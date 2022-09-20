@@ -1,0 +1,1 @@
+This repo contains the Pseudospectral code to solve the full GOY shell model for (hydro- and magnetohydro- dynamic) turbulence.
