@@ -47,7 +47,7 @@
 // Choose which system to solver 
 // #define __MAGNETO
 // Choose which integrator to use
-#define __RK4
+#define __INT_FAC_RK4
 // #define __RK5
 // #define __DPRK5
 // Choose whether to print updates to screen
@@ -110,13 +110,17 @@
 // Define the shell wavenumber parameters
 #define K_0 1.0 				// The shell wavenumber prefactor
 #define LAMBDA 2.0              // The intershell ratio for the shell wavenumber 
+// System checking parameters
+#define MIN_STEP_SIZE 1e-10 	// The minimum allowed stepsize for the solver 
+#define MAX_ITERS 1e+12			// The maximum iterations to perform
+#define MAX_FIELD_LIM 1e+100     // The maximum allowed velocity &/or magnetic
 // // Dormand Prince integrator parameters
 // #define DP_ABS_TOL 1e-7		    // The absolute error tolerance for the Dormand Prince Scheme
 // #define DP_REL_TOL 1e-7         // The relative error tolerance for the Dormand Prince Scheme
 // #define DP_DELTA_MIN 0.01       // The min delta value for the Dormand Prince scheme
 // #define DP_DELTA_MAX 1.5 		// The max delta value for the Dormand Prince scheme
 // #define DP_DELTA 0.8 			// The scaling parameter of the error for the Dormand Prince Scheme
-// // Initial Conditions parameters
+// Initial Conditions parameters
 // #define KAPPA 1.0 				// The wavenumber of the Taylor Green initial condition 
 // #define SIGMA 15.0 / M_PI 		// The sigma term for the Double Shear Layer initial condition
 // #define DELTA 0.005	 			// The delta term for the Double Shear Layer initial condition
@@ -139,10 +143,6 @@
 // #define STOC_FORC_K_MAX 2.5     // The maximum value of the modulus forced wavevectors for the stochastic (Gaussian) forcing
 // #define CONST_GAUSS_K_MIN 10    // The minimum value of the mod of forced wavevectors for the Constant Gaussian Ring forcing
 // #define CONST_GAUSS_K_MAX 12    // The minimum value of the mod of forced wavevectors for the Constant Gaussian Ring forcing
-// // System checking parameters
-// #define MIN_STEP_SIZE 1e-10 	// The minimum allowed stepsize for the solver 
-// #define MAX_ITERS 1e+12			// The maximum iterations to perform
-// #define MAX_VORT_LIM 1e+100     // The maximum allowed vorticity
 // // Dynamic Modes
 // #define UPR_SBST_LIM 64         // The upper mode limit of the energy/enstrophy flux
 // #define LWR_SBST_LIM 0  		// The lower mode limit of the energy/enstrophy flux
@@ -182,6 +182,8 @@ typedef struct system_vars_struct {
 	int CFL_COND_FLAG;					// Flag for indicating if the CFL like condition is to be used for the adaptive stepping
 	double NU;							// The viscosity
 	double ETA;							// The magnetic diffusivity
+	double ALPHA;						// Slope of the velocity energy spectrum = 2 * ALPHA
+	double BETA; 						// Slope of the magnetic energy spectrum = 2 * BETA
 	// int HYPER_VISC_FLAG;				// Flag to indicate if hyperviscosity is to be used
 	// double HYPER_VISC_POW;				// The power of the hyper viscosity to use
 	// double EKMN_ALPHA; 					// The value of the Ekman drag coefficient
@@ -192,22 +194,20 @@ typedef struct system_vars_struct {
 // Runtime data struct
 typedef struct runtime_data_struct {
 	long int* k;		  				// Array to hold wavenumbers
-	fftw_complex* b_hat;      			// Fourier space vorticity
-	fftw_complex* u_hat;      			// Fourier space velocity
+	fftw_complex* u;	      			// Fourier space velocity
+	fftw_complex* b;	      			// Fourier space vorticity
 	fftw_complex* rhs; 		  			// Array to hold the RHS of the equation of motion
 	fftw_complex* nonlinterm; 			// Array to hold the nonlinear term
-	double* u;				  			// Real space vorticity
-	double* b;				  			// Real space velocity
 	double* a_n;			  			// Fourier vorticity amplitudes
 	double* tmp_a_n;		  			// Array to hold the amplitudes of the fourier vorticity before marching forward in time
-	double* phi_n;			  			// Fourier vorticity phases
-	double* b_n;			  			// Fourier vorticity amplitudes
+	double* phi_n;			  			// Fourier velocity phases
+	double* b_n;			  			// Fourier velocity amplitudes
 	double* tmp_b_n;		  			// Array to hold the amplitudes of the fourier vorticity before marching forward in time
-	double* psi_n;
+	double* psi_n;						// Array to hold the phases of the magnetic modes
 	double* time;			  			// Array to hold the simulation times
-	// double* tot_div;		  			// Array to hold the total diverence
-	// double* tot_forc;		  			// Array to hold the total forcing input into the sytem over the simulation
-	// double* tot_energy;       			// Array to hold the total energy over the simulation
+	double* tot_energy;       			// Array to hold the total energy over the simulation
+	double* tot_hel;		  			// Array to hold the total helicity in the magnetic field
+	double* tot_cross_hel;	  			// Array to hold the total cross helicity
 	// double* tot_enstr;		  			// Array to hold the total entrophy over the simulation
 	// double* tot_palin;		  			// Array to hold the total palinstrophy over the simulaiotns
 	// double* enrg_diss; 		  			// Array to hold the energy dissipation rate 
@@ -237,20 +237,24 @@ typedef struct runtime_data_struct {
 
 // Runge-Kutta Integration struct
 typedef struct RK_data_struct {
-	fftw_complex* RK1;		  // Array to hold the result of the first stage
-	fftw_complex* RK2;		  // Array to hold the result of the second stage
-	fftw_complex* RK3;		  // Array to hold the result of the third stage
-	fftw_complex* RK4;		  // Array to hold the result of the fourth stage
-	fftw_complex* RK5;		  // Array to hold the result of the fifth stage of RK5 scheme
-	fftw_complex* RK6;		  // Array to hold the result of the sixth stage of RK5 scheme
-	fftw_complex* RK7; 		  // Array to hold the result of the seventh stage of the Dormand Prince Scheme
-	fftw_complex* RK_tmp;	  // Array to hold the tempory updates to w_hat - input to RHS function
-	fftw_complex* w_hat_last; // Array to hold the values of the Fourier space vorticity from the previous iteration - used in the stepsize control in DP scheme
-	double* nabla_psi;		  // Batch array the velocities u = d\psi_dy and v = -d\psi_dx
-	double* nabla_w;		  // Batch array to hold \nabla\omega - the vorticity derivatives
-	double* nonlin;           // Array to hold the result of the nonlinear term in real space
-	double DP_err; 			  // Variable to hold the error between the embedded methods in the Dormand Prince scheme
-	int DP_fails;
+	fftw_complex* RK1_u;		  // Array to hold the result of the first stage for the velocity field
+	fftw_complex* RK2_u;		  // Array to hold the result of the second stage for the velocity field
+	fftw_complex* RK3_u;		  // Array to hold the result of the third stage for the velocity field
+	fftw_complex* RK4_u;		  // Array to hold the result of the fourth stage for the velocity field
+	fftw_complex* RK1_b;		  // Array to hold the result of the first stage for the magnetic field
+	fftw_complex* RK2_b;		  // Array to hold the result of the second stage for the magnetic field
+	fftw_complex* RK3_b;		  // Array to hold the result of the third stage for the magnetic field
+	fftw_complex* RK4_b;		  // Array to hold the result of the fourth stage for the magnetic field
+	// fftw_complex* RK5;		  // Array to hold the result of the fifth stage of RK5 scheme
+	// fftw_complex* RK6;		  // Array to hold the result of the sixth stage of RK5 scheme
+	// fftw_complex* RK7; 		  // Array to hold the result of the seventh stage of the Dormand Prince Scheme
+	fftw_complex* RK_u_tmp;		  // Array to hold the tempory updates to u - input to Nonlinear term function
+	fftw_complex* RK_b_tmp;		  // Array to hold the tempory updates to b - input to Nonlinear term function
+	// fftw_complex* w_hat_last; // Array to hold the values of the Fourier space vorticity from the previous iteration - used in the stepsize control in DP scheme
+	// double* nabla_psi;		  // Batch array the velocities u = d\psi_dy and v = -d\psi_dx
+	// double* nabla_w;		  // Batch array to hold \nabla\omega - the vorticity derivatives
+	// double DP_err; 			  // Variable to hold the error between the embedded methods in the Dormand Prince scheme
+	// int DP_fails;
 } RK_data_struct;
 
 // HDF5 file info struct

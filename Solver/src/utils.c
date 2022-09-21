@@ -64,7 +64,9 @@ int GetCMLArgs(int argc, char** argv) {
 	sys_vars->ADAPT_STEP_FLAG = 0;
 	sys_vars->CFL_COND_FLAG   = 1;
 	// Initial conditions
-	strncpy(sys_vars->u0, "TG_VORT", 64);
+	strncpy(sys_vars->u0, "N_SCALING", 64);
+	sys_vars->ALPHA = 1.5;
+	sys_vars->BETA  = 1.5;
 	// Forcing
 	strncpy(sys_vars->forcing, "NONE", 64);	
 	sys_vars->force_k         = 0;
