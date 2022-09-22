@@ -45,10 +45,10 @@ int main(int argc, char** argv) {
 	clock_t begin = clock();
 	
 	// Read in Command Line Arguments
-	// if (GetCMLArgs(argc, argv) != 0) {
-	// 	fprintf(stderr, "\n["RED"ERROR"RESET"]: Error in reading in command line aguments, check utils.c file for details\n");
-	// 	exit(1);
-	// }
+	if (GetCMLArgs(argc, argv) != 0) {
+		fprintf(stderr, "\n["RED"ERROR"RESET"]: Error in reading in command line aguments, check utils.c file for details\n");
+		exit(1);
+	}
 
 	//////////////////////////////////
 	// Call Solver
@@ -68,9 +68,9 @@ int main(int argc, char** argv) {
 	printf("\n\nTotal Execution Time: ["CYAN"%5.10lf"RESET"] --> "CYAN"%d"RESET" hrs : "CYAN"%d"RESET" mins : "CYAN"%d"RESET" secs\n\n", time_spent, hh, mm, ss);
 
 	// Print simulation details to .txt file in default output mode
-	// if (!file_info->file_only) {
-	// 	PrintSimulationDetails(argc, argv, time_spent);
-	// }
+	if (!file_info->file_only) {
+		PrintSimulationDetails(argc, argv, time_spent);
+	}
 
 	// Return statement
 	return 0;

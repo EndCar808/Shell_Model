@@ -58,8 +58,8 @@
 // Solver Types
 #define HYPER_VISC 1			// Turned on hyperviscosity if called for at compilation time
 #define VISC_POW 2.0            // The power of the hyperviscosity -> 1.0 means no hyperviscosity
-#define EKMN_DRAG 1   			// Turn on Ekman drag if called for at compilation time
-#define EKMN_POW -2.0 			// The power of the Eckman drag term -> 0.0 means no drag
+#define HYPO_DIFF 1   			// Turn on Ekman drag if called for at compilation time
+#define HYPO_DIFF_POW -2.0 		// The power of the Eckman drag term -> 0.0 means no drag
 // For allow transient dynamics
 #define TRANSIENT_ITERS 1       // Indicator for transient iterations
 #define TRANSIENT_FRAC 0.2      // Fraction of total iteration = transient iterations
@@ -89,19 +89,24 @@
 #define __VEL_AMP
 #define __VEL_PHI
 // Choose whether to save the Fourier Magnetic Field Phase and Amp
-#define __VEL_AMP
-#define __VEL_PHI
+#define __MAG_AMP
+#define __MAG_PSI
 // Choose whether to save the Nonlinear term or RHS of equation of motion
 // #define __RHS
 // #define __NONLIN
 // Choose whether to compute system measures
-#define __SYS_MEASURES
-#define __ENRG
-#define __HELIC
-#define __ENRG_N
+// #define __SYS_MEASURES
 // Choose whether to save the time, collocation points and wavenumbers
 #define __TIME
 #define __WAVELIST
+// Writing datasets to file
+#define DSET_VEL 0
+#define DSET_VEL_AMP 1
+#define DSET_VEL_PHI 2
+#define DSET_MAG 3
+#define DSET_MAG_AMP 4
+#define DSET_MAG_PSI 5
+#define NUM_DSETS 6
 // ---------------------------------------------------------------------
 //  Global Variables
 // ---------------------------------------------------------------------
@@ -180,15 +185,14 @@ typedef struct system_vars_struct {
 	int ADAPT_STEP_FLAG;			 	// Flag for indicating if adaptive stepping is to be used
 	double CFL_CONST;					// The CFL constant for the adaptive step
 	int CFL_COND_FLAG;					// Flag for indicating if the CFL like condition is to be used for the adaptive stepping
-	double NU;							// The viscosity
-	double ETA;							// The magnetic diffusivity
 	double ALPHA;						// Slope of the velocity energy spectrum = 2 * ALPHA
 	double BETA; 						// Slope of the magnetic energy spectrum = 2 * BETA
-	// int HYPER_VISC_FLAG;				// Flag to indicate if hyperviscosity is to be used
-	// double HYPER_VISC_POW;				// The power of the hyper viscosity to use
-	// double EKMN_ALPHA; 					// The value of the Ekman drag coefficient
-	// int EKMN_DRAG_FLAG;					// Flag for indicating if ekman drag is to be used
-	// double EKMN_DRAG_POW;				// The power of the hyper drag to be used
+	double NU;							// The viscosity
+	int HYPER_VISC_FLAG;				// Flag to indicate if hyperviscosity is to be used
+	double HYPER_VISC_POW;				// The power of the hyper viscosity to use
+	double ETA;							// The magnetic diffusivity
+	int HYPO_MAG_DIFF_FLAG;				// Flag for indicating if ekman drag is to be used
+	double HYPO_MAG_DIFF_POW;			// The power of the hyper drag to be used
 } system_vars_struct;
 
 // Runtime data struct
@@ -259,21 +263,20 @@ typedef struct RK_data_struct {
 
 // HDF5 file info struct
 typedef struct HDF_file_info_struct {
-	char input_file_name[512];		// Array holding input file name
-	char output_file_name[512];     // Output file name array
-	char spectra_file_name[512];    // Spectra file name array
-	char sync_file_name[512]; 	    // Phase Sync file name array
-	char input_dir[512];			// Inputs directory
-	char output_dir[512];			// Output directory
-	char output_tag[64]; 			// Tag to be added to the output directory
-	hid_t input_file_handle;		// File handle for the input file
-	hid_t output_file_handle;		// Main file handle for the output file 
-	hid_t spectra_file_handle;      // Spectra file handle
-	hid_t sync_file_handle;		    // Phase sync file handle
-	hid_t COMPLEX_DTYPE;			// Complex datatype handle
-	int file_only;					// Indicates if output should be file only with no output folder created
-	hid_t test_file_handle;         // File handle for testing
-	char test_file_name[512];       // File name for testing
+	char input_file_name[512];		 // Array holding input file name
+	char output_file_name[512];      // Output file name array
+	char input_dir[512];			 // Inputs directory
+	char output_dir[512];			 // Output directory
+	char output_tag[64]; 			 // Tag to be added to the output directory
+	hid_t input_file_handle;		 // File handle for the input file
+	hid_t output_file_handle;		 // Main file handle for the output file 
+	hid_t COMPLEX_DTYPE;			 // Complex datatype handle
+	int file_only;					 // Indicates if output should be file only with no output folder created
+	hid_t test_file_handle;          // File handle for testing
+	char test_file_name[512];        // File name for testing
+	hid_t file_space[NUM_DSETS];	 // Identifier for File memory space for the slabbed datasets
+	hid_t data_set[NUM_DSETS];  	 // Identifier for Size of the data memory space for the slabbed datasets
+	hid_t mem_space[NUM_DSETS]; 	 // Identifier for Size of memory for the slabbed datasets
 } HDF_file_info_struct;
 
 // Complex datatype struct for HDF5

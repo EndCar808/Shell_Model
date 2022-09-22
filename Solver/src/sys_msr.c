@@ -69,9 +69,9 @@ void ComputeSystemMeasurables(double t, int iter, RK_data_struct* RK_data) {
 
         if (iter < sys_vars->num_print_steps) {
             // Update sum for totals
-            run_data->tot_energy[iter] += cabs(run_data->u[n] * conj(run_data->u[n])) + cabs(run_data->b[n] * conj(run_data->b[n]));
-            run_data->tot_hel[iter]    += pow(-1.0, i) * cabs(run_data->b[n] * conj(run_data->b[n])) / run_data->k[i];
-            run_data->tot_energy[iter] += creal(run_data->u[n] * conj(run_data->b[n]));
+            run_data->tot_energy[iter]    += cabs(run_data->u[n] * conj(run_data->u[n])) + cabs(run_data->b[n] * conj(run_data->b[n]));
+            run_data->tot_hel[iter]       += pow(-1.0, i) * cabs(run_data->b[n] * conj(run_data->b[n])) / run_data->k[i];
+            run_data->tot_cross_hel[iter] += creal(run_data->u[n] * conj(run_data->b[n]));
         }
     }
 
@@ -80,8 +80,9 @@ void ComputeSystemMeasurables(double t, int iter, RK_data_struct* RK_data) {
     // ------------------------------------ 
     #if defined(__SYS_MEASURES)
     if (iter < sys_vars->num_print_steps) {
-        run_data->tot_energy[iter] *= 0.5;
-        run_data->tot_hel[iter]    *= -1.0;
+        run_data->tot_energy[iter]    *= 0.5;
+        run_data->tot_hel[iter]       *= 0.5;
+        run_data->tot_cross_hel[iter] *= 0.5;
     }
     #endif
 }
@@ -134,7 +135,6 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
         exit(1);
     }
     #endif
-
 
     // ----------------------------
     // Get Measurables of the ICs

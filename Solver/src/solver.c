@@ -17,7 +17,7 @@
 //  User Libraries and Headers
 // ---------------------------------------------------------------------
 #include "data_types.h"
-// #include "hdf5_funcs.h"
+#include "hdf5_funcs.h"
 #include "utils.h"
 #include "solver.h"
 #include "sys_msr.h"
@@ -26,21 +26,11 @@
 //  Global Variables
 // ---------------------------------------------------------------------
 // Define RK4 variables - Butcher Tableau
-#if defined(__RK4)
+#if defined(__RK4) || defined(__INT_FAC_RK4)
 static const double RK4_C2 = 0.5, 	  RK4_A21 = 0.5, \
 				  	RK4_C3 = 0.5,	           					RK4_A32 = 0.5, \
 				  	RK4_C4 = 1.0,                      									   RK4_A43 = 1.0, \
 				              	 	  RK4_B1 = 1.0/6.0, 		RK4_B2  = 1.0/3.0, 		   RK4_B3  = 1.0/3.0, 		RK4_B4 = 1.0/6.0;
-// Define RK5 Dormand Prince variables - Butcher Tableau
-#elif defined(__RK5) || defined(__DPRK5)
-static const double RK5_C2 = 0.2, 	  RK5_A21 = 0.2, \
-				  	RK5_C3 = 0.3,     RK5_A31 = 3.0/40.0,       RK5_A32 = 0.5, \
-				  	RK5_C4 = 0.8,     RK5_A41 = 44.0/45.0,      RK5_A42 = -56.0/15.0,	   RK5_A43 = 32.0/9.0, \
-				  	RK5_C5 = 8.0/9.0, RK5_A51 = 19372.0/6561.0, RK5_A52 = -25360.0/2187.0, RK5_A53 = 64448.0/6561.0, RK5_A54 = -212.0/729.0, \
-				  	RK5_C6 = 1.0,     RK5_A61 = 9017.0/3168.0,  RK5_A62 = -355.0/33.0,     RK5_A63 = 46732.0/5247.0, RK5_A64 = 49.0/176.0,    RK5_A65 = -5103.0/18656.0, \
-				  	RK5_C7 = 1.0,     RK5_A71 = 35.0/384.0,								   RK5_A73 = 500.0/1113.0,   RK5_A74 = 125.0/192.0,   RK5_A75 = -2187.0/6784.0,    RK5_A76 = 11.0/84.0, \
-				              		  RK5_B1  = 35.0/384.0, 							   RK5_B3  = 500.0/1113.0,   RK5_B4  = 125.0/192.0,   RK5_B5  = -2187.0/6784.0,    RK5_B6  = 11.0/84.0, \
-				              		  RK5_Bs1 = 5179.0/57600.0, 						   RK5_Bs3 = 7571.0/16695.0, RK5_Bs4 = 393.0/640.0,   RK5_Bs5 = -92097.0/339200.0, RK5_Bs6 = 187.0/2100.0, RK5_Bs7 = 1.0/40.0;
 #endif
 // ---------------------------------------------------------------------
 //  Function Definitions
@@ -51,32 +41,7 @@ static const double RK5_C2 = 0.2, 	  RK5_A21 = 0.2, \
 void Solve(void) {
 
 	// Initialize variables
-	sys_vars->N = 19;
-	// Integration time 
-	sys_vars->t0              = 0.0;
-	sys_vars->dt              = 1e-4;
-	sys_vars->T               = 1.0;
-	sys_vars->CFL_CONST       = 0.9;
-	sys_vars->ADAPT_STEP_FLAG = 0;
-	sys_vars->CFL_COND_FLAG   = 1;
-	// Initial conditions
-	strncpy(sys_vars->u0, "N_SCALING", 64);
-	sys_vars->ALPHA = 1.5;
-	sys_vars->BETA  = 1.5;
-	// Transient iterations
-	sys_vars->TRANS_ITERS_FLAG = 0;
-	sys_vars->TRANS_ITERS_FRAC = TRANSIENT_FRAC;
-	// System viscosity / hyperviscosity
-	sys_vars->NU  = 0.0001;
-	sys_vars->ETA = 
-	sys_vars->SAVE_EVERY = 100;
-
-
-
 	const long int N = sys_vars->N;
-	strncpy(sys_vars->u0, "N_SCALING", 64);
-	sys_vars->ALPHA = 1.5;
-	sys_vars->BETA  = 1.5;
 
 	// Initialize the Runge-Kutta struct
 	struct RK_data_struct* RK_data;	   // Initialize pointer to a RK_data_struct
@@ -113,24 +78,26 @@ void Solve(void) {
 	// Integration Variables
 	// -------------------------------
 	// Initialize integration variables
-	double t0 = 0.0;
-	double t  = t0;
-	double dt = 1e-3;
-	double T  = 12;
+	double t0;
+	double t;
+	double dt;
+	double T;
 	long int trans_steps;
-	// #if defined(__DPRK5)
-	// int try = 1;
-	// double dt_new;
-	// #endif
 
 	// // Get timestep and other integration variables
-	// InitializeIntegrationVariables(&t0, &t, &dt, &T, &trans_steps);
+	InitializeIntegrationVariables(&t0, &t, &dt, &T, &trans_steps);
 	
 	// -------------------------------
 	// Create & Open Output File
 	// -------------------------------
 	// Inialize system measurables
 	InitializeSystemMeasurables(RK_data);	
+
+	// Create and open the output file - also write initial conditions to file
+	CreateOutputFilesWriteICs(N);
+
+	// Print update of the initial conditions to the terminal
+	PrintUpdateToTerminal(0, t0, dt, T, 0);
 
 	//////////////////////////////
 	// Begin Integration
@@ -164,7 +131,7 @@ void Solve(void) {
 			// If and when transient steps are complete write to file
 			if (iters > trans_steps) {
 				// Write the appropriate datasets to file 
-				// WriteDataToFile(t, dt, save_data_indx);
+				WriteDataToFile(t, dt, save_data_indx);
 				
 				// Update saving data index
 				save_data_indx++;
@@ -211,13 +178,17 @@ void Solve(void) {
 			#endif
 		}
 
-		// // Check System: Determine if system has blown up or integration limits reached
-		// SystemCheck(dt, iters);
+		// Check System: Determine if system has blown up or integration limits reached
+		SystemCheck(dt, iters);
 	}
 	//////////////////////////////
 	// End Integration
 	//////////////////////////////
 	
+	// ------------------------------- 
+	// Final Writes to Output File
+	// -------------------------------
+	FinalWriteAndCloseOutputFile(N, iters, save_data_indx);
 
 	// -------------------------------
 	// Clean Up 
@@ -248,14 +219,14 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		n = i + 2;
 
 		// Get the integrating factor
-		int_fac_u = cexp(-sys_vars->NU * dt * run_data->k[i] * run_data->k[i] / 2.0);
-		int_fac_b = cexp(-sys_vars->ETA * dt * run_data->k[i] * run_data->k[i] / 2.0);
+		int_fac_u = exp(-sys_vars->NU * dt * run_data->k[i] * run_data->k[i] / 2.0);
+		int_fac_b = exp(-sys_vars->ETA * dt * run_data->k[i] * run_data->k[i] / 2.0);
 
 		// Update temorary velocity term
-		RK_data->RK_u_tmp[n] = run_data->u[n] * int_fac_u + (dt / 2.0) * RK_data->RK1_u[n] * int_fac_u;
+		RK_data->RK_u_tmp[n] = run_data->u[n] * int_fac_u + dt * RK4_A21 * RK_data->RK1_u[n] * int_fac_u;
 		#if defined(__MAGNETO)
 		// Update temporary magnetic term
-		RK_data->RK_b_tmp[n] = run_data->b[n] * int_fac_b + (dt / 2.0) * RK_data->RK1_b[n] * int_fac_b;		
+		RK_data->RK_b_tmp[n] = run_data->b[n] * int_fac_b + dt * RK4_A21 * RK_data->RK1_b[n] * int_fac_b;		
 		#endif
 	}
 
@@ -270,10 +241,10 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		int_fac_b = cexp(-sys_vars->ETA * dt * run_data->k[i] * run_data->k[i] / 2.0);
 
 		// Update temorary velocity term
-		RK_data->RK_u_tmp[n] = run_data->u[n] * int_fac_u + (dt / 2.0) * RK_data->RK2_u[n];
+		RK_data->RK_u_tmp[n] = run_data->u[n] * int_fac_u + dt * RK4_A32 * RK_data->RK2_u[n];
 		#if defined(__MAGNETO)
 		// Update temporary magnetic term
-		RK_data->RK_b_tmp[n] = run_data->b[n] * int_fac_b + (dt / 2.0) * RK_data->RK2_b[n];		
+		RK_data->RK_b_tmp[n] = run_data->b[n] * int_fac_b + dt * RK4_A32 * RK_data->RK2_b[n];		
 		#endif
 	}
 
@@ -288,16 +259,16 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		int_fac_b = cexp(-sys_vars->ETA * dt * run_data->k[i] * run_data->k[i]);
 
 		// Update temorary velocity term
-		RK_data->RK_u_tmp[n] = run_data->u[n] * int_fac_u + (dt / 2.0) * RK_data->RK3_u[n] * int_fac_u * cexp(0.5);
+		RK_data->RK_u_tmp[n] = run_data->u[n] * int_fac_u + dt * RK4_A43 * RK_data->RK3_u[n] * sqrt(int_fac_u);
 		#if defined(__MAGNETO)
 		// Update temporary magnetic term
-		RK_data->RK_b_tmp[n] = run_data->b[n] * int_fac_b + (dt / 2.0) * RK_data->RK3_b[n] * int_fac_b * cexp(0.5);		
+		RK_data->RK_b_tmp[n] = run_data->b[n] * int_fac_b + dt * RK4_A43 * RK_data->RK3_b[n] * sqrt(int_fac_b);		
 		#endif
 	}
 
 	// ----------------------- Stage 2
 	NonlinearTerm(RK_data->RK_u_tmp, RK_data->RK_b_tmp, RK_data->RK4_u, RK_data->RK4_b, N);
-	
+
 
 	/////////////////////
 	/// UPDATE STEP
@@ -311,10 +282,12 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		int_fac_b = cexp(-sys_vars->ETA * dt * run_data->k[i] * run_data->k[i]);
 
 		// Update the new velocity field
-		run_data->u[n] = int_fac_u * run_data->u[n] + (dt / 6.0) * (1.0 / int_fac_u) * RK_data->RK1_u[n] + (1.0 / (3.0 * int_fac_u * cexp(0.5))) * RK_data->RK2_u[n] + (1.0 / (3.0 * int_fac_u * cexp(0.5))) * RK_data->RK3_u[n] + RK_data->RK4_u[n];
+		run_data->u[n] = int_fac_u * run_data->u[n] + dt * RK4_B1 * int_fac_u * RK_data->RK1_u[n] + dt * RK4_B2 * sqrt(int_fac_u) * RK_data->RK2_u[n] + dt * RK4_B3 * sqrt(int_fac_u) * RK_data->RK3_u[n] + dt * RK4_B4 * RK_data->RK4_u[n];
+		// run_data->u[n] = int_fac_u * run_data->u[n] + (dt / 6.0) * (int_fac_u * RK_data->RK1_u[n] + 2.0 * sqrt(int_fac_u) * RK_data->RK2_u[n] + 2.0 * sqrt(int_fac_u) * RK_data->RK3_u[n] + RK_data->RK4_u[n]);
 		#if defined(__MAGNETO)
 		// Update the new magnetic field
-		run_data->b[n] = int_fac_b * run_data->b[n] + (dt / 6.0) * (1.0 / int_fac_b) * RK_data->RK1_b[n] + (1.0 / (3.0 * int_fac_b * cexp(0.5))) * RK_data->RK2_b[n] + (1.0 / (3.0 * int_fac_b * cexp(0.5))) * RK_data->RK3_b[n] + RK_data->RK4_b[n];
+		run_data->b[n] = int_fac_b * run_data->b[n] + dt * RK4_B1 * int_fac_b * RK_data->RK1_b[n] + dt * RK4_B2 * sqrt(int_fac_b) * RK_data->RK2_b[n] + dt * RK4_B3 * sqrt(int_fac_b) * RK_data->RK3_b[n] + dt * RK4_B4 * RK_data->RK4_b[n];
+		// run_data->b[n] = int_fac_b * run_data->b[n] + (dt / 6.0) * (int_fac_b * RK_data->RK1_b[n] + 2.0 * sqrt(int_fac_b) * RK_data->RK2_b[n] + 2.0 * sqrt(int_fac_b) * RK_data->RK3_b[n] + RK_data->RK4_b[n]);
 		#endif
 	}
 }
@@ -369,7 +342,7 @@ void NonlinearTerm(fftw_complex* u, fftw_complex* b, fftw_complex* u_nonlin, fft
 		u_nonlin[n] = I * run_data->k[i] * conj(u_tmp_1 - 0.25 * u_tmp_2 - 0.125 * u_tmp_3); 
 		#if defined(__MAGNETO)
 		// Compute the nonlinear term for the magnetic field
-		b_nonlin[n] = I * run_data->k[i] * (1.0 / 6.0) * conj(b_tmp_1 + b_tmp_2 + b_tmp_3); 		
+		b_nonlin[n] = I * run_data->k[i] * (1.0 / 6.0) * conj(b_tmp_1 + b_tmp_2 + b_tmp_3); 
 		#endif
 	}
 }
@@ -392,13 +365,11 @@ void InitialConditions(const long int N) {
 		// ------------------------------------------------
 		for (int i = 0; i < N; ++i) {
 			// Initialize the velocity field
-			run_data->u[i + 2] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) * cexp(I * pow(i, 2.0));
+			run_data->u[i + 2] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) * cexp(I * pow(i + 1, 2.0));
 
 			#if defined(__MAGNETO)
 			// Initialize the magnetic field
-			run_data->b[i + 2] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * cexp(I * pow(i, 4.0)) * 1e-2;
-
-			printf("u[%d]:\t%1.16lf\t%1.16lf I\t--\tb[%d]:\t%1.16lf\t%1.16lf I\n", i, creal(run_data->u[i + 2]), cimag(run_data->u[i + 2]), i, creal(run_data->b[i + 2]), cimag(run_data->b[i + 2]));
+			run_data->b[i + 2] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * cexp(I * pow(i + 1, 4.0)) * 1e-2;
 			#endif
 		}	
 	}
@@ -425,8 +396,7 @@ void InitializeShellWavenumbers(long int* k, const long int N) {
 	// Define Shell Wavenumbers
 	// -------------------------------
 	for (int i = 0; i < N; ++i) {
-		run_data->k[i] = K_0 * pow(LAMBDA, i);
-		printf("k[%d]: %ld\n", i, run_data->k[i]);
+		k[i] = K_0 * pow(LAMBDA, i);
 	}
 }
 /**
@@ -465,7 +435,7 @@ void InitializeIntegrationVariables(double* t0, double* t, double* dt, double* T
 		printf("Total Iters: %ld\t Saving Iters: %ld\t Transient Steps: %ld\n", sys_vars->num_t_steps, sys_vars->num_print_steps, sys_vars->trans_iters);
 	}
 	else {
-		// Get the transient iterations
+		// Get the transient iterations 
 		(* trans_steps)       = 0;
 		sys_vars->trans_iters = (* trans_steps);
 
@@ -488,7 +458,26 @@ void InitializeIntegrationVariables(double* t0, double* t, double* dt, double* T
 void PrintUpdateToTerminal(int iters, double t, double dt, double T, int save_data_indx) {
 
 	// Initialize variables
-	printf("Iter: %d/%ld\tt: %1.6lf/%1.3lf\tdt: %1.6g \tKE: %1.5g\tHEL: %1.5g\tX-HEL: %1.5g\n", iters, sys_vars->num_t_steps, t, T, dt, run_data->tot_energy[save_data_indx], run_data->tot_hel[save_data_indx], run_data->tot_cross_hel[save_data_indx]);
+	printf("Iter: %d/%ld\tt: %1.6lf/%1.3lf\tdt: %1.6g\tKE: %6.6g\tHEL: %6.6g\tX-HEL: %6.6g\n", iters, sys_vars->num_t_steps, t, T, dt, run_data->tot_energy[save_data_indx], run_data->tot_hel[save_data_indx], run_data->tot_cross_hel[save_data_indx]);
+}
+/**
+ * Function that checks the system to see if it is ok to continue integrations. Checks for blow up, timestep and iteration limits etc
+ * @param dt    The updated timestep for the next iteration
+ * @param iters The number of iterations for the next iteration
+ */
+void SystemCheck(double dt, int iters) {
+
+	// -------------------------------
+	// Check Stopping Criteria 
+	// -------------------------------
+	if (dt <= MIN_STEP_SIZE) {
+		fprintf(stderr, "\n["YELLOW"SOVLER FAILURE"RESET"]--- Timestep has become too small to continue at Iter: ["CYAN"%d"RESET"]\n-->> Exiting!!!\n", iters);
+		exit(1);		
+	}
+	else if (iters >= MAX_ITERS) {
+		fprintf(stderr, "\n["YELLOW"SOVLER FAILURE"RESET"]--- The maximum number of iterations has been reached at Iter: ["CYAN"%d"RESET"]\n-->> Exiting!!!\n", iters);
+		exit(1);		
+	}
 }
 /**
  * Wrapper function used to allocate memory all the nessecary local and global system and integration arrays
@@ -499,7 +488,6 @@ void PrintUpdateToTerminal(int iters, double t, double dt, double T, int save_da
 void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 
 	// Initialize variables
-	int n;
 
 	// -------------------------------
 	// Allocate Shell Wavenumbers
