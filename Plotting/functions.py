@@ -39,7 +39,7 @@ class tc:
 #################################
 ##          MISC               ##
 #################################
-def compute_pdf(data, bin_lims, nbins = 1000, normed = True):
+def compute_pdf(data, bin_lims = None, nbins = 1000, normed = False):
 
     """
     Computes the PDF of input data from a histogram of that data
