@@ -45,10 +45,10 @@ endif
 SOLVER_FLAGS := -D__MAGNETO #-D__HYPER -D__ADAPTIVE_STEP -D__CFL_STEP #-D__TRANSIENTS  -D__EKMN_DRAG
 
 # Phase only flags to be passed to solver
-PHASE_ONLY := -D__MAGNETO -D__PHASE_ONLY #-D__HYPER -D__TRANSIENTS
+PHASE_ONLY_FLAGS := -D__MAGNETO -D__PHASE_ONLY #-D__HYPER -D__TRANSIENTS
 
 # Dataset Flags to be passed to the solver
-DSET_FLAGS := -D__SYS_MEASURES -D__ENST_FLUX -D__ENRG_FLUX -D__ENST_SPECT -D__ENRG_SPECT -D__ENST_FLUX_SPECT -D__ENRG_FLUX_SPECT -D__PHASE_SYNC # -D__VORT_REAL #-D__REALSPACE # -D__MODES  
+DSET_FLAGS := -D__SYS_MEASURES -D__ENRG_FLUX
  
 # Flags to be passed to the solver for testing
 TEST_FLAGS    := -D__MAGNETO -D__TESTING -D__DEBUG #-D__ADAPTIVE_STEP -D__CFL_STEP -D__TRANSIENTS
@@ -99,10 +99,10 @@ $(OBJBIN)/%.o: $(SRCDIR)/%.c $(DEPS)
 ####-----------
 solver_phase_only: $(BIN)/solver_phase_only 
 
-$(BIN)/solver_phase_only: $(SRCOBJ) $(DEPS)
+$(BIN)/solver_phase_only: $(SRCOBJ_PO) $(DEPS) 
 	$(GCC) $(CCFLAG) $(PHASE_ONLY_FLAGS) $(DSET_FLAGS) -o $@ $^ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
 
-$(OBJBIN)/%_phase_only.o: $(SRCDIR)/%.c $(DEPS)
+$(OBJBIN)/%_phase_only.o: $(SRCDIR)/%.c $(DEPS) 
 	$(GCC) $(CCFLAG) $(PHASE_ONLY_FLAGS) $(DSET_FLAGS) -c $^ -o $@ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
 
 ####--------
@@ -111,7 +111,7 @@ $(OBJBIN)/%_phase_only.o: $(SRCDIR)/%.c $(DEPS)
 test: $(BIN)/solver_test
 
 test_run: $(BIN)/solver_test
-	$(BIN)/solver_test -o "../Data/Test/" -n 128 -n 128 -s 0.0 -e 1.0 -h 0.0001 -i "VORT" -v 1.0 -t "TG-TEST"
+	$(BIN)/solver_test -o "../Data/Test/" -n 19  -s 0.0 -e 12.0 -h 0.001 -i "N_SCALING" -v 0.0000001 -d 0.0000001 -a 1.5 -b 1.5 -t "TEST"
 
 
 # Tetst Case

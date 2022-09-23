@@ -208,6 +208,12 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 	int n;
 	fftw_complex int_fac_u;
 	fftw_complex int_fac_b;
+	#if defined(PHASE_ONLY)
+	double po_norm_fac_u;
+	#if defined(__MAGNETO)
+	double po_norm_fac_b;
+	#endif
+	#endif
 
 	/////////////////////
 	/// RK STAGES
@@ -281,6 +287,15 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		int_fac_u = cexp(-sys_vars->NU * dt * run_data->k[i] * run_data->k[i]);
 		int_fac_b = cexp(-sys_vars->ETA * dt * run_data->k[i] * run_data->k[i]);
 
+		#if defined(PHASE_ONLY)
+		// Pre-record the amplitudes for resetting after update step
+		po_norm_fac_u = cabs(run_data->u[n]);
+		#if defined(__MAGNETO)
+		po_norm_fac_b = cabs(run_data->b[n]);
+		#endif
+		#endif
+
+		///-------------------- Update Step
 		// Update the new velocity field
 		run_data->u[n] = int_fac_u * run_data->u[n] + dt * RK4_B1 * int_fac_u * RK_data->RK1_u[n] + dt * RK4_B2 * sqrt(int_fac_u) * RK_data->RK2_u[n] + dt * RK4_B3 * sqrt(int_fac_u) * RK_data->RK3_u[n] + dt * RK4_B4 * RK_data->RK4_u[n];
 		// run_data->u[n] = int_fac_u * run_data->u[n] + (dt / 6.0) * (int_fac_u * RK_data->RK1_u[n] + 2.0 * sqrt(int_fac_u) * RK_data->RK2_u[n] + 2.0 * sqrt(int_fac_u) * RK_data->RK3_u[n] + RK_data->RK4_u[n]);
@@ -288,6 +303,20 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		// Update the new magnetic field
 		run_data->b[n] = int_fac_b * run_data->b[n] + dt * RK4_B1 * int_fac_b * RK_data->RK1_b[n] + dt * RK4_B2 * sqrt(int_fac_b) * RK_data->RK2_b[n] + dt * RK4_B3 * sqrt(int_fac_b) * RK_data->RK3_b[n] + dt * RK4_B4 * RK_data->RK4_b[n];
 		// run_data->b[n] = int_fac_b * run_data->b[n] + (dt / 6.0) * (int_fac_b * RK_data->RK1_b[n] + 2.0 * sqrt(int_fac_b) * RK_data->RK2_b[n] + 2.0 * sqrt(int_fac_b) * RK_data->RK3_b[n] + RK_data->RK4_b[n]);
+		#endif
+
+		#if defined(PHASE_ONLY)
+		// Reset the amplitudes 
+		run_data->u[n] *= (po_norm_fac_u / cabs(run_data->u[n]));
+		#if defined(__MAGNETO)
+		run_data->b[n] *= (po_norm_fac_b / cabs(run_data->b[n]));
+		#endif
+
+		// Record the phases and amplitudes
+		run_data->a_n[n]   = cabs(run_data->u[n]);
+		run_data->phi_n[n] = carg(run_data->u[n]);
+		run_data->b_n[n]   = cabs(run_data->b[n]);
+		run_data->psi_n[n] = carg(run_data->b[n]);
 		#endif
 	}
 }
@@ -458,7 +487,13 @@ void InitializeIntegrationVariables(double* t0, double* t, double* dt, double* T
 void PrintUpdateToTerminal(int iters, double t, double dt, double T, int save_data_indx) {
 
 	// Initialize variables
+	
+	#if defined(__MAGNETO)
 	printf("Iter: %d/%ld\tt: %1.6lf/%1.3lf\tdt: %1.6g\tKE: %6.6g\tHEL: %6.6g\tX-HEL: %6.6g\n", iters, sys_vars->num_t_steps, t, T, dt, run_data->tot_energy[save_data_indx], run_data->tot_hel[save_data_indx], run_data->tot_cross_hel[save_data_indx]);
+	#else
+	printf("Iter: %d/%ld\tt: %1.6lf/%1.3lf\tdt: %1.6g\tKE: %6.6g\n", iters, sys_vars->num_t_steps, t, T, dt, run_data->tot_energy[save_data_indx]);
+	#endif
+
 }
 /**
  * Function that checks the system to see if it is ok to continue integrations. Checks for blow up, timestep and iteration limits etc
@@ -665,11 +700,17 @@ void FreeMemory(RK_data_struct* RK_data) {
 	#endif
 	#if defined(__SYS_MEASURES)
 	fftw_free(run_data->tot_energy);
+	#if defined(__MAGNETO)
 	fftw_free(run_data->tot_hel);
 	fftw_free(run_data->tot_cross_hel);
 	#endif
+	#endif
 	#if defined(__TIME)
 	fftw_free(run_data->time);
+	#endif
+	#if defined(__ENRG_FLUX)
+	fftw_free(run_data->energy_flux);
+	fftw_free(run_data->energy_diss);
 	#endif
 
 	// Free integration variables

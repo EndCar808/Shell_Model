@@ -34,6 +34,44 @@ class tc:
     Bold      = '\033[1m'
     Underline = '\033[4m'
 
+
+
+#################################
+##          MISC               ##
+#################################
+def compute_pdf(data, bin_lims, nbins = 1000, normed = True):
+
+    """
+    Computes the PDF of input data from a histogram of that data
+
+    Input Parameters:
+        data : array
+                - Input array of the data used to compute the PDF
+        nbins : int
+                - Determines the number of bins to use in the histogram
+        normed : bool
+                - Indicates if the PDF is to be normalized by the variances or not
+    """
+
+    ## Compute the histogram of the data
+    hist, edges = np.histogram(data, bins = nbins, range = bin_lims)
+
+    ## Compute the bin info for plotting the pdf
+    bin_centres = (edges[1:] + edges[:-1]) * 0.5
+    bin_width   = edges[1] - edges[0]
+
+    ## Compute the PDF
+    pdf = hist / (np.sum(hist) * bin_width)
+
+    if normed is True:
+        ## Compute the variance from the PDF data
+        var         = np.sqrt(np.sum(pdf * bin_centres**2 * bin_width))
+        pdf         *= var
+        bin_centres /= var
+        bin_width   /= var
+
+    return pdf, bin_centres
+
 #####################################
 ##       DATA FILE FUNCTIONS       ##
 #####################################
@@ -201,6 +239,10 @@ def import_data(input_file, sim_data, method = "default"):
                     self.b_n   = f["MagAmps"][:, :]
                 if 'MagPhases' in list(f.keys()):
                     self.psi_n = f["MagPhases"][:, :]
+                if 'EnergyFlux' in list(f.keys()):
+                    self.enrg_flux = f["EnergyFlux"][:, :]
+                if 'EnergyDiss' in list(f.keys()):
+                    self.enrg_diss = f["EnergyDiss"][:, :]
                 if 'Time' in list(f.keys()):
                     self.time  = f["Time"][:]
                 if 'k' in list(f.keys()):

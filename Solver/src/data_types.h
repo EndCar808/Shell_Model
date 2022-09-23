@@ -96,6 +96,7 @@
 // #define __NONLIN
 // Choose whether to compute system measures
 // #define __SYS_MEASURES
+// #define __ENRG_FLUX
 // Choose whether to save the time, collocation points and wavenumbers
 #define __TIME
 #define __WAVELIST
@@ -106,7 +107,9 @@
 #define DSET_MAG 3
 #define DSET_MAG_AMP 4
 #define DSET_MAG_PSI 5
-#define NUM_DSETS 6
+#define DSET_ENRG_FLUX 6
+#define DSET_ENRG_DISS 7
+#define NUM_DSETS 8
 // ---------------------------------------------------------------------
 //  Global Variables
 // ---------------------------------------------------------------------
@@ -212,6 +215,8 @@ typedef struct runtime_data_struct {
 	double* tot_energy;       			// Array to hold the total energy over the simulation
 	double* tot_hel;		  			// Array to hold the total helicity in the magnetic field
 	double* tot_cross_hel;	  			// Array to hold the total cross helicity
+	double* energy_flux;				// Array to hold the energy flux
+	double* energy_diss;				// Array to hold the energy dissipation
 	// double* tot_enstr;		  			// Array to hold the total entrophy over the simulation
 	// double* tot_palin;		  			// Array to hold the total palinstrophy over the simulaiotns
 	// double* enrg_diss; 		  			// Array to hold the energy dissipation rate 

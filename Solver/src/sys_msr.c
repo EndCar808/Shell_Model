@@ -33,7 +33,7 @@ void ComputeSystemMeasurables(double t, int iter, RK_data_struct* RK_data) {
 
 	// Initialize variables
     const long int N = sys_vars->N; 
-    int n;
+    int n, l;
 
     // Record the initial time
     #if defined(__TIME)
@@ -55,8 +55,17 @@ void ComputeSystemMeasurables(double t, int iter, RK_data_struct* RK_data) {
     if (iter < sys_vars->num_print_steps) {
         // Initialize totals
         run_data->tot_energy[iter]    = 0.0;
+        #if defined(__MAGNETO)
         run_data->tot_hel[iter]       = 0.0;
         run_data->tot_cross_hel[iter] = 0.0;
+        #endif
+    }
+    #endif
+    #if defined(__ENRG_FLUX)
+    for (int i = 0; i < N; ++i) {
+        // Initialize the energy dissipation
+        run_data->energy_flux[i] = 0.0;
+        run_data->energy_diss[i] = 0.0;
     }
     #endif
 
@@ -68,12 +77,46 @@ void ComputeSystemMeasurables(double t, int iter, RK_data_struct* RK_data) {
         n = i + 2;
 
         if (iter < sys_vars->num_print_steps) {
+            //-------------- System Measures
+            #if defined(__SYS_MEASURES)
             // Update sum for totals
             run_data->tot_energy[iter]    += cabs(run_data->u[n] * conj(run_data->u[n])) + cabs(run_data->b[n] * conj(run_data->b[n]));
+            #if defined(__MAGNETO)
             run_data->tot_hel[iter]       += pow(-1.0, i) * cabs(run_data->b[n] * conj(run_data->b[n])) / run_data->k[i];
             run_data->tot_cross_hel[iter] += creal(run_data->u[n] * conj(run_data->b[n]));
+            #endif
+            #endif
+
+            //-------------- Energy Flux and Dissipation
+            #if defined(__ENRG_FLUX)
+            // Compute the energy dissipation
+            for (int j = 0; j < i; ++j) {
+                // Get temp indx
+                l = j + 2;                    
+                run_data->energy_diss[i] -= run_data->k[j] * run_data->k[j] * (sys_vars->NU * cabs(run_data->u[l]) * conj(run_data->u[l]) + sys_vars->BETA * cabs(run_data->b[l]) * conj(run_data->b[l])); 
+            }
+            // Compute the energy flux
+            if (i == 0) {
+                run_data->energy_flux[i] = cimag((- 1.0 / 4.0 * run_data->k[i]) * run_data->u[n - 1] * run_data->u[n] * run_data->u[n + 1] + run_data->k[i] * run_data->u[n] * run_data->u[n + 1] * run_data->u[n + 2]);
+                #if defined(__MAGNETO)
+                run_data->energy_flux[i] += cimag((1.0/6.0 * run_data->k[i]) * run_data->u[n - 1] * run_data->b[n] * run_data->b[n + 1] - run_data->k[i] * run_data->u[n] * run_data->b[n + 1] * run_data->b[n + 2]);
+                run_data->energy_flux[i] += cimag((1.0 / 4.0 * run_data->k[i]) * run_data->b[n - 1] * run_data->u[n] * run_data->b[n + 1] + 1.0 / 6.0 * run_data->k[i] * run_data->b[n] * run_data->u[n + 1] * run_data->b[n + 2]);
+                run_data->energy_flux[i] += cimag(-(1.0 / 6.0 * run_data->k[i]) * run_data->b[n - 1] * run_data->b[n] * run_data->u[n + 1] - 1.0 / 6.0 * run_data->k[i] * run_data->b[n] * run_data->b[n + 1] * run_data->u[n + 2]);
+                #endif
+            }
+            else {
+                run_data->energy_flux[i] = cimag((run_data->k[i - 1] - 1.0 / 4.0 * run_data->k[i]) * run_data->u[n - 1] * run_data->u[n] * run_data->u[n + 1] + run_data->k[i] * run_data->u[n] * run_data->u[n + 1] * run_data->u[n + 2]);
+                #if defined(__MAGNETO)
+                run_data->energy_flux[i] += cimag((1.0/6.0 * run_data->k[i] - run_data->k[i - 1]) * run_data->u[n - 1] * run_data->b[n] * run_data->b[n + 1] - run_data->k[i] * run_data->u[n] * run_data->b[n + 1] * run_data->b[n + 2]);
+                run_data->energy_flux[i] += cimag((1.0 / 4.0 * run_data->k[i] + 1.0 / 6.0 * run_data->k[i - 1]) * run_data->b[n - 1] * run_data->u[n] * run_data->b[n + 1] + 1.0 / 6.0 * run_data->k[i] * run_data->b[n] * run_data->u[n + 1] * run_data->b[n + 2]);
+                run_data->energy_flux[i] += cimag(-(1.0 / 6.0 * run_data->k[i] + 1.0 / 6.0 * run_data->k[i - 1]) * run_data->b[n - 1] * run_data->b[n] * run_data->u[n + 1] - 1.0 / 6.0 * run_data->k[i] * run_data->b[n] * run_data->b[n + 1] * run_data->u[n + 2]);
+                #endif
+            }
+            // Update the flux term with the dissipation 
+            run_data->energy_flux[i] += run_data->energy_diss[i];
+            #endif
         }
-    }
+    }    
 
     // ------------------------------------
     // Normalize Measureables 
@@ -81,8 +124,10 @@ void ComputeSystemMeasurables(double t, int iter, RK_data_struct* RK_data) {
     #if defined(__SYS_MEASURES)
     if (iter < sys_vars->num_print_steps) {
         run_data->tot_energy[iter]    *= 0.5;
+        #if defined(__MAGNETO)
         run_data->tot_hel[iter]       *= 0.5;
         run_data->tot_cross_hel[iter] *= 0.5;
+        #endif
     }
     #endif
 }
@@ -111,7 +156,7 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
         fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Total Energy");
         exit(1);
     }
-
+    #if defined(__MAGNETO)
     // Total Helicity
     run_data->tot_hel = (double* )fftw_malloc(sizeof(double) * print_steps);
     if (run_data->tot_hel == NULL) {
@@ -126,12 +171,28 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
         exit(1);
     }   
     #endif
+    #endif
 
     // Time
     #if defined(__TIME)
     run_data->time = (double* )fftw_malloc(sizeof(double) * print_steps);
     if (run_data->time == NULL) {
         fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Time");
+        exit(1);
+    }
+    #endif
+
+    #if defined(__ENRG_FLUX)
+    // Allocate energy flux
+    run_data->energy_flux = (double* )fftw_malloc(sizeof(double) * sys_vars->N);
+    if (run_data->energy_flux == NULL) {
+        fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Energy Flux");
+        exit(1);
+    }
+    // Allocate energy dissipation
+    run_data->energy_diss = (double* )fftw_malloc(sizeof(double) * sys_vars->N);
+    if (run_data->energy_diss == NULL) {
+        fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Energy Dissipation");
         exit(1);
     }
     #endif
