@@ -386,16 +386,27 @@ if __name__ == '__main__':
 
         ##-------------- Plot The Total Flux & Diss over time
         fig = plt.figure(figsize = (16, 8))
-        gs  = GridSpec(1, 2)
-        t_i = 4.
-        t_f = 4.5
+        gs  = GridSpec(2, 2)
         ## Plot the velocity amplitudes
         ax1 = fig.add_subplot(gs[0, 0])
         for i in range(sys_vars.N):
             ax1.plot(run_data.time, run_data.enrg_flux[:, i])
         ax1.set_xlabel("$t$")
         ax1.set_title("Energ Flux")
+        ax1.set_yscale('symlog')
         ax2 = fig.add_subplot(gs[0, 1])
+        for i in range(sys_vars.N):
+            ax2.plot(run_data.time, run_data.enrg_diss[:, i])
+        ax2.set_xlabel("$t$")
+        ax2.set_title("Energy Dissipation")
+        ax2.set_yscale('symlog')
+        ax1 = fig.add_subplot(gs[1, 0])
+
+        for i in range(sys_vars.N):
+            ax1.plot(run_data.time, run_data.enrg_flux[:, i])
+        ax1.set_xlabel("$t$")
+        ax1.set_title("Energ Flux")
+        ax2 = fig.add_subplot(gs[1, 1])
         for i in range(sys_vars.N):
             ax2.plot(run_data.time, run_data.enrg_diss[:, i])
         ax2.set_xlabel("$t$")

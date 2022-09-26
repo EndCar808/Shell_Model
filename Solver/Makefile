@@ -42,10 +42,13 @@ endif
 #  Executable flags
 # ---------------------------------------------------------------------
 # Flags to be passed to the solver for normal runs
-SOLVER_FLAGS := -D__MAGNETO #-D__HYPER -D__ADAPTIVE_STEP -D__CFL_STEP #-D__TRANSIENTS  -D__EKMN_DRAG
+SOLVER_FLAGS := -D__MAGNETO -D__INT_FAC_RK4 #-D__HYPER -D__ADAPTIVE_STEP -D__CFL_STEP #-D__TRANSIENTS  -D__EKMN_DRAG
 
 # Phase only flags to be passed to solver
-PHASE_ONLY_FLAGS := -D__MAGNETO -D__PHASE_ONLY # -D__HYPER -D__TRANSIENTS
+PHASE_ONLY_FLAGS := -D__MAGNETO -D__PHASE_ONLY -D__RK4 # -D__HYPER -D__TRANSIENTS
+
+# Phase only flags to be passed to solver
+PHASE_ONLY_DIRECT_FLAGS := -D__MAGNETO -D__PHASE_ONLY_DIRECT -D__RK4 # -D__HYPER -D__TRANSIENTS
 
 # Dataset Flags to be passed to the solver
 DSET_FLAGS := -D__SYS_MEASURES -D__ENRG_FLUX
@@ -64,11 +67,12 @@ BINDIR := $(shell mkdir -p $(BIN))
 OUT    := output
 OUTDIR := $(shell mkdir -p $(OUT))
 
-SRCDIR     := src
-SRCFILE    := $(wildcard $(SRCDIR)/*.c)
-SRCOBJ     := $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%.o, $(SRCFILE))
-SRCOBJ_PO  := $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_phase_only.o, $(SRCFILE))
-SRCOBJ_Test  := $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_test.o, $(SRCFILE))
+SRCDIR      := src
+SRCFILE     := $(wildcard $(SRCDIR)/*.c)
+SRCOBJ      := $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%.o, $(SRCFILE))
+SRCOBJ_PO  	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_phase_only.o, $(SRCFILE))
+SRCOBJ_PO_D := $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_phase_only_direct.o, $(SRCFILE))
+SRCOBJ_Test := $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_test.o, $(SRCFILE))
 
 DEPS = $(wildcard *.h) 
 
@@ -80,7 +84,7 @@ DEPS = $(wildcard *.h)
 ############
 
 
-all: $(BIN)/solver $(BIN)/solver_phase_only $(BIN)/solver_test
+all: $(BIN)/solver $(BIN)/solver_phase_only $(BIN)/solver_phase_only_direct $(BIN)/solver_test
 
 
 ####--------
@@ -104,6 +108,14 @@ $(BIN)/solver_phase_only: $(SRCOBJ_PO) $(DEPS)
 
 $(OBJBIN)/%_phase_only.o: $(SRCDIR)/%.c $(DEPS) 
 	$(GCC) $(CCFLAG) $(PHASE_ONLY_FLAGS) $(DSET_FLAGS) -c $^ -o $@ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+
+solver_phase_only_direct: $(BIN)/solver_phase_only_direct 
+
+$(BIN)/solver_phase_only_direct: $(SRCOBJ_PO_D) $(DEPS) 
+	$(GCC) $(CCFLAG) $(PHASE_ONLY_DIRECT_FLAGS) $(DSET_FLAGS) -o $@ $^ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+
+$(OBJBIN)/%_phase_only_direct.o: $(SRCDIR)/%.c $(DEPS) 
+	$(GCC) $(CCFLAG) $(PHASE_ONLY_DIRECT_FLAGS) $(DSET_FLAGS) -c $^ -o $@ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
 
 ####--------
 #  Testing

@@ -80,10 +80,21 @@ void ComputeSystemMeasurables(double t, int iter, RK_data_struct* RK_data) {
             //-------------- System Measures
             #if defined(__SYS_MEASURES)
             // Update sum for totals
-            run_data->tot_energy[iter]    += cabs(run_data->u[n] * conj(run_data->u[n])) + cabs(run_data->b[n] * conj(run_data->b[n]));
+            #if defined(PHASE_ONLY_DIRECT)
+            run_data->tot_energy[iter]    += run_data->a_n[n] * run_data->a_n[n];
+            #else
+            run_data->tot_energy[iter]    += cabs(run_data->u[n] * conj(run_data->u[n]));
+            #endif
             #if defined(__MAGNETO)
+            #if defined(PHASE_ONLY_DIRECT)
+            run_data->tot_energy[iter]    += run_data->b_n[n] * run_data->b_n[n];
+            run_data->tot_hel[iter]       += pow(-1.0, i) * (run_data->b_n[n] * run_data->b_n[n]) / run_data->k[i];
+            run_data->tot_cross_hel[iter] += creal(run_data->a_n[n] * run_data->b_n[n]);
+            #else
+            run_data->tot_energy[iter]    += cabs(run_data->b[n] * conj(run_data->b[n]));
             run_data->tot_hel[iter]       += pow(-1.0, i) * cabs(run_data->b[n] * conj(run_data->b[n])) / run_data->k[i];
             run_data->tot_cross_hel[iter] += creal(run_data->u[n] * conj(run_data->b[n]));
+            #endif
             #endif
             #endif
 
@@ -92,24 +103,76 @@ void ComputeSystemMeasurables(double t, int iter, RK_data_struct* RK_data) {
             // Compute the energy dissipation
             for (int j = 0; j < i; ++j) {
                 // Get temp indx
-                l = j + 2;                    
-                run_data->energy_diss[i] -= run_data->k[j] * run_data->k[j] * (sys_vars->NU * cabs(run_data->u[l]) * conj(run_data->u[l]) + sys_vars->BETA * cabs(run_data->b[l]) * conj(run_data->b[l])); 
+                l = j + 2;
+                #if defined(PHASE_ONLY_DIRECT)
+                run_data->tot_energy[iter] -= run_data->k[j] * run_data->k[j] * sys_vars->NU * run_data->a_n[n] * run_data->a_n[n];
+                #if defined(__MAGNETO) 
+                run_data->tot_energy[iter] -= run_data->k[j] * run_data->k[j] * sys_vars->BETA * run_data->b_n[n] * run_data->b_n[n];
+                #endif
+                #else
+                run_data->energy_diss[i] -= run_data->k[j] * run_data->k[j] * sys_vars->NU * cabs(run_data->u[l] * conj(run_data->u[l])); 
+                #if defined(__MAGNETO) 
+                run_data->energy_diss[i] -= run_data->k[j] * run_data->k[j] * sys_vars->BETA * cabs(run_data->b[l] * conj(run_data->b[l])); 
+                #endif
+                #endif                  
             }
             // Compute the energy flux
             if (i == 0) {
+                #if defined(PHASE_ONLY_DIRECT)
+                // First term    
+                run_data->energy_flux[i] = (- 1.0 / 4.0 * run_data->k[i]) * run_data->a_n[n - 1] * run_data->a_n[n] * run_data->a_n[n + 1] * sin(run_data->phi_n[n] + run_data->phi_n[n]);
+                run_data->energy_flux[i] += run_data->k[i] * run_data->a_n[n] * run_data->a_n[n + 1] * run_data->a_n[n + 2] * sin(run_data->phi_n[n] + run_data->phi_n[n + 1] + run_data->phi_n[n + 2]);
+                #if defined(__MAGNETO)
+                // Second term
+                run_data->energy_flux[i] += (-1.0/6.0 * run_data->k[i]) * run_data->a_n[n - 1] * run_data->b_n[n] * run_data->b_n[n + 1] * sin(run_data->psi_n[n] + run_data->psi_n[n + 1]);
+                run_data->energy_flux[i] += run_data->k[i] * run_data->a_n[n] * run_data->b_n[n + 1] * run_data->b_n[n + 2] * sin(run_data->phi_n[n] + run_data->psi_n[n + 1] + run_data->psi_n[n + 2]);
+                // Third term
+                run_data->energy_flux[i] += (1.0 / 4.0 * run_data->k[i]) * run_data->b_n[n - 1] * run_data->a_n[n] * run_data->b_n[n + 1] * sin(run_data->phi_n[n] + run_data->psi_n[n + 1]);
+                run_data->energy_flux[i] += 1.0 / 6.0 * run_data->k[i] * run_data->b_n[n] * run_data->a_n[n + 1] * run_data->b_n[n + 2] * sin(run_data->psi_n[n] + run_data->phi_n[n + 1] + run_data->psi_n[n + 2]);
+                // Fourth term
+                run_data->energy_flux[i] += -(1.0 / 6.0 * run_data->k[i]) * run_data->b_n[n - 1] * run_data->b_n[n] * run_data->a_n[n + 1] * sin(run_data->psi_n[n] + run_data->psi_n[n + 1]);
+                run_data->energy_flux[i] += - 1.0 / 6.0 * run_data->k[i] * run_data->b_n[n] * run_data->b_n[n + 1] * run_data->a_n[n + 2] * sin(run_data->psi_n[n] + run_data->psi_n[n + 1] + run_data->psi_n[n + 2]);
+                #endif
+                #else
+                // First term
                 run_data->energy_flux[i] = cimag((- 1.0 / 4.0 * run_data->k[i]) * run_data->u[n - 1] * run_data->u[n] * run_data->u[n + 1] + run_data->k[i] * run_data->u[n] * run_data->u[n + 1] * run_data->u[n + 2]);
                 #if defined(__MAGNETO)
+                // Second term
                 run_data->energy_flux[i] += cimag((1.0/6.0 * run_data->k[i]) * run_data->u[n - 1] * run_data->b[n] * run_data->b[n + 1] - run_data->k[i] * run_data->u[n] * run_data->b[n + 1] * run_data->b[n + 2]);
+                // Third term
                 run_data->energy_flux[i] += cimag((1.0 / 4.0 * run_data->k[i]) * run_data->b[n - 1] * run_data->u[n] * run_data->b[n + 1] + 1.0 / 6.0 * run_data->k[i] * run_data->b[n] * run_data->u[n + 1] * run_data->b[n + 2]);
+                // Fourth term
                 run_data->energy_flux[i] += cimag(-(1.0 / 6.0 * run_data->k[i]) * run_data->b[n - 1] * run_data->b[n] * run_data->u[n + 1] - 1.0 / 6.0 * run_data->k[i] * run_data->b[n] * run_data->b[n + 1] * run_data->u[n + 2]);
+                #endif
                 #endif
             }
             else {
+                #if defined(PHASE_ONLY_DIRECT)
+                // First term
+                run_data->energy_flux[i] = (run_data->k[i - 1] - 1.0 / 4.0 * run_data->k[i]) * run_data->a_n[n - 1] * run_data->a_n[n] * run_data->a_n[n + 1] * sin(run_data->phi_n[n - 1] + run_data->phi_n[n] + run_data->phi_n[n]);
+                run_data->energy_flux[i] += run_data->k[i] * run_data->a_n[n] * run_data->a_n[n + 1] * run_data->a_n[n + 2] * sin(run_data->phi_n[n] + run_data->phi_n[n + 1] + run_data->phi_n[n + 2]);
+                #if defined(__MAGNETO)
+                // Second term
+                run_data->energy_flux[i] += -(run_data->k[i - 1] - 1.0/6.0 * run_data->k[i]) * run_data->a_n[n - 1] * run_data->b_n[n] * run_data->b_n[n + 1] * sin(run_data->phi_n[n - 1] + run_data->psi_n[n] + run_data->psi_n[n + 1]);
+                run_data->energy_flux[i] += run_data->k[i] * run_data->a_n[n] * run_data->b_n[n + 1] * run_data->b_n[n + 2] * sin(run_data->phi_n[n] + run_data->psi_n[n + 1] + run_data->psi_n[n + 2]);
+                // Third term
+                run_data->energy_flux[i] += (1.0 / 6.0 * run_data->k[i] + 1.0 / 4.0 * run_data->k[i]) * run_data->b_n[n - 1] * run_data->a_n[n] * run_data->b_n[n + 1] * sin(run_data->psi_n[n - 1] + run_data->phi_n[n] + run_data->psi_n[n + 1]);
+                run_data->energy_flux[i] += 1.0 / 6.0 * run_data->k[i] * run_data->b_n[n] * run_data->a_n[n + 1] * run_data->b_n[n + 2] * sin(run_data->psi_n[n] + run_data->phi_n[n + 1] + run_data->psi_n[n + 2]);
+                // Fourth term
+                run_data->energy_flux[i] += -(1.0 / 6.0 * run_data->k[i - 1] + 1.0 / 6.0 * run_data->k[i]) * run_data->b_n[n - 1] * run_data->b_n[n] * run_data->a_n[n + 1] * sin(run_data->psi_n[n - 1] + run_data->psi_n[n] + run_data->psi_n[n + 1]);
+                run_data->energy_flux[i] += - 1.0 / 6.0 * run_data->k[i] * run_data->b_n[n] * run_data->b_n[n + 1] * run_data->a_n[n + 2] * sin(run_data->psi_n[n] + run_data->psi_n[n + 1] + run_data->psi_n[n + 2]);
+                #endif
+                #else
+                // First term
                 run_data->energy_flux[i] = cimag((run_data->k[i - 1] - 1.0 / 4.0 * run_data->k[i]) * run_data->u[n - 1] * run_data->u[n] * run_data->u[n + 1] + run_data->k[i] * run_data->u[n] * run_data->u[n + 1] * run_data->u[n + 2]);
                 #if defined(__MAGNETO)
+                // Second term
                 run_data->energy_flux[i] += cimag((1.0/6.0 * run_data->k[i] - run_data->k[i - 1]) * run_data->u[n - 1] * run_data->b[n] * run_data->b[n + 1] - run_data->k[i] * run_data->u[n] * run_data->b[n + 1] * run_data->b[n + 2]);
+                // Third term
                 run_data->energy_flux[i] += cimag((1.0 / 4.0 * run_data->k[i] + 1.0 / 6.0 * run_data->k[i - 1]) * run_data->b[n - 1] * run_data->u[n] * run_data->b[n + 1] + 1.0 / 6.0 * run_data->k[i] * run_data->b[n] * run_data->u[n + 1] * run_data->b[n + 2]);
+                // Fourth term
                 run_data->energy_flux[i] += cimag(-(1.0 / 6.0 * run_data->k[i] + 1.0 / 6.0 * run_data->k[i - 1]) * run_data->b[n - 1] * run_data->b[n] * run_data->u[n + 1] - 1.0 / 6.0 * run_data->k[i] * run_data->b[n] * run_data->b[n + 1] * run_data->u[n + 2]);
+                #endif
                 #endif
             }
             // Update the flux term with the dissipation 

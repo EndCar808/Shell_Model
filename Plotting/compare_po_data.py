@@ -128,8 +128,8 @@ if __name__ == '__main__':
     # # --------  Load in Sasha's PO Data
     # -----------------------------------------
     Y = np.loadtxt("./Sashas_Work/codes/Updated_Codes/Phase_only_"+ str(10) + "_" + str(1e-3)+ "_" + str(0.4)+".txt")
-    Phi = Y[0:sys_vars.N]%(2*np.pi)
-    Psi = Y[sys_vars.N:2*sys_vars.N]%(2*np.pi)
+    Phi = Y[0:sys_vars.N] %(2*np.pi)
+    Psi = Y[sys_vars.N:2*sys_vars.N] %(2*np.pi)
 
     Y = np.loadtxt("./Sashas_Work/codes/Data_Temp/Complex_"+ str(12) + "_" + str(1e-3) + ".txt", dtype=complex)
     U = Y[0:sys_vars.N]
@@ -207,7 +207,7 @@ if __name__ == '__main__':
             plt.close()
 
 
-            ##-------------- Plot Velocity and Magnetic Tseries
+            ##-------------- Plot Error Tseries
             i = -1
             fig = plt.figure(figsize = (16, 8))
             gs  = GridSpec(1, 2)

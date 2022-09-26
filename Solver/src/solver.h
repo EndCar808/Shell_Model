@@ -22,10 +22,17 @@
 // Main function for the solver
 void Solve(void);
 // Integration functions
-#if defined(__INT_FAC_RK4)
+#if defined(INT_FAC_RK4)
 void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data);
 #endif
+#if defined(RK4)
+void RK4Step(const double dt, const long int N, RK_data_struct* RK_data);
+#endif
+#if defined(PHASE_ONLY_DIRECT) && !defined(PHASE_ONLY)
+void NonlinearTerm(double* u, double* b, double* u_nonlin, double* b_nonlin, const long int N);
+#else
 void NonlinearTerm(fftw_complex* u, fftw_complex* b, fftw_complex* u_nonlin, fftw_complex* b_nonlin, const long int N);
+#endif
 // Initialize the system functions
 void InitializeShellWavenumbers(long int* k, const long int N);
 void InitialConditions(const long int N);

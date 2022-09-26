@@ -78,11 +78,11 @@ void CreateOutputFilesWriteICs(const long int N) {
 	#endif
 
 	///--------------------------------------- Velocity Amplitudes
-	#if defined(__VEL_AMP) && defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT))
+	#if defined(__VEL_AMP) && (defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT))
 	CreateSlabbedDSet(0.0, 0, "VelAmps", &(file_info->file_space[DSET_VEL_AMP]), &(file_info->data_set[DSET_VEL_AMP]), &(file_info->mem_space[DSET_VEL_AMP]), H5T_NATIVE_DOUBLE, dims, maxdims, chunkdims, Dim);
 	#endif
 	///--------------------------------------- Velocity Phases
-	#if defined(__VEL_PHI) && defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT))
+	#if defined(__VEL_PHI) && (defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT))
 	CreateSlabbedDSet(0.0, 0, "VelPhases", &(file_info->file_space[DSET_VEL_PHI]), &(file_info->data_set[DSET_VEL_PHI]), &(file_info->mem_space[DSET_VEL_PHI]), H5T_NATIVE_DOUBLE, dims, maxdims, chunkdims, Dim);
 	#endif
 
@@ -93,11 +93,11 @@ void CreateOutputFilesWriteICs(const long int N) {
 	#endif
 
 	///--------------------------------------- Magnetic Amplitudes
-	#if defined(__MAG_AMP) && defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT))
+	#if defined(__MAG_AMP) && (defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT))
 	CreateSlabbedDSet(0.0, 0, "MagAmps", &(file_info->file_space[DSET_MAG_AMP]), &(file_info->data_set[DSET_MAG_AMP]), &(file_info->mem_space[DSET_MAG_AMP]), H5T_NATIVE_DOUBLE, dims, maxdims, chunkdims, Dim);
 	#endif
 	///--------------------------------------- Magnetic Phases
-	#if defined(__MAG_PSI) && defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT))
+	#if defined(__MAG_PSI) && (defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT))
 	CreateSlabbedDSet(0.0, 0, "MagPhases", &(file_info->file_space[DSET_MAG_PSI]), &(file_info->data_set[DSET_MAG_PSI]), &(file_info->mem_space[DSET_MAG_PSI]), H5T_NATIVE_DOUBLE, dims, maxdims, chunkdims, Dim);
 	#endif
 	#endif
@@ -205,8 +205,10 @@ void GetOutputDirPath(void) {
 		#else
 		sprintf(sys_type, "%s", "UKN");
 		#endif
-		#if defined(__INT_FAC_RK4)
+		#if defined(INT_FAC_RK4)
 		sprintf(solv_type, "%s", "INTFACRK4");
+		#elif defined(RK4)
+		sprintf(solv_type, "%s", "RK4");
 		#elif defined(__RK5)
 		sprintf(solv_type, "%s", "RK5");
 		#elif defined(__DPRK5)
@@ -216,6 +218,8 @@ void GetOutputDirPath(void) {
 		#endif
 		#if defined(PHASE_ONLY)
 		sprintf(model_type, "%s", "PO");
+		#elif defined(PHASE_ONLY_DIRECT)
+		sprintf(model_type, "%s", "PO_D");
 		#else
 		sprintf(model_type, "%s", "FULL");
 		#endif
@@ -251,10 +255,12 @@ void GetOutputDirPath(void) {
 		#else
 		sprintf(sys_type, "%s", "UKN");
 		#endif
-		#if defined(__INT_FAC_RK4)
+		#if defined(INT_FAC_RK4)
 		sprintf(solv_type, "%s", "INTFACRK4");
 		#elif defined(__RK5)
 		sprintf(solv_type, "%s", "RK5");
+		#elif defined(RK4)
+		sprintf(solv_type, "%s", "RK4");
 		#elif defined(__DPRK5)
 		sprintf(solv_type, "%s", "DP5");
 		#else 
@@ -262,6 +268,8 @@ void GetOutputDirPath(void) {
 		#endif
 		#if defined(PHASE_ONLY)
 		sprintf(model_type, "%s", "PO");
+		#elif defined(PHASE_ONLY_DIRECT)
+		sprintf(model_type, "%s", "PO_D");
 		#else
 		sprintf(model_type, "%s", "FULL");
 		#endif
@@ -339,31 +347,31 @@ void WriteDataToFile(double t, double dt, long int iters) {
 	// Write Data to File
 	// -------------------------------
 	///--------------------------------------- Velocity Modes
-	#if defined(__VEL) && !defined(PHASE_ONLY) 
+	#if defined(__VEL) && !(defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT)) 
 	WriteSlabbedDataFourier(t, iters, file_info->file_space[DSET_VEL], file_info->data_set[DSET_VEL], file_info->mem_space[DSET_VEL], file_info->COMPLEX_DTYPE, &(run_data->u[2]), "VelModes", sys_vars->N, iters);
 	#endif
 
 	///--------------------------------------- Velocity Amplitudes
-	#if defined(__VEL_AMP) && defined(PHASE_ONLY)
+	#if defined(__VEL_AMP) && (defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT))
 	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_VEL_AMP], file_info->data_set[DSET_VEL_AMP], file_info->mem_space[DSET_VEL_AMP], H5T_NATIVE_DOUBLE, &(run_data->a_n[2]), "VelAmps", sys_vars->N, iters);
 	#endif
 	///--------------------------------------- Velocity Phases
-	#if defined(__VEL_PHI) && defined(PHASE_ONLY)
+	#if defined(__VEL_PHI) && (defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT))
 	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_VEL_PHI], file_info->data_set[DSET_VEL_PHI], file_info->mem_space[DSET_VEL_PHI], H5T_NATIVE_DOUBLE, &(run_data->phi_n[2]), "VelPhases", sys_vars->N, iters);
 	#endif
 
 	#if defined(__MAGNETO)
 	///--------------------------------------- Magnetic Modes
-	#if defined(__MAG) && !defined(PHASE_ONLY)
+	#if defined(__MAG) && !(defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT))
 	WriteSlabbedDataFourier(t, iters, file_info->file_space[DSET_MAG], file_info->data_set[DSET_MAG], file_info->mem_space[DSET_MAG], file_info->COMPLEX_DTYPE, &(run_data->b[2]), "MagModes", sys_vars->N, iters);
 	#endif
 
 	///--------------------------------------- Magnetic Amplitudes
-	#if defined(__MAG_AMP) && defined(PHASE_ONLY)
+	#if defined(__MAG_AMP) && (defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT))
 	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_MAG_AMP], file_info->data_set[DSET_MAG_AMP], file_info->mem_space[DSET_MAG_AMP], H5T_NATIVE_DOUBLE, &(run_data->b_n[2]), "MagAmps", sys_vars->N, iters);
 	#endif
 	///--------------------------------------- Magnetic Phases
-	#if defined(__MAG_PSI) && defined(PHASE_ONLY)
+	#if defined(__MAG_PSI) && (defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT))
 	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_MAG_PSI], file_info->data_set[DSET_MAG_PSI], file_info->mem_space[DSET_MAG_PSI], H5T_NATIVE_DOUBLE, &(run_data->psi_n[2]), "MagPhases", sys_vars->N, iters);
 	#endif
 	#endif

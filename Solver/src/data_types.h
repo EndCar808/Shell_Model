@@ -47,25 +47,33 @@
 // Choose which system to solver 
 // #define __MAGNETO
 // Choose which integrator to use
-#define __INT_FAC_RK4
+#if defined(__INT_FAC_RK4)
+#define INT_FAC_RK4
+#endif
+#if defined(__RK4)
+#define RK4
+#endif
 // #define __RK5
 // #define __DPRK5
 // Choose whether to print updates to screen
 #define __PRINT_SCREEN
 // Adaptive stepping Indicators 
-#define ADAPTIVE_STEP 1         // Indicator for the adaptive stepping
-#define CFL_STEP 1 				// Indicator to use a CFL like condition with the adaptive stepping
-// Solver Types
-#define HYPER_VISC 1			// Turned on hyperviscosity if called for at compilation time
-#define VISC_POW 2.0            // The power of the hyperviscosity -> 1.0 means no hyperviscosity
-#define HYPO_DIFF 1   			// Turn on Ekman drag if called for at compilation time
-#define HYPO_DIFF_POW -2.0 		// The power of the Eckman drag term -> 0.0 means no drag
+#define ADAPTIVE_STEP 1          // Indicator for the adaptive stepping
+#define CFL_STEP 1 				 // Indicator to use a CFL like condition with the adaptive stepping
+// Solver Types 
+#define HYPER_VISC 1			 // Turned on hyperviscosity if called for at compilation time
+#define VISC_POW 2.0             // The power of the hyperviscosity -> 1.0 means no hyperviscosity
+#define HYPO_DIFF 1   			 // Turn on Ekman drag if called for at compilation time
+#define HYPO_DIFF_POW -2.0 		 // The power of the Eckman drag term -> 0.0 means no drag
 // For allow transient dynamics
-#define TRANSIENT_ITERS 1       // Indicator for transient iterations
-#define TRANSIENT_FRAC 0.2      // Fraction of total iteration = transient iterations
+#define TRANSIENT_ITERS 1        // Indicator for transient iterations
+#define TRANSIENT_FRAC 0.2       // Fraction of total iteration = transient iterations
 // Allow for Phase Only mode
-#if defined(__PHASE_ONLY)		// Turn on phase only mode if called for at compilation
+#if defined(__PHASE_ONLY)		 // Turn on phase only mode if called for at compilation
 #define PHASE_ONLY
+#endif
+#if defined(__PHASE_ONLY_DIRECT) // Turn on phase only direct mode if called for at compilation
+#define PHASE_ONLY_DIRECT
 #endif
 // Testing the solver will be decided at compilation
 #if defined(__TESTING)
@@ -246,6 +254,18 @@ typedef struct runtime_data_struct {
 
 // Runge-Kutta Integration struct
 typedef struct RK_data_struct {
+	#if defined(PHASE_ONLY_DIRECT)
+	double* RK1_u;		  // Array to hold the result of the first stage for the velocity field
+	double* RK2_u;		  // Array to hold the result of the second stage for the velocity field
+	double* RK3_u;		  // Array to hold the result of the third stage for the velocity field
+	double* RK4_u;		  // Array to hold the result of the fourth stage for the velocity field
+	double* RK1_b;		  // Array to hold the result of the first stage for the magnetic field
+	double* RK2_b;		  // Array to hold the result of the second stage for the magnetic field
+	double* RK3_b;		  // Array to hold the result of the third stage for the magnetic field
+	double* RK4_b;		  // Array to hold the result of the fourth stage for the magnetic field
+	double* RK_u_tmp;		  // Array to hold the tempory updates to u - input to Nonlinear term function
+	double* RK_b_tmp;		  // Array to hold the tempory updates to b - input to Nonlinear term function
+	#else
 	fftw_complex* RK1_u;		  // Array to hold the result of the first stage for the velocity field
 	fftw_complex* RK2_u;		  // Array to hold the result of the second stage for the velocity field
 	fftw_complex* RK3_u;		  // Array to hold the result of the third stage for the velocity field
@@ -254,11 +274,12 @@ typedef struct RK_data_struct {
 	fftw_complex* RK2_b;		  // Array to hold the result of the second stage for the magnetic field
 	fftw_complex* RK3_b;		  // Array to hold the result of the third stage for the magnetic field
 	fftw_complex* RK4_b;		  // Array to hold the result of the fourth stage for the magnetic field
+	fftw_complex* RK_u_tmp;		  // Array to hold the tempory updates to u - input to Nonlinear term function
+	fftw_complex* RK_b_tmp;		  // Array to hold the tempory updates to b - input to Nonlinear term function
+	#endif
 	// fftw_complex* RK5;		  // Array to hold the result of the fifth stage of RK5 scheme
 	// fftw_complex* RK6;		  // Array to hold the result of the sixth stage of RK5 scheme
 	// fftw_complex* RK7; 		  // Array to hold the result of the seventh stage of the Dormand Prince Scheme
-	fftw_complex* RK_u_tmp;		  // Array to hold the tempory updates to u - input to Nonlinear term function
-	fftw_complex* RK_b_tmp;		  // Array to hold the tempory updates to b - input to Nonlinear term function
 	// fftw_complex* w_hat_last; // Array to hold the values of the Fourier space vorticity from the previous iteration - used in the stepsize control in DP scheme
 	// double* nabla_psi;		  // Batch array the velocities u = d\psi_dy and v = -d\psi_dx
 	// double* nabla_w;		  // Batch array to hold \nabla\omega - the vorticity derivatives
