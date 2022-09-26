@@ -45,7 +45,7 @@ endif
 SOLVER_FLAGS := -D__MAGNETO #-D__HYPER -D__ADAPTIVE_STEP -D__CFL_STEP #-D__TRANSIENTS  -D__EKMN_DRAG
 
 # Phase only flags to be passed to solver
-PHASE_ONLY_FLAGS := -D__MAGNETO -D__PHASE_ONLY #-D__HYPER -D__TRANSIENTS
+PHASE_ONLY_FLAGS := -D__MAGNETO -D__PHASE_ONLY # -D__HYPER -D__TRANSIENTS
 
 # Dataset Flags to be passed to the solver
 DSET_FLAGS := -D__SYS_MEASURES -D__ENRG_FLUX

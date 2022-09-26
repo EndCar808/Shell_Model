@@ -275,6 +275,11 @@ int GetCMLArgs(int argc, char** argv) {
 					strncpy(sys_vars->u0, "RANDOM", 64);
 					break;
 				}
+				else if (!(strcmp(optarg,"ZERO"))) {
+					// Zero Phases Initial Conditions
+					strncpy(sys_vars->u0, "ZERO", 64);
+					break;
+				}
 				else {
 					// No initial conditions specified -> this will default to random initial conditions
 					strncpy(sys_vars->u0, "NONE", 64);

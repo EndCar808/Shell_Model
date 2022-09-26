@@ -128,10 +128,10 @@ if __name__ == '__main__':
         fig = plt.figure(figsize = (16, 8))
         gs  = GridSpec(1, 2)
         ax1 = fig.add_subplot(gs[0, 0])
-        for i in range(sys_vars.N):
+        for i in [1, 10, -1]:
             var = np.std(np.real(run_data.u[:, i]))
-            pdf, centres = compute_pdf(np.real(run_data.u[:, i]))
-            ax1.plot(centres, pdf / var, label = "$n = {}$".format(i + 1))
+            pdf, centres = compute_pdf(np.real(run_data.u[:, i]) / var)
+            ax1.plot(centres, pdf, label = "$n = {}$".format(i + 1))
         ax1.set_xlabel(r"$\Re u_n / \langle (\Re u_n)^2 \rangle^{1/2}$")
         ax1.set_ylabel(r"PDF")
         ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
@@ -139,10 +139,10 @@ if __name__ == '__main__':
         ax1.legend()
 
         ax2 = fig.add_subplot(gs[0, 1])
-        for i in range(sys_vars.N):
+        for i in [1, 10, -1]:
             var = np.std(np.real(run_data.b[:, i]))
-            pdf, centres = compute_pdf(np.real(run_data.b[:, i]))
-            ax2.plot(centres, pdf / var, label = "$n = {}$".format(i + 1))
+            pdf, centres = compute_pdf(np.real(run_data.b[:, i]) / var)
+            ax2.plot(centres, pdf, label = "$n = {}$".format(i + 1))
         ax2.set_xlabel(r"$\Re u_n / \langle (\Re u_n)^2 \rangle^{1/2}$")
         ax2.set_ylabel(r"PDF")
         ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)

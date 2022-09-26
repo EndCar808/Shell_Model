@@ -308,15 +308,16 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		#if defined(PHASE_ONLY)
 		// Reset the amplitudes 
 		run_data->u[n] *= (po_norm_fac_u / cabs(run_data->u[n]));
-		#if defined(__MAGNETO)
-		run_data->b[n] *= (po_norm_fac_b / cabs(run_data->b[n]));
-		#endif
-
 		// Record the phases and amplitudes
 		run_data->a_n[n]   = cabs(run_data->u[n]);
 		run_data->phi_n[n] = carg(run_data->u[n]);
+
+		#if defined(__MAGNETO)
+		run_data->b[n] *= (po_norm_fac_b / cabs(run_data->b[n]));
+		// Record the phases and amplitudes
 		run_data->b_n[n]   = cabs(run_data->b[n]);
 		run_data->psi_n[n] = carg(run_data->b[n]);
+		#endif
 		#endif
 	}
 }
@@ -381,6 +382,11 @@ void NonlinearTerm(fftw_complex* u, fftw_complex* b, fftw_complex* u_nonlin, fft
 void InitialConditions(const long int N) {
 
 	// Initialize variables
+	int n;
+	double r1, r3;
+	#if defined(__MAGNETO)
+	double r2, r4;
+	#endif
 	
 	// ------------------------------------------------
     // Set Seed for RNG
@@ -393,24 +399,160 @@ void InitialConditions(const long int N) {
 		// Scaling in N Initial Condition
 		// ------------------------------------------------
 		for (int i = 0; i < N; ++i) {
+			// Get temp indx;
+			n = i + 2;
+
 			// Initialize the velocity field
-			run_data->u[i + 2] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) * cexp(I * pow(i + 1, 2.0));
+			run_data->u[n] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) * cexp(I * pow(i + 1, 2.0));
+
+			#if defined(PHASE_ONLY)
+			// Record the phases and amplitudes
+			run_data->a_n[n]   = cabs(run_data->u[n]);
+			run_data->phi_n[n] = carg(run_data->u[n]);
+			#endif
+			#if defined(PHASE_ONLY_DIRECT)
+			run_data->a_n[n]   = 1.0 / pow(run_data->k[n], sys_vars->ALPHA);
+			run_data->phi_n[n] = pow(i + 1, 2.0);
+			#endif
 
 			#if defined(__MAGNETO)
 			// Initialize the magnetic field
-			run_data->b[i + 2] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * cexp(I * pow(i + 1, 4.0)) * 1e-2;
+			run_data->b[n] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * cexp(I * pow(i + 1, 4.0)) * 1e-2;
+			#if defined(PHASE_ONLY)
+			// Record the phases and amplitudes
+			run_data->b_n[n]   = cabs(run_data->b[n]);
+			run_data->psi_n[n] = carg(run_data->b[n]);
 			#endif
+			#if defined(PHASE_ONLY_DIRECT)
+			run_data->b_n[n]   = 1.0 / pow(run_data->k[n], sys_vars->BETA) * 1e-2;
+			run_data->psi_n[n] = pow(i + 1, 4.0);
+			#endif
+			#endif
+
+			printf("a_n[%d]:\t%1.16lf\tphi[%d]:\t%1.16lf\tb_n[%d]:\t%1.16lf\tpsi[%d]:\t%1.16lf\n", i, run_data->a_n[n], i, run_data->phi_n[n], i, run_data->b_n[n], i, run_data->psi_n[n]);
 		}	
 	}
 	else if(!(strcmp(sys_vars->u0, "RANDOM"))) {
 		// ------------------------------------------------
 		// Default - Random Initial Conditions
 		// ------------------------------------------------	
+		for (int i = 0; i < N; ++i) {
+			// Get temp indx;
+			n = i + 2;
+
+			// Get random uniform number
+			r1 = (double)rand() / (double)RAND_MAX;
+			#if defined(__MAGNETO)
+			r2 = (double)rand() / (double)RAND_MAX;
+			#endif
+
+			// Initialize the velocity field
+			run_data->u[n] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) * cexp(I * r1 * 2.0 * M_PI);
+
+			#if defined(PHASE_ONLY)
+			// Record the phases and amplitudes
+			run_data->a_n[n]   = cabs(run_data->u[n]);
+			run_data->phi_n[n] = carg(run_data->u[n]);
+			#endif
+			#if defined(PHASE_ONLY_DIRECT)
+			run_data->a_n[n]   = 1.0 / pow(run_data->k[n], sys_vars->ALPHA);
+			run_data->phi_n[n] = r1 * 2.0 * M_PI;
+			#endif
+
+			#if defined(__MAGNETO)
+			// Initialize the magnetic field
+			run_data->b[n] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * cexp(I * r2 * 2.0 * M_PI) * 1e-2;
+			#if defined(PHASE_ONLY)
+			// Record the phases and amplitudes
+			run_data->b_n[n]   = cabs(run_data->b[n]);
+			run_data->psi_n[n] = carg(run_data->b[n]);
+			#endif
+			#if defined(PHASE_ONLY_DIRECT)
+			run_data->b_n[n]   = 1.0 / pow(run_data->k[n], sys_vars->BETA) * 1e-2;
+			run_data->psi_n[n] = r2 * 2.0 * M_PI;
+			#endif
+			#endif
+		}	
+	}
+	else if(!(strcmp(sys_vars->u0, "ZERO"))) {
+		// ------------------------------------------------
+		// Zero Initial Conditions
+		// ------------------------------------------------	
+		for (int i = 0; i < N; ++i) {
+			// Get temp indx;
+			n = i + 2;
+
+			// Initialize the velocity field
+			run_data->u[n] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA);
+
+			#if defined(PHASE_ONLY)
+			// Record the phases and amplitudes
+			run_data->a_n[n]   = cabs(run_data->u[n]);
+			run_data->phi_n[n] = carg(run_data->u[n]);
+			#endif
+			#if defined(PHASE_ONLY_DIRECT)
+			run_data->a_n[n]   = 1.0 / pow(run_data->k[n], sys_vars->ALPHA);
+			run_data->phi_n[n] = 0.0;
+			#endif
+
+			#if defined(__MAGNETO)
+			// Initialize the magnetic field
+			run_data->b[n] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-2;
+			#if defined(PHASE_ONLY)
+			// Record the phases and amplitudes
+			run_data->b_n[n]   = cabs(run_data->b[n]);
+			run_data->psi_n[n] = carg(run_data->b[n]);
+			#endif
+			#if defined(PHASE_ONLY_DIRECT)
+			run_data->b_n[n]   = 1.0 / pow(run_data->k[n], sys_vars->BETA) * 1e-2;
+			run_data->psi_n[n] = 0.0;
+			#endif
+			#endif
+		}	
 	}
 	else {
 		// ------------------------------------------------
 		// Default - Pure Random Initial Conditions
-		// ------------------------------------------------	
+		// ------------------------------------------------
+		for (int i = 0; i < N; ++i) {
+			// Get temp indx;
+			n = i + 2;
+
+			// Get random uniform number
+			r1 = (double)rand() / (double)RAND_MAX;
+			r3 = (double)rand() / (double)RAND_MAX;
+			#if defined(__MAGNETO)
+			r2 = (double)rand() / (double)RAND_MAX;
+			r4 = (double)rand() / (double)RAND_MAX;
+			#endif
+
+			// Initialize the velocity field
+			run_data->u[n] = r1 + r3 * I;
+
+			#if defined(PHASE_ONLY)
+			// Record the phases and amplitudes
+			run_data->a_n[n]   = cabs(run_data->u[n]);
+			run_data->phi_n[n] = carg(run_data->u[n]);
+			#endif
+			#if defined(PHASE_ONLY_DIRECT)
+			run_data->a_n[n]   = r1;
+			run_data->phi_n[n] = r3;
+			#endif
+
+			#if defined(__MAGNETO)
+			// Initialize the magnetic field
+			run_data->b[n] = (r2 + r4) * 1e-2;
+			#if defined(PHASE_ONLY)
+			// Record the phases and amplitudes
+			run_data->b_n[n]   = cabs(run_data->b[n]);
+			run_data->psi_n[n] = carg(run_data->b[n]);
+			#endif
+			#if defined(PHASE_ONLY_DIRECT)
+			run_data->b_n[n]   = r2;
+			run_data->psi_n[n] = r4;
+			#endif
+			#endif
+		}	
 	}
 }
 /**
@@ -543,7 +685,7 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Velocity Field");
 		exit(1);
 	}
-	#if defined(PHASE_ONLY)	
+	#if defined(PHASE_ONLY)	|| defined(PHASE_ONLY_DIRECT)
 	// The Fourier amplitudes
 	run_data->a_n = (double* ) fftw_malloc(sizeof(double) * (N + 4));
 	if (run_data->a_n == NULL) {
@@ -568,7 +710,7 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Magnetic Field");
 		exit(1);
 	}	
-	#if defined(PHASE_ONLY)	
+	#if defined(PHASE_ONLY)	|| defined(PHASE_ONLY_DIRECT)
 	// The Fourier amplitudes
 	run_data->b_n = (double* ) fftw_malloc(sizeof(double) * (N + 4));
 	if (run_data->b_n == NULL) {
@@ -649,7 +791,7 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 		if (i < N) {
 			run_data->k[i] = 0;
 		}
-		run_data->u[i]        = 0.0 + 0.0 * I;
+		run_data->u[i]       = 0.0 + 0.0 * I;
 		RK_data->RK1_u[i]    = 0.0 + 0.0 * I;
 		RK_data->RK2_u[i]    = 0.0 + 0.0 * I;
 		RK_data->RK3_u[i]    = 0.0 + 0.0 * I;
@@ -660,11 +802,11 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 		run_data->phi_n[i] = 0.0;
 		#endif
 		#if defined(__MAGNETO)
-		run_data->b[i]     = 0.0 + 0.0 * I;
-		RK_data->RK1_b[i] = 0.0 + 0.0 * I;
-		RK_data->RK2_b[i] = 0.0 + 0.0 * I;
-		RK_data->RK3_b[i] = 0.0 + 0.0 * I;
-		RK_data->RK4_b[i] = 0.0 + 0.0 * I;
+		run_data->b[i]       = 0.0 + 0.0 * I;
+		RK_data->RK1_b[i]    = 0.0 + 0.0 * I;
+		RK_data->RK2_b[i]    = 0.0 + 0.0 * I;
+		RK_data->RK3_b[i]    = 0.0 + 0.0 * I;
+		RK_data->RK4_b[i]    = 0.0 + 0.0 * I;
 		RK_data->RK_b_tmp[i] = 0.0 + 0.0 * I;
 		#if defined(PHASE_ONLY)
 		run_data->b_n[i]   = 0.0;
@@ -687,7 +829,7 @@ void FreeMemory(RK_data_struct* RK_data) {
 
 	// Free system variables
 	fftw_free(run_data->u);
-	#if defined(PHASE_ONLY)
+	#if defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT)
 	fftw_free(run_data->a_n);
 	fftw_free(run_data->phi_n);
 	#endif

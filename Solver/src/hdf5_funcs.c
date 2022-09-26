@@ -73,31 +73,31 @@ void CreateOutputFilesWriteICs(const long int N) {
 	chunkdims[1] = N;                            // 1D chunk of size number of shells
 
 	///--------------------------------------- Velocity Modes
-	#if defined(__VEL) && !defined(PHASE_ONLY) 
+	#if defined(__VEL) && !(defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT))
 	CreateSlabbedDSet(0.0, 0, "VelModes", &(file_info->file_space[DSET_VEL]), &(file_info->data_set[DSET_VEL]), &(file_info->mem_space[DSET_VEL]), file_info->COMPLEX_DTYPE, dims, maxdims, chunkdims, Dim);
 	#endif
 
 	///--------------------------------------- Velocity Amplitudes
-	#if defined(__VEL_AMP) && defined(PHASE_ONLY)
+	#if defined(__VEL_AMP) && defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT))
 	CreateSlabbedDSet(0.0, 0, "VelAmps", &(file_info->file_space[DSET_VEL_AMP]), &(file_info->data_set[DSET_VEL_AMP]), &(file_info->mem_space[DSET_VEL_AMP]), H5T_NATIVE_DOUBLE, dims, maxdims, chunkdims, Dim);
 	#endif
 	///--------------------------------------- Velocity Phases
-	#if defined(__VEL_PHI) && defined(PHASE_ONLY)
+	#if defined(__VEL_PHI) && defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT))
 	CreateSlabbedDSet(0.0, 0, "VelPhases", &(file_info->file_space[DSET_VEL_PHI]), &(file_info->data_set[DSET_VEL_PHI]), &(file_info->mem_space[DSET_VEL_PHI]), H5T_NATIVE_DOUBLE, dims, maxdims, chunkdims, Dim);
 	#endif
 
 	#if defined(__MAGNETO)
 	///--------------------------------------- Magnetic Modes
-	#if defined(__MAG) && !defined(PHASE_ONLY) 
+	#if defined(__MAG) && !(defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT))
 	CreateSlabbedDSet(0.0, 0, "MagModes", &(file_info->file_space[DSET_MAG]), &(file_info->data_set[DSET_MAG]), &(file_info->mem_space[DSET_MAG]), file_info->COMPLEX_DTYPE, dims, maxdims, chunkdims, Dim);
 	#endif
 
 	///--------------------------------------- Magnetic Amplitudes
-	#if defined(__MAG_AMP) && defined(PHASE_ONLY)
+	#if defined(__MAG_AMP) && defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT))
 	CreateSlabbedDSet(0.0, 0, "MagAmps", &(file_info->file_space[DSET_MAG_AMP]), &(file_info->data_set[DSET_MAG_AMP]), &(file_info->mem_space[DSET_MAG_AMP]), H5T_NATIVE_DOUBLE, dims, maxdims, chunkdims, Dim);
 	#endif
 	///--------------------------------------- Magnetic Phases
-	#if defined(__MAG_PSI) && defined(PHASE_ONLY)
+	#if defined(__MAG_PSI) && defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT))
 	CreateSlabbedDSet(0.0, 0, "MagPhases", &(file_info->file_space[DSET_MAG_PSI]), &(file_info->data_set[DSET_MAG_PSI]), &(file_info->mem_space[DSET_MAG_PSI]), H5T_NATIVE_DOUBLE, dims, maxdims, chunkdims, Dim);
 	#endif
 	#endif
@@ -115,31 +115,31 @@ void CreateOutputFilesWriteICs(const long int N) {
 	////////////////////////////////
 	if (sys_vars->TRANS_ITERS_FLAG != TRANSIENT_ITERS) {
 		///--------------------------------------- Velocity Modes
-		#if defined(__VEL) && !defined(PHASE_ONLY) 
+		#if defined(__VEL) && !(defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT))
 		WriteSlabbedDataFourier(0.0, 0, file_info->file_space[DSET_VEL], file_info->data_set[DSET_VEL], file_info->mem_space[DSET_VEL], file_info->COMPLEX_DTYPE, &(run_data->u[2]), "VelModes", N, 0);
 		#endif
 
 		///--------------------------------------- Velocity Amplitudes
-		#if defined(__VEL_AMP) && defined(PHASE_ONLY)
+		#if defined(__VEL_AMP) && (defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT))
 		WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_VEL_AMP], file_info->data_set[DSET_VEL_AMP], file_info->mem_space[DSET_VEL_AMP], H5T_NATIVE_DOUBLE, &(run_data->a_n[2]), "VelAmps", N, 0);
 		#endif
 		///--------------------------------------- Velocity Phases
-		#if defined(__VEL_PHI) && defined(PHASE_ONLY)
+		#if defined(__VEL_PHI) && (defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT)) 
 		WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_VEL_PHI], file_info->data_set[DSET_VEL_PHI], file_info->mem_space[DSET_VEL_PHI], H5T_NATIVE_DOUBLE, &(run_data->phi_n[2]), "VelPhases", N, 0);
 		#endif
 
 		#if defined(__MAGNETO)
 		///--------------------------------------- Magnetic Modes
-		#if defined(__MAG) && !defined(PHASE_ONLY) 
+		#if defined(__MAG) && !(defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT))
 		WriteSlabbedDataFourier(0.0, 0, file_info->file_space[DSET_MAG], file_info->data_set[DSET_MAG], file_info->mem_space[DSET_MAG], file_info->COMPLEX_DTYPE, &(run_data->b[2]), "MagModes", N, 0);
 		#endif
 
 		///--------------------------------------- Magnetic Amplitudes
-		#if defined(__MAG_AMP) && defined(PHASE_ONLY)
+		#if defined(__MAG_AMP) && (defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT))
 		WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_MAG_AMP], file_info->data_set[DSET_MAG_AMP], file_info->mem_space[DSET_MAG_AMP], H5T_NATIVE_DOUBLE, &(run_data->b_n[2]), "MagAmps", N, 0);
 		#endif
 		///--------------------------------------- Magnetic Phases
-		#if defined(__MAG_PSI) && defined(PHASE_ONLY)
+		#if defined(__MAG_PSI) && (defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT))
 		WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_MAG_PSI], file_info->data_set[DSET_MAG_PSI], file_info->mem_space[DSET_MAG_PSI], H5T_NATIVE_DOUBLE, &(run_data->psi_n[2]), "MagPhases", N, 0);
 		#endif
 		#endif
