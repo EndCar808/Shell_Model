@@ -604,13 +604,17 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalEnergy");
 	}
 	#if defined(__MAGNETO)
-	// Helicity
-	if ( (H5LTmake_dataset(file_info->output_file_handle, "TotalHelicity", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_hel)) < 0) {
-		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalEnstrophy");
+	// Velocity Helicity
+	if ( (H5LTmake_dataset(file_info->output_file_handle, "TotalVelocityHelicity", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_hel_u)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalVelocityHelicity");
+	}
+	// Magnetic Helicity
+	if ( (H5LTmake_dataset(file_info->output_file_handle, "TotalMagneticHelicity", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_hel_b)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalMagneticHelicity");
 	}
 	// Cross Helicity
 	if ( (H5LTmake_dataset(file_info->output_file_handle, "TotalCrossHelicity", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_cross_hel)) < 0) {
-		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalPalinstrophy");
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalCrossHelicity");
 	}
 	#endif
 	#endif

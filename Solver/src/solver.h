@@ -34,9 +34,10 @@ void NonlinearTerm(double* u, double* b, double* u_nonlin, double* b_nonlin, con
 void NonlinearTerm(fftw_complex* u, fftw_complex* b, fftw_complex* u_nonlin, fftw_complex* b_nonlin, const long int N);
 #endif
 // Initialize the system functions
-void InitializeShellWavenumbers(long int* k, const long int N);
+void InitializeShellWavenumbers(double* k, const long int N);
 void InitialConditions(const long int N);
 void InitializeIntegrationVariables(double* t0, double* t, double* dt, double* T, long int* trans_steps);
+void InitializeForicing(const long int N);
 // Memory Functions
 void AllocateMemory(const long int N, RK_data_struct* RK_data);
 void FreeMemory(RK_data_struct* RK_data);

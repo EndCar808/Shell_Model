@@ -37,6 +37,8 @@ int GetCMLArgs(int argc, char** argv) {
 	int c;
 	int force_flag      = 0;
 	int cfl_flag        = 0;
+	int interact_flag   = 0;
+	int shell_wave_flag = 0;
 	int visc_flag       = 0;
 	int mag_diff_flag   = 0;
 	int output_dir_flag = 0;
@@ -67,6 +69,12 @@ int GetCMLArgs(int argc, char** argv) {
 	// Energy Spectra scaling
 	sys_vars->ALPHA = 1.5;
 	sys_vars->BETA  = 1.5;
+	// Shell wavenumber coefficients
+	sys_vars->k_0    = K_0;
+	sys_vars->Lambda = LAMBDA;	
+	// Interaction coefficients
+	sys_vars->EPS   = EPSILON;
+	sys_vars->EPS_M = EPSILON_M;	
 	// Forcing
 	strncpy(sys_vars->forcing, "NONE", 64);	
 	sys_vars->force_k         = 0;
@@ -88,7 +96,7 @@ int GetCMLArgs(int argc, char** argv) {
 	// -------------------------------
 	// Parse CML Arguments
 	// -------------------------------
-	while ((c = getopt(argc, argv, "o:h:n:a:b:d:s:e:t:v:i:c:p:f:z:T:")) != -1) {
+	while ((c = getopt(argc, argv, "o:h:n:a:b:d:s:e:t:v:i:c:p:f:z:y:w:T:")) != -1) {
 		switch(c) {
 			case 'o':
 				if (output_dir_flag == 0) {
@@ -263,6 +271,52 @@ int GetCMLArgs(int argc, char** argv) {
 					break;
 				}
 				break;
+			case 'w':
+				if (shell_wave_flag == 0) {
+					// Read in the shell wavenumber prefactor
+					sys_vars->k_0 = atof(optarg);
+					if (sys_vars->k_0 < 0) {
+						fprintf(stderr, "\n["RED"ERROR"RESET"] Parsing of Command Line Arguements Failed: The provided shell wavenumber factor: [%lf] must be positive\n-->> Exiting!\n\n", sys_vars->k_0);		
+						exit(1);
+					}
+					shell_wave_flag = 1;
+					break;
+				}
+				else if (shell_wave_flag == 1) {
+					// Read in the intershell ratio for the shell radius
+					sys_vars->Lambda = atoi(optarg);
+					if (sys_vars->Lambda < 0) {
+					}
+					else {
+						fprintf(stderr, "\n["RED"ERROR"RESET"] Parsing of Command Line Arguements Failed: The provided intershell ratio lambda: [%lf] must be positive\n-->> Exiting!\n\n", sys_vars->Lambda);		
+						exit(1);
+					}
+					break;	
+				}
+				break;
+			case 'y':
+				if (interact_flag == 0) {
+					// Read in the interaction coefficient for the velocity equation
+					sys_vars->EPS = atof(optarg);
+					if (sys_vars->EPS < 0) {
+						fprintf(stderr, "\n["RED"ERROR"RESET"] Parsing of Command Line Arguements Failed: The velocity interaction coefficient: [%lf] must be positive\n-->> Exiting!\n\n", sys_vars->EPS);		
+						exit(1);
+					}
+					interact_flag = 1;
+					break;
+				}
+				else if (interact_flag == 1) {
+					// Read in the interaction coefficient for the magnetic equation
+					sys_vars->EPS_M = atoi(optarg);
+					if (sys_vars->EPS_M < 0) {
+					}
+					else {
+						fprintf(stderr, "\n["RED"ERROR"RESET"] Parsing of Command Line Arguements Failed: The magnetic interaction coefficient: [%lf] must be positive\n-->> Exiting!\n\n", sys_vars->EPS_M);		
+						exit(1);
+					}
+					break;	
+				}
+				break;
 			case 'i':
 				// Read in the initial conditions
 				if (!(strcmp(optarg,"N_SCALING"))) {
@@ -320,21 +374,9 @@ int GetCMLArgs(int argc, char** argv) {
 				break;
 			case 'f':
 				// Read in the forcing type
-				if (!(strcmp(optarg,"ZERO")) && (force_flag == 0)) {
-					// Killing certain modes
-					strncpy(sys_vars->forcing, "ZERO", 64);
-					force_flag = 1;
-					break;
-				}
-				if (!(strcmp(optarg,"CONST_GAUSS")) && (force_flag == 0)) {
-					// Deterministic, constant in time, forcing of low wavenumbers
-					strncpy(sys_vars->forcing, "CONST_GAUSS", 64);
-					force_flag = 1;
-					break;
-				}
-				else if (!(strcmp(optarg,"KOLM"))  && (force_flag == 0)) {
-					// Kolmogorov forcing
-					strncpy(sys_vars->forcing, "KOLM", 64);
+				if (!(strcmp(optarg,"DELTA")) && (force_flag == 0)) {
+					// Delta function on mode 0
+					strncpy(sys_vars->forcing, "DELTA", 64);
 					force_flag = 1;
 					break;
 				}
@@ -519,6 +561,39 @@ void PrintSimulationDetails(int argc, char** argv, double sim_time) {
 	// Close File
 	// -------------------------------
 	fclose(sim_file);
+}
+/**
+ * Function to carry out the signum function 
+ * @param  x double Input value
+ * @return   Output of performing the signum function on the input
+ */
+double sgn(double x) {
+
+	if (x < 0.0) return -1.0;
+	if (x > 0.0) return 1.0;
+	return 0.0;
+}
+/**
+ * Function to compute the log of base lambda 
+ * @param  x double input to compute the log of
+ * @return   result of computing log of the base lambda of the input
+ */
+double log_lambda(double x) {
+	return log(x) / log(sys_vars->Lambda);
+}
+/**
+ * Function to perform the Kronecker delta
+ * @param  i Input
+ * @param  j Input
+ * @return   Returns the Kronecker delta of the input
+ */
+double my_delta(double i, double j) {
+	if (i == j) {
+		return 1.0;
+	}
+	else {
+		return 0.0;
+	}
 }
 // ---------------------------------------------------------------------
 //  End of File

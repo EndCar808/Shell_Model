@@ -126,7 +126,7 @@ if __name__ == '__main__':
     if cmdargs.plotting is True:
         ##-------------- Plot Conserved quntities
         fig = plt.figure(figsize = (32, 8))
-        gs  = GridSpec(1, 3)
+        gs  = GridSpec(1, 4)
         ## Plot the relative energy
         ax1 = fig.add_subplot(gs[0, 0])
         ax1.plot(run_data.time, run_data.tot_enrg / run_data.tot_enrg[0] - 1)
@@ -135,12 +135,19 @@ if __name__ == '__main__':
         ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
         ## Plot the relative helicity
         ax2 = fig.add_subplot(gs[0, 1])
-        ax2.plot(run_data.time, 1 - run_data.tot_hel / run_data.tot_hel[0])
+        ax2.plot(run_data.time, 1 - run_data.tot_hel_u / run_data.tot_hel_u[0])
         ax2.set_xlabel(r"$t$")
-        ax2.set_title(r"Total Helicity")
+        ax2.set_title(r"Total Velocity Helicity")
+        ax2.set_yscale('symlog')
+        ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        ## Plot the relative helicity
+        ax2 = fig.add_subplot(gs[0, 2])
+        ax2.plot(run_data.time, 1 - run_data.tot_hel_b / run_data.tot_hel_b[0])
+        ax2.set_xlabel(r"$t$")
+        ax2.set_title(r"Total Magnetic Helicity")
         ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
         ## Plot the relative cross helicity
-        ax3 = fig.add_subplot(gs[0, 2])
+        ax3 = fig.add_subplot(gs[0, 3])
         ax3.plot(run_data.time, 1 - run_data.tot_cross_hel / run_data.tot_cross_hel[0])
         ax3.set_xlabel(r"$t$")
         ax3.set_title(r"Total Cross Helicity")

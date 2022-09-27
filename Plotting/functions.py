@@ -250,8 +250,10 @@ def import_data(input_file, sim_data, method = "default"):
                 ## Allocate system measure arrays
                 if 'TotalEnergy' in list(f.keys()):
                     self.tot_enrg      = f["TotalEnergy"][:]
-                if 'TotalHelicity' in list(f.keys()):
-                    self.tot_hel       = f["TotalHelicity"][:]
+                if 'TotalVelocityHelicity' in list(f.keys()):
+                    self.tot_hel_u       = f["TotalVelocityHelicity"][:]
+                if 'TotalMagneticHelicity' in list(f.keys()):
+                    self.tot_hel_b       = f["TotalMagneticHelicity"][:]
                 if 'TotalCrossHelicity' in list(f.keys()):
                     self.tot_cross_hel = f["TotalCrossHelicity"][:]
 

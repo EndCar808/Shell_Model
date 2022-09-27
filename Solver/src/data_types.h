@@ -126,6 +126,9 @@
 // Define the shell wavenumber parameters
 #define K_0 1.0 				// The shell wavenumber prefactor
 #define LAMBDA 2.0              // The intershell ratio for the shell wavenumber 
+// Define the equations of motion parameters
+#define EPSILON 0.5 			// Interaction coefficient for the HD shell model
+#define EPSILON_M 1.0/3.0 		// Interaction coefficient for the MHD shell model
 // System checking parameters
 #define MIN_STEP_SIZE 1e-10 	// The minimum allowed stepsize for the solver 
 #define MAX_ITERS 1e+12			// The maximum iterations to perform
@@ -136,32 +139,11 @@
 // #define DP_DELTA_MIN 0.01       // The min delta value for the Dormand Prince scheme
 // #define DP_DELTA_MAX 1.5 		// The max delta value for the Dormand Prince scheme
 // #define DP_DELTA 0.8 			// The scaling parameter of the error for the Dormand Prince Scheme
-// Initial Conditions parameters
-// #define KAPPA 1.0 				// The wavenumber of the Taylor Green initial condition 
-// #define SIGMA 15.0 / M_PI 		// The sigma term for the Double Shear Layer initial condition
-// #define DELTA 0.005	 			// The delta term for the Double Shear Layer initial condition
-// #define BETA 1.0                // The aspect ratio for the Gaussian blob initial condition
-// #define S 6.0                   // The scale parameter for the Gaussian Blob initial condition 
-// #define DT_K0 6.0				// The peak wavenumber for the McWilliams decaying vortex turblence initial condition
-// #define DT_E0 0.5               // The initial energy for the McWilliams decaying vortex turbulence initial condition
-// #define DT2_K0 30				// The peak wavenumber for the second McWilliams decaying turbulence initial condition
-// #define DT2_E0 0.5				// The spectrum normalizing constant for the second McWilliams decaying turbulence initial condition
-// #define DTEXP_K0 8.0			// The peak of the initial spectrum for the decaying turbulence exponential spectrum initial condition
-// #define DTEXP_E0 343.0/96.0		// The initial energy for the decaying turbulence exponential spectrum initial condition
-// #define GDT_K0 5.0              // The peak wavenumber for the Gaussian decay turbulence initial condition
-// #define GDT_C0 0.06             // The intial energy of the Gaussian decaying turbulence initial condition
-// #define RING_MIN_K 3.0			// The minimum absolute wavevector value to set the ring initial condition
-// #define RING_MAX_K 10.0			// The maximum absolute wavevector value to set the ring initial condition
-// #define EXTRM_ENS_MIN_K 1.5 	// The minimum absolute wavevector value for the Exponential Enstrophy initial condition
-// #define EXTRM_ENS_POW 1.5 		// The power for wavevectors for the Exponential enstrophy distribution
 // // Forcing parameters
 // #define STOC_FORC_K_MIN	0.5		// The minimum value of the modulus forced wavevectors for the stochasitc (Gaussian) forcing
 // #define STOC_FORC_K_MAX 2.5     // The maximum value of the modulus forced wavevectors for the stochastic (Gaussian) forcing
 // #define CONST_GAUSS_K_MIN 10    // The minimum value of the mod of forced wavevectors for the Constant Gaussian Ring forcing
 // #define CONST_GAUSS_K_MAX 12    // The minimum value of the mod of forced wavevectors for the Constant Gaussian Ring forcing
-// // Dynamic Modes
-// #define UPR_SBST_LIM 64         // The upper mode limit of the energy/enstrophy flux
-// #define LWR_SBST_LIM 0  		// The lower mode limit of the energy/enstrophy flux
 // ---------------------------------------------------------------------
 //  Global Struct Definitions
 // ---------------------------------------------------------------------
@@ -204,11 +186,15 @@ typedef struct system_vars_struct {
 	double ETA;							// The magnetic diffusivity
 	int HYPO_MAG_DIFF_FLAG;				// Flag for indicating if ekman drag is to be used
 	double HYPO_MAG_DIFF_POW;			// The power of the hyper drag to be used
+	double EPS; 						// Defines the interaction coefficient for the HD shell model equation 
+	double EPS_M; 						// Defines the interaction coefficient for the MHD shell model equation
+	double k_0;							// Defines the wavenumber constant k_0
+	double Lambda;						// Defines the intershell ratio for radius of the shell wavenumber
 } system_vars_struct;
 
 // Runtime data struct
 typedef struct runtime_data_struct {
-	long int* k;		  				// Array to hold wavenumbers
+	double* k;			  				// Array to hold wavenumbers
 	fftw_complex* u;	      			// Fourier space velocity
 	fftw_complex* b;	      			// Fourier space vorticity
 	fftw_complex* rhs; 		  			// Array to hold the RHS of the equation of motion
@@ -221,10 +207,15 @@ typedef struct runtime_data_struct {
 	double* psi_n;						// Array to hold the phases of the magnetic modes
 	double* time;			  			// Array to hold the simulation times
 	double* tot_energy;       			// Array to hold the total energy over the simulation
-	double* tot_hel;		  			// Array to hold the total helicity in the magnetic field
+	double* tot_hel_u;		  			// Array to hold the total helicity in the velocity field
+	double* tot_hel_b;		  			// Array to hold the total helicity in the magnetic field
 	double* tot_cross_hel;	  			// Array to hold the total cross helicity
 	double* energy_flux;				// Array to hold the energy flux
 	double* energy_diss;				// Array to hold the energy dissipation
+	fftw_complex* forcing;	  			// Array to hold the forcing for the current timestep
+	double* forcing_scaling;  			// Array to hold the initial scaling for the forced modes
+	int* forcing_indx;		  			// Array to hold the indices of the forced modes
+	int* forcing_k;			  			// Array containg the wavenumbers for the forced modes
 	// double* tot_enstr;		  			// Array to hold the total entrophy over the simulation
 	// double* tot_palin;		  			// Array to hold the total palinstrophy over the simulaiotns
 	// double* enrg_diss; 		  			// Array to hold the energy dissipation rate 
@@ -246,10 +237,6 @@ typedef struct runtime_data_struct {
 	// fftw_complex* phase_order_k;		// Array to hold the scale dependent collective phase
 	// fftw_complex* normed_phase_order_k;	// Array to hold the scale dependent collective phase
 	// double* tg_soln;	  	  			// Array for computing the Taylor Green vortex solution
-	// fftw_complex* forcing;	  			// Array to hold the forcing for the current timestep
-	// double* forcing_scaling;  			// Array to hold the initial scaling for the forced modes
-	// int* forcing_indx;		  			// Array to hold the indices of the forced modes
-	// int* forcing_k[SYS_DIM];  			// Array containg the wavenumbers for the forced modes
 } runtime_data_struct;
 
 // Runge-Kutta Integration struct

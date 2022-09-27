@@ -22,6 +22,10 @@
 int GetCMLArgs(int argc, char** argv);
 // Simulation Details
 void PrintSimulationDetails(int argc, char** argv, double sim_time);
+// Misc
+double sgn(double x);
+double log_lambda(double x);
+double my_delta(double i, double j);
 // ---------------------------------------------------------------------
 //  End of File
 // ---------------------------------------------------------------------

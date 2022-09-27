@@ -20,6 +20,7 @@
 #include "data_types.h"
 #include "sys_msr.h"
 #include "solver.h"
+#include "utils.h"
 // ---------------------------------------------------------------------
 //  Function Definitions
 // ---------------------------------------------------------------------
@@ -34,6 +35,7 @@ void ComputeSystemMeasurables(double t, int iter, RK_data_struct* RK_data) {
 	// Initialize variables
     const long int N = sys_vars->N; 
     int n, l;
+    double k_fac;
 
     // Record the initial time
     #if defined(__TIME)
@@ -56,7 +58,8 @@ void ComputeSystemMeasurables(double t, int iter, RK_data_struct* RK_data) {
         // Initialize totals
         run_data->tot_energy[iter]    = 0.0;
         #if defined(__MAGNETO)
-        run_data->tot_hel[iter]       = 0.0;
+        run_data->tot_hel_u[iter]     = 0.0;
+        run_data->tot_hel_b[iter]     = 0.0;
         run_data->tot_cross_hel[iter] = 0.0;
         #endif
     }
@@ -79,6 +82,13 @@ void ComputeSystemMeasurables(double t, int iter, RK_data_struct* RK_data) {
         if (iter < sys_vars->num_print_steps) {
             //-------------- System Measures
             #if defined(__SYS_MEASURES)
+            // Compute Velocity helicity k factors
+            if (-log_lambda(fabs(sys_vars->EPS - 1.0) / 2.0) < 0) { 
+                k_fac = 1.0 / pow(run_data->k[i], log_lambda(fabs(sys_vars->EPS - 1.0) / 2.0));
+            } 
+            else {
+              k_fac = pow(run_data->k[i], -log_lambda(fabs(sys_vars->EPS - 1.0) / 2.0));  
+            }
             // Update sum for totals
             #if defined(PHASE_ONLY_DIRECT)
             run_data->tot_energy[iter]    += run_data->a_n[n] * run_data->a_n[n];
@@ -88,11 +98,13 @@ void ComputeSystemMeasurables(double t, int iter, RK_data_struct* RK_data) {
             #if defined(__MAGNETO)
             #if defined(PHASE_ONLY_DIRECT)
             run_data->tot_energy[iter]    += run_data->b_n[n] * run_data->b_n[n];
-            run_data->tot_hel[iter]       += pow(-1.0, i) * (run_data->b_n[n] * run_data->b_n[n]) / run_data->k[i];
+            run_data->tot_hel_u[iter]     += pow(sgn(sys_vars->EPS - 1.0), i) * (run_data->a_n[n] * run_data->a_n[n]) * k_fac;
+            run_data->tot_hel_b[iter]     += pow(sgn(sys_vars->EPS - 1.0), i) * (run_data->b_n[n] * run_data->b_n[n]) / run_data->k[i];
             run_data->tot_cross_hel[iter] += creal(run_data->a_n[n] * run_data->b_n[n]);
             #else
             run_data->tot_energy[iter]    += cabs(run_data->b[n] * conj(run_data->b[n]));
-            run_data->tot_hel[iter]       += pow(-1.0, i) * cabs(run_data->b[n] * conj(run_data->b[n])) / run_data->k[i];
+            run_data->tot_hel_u[iter]     += pow(sgn(sys_vars->EPS - 1.0), i) * cabs(run_data->u[n] * conj(run_data->u[n])) * k_fac;
+            run_data->tot_hel_b[iter]     += pow(sgn(sys_vars->EPS - 1.0), i) * cabs(run_data->b[n] * conj(run_data->b[n])) / run_data->k[i];
             run_data->tot_cross_hel[iter] += creal(run_data->u[n] * conj(run_data->b[n]));
             #endif
             #endif
@@ -105,14 +117,14 @@ void ComputeSystemMeasurables(double t, int iter, RK_data_struct* RK_data) {
                 // Get temp indx
                 l = j + 2;
                 #if defined(PHASE_ONLY_DIRECT)
-                run_data->tot_energy[iter] -= run_data->k[j] * run_data->k[j] * sys_vars->NU * run_data->a_n[n] * run_data->a_n[n];
+                run_data->energy_diss[iter] += run_data->k[j] * run_data->k[j] * sys_vars->NU * run_data->a_n[n] * run_data->a_n[n];
                 #if defined(__MAGNETO) 
-                run_data->tot_energy[iter] -= run_data->k[j] * run_data->k[j] * sys_vars->BETA * run_data->b_n[n] * run_data->b_n[n];
+                run_data->energy_diss[iter] += run_data->k[j] * run_data->k[j] * sys_vars->ETA * run_data->b_n[n] * run_data->b_n[n];
                 #endif
                 #else
-                run_data->energy_diss[i] -= run_data->k[j] * run_data->k[j] * sys_vars->NU * cabs(run_data->u[l] * conj(run_data->u[l])); 
+                run_data->energy_diss[i] += run_data->k[j] * run_data->k[j] * sys_vars->NU * cabs(run_data->u[l] * conj(run_data->u[l])); 
                 #if defined(__MAGNETO) 
-                run_data->energy_diss[i] -= run_data->k[j] * run_data->k[j] * sys_vars->BETA * cabs(run_data->b[l] * conj(run_data->b[l])); 
+                run_data->energy_diss[i] += run_data->k[j] * run_data->k[j] * sys_vars->ETA * cabs(run_data->b[l] * conj(run_data->b[l])); 
                 #endif
                 #endif                  
             }
@@ -175,8 +187,6 @@ void ComputeSystemMeasurables(double t, int iter, RK_data_struct* RK_data) {
                 #endif
                 #endif
             }
-            // Update the flux term with the dissipation 
-            run_data->energy_flux[i] += run_data->energy_diss[i];
             #endif
         }
     }    
@@ -188,7 +198,8 @@ void ComputeSystemMeasurables(double t, int iter, RK_data_struct* RK_data) {
     if (iter < sys_vars->num_print_steps) {
         run_data->tot_energy[iter]    *= 0.5;
         #if defined(__MAGNETO)
-        run_data->tot_hel[iter]       *= 0.5;
+        run_data->tot_hel_u[iter]     *= 0.5;
+        run_data->tot_hel_b[iter]     *= 0.5;
         run_data->tot_cross_hel[iter] *= 0.5;
         #endif
     }
@@ -220,10 +231,16 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
         exit(1);
     }
     #if defined(__MAGNETO)
-    // Total Helicity
-    run_data->tot_hel = (double* )fftw_malloc(sizeof(double) * print_steps);
-    if (run_data->tot_hel == NULL) {
-        fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Total Helicity");
+    // Total Velocity Helicity
+    run_data->tot_hel_u = (double* )fftw_malloc(sizeof(double) * print_steps);
+    if (run_data->tot_hel_u == NULL) {
+        fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Total Velocity Helicity");
+        exit(1);
+    }   
+    // Total Magnetic Helicity
+    run_data->tot_hel_b = (double* )fftw_malloc(sizeof(double) * print_steps);
+    if (run_data->tot_hel_b == NULL) {
+        fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Total Magnetic Helicity");
         exit(1);
     }   
 

@@ -73,7 +73,9 @@ void Solve(void) {
 	// Get initial conditions - seed for random number generator is set here
 	InitialConditions(N);
 
-	printf("Here\n");
+	// Initialize the forcing
+	InitializeForicing(N);
+
 	// -------------------------------
 	// Integration Variables
 	// -------------------------------
@@ -527,6 +529,12 @@ void NonlinearTerm(double* u, double* b, double* u_nonlin, double* b_nonlin, con
 
 	// Initialize variables
 	int n;
+	double lambda_pow         = sys_vars->Lambda * sys_vars->Lambda;
+	double interact_coeff_u_1 = sys_vars->EPS / sys_vars->Lambda;
+	double interact_coeff_u_2 = (1.0 - sys_vars->EPS) / lambda_pow;
+	double interact_coeff_b_1 = 1.0 - sys_vars->EPS - sys_vars->EPS_M;
+	double interact_coeff_b_2 = sys_vars->EPS_M / sys_vars->Lambda;
+	double interact_coeff_b_3 = (1.0 - sys_vars->EPS_M) / lambda_pow;
 	double u_tmp_1, u_tmp_2, u_tmp_3;
 	#if defined(__MAGNETO)
 	double b_tmp_1, b_tmp_2, b_tmp_3;
@@ -562,10 +570,10 @@ void NonlinearTerm(double* u, double* b, double* u_nonlin, double* b_nonlin, con
 		// Compute Nonlinear Terms
 		// -----------------------------------
 		// Compute the nonlinear term for the velocity field
-		u_nonlin[n] = (run_data->k[i] / run_data->a_n[n]) * (u_tmp_1 - 0.25 * u_tmp_2 - 0.125 * u_tmp_3);
+		u_nonlin[n] = (run_data->k[i] / run_data->a_n[n]) * (u_tmp_1 - interact_coeff_u_1 * u_tmp_2 - interact_coeff_u_2 *  u_tmp_3);
 		#if defined(__MAGNETO)
 		// Compute the nonlinear term for the magnetic field
-		b_nonlin[n] = (run_data->k[i] / run_data->b_n[n]) * (1.0 / 6.0) * (b_tmp_1 + b_tmp_2 + b_tmp_3); 
+		b_nonlin[n] = (run_data->k[i] / run_data->b_n[n]) * (interact_coeff_b_1 * b_tmp_1 + interact_coeff_b_2 * b_tmp_2 + interact_coeff_b_3 * b_tmp_3); 
 		#endif
 	}
 }
@@ -582,6 +590,12 @@ void NonlinearTerm(fftw_complex* u, fftw_complex* b, fftw_complex* u_nonlin, fft
 
 	// Initialize variables
 	int n;
+	double lambda_pow         = sys_vars->Lambda * sys_vars->Lambda;
+	double interact_coeff_u_1 = sys_vars->EPS / sys_vars->Lambda;
+	double interact_coeff_u_2 = (1.0 - sys_vars->EPS) / lambda_pow;
+	double interact_coeff_b_1 = 1.0 - sys_vars->EPS - sys_vars->EPS_M;
+	double interact_coeff_b_2 = sys_vars->EPS_M / sys_vars->Lambda;
+	double interact_coeff_b_3 = (1.0 - sys_vars->EPS_M) / lambda_pow;
 	fftw_complex u_tmp_1, u_tmp_2, u_tmp_3;
 	#if defined(__MAGNETO)
 	fftw_complex b_tmp_1, b_tmp_2, b_tmp_3;
@@ -617,10 +631,10 @@ void NonlinearTerm(fftw_complex* u, fftw_complex* b, fftw_complex* u_nonlin, fft
 		// Compute Nonlinear Terms
 		// -----------------------------------
 		// Compute the nonlinear term for the velocity field
-		u_nonlin[n] = I * run_data->k[i] * conj(u_tmp_1 - 0.25 * u_tmp_2 - 0.125 * u_tmp_3); 
+		u_nonlin[n] = I * run_data->k[i] * conj(u_tmp_1 - interact_coeff_u_1 * u_tmp_2 - interact_coeff_u_2 *  u_tmp_3); 
 		#if defined(__MAGNETO)
 		// Compute the nonlinear term for the magnetic field
-		b_nonlin[n] = I * run_data->k[i] * (1.0 / 6.0) * conj(b_tmp_1 + b_tmp_2 + b_tmp_3); 
+		b_nonlin[n] = I * run_data->k[i] * conj(interact_coeff_b_1 * b_tmp_1 + interact_coeff_b_2 * b_tmp_2 + interact_coeff_b_3 * b_tmp_3); 
 		#endif
 	}
 }
@@ -677,7 +691,7 @@ void InitialConditions(const long int N) {
 			run_data->psi_n[n] = pow(i + 1, 4.0);
 			#endif
 			#endif
-			printf("a_n[%d]:\t%1.16lf\tphi[%d]:\t%1.16lf\tb_n[%d]:\t%1.16lf\tpsi[%d]:\t%1.16lf\n", i, run_data->a_n[n], i, run_data->phi_n[n], i, run_data->b_n[n], i, run_data->psi_n[n]);
+			// printf("a_n[%d]:\t%1.16lf\tphi[%d]:\t%1.16lf\tb_n[%d]:\t%1.16lf\tpsi[%d]:\t%1.16lf\n", i, run_data->a_n[n], i, run_data->phi_n[n], i, run_data->b_n[n], i, run_data->psi_n[n]);
 		}	
 	}
 	else if(!(strcmp(sys_vars->u0, "RANDOM"))) {
@@ -809,13 +823,62 @@ void InitialConditions(const long int N) {
  * @param k Array to contain the shell wavenumber
  * @param N int containging the maximum shell level
  */
-void InitializeShellWavenumbers(long int* k, const long int N) {
+void InitializeShellWavenumbers(double* k, const long int N) {
 
 	// -------------------------------
 	// Define Shell Wavenumbers
 	// -------------------------------
 	for (int i = 0; i < N; ++i) {
-		k[i] = K_0 * pow(LAMBDA, i);
+		k[i] = sys_vars->k_0 * pow(sys_vars->Lambda, i);
+	}
+}
+/**
+ * Function to initialize the forcing 
+ * @param N Number of shells
+ */
+void InitializeForicing(const long int N) {
+
+	// Initialize variables
+	int n;
+
+	// ------------------------------------------------
+	// Allocate Memory for Forcing Data
+	// ------------------------------------------------
+	run_data->forcing = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
+
+	// ------------------------------------------------
+	// Initialize Forcing Data
+	// ------------------------------------------------
+	for (int i = 0; i < N + 4; ++i) {
+		// Get temporary index
+		int n = i;
+
+		// Compute the forcing and intialize
+		if(!(strcmp(sys_vars->forcing, "DELTA"))) {
+			// ------------------------------------------------
+			// Delta function on the zero mode
+			// ------------------------------------------------
+			// Record the forcing 
+			run_data->forcing[i] = sys_vars->force_scale_var * (1.0 + 1.0 * I) * my_delta(sys_vars->force_k, 0.0);
+		}
+		else if(!(strcmp(sys_vars->forcing, "STOC"))) {
+			// ------------------------------------------------
+			// Stochastic Forcing
+			// ------------------------------------------------
+			
+		}
+		else if(!(strcmp(sys_vars->forcing, "NONE"))) {
+			// ------------------------------------------------
+			// No Forcing
+			// ------------------------------------------------
+			
+		}
+		else {
+			if (i == 0) {
+				// Print warning to screen that no valid forcing (incl. NONE) was selected
+				printf("\n["MAGENTA"WARNING"RESET"] --- No valid forcing was selected!!!\n");
+			}
+		}
 	}
 }
 /**
@@ -879,11 +942,10 @@ void PrintUpdateToTerminal(int iters, double t, double dt, double T, int save_da
 	// Initialize variables
 	
 	#if defined(__MAGNETO)
-	printf("Iter: %d/%ld\tt: %1.6lf/%1.3lf\tdt: %1.6g\tKE: %6.6g\tHEL: %6.6g\tX-HEL: %6.6g\n", iters, sys_vars->num_t_steps, t, T, dt, run_data->tot_energy[save_data_indx], run_data->tot_hel[save_data_indx], run_data->tot_cross_hel[save_data_indx]);
+	printf("Iter: %d/%ld\tt: %1.6lf/%1.3lf\tdt: %1.6g\tKE: %6.6g\tHEL_U: %6.6g\tHEL_B: %6.6g\tX-HEL: %6.6g\n", iters, sys_vars->num_t_steps, t, T, dt, run_data->tot_energy[save_data_indx], run_data->tot_hel_u[save_data_indx], run_data->tot_hel_b[save_data_indx], run_data->tot_cross_hel[save_data_indx]);
 	#else
-	printf("Iter: %d/%ld\tt: %1.6lf/%1.3lf\tdt: %1.6g\tKE: %6.6g\n", iters, sys_vars->num_t_steps, t, T, dt, run_data->tot_energy[save_data_indx]);
+	printf("Iter: %d/%ld\tt: %1.6lf/%1.3lf\tdt: %1.6g\tKE: %6.6gHEL: %6.6g\t\n", iters, sys_vars->num_t_steps, t, T, dt, run_data->tot_energy[save_data_indx], run_data->tot_hel_u[save_data_indx]);
 	#endif
-
 }
 /**
  * Function that checks the system to see if it is ok to continue integrations. Checks for blow up, timestep and iteration limits etc
@@ -918,7 +980,7 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 	// Allocate Shell Wavenumbers
 	// -------------------------------
 	// Allocate the shell wavenumbers
-	run_data->k = (long int* )fftw_malloc(sizeof(long int) * N);  // k
+	run_data->k = (double* )fftw_malloc(sizeof(double) * N);  // k
 	if (run_data->k == NULL) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Shell Wavenumber List");
 		exit(1);
@@ -1131,7 +1193,8 @@ void FreeMemory(RK_data_struct* RK_data) {
 	#if defined(__SYS_MEASURES)
 	fftw_free(run_data->tot_energy);
 	#if defined(__MAGNETO)
-	fftw_free(run_data->tot_hel);
+	fftw_free(run_data->tot_hel_u);
+	fftw_free(run_data->tot_hel_b);
 	fftw_free(run_data->tot_cross_hel);
 	#endif
 	#endif
@@ -1142,6 +1205,7 @@ void FreeMemory(RK_data_struct* RK_data) {
 	fftw_free(run_data->energy_flux);
 	fftw_free(run_data->energy_diss);
 	#endif
+	fftw_free(run_data->forcing);
 
 	// Free integration variables
 	fftw_free(RK_data->RK1_u);
