@@ -229,9 +229,27 @@ void GetOutputDirPath(void) {
 		// -------------------------------------
 		#if defined(__MAGNETO)
 		// Construct file label from simulation data
-		sprintf(file_data, "_SIM[%s-%s-%s]_N[%ld]_T[%1.1lf-%g-%1.3lf]_NU[%1.8lf]_ETA[%1.8lf]_ALPHA[%1.3lf]_BETA[%1.3lf]_u0[%s].h5", sys_type, solv_type, model_type, sys_vars->N, sys_vars->t0, sys_vars->dt, sys_vars->T, sys_vars->NU, sys_vars->ETA, sys_vars->ALPHA, sys_vars->BETA, sys_vars->u0);
+		sprintf(file_data, "_SIM_DATA_[%s-%s-%s]_N[%ld]_T[%1.1lf-%g-%1.3lf]_NU[%1.8lf]_ETA[%1.8lf]_ALPHA[%1.3lf]_BETA[%1.3lf]_K[%1.3lf,%lf]_EPS[%1.2lf,%1.2lf]_u0[%s].h5", 
+							sys_type, solv_type, model_type, 
+							sys_vars->N, 
+							sys_vars->t0, sys_vars->dt, sys_vars->T, 
+							sys_vars->NU, 
+							sys_vars->ETA, 
+							sys_vars->ALPHA, 
+							sys_vars->BETA, 
+							sys_vars->k_0, sys_vars->Lambda, 
+							sys_vars->EPS, sys_vars->EPS_M, 
+							sys_vars->u0);
 		#else
-		sprintf(file_data, "_SIM[%s-%s-%s]_N[%ld]_T[%1.1lf-%g-%1.3lf]_NU[%1.8lf]_ALPHA[%1.3lf]_BETA[%1.3lf]_u0[%s].h5", sys_type, solv_type, model_type, sys_vars->N, sys_vars->t0, sys_vars->dt, sys_vars->T, sys_vars->NU, sys_vars->ALPHA, sys_vars->BETA, sys_vars->u0);
+		sprintf(file_data, "_SIM_DATA_[%s-%s-%s]_N[%ld]_T[%1.1lf-%g-%1.3lf]_NU[%1.8lf]_ALPHA[%1.3lf]_K[%1.3lf,%lf]_EPS[%1.2lf,%1.2lf]_u0[%s].h5", 
+							sys_type, solv_type, model_type, 
+							sys_vars->N, 
+							sys_vars->t0, sys_vars->dt, sys_vars->T, 
+							sys_vars->NU, 
+							sys_vars->ALPHA, 
+							sys_vars->k_0, sys_vars->Lambda, 
+							sys_vars->EPS, 
+							sys_vars->u0);
 		#endif
 
 		// ----------------------------------
@@ -279,9 +297,28 @@ void GetOutputDirPath(void) {
 		// ----------------------------------
 		#if defined(__MAGNETO)
 		// Construct file label from simulation data
-		sprintf(file_data, "SIM[%s-%s-%s]_N[%ld]_T[%1.1lf-%g-%1.3lf]_NU[%1.8lf]_ETA[%1.8lf]_ALPHA[%1.3lf]_BETA[%1.3lf]_u0[%s]_TAG[%s]/", sys_type, solv_type, model_type, sys_vars->N, sys_vars->t0, sys_vars->dt, sys_vars->T, sys_vars->NU, sys_vars->ETA, sys_vars->ALPHA, sys_vars->BETA, sys_vars->u0, file_info->output_tag);
+		sprintf(file_data, "SIM_DATA_[%s-%s-%s]_N[%ld]_T[%1.1lf-%g-%1.3lf]_NU[%1.8lf]_ETA[%1.8lf]_ALPHA[%1.3lf]_BETA[%1.3lf]_K[%1.3lf,%lf]_EPS[%1.2lf,%1.2lf]_u0[%s]_TAG[%s]/", 
+							sys_type, solv_type, model_type, 
+							sys_vars->N, 
+							sys_vars->t0, sys_vars->dt, sys_vars->T, 
+							sys_vars->NU, 
+							sys_vars->ETA, 
+							sys_vars->ALPHA,
+							sys_vars->BETA, 
+							sys_vars->k_0, sys_vars->Lambda, 
+							sys_vars->EPS, sys_vars->EPS_M, 
+							sys_vars->u0, 
+							file_info->output_tag);
 		#else
-		sprintf(file_data, "SIM[%s-%s-%s]_N[%ld]_T[%1.1lf-%g-%1.3lf]_NU[%1.8lf]_ETA[%1.8lf]_ALPHA[%1.3lf]_BETA[%1.3lf]_u0[%s]_TAG[%s]/", sys_type, solv_type, model_type, sys_vars->N, sys_vars->t0, sys_vars->dt, sys_vars->T, sys_vars->NU, sys_vars->ALPHA, sys_vars->BETA, sys_vars->u0, file_info->output_tag);
+		sprintf(file_data, "SIM_DATA_[%s-%s-%s]_N[%ld]_T[%1.1lf-%g-%1.3lf]_NU[%1.8lf]_ALPHA[%1.3lf]_K[%1.3lf,%lf]_EPS[%1.2lf]_u0[%s]_TAG[%s]/", 
+							sys_type, solv_type, model_type, 
+							sys_vars->N, 
+							sys_vars->t0, sys_vars->dt, sys_vars->T, 
+							sys_vars->NU, sys_vars->ALPHA, 
+							sys_vars->k_0, sys_vars->Lambda, 
+							sys_vars->EPS, 
+							sys_vars->u0, 
+							file_info->output_tag);
 		#endif
 		
 		// ----------------------------------

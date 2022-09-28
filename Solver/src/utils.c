@@ -511,6 +511,15 @@ void PrintSimulationDetails(int argc, char** argv, double sim_time) {
 	else {
 		fprintf(sim_file, "Hyperviscosity: NO\n");
 	}
+	// Equation Interaction coefficients
+	fprintf(sim_file, "\nVelocity Interaction Coefficient: %1.3lf\n", sys_vars->EPS);
+	fprintf(sim_file, "Magnetic Interaction Coefficient: %1.3lf\n\n", sys_vars->EPS_M);
+
+
+	// Shell Wavenumber variables
+	fprintf(sim_file, "\nShell Wavenumber Prefactor: %1.3lf\n", sys_vars->k_0);
+	fprintf(sim_file, "Intershell Ratio: %1.3lf\n\n", sys_vars->Lambda);
+
 	// Spectra Slopes
 	fprintf(sim_file, "\nVelocity Spect Slope: %1.3lf\n", sys_vars->ALPHA);
 	fprintf(sim_file, "Magnetic Spect Slope: %1.3lf\n\n", sys_vars->BETA);
