@@ -286,8 +286,6 @@ int GetCMLArgs(int argc, char** argv) {
 					// Read in the intershell ratio for the shell radius
 					sys_vars->Lambda = atoi(optarg);
 					if (sys_vars->Lambda < 0) {
-					}
-					else {
 						fprintf(stderr, "\n["RED"ERROR"RESET"] Parsing of Command Line Arguements Failed: The provided intershell ratio lambda: [%lf] must be positive\n-->> Exiting!\n\n", sys_vars->Lambda);		
 						exit(1);
 					}
@@ -309,8 +307,6 @@ int GetCMLArgs(int argc, char** argv) {
 					// Read in the interaction coefficient for the magnetic equation
 					sys_vars->EPS_M = atoi(optarg);
 					if (sys_vars->EPS_M < 0) {
-					}
-					else {
 						fprintf(stderr, "\n["RED"ERROR"RESET"] Parsing of Command Line Arguements Failed: The magnetic interaction coefficient: [%lf] must be positive\n-->> Exiting!\n\n", sys_vars->EPS_M);		
 						exit(1);
 					}
