@@ -906,7 +906,7 @@ void InitializeIntegrationVariables(double* t0, double* t, double* dt, double* T
 	// Integration Counters
 	// -------------------------------
 	// Number of time steps and saving steps
-	sys_vars->num_t_steps = ((*T) - (*t0)) / (*dt);
+	sys_vars->num_t_steps = (int)round( ((*T) - (*t0)) / (*dt) );
 	if (sys_vars->TRANS_ITERS_FLAG == TRANSIENT_ITERS) {
 		// Get the transient iterations
 		(* trans_steps)       = (long int)(sys_vars->TRANS_ITERS_FRAC * sys_vars->num_t_steps);
@@ -944,7 +944,7 @@ void PrintUpdateToTerminal(int iters, double t, double dt, double T, int save_da
 	#if defined(__MAGNETO)
 	printf("Iter: %d/%ld\tt: %1.6lf/%1.3lf\tdt: %1.6g\tKE: %6.6g\tHEL_U: %6.6g\tHEL_B: %6.6g\tX-HEL: %6.6g\n", iters, sys_vars->num_t_steps, t, T, dt, run_data->tot_energy[save_data_indx], run_data->tot_hel_u[save_data_indx], run_data->tot_hel_b[save_data_indx], run_data->tot_cross_hel[save_data_indx]);
 	#else
-	printf("Iter: %d/%ld\tt: %1.6lf/%1.3lf\tdt: %1.6g\tKE: %6.6gHEL: %6.6g\t\n", iters, sys_vars->num_t_steps, t, T, dt, run_data->tot_energy[save_data_indx], run_data->tot_hel_u[save_data_indx]);
+	printf("Iter: %d/%ld\tt: %1.6lf/%1.3lf\tdt: %1.6g\tKE: %6.6g\tHEL: %6.6g\t\n", iters, sys_vars->num_t_steps, t, T, dt, run_data->tot_energy[save_data_indx], run_data->tot_hel_u[save_data_indx]);
 	#endif
 }
 /**

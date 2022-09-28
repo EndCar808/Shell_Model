@@ -154,7 +154,6 @@ if __name__ == '__main__':
     cfl        = []
     save_every = []
 
-
     ## Parse input parameters
     for section in parser.sections():
         if section in ['SYSTEM']:
@@ -263,6 +262,10 @@ if __name__ == '__main__':
     ## Get the path to the runs output directory
     par_runs_output_dir = os.path.split(output_dir)[0]
     par_runs_output_dir += '/ParallelRunsDump/'
+
+    for h, save in zip(dt, save_every):
+        print(T[0] / h)
+
     #########################
     ##      RUN SOLVER     ##
     #########################
@@ -294,7 +297,7 @@ if __name__ == '__main__':
                                                                                                                                                     u0, 
                                                                                                                                                     s_tag, 
                                                                                                                                                     forcing, force_k, force_scale, 
-                                                                                                                                                    save)] for n in N for t in T for h, save in zip(dt, save) for u0 in ic for v in nu for et in eta for ep in eps for a in alpha for b in beta for ep_m in eps_m for c in cfl for s_tag in solver_tag]
+                                                                                                                                                    save)] for n in N for t in T for h, save in zip(dt, save_every) for u0 in ic for v in nu for et in eta for ep in eps for a in alpha for b in beta for ep_m in eps_m for c in cfl for s_tag in solver_tag]
 
         if cmdargs.cmd_only:
             print(tc.C + "\nSolver Commands:\n" + tc.Rst)
@@ -302,49 +305,47 @@ if __name__ == '__main__':
                 print(c)
                 print()
         else:
-            # ## Create grouped iterable of subprocess calls to Popen() - see grouper recipe in itertools
-            # groups = [(Popen(cmd, shell = True, stdout = PIPE, stdin = PIPE, stderr = PIPE, universal_newlines = True) for cmd in cmd_list)] * proc_limit 
+            ## Create grouped iterable of subprocess calls to Popen() - see grouper recipe in itertools
+            groups = [(Popen(cmd, shell = True, stdout = PIPE, stdin = PIPE, stderr = PIPE, universal_newlines = True) for cmd in cmd_list)] * proc_limit 
 
-            # ## Loop through grouped iterable
-            # for processes in zip_longest(*groups): 
-            #     for proc in filter(None, processes): # filters out 'None' fill values if proc_limit does not divide evenly into cmd_list
-            #         ## Print command to screen
-            #         print("Executing the following command:\n\t" + tc.C + "{}".format(proc.args[0]) + tc.Rst)
+            ## Loop through grouped iterable
+            for processes in zip_longest(*groups): 
+                for proc in filter(None, processes): # filters out 'None' fill values if proc_limit does not divide evenly into cmd_list
+                    ## Print command to screen
+                    print("Executing the following command:\n\t" + tc.C + "{}".format(proc.args[0]) + tc.Rst)
                     
-            #         ## Print output to terminal as it comes
-            #         for line in proc.stdout:
-            #             sys.stdout.write(line)
+                    # ## Print output to terminal as it comes
+                    # for line in proc.stdout:
+                    #     sys.stdout.write(line)
 
-            #         # Communicate with process to retrive output and error
-            #         [run_CodeOutput, run_CodeErr] = proc.communicate()
+                    # Communicate with process to retrive output and error
+                    [run_CodeOutput, run_CodeErr] = proc.communicate()
 
-            #         # Append to output and error objects
-            #         if collect_data:
-            #             solver_output.append(run_CodeOutput)
-            #             solver_error.append(run_CodeErr)
+                    # Append to output and error objects
+                    if collect_data:
+                        solver_output.append(run_CodeOutput)
+                        solver_error.append(run_CodeErr)
                     
-            #         ## Print both to screen
-            #         print(run_CodeOutput)
-            #         print(run_CodeErr)
+                    ## Print both to screen
+                    print(run_CodeOutput)
+                    print(run_CodeErr)
 
-            #         ## Wait until all finished
-            #         proc.wait()
+                    ## Wait until all finished
+                    proc.wait()
 
-            # if collect_data:
-            #     # Get data and time
-            #     now = datetime.now()
-            #     d_t = now.strftime("%d%b%Y_%H:%M:%S")
+            if collect_data:
+                # Get data and time
+                now = datetime.now()
+                d_t = now.strftime("%d%b%Y_%H:%M:%S")
 
-            #     # Write output to file
-            #     with open(par_runs_output_dir + "par_run_solver_output_{}_{}.txt".format(cmdargs.init_file.lstrip('InitFiles/').rstrip(".ini"), d_t), "w") as file:
-            #         for item in solver_output:
-            #             file.write("%s\n" % item)
+                # Write output to file
+                with open(par_runs_output_dir + "par_run_solver_output_{}_{}.txt".format(cmdargs.init_file.lstrip('InitFiles/').rstrip(".ini"), d_t), "w") as file:
+                    for item in solver_output:
+                        file.write("%s\n" % item)
 
-            #     # Write error to file
-            #     with open(par_runs_output_dir + "par_run_solver_error_{}_{}.txt".format(cmdargs.init_file.lstrip('InitFiles/').rstrip(".ini"), d_t), "w") as file:
-            #         for i, item in enumerate(solver_error):
-            #             file.write("%s\n" % cmd_list[i])
-            #             file.write("%s\n" % item)
+                # Write error to file
+                with open(par_runs_output_dir + "par_run_solver_error_{}_{}.txt".format(cmdargs.init_file.lstrip('InitFiles/').rstrip(".ini"), d_t), "w") as file:
+                    for i, item in enumerate(solver_error):
+                        file.write("%s\n" % cmd_list[i])
+                        file.write("%s\n" % item)
 
-            for i, j in zip(dt, [0.5]):
-                print(i, j)

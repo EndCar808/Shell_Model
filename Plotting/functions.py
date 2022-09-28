@@ -182,9 +182,9 @@ def sim_data(input_dir, method = "default"):
 
             ## Parse Time range
             if term.startswith('T['):
-                data.t0 = float(term.split('-')[0].lstrip('T['))
-                data.dt = float(term.split('-')[1])
-                data.T  = float(term.split('-')[-1].rstrip(']'))
+                data.t0 = float(term.split(',')[0].lstrip('T['))
+                data.dt = float(term.split(',')[1])
+                data.T  = float(term.split(',')[-1].rstrip(']'))
 
             ## Parse initial condition
             if term.startswith('u0'):
