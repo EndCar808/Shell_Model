@@ -36,6 +36,13 @@ void ComputeSystemMeasurables(double t, int iter, RK_data_struct* RK_data) {
     const long int N = sys_vars->N; 
     int n, l;
     double k_fac;
+    const double lambda_pow         = sys_vars->Lambda * sys_vars->Lambda;
+    const double interact_coeff_u_1 = sys_vars->EPS / sys_vars->Lambda;
+    const double interact_coeff_u_2 = (1.0 - sys_vars->EPS) / lambda_pow;
+    const double interact_coeff_b_1 = 1.0 - sys_vars->EPS - sys_vars->EPS_M;
+    const double interact_coeff_b_2 = sys_vars->EPS_M / sys_vars->Lambda;
+    const double interact_coeff_b_3 = (1.0 - sys_vars->EPS_M) / lambda_pow;
+    double k_pre_fac_1, k_pre_fac_2, k_pre_fac_3, k_pre_fac_4;
 
     // Record the initial time
     #if defined(__TIME)
@@ -117,76 +124,68 @@ void ComputeSystemMeasurables(double t, int iter, RK_data_struct* RK_data) {
                 // Get temp indx
                 l = j + 2;
                 #if defined(PHASE_ONLY_DIRECT)
-                run_data->energy_diss[iter] += run_data->k[j] * run_data->k[j] * sys_vars->NU * run_data->a_n[n] * run_data->a_n[n];
+                run_data->energy_diss[i]  += run_data->k[j] * run_data->k[j] * sys_vars->NU * run_data->a_n[n] * run_data->a_n[n];
+                run_data->energy_force[i] += run_data->a_n[l] * cabs(run_data->forcing_u[l]) * cos(run_data->phi_n[l] - carg(run_data->forcing_u[l]));
                 #if defined(__MAGNETO) 
-                run_data->energy_diss[iter] += run_data->k[j] * run_data->k[j] * sys_vars->ETA * run_data->b_n[n] * run_data->b_n[n];
+                run_data->energy_diss[i] += run_data->k[j] * run_data->k[j] * sys_vars->ETA * run_data->b_n[n] * run_data->b_n[n];
+                run_data->energy_force[i] += run_data->b_n[l] * cabs(run_data->forcing_b[l]) * cos(run_data->psi_n[l] - carg(run_data->forcing_b[l]));
                 #endif
                 #else
-                run_data->energy_diss[i] += run_data->k[j] * run_data->k[j] * sys_vars->NU * cabs(run_data->u[l] * conj(run_data->u[l])); 
+                run_data->energy_diss[i]  += run_data->k[j] * run_data->k[j] * sys_vars->NU * cabs(run_data->u[l] * conj(run_data->u[l]));
+                run_data->energy_force[i] += creal(run_data->u[l] * conj(run_data->forcing_u[l]));
                 #if defined(__MAGNETO) 
-                run_data->energy_diss[i] += run_data->k[j] * run_data->k[j] * sys_vars->ETA * cabs(run_data->b[l] * conj(run_data->b[l])); 
+                run_data->energy_diss[i]  += run_data->k[j] * run_data->k[j] * sys_vars->ETA * cabs(run_data->b[l] * conj(run_data->b[l])); 
+                run_data->energy_force[i] += creal(run_data->b[l] * conj(run_data->forcing_b[l]));
                 #endif
                 #endif                  
             }
-            // Compute the energy flux
+
+            // Get the correct k prefactor terms for the nonlinear flux term 
             if (i == 0) {
-                #if defined(PHASE_ONLY_DIRECT)
-                // First term    
-                run_data->energy_flux[i] = (- 1.0 / 4.0 * run_data->k[i]) * run_data->a_n[n - 1] * run_data->a_n[n] * run_data->a_n[n + 1] * sin(run_data->phi_n[n] + run_data->phi_n[n]);
-                run_data->energy_flux[i] += run_data->k[i] * run_data->a_n[n] * run_data->a_n[n + 1] * run_data->a_n[n + 2] * sin(run_data->phi_n[n] + run_data->phi_n[n + 1] + run_data->phi_n[n + 2]);
+                k_pre_fac_1 =  - run_data->k[i] * interact_coeff_u_1;
                 #if defined(__MAGNETO)
-                // Second term
-                run_data->energy_flux[i] += (-1.0/6.0 * run_data->k[i]) * run_data->a_n[n - 1] * run_data->b_n[n] * run_data->b_n[n + 1] * sin(run_data->psi_n[n] + run_data->psi_n[n + 1]);
-                run_data->energy_flux[i] += run_data->k[i] * run_data->a_n[n] * run_data->b_n[n + 1] * run_data->b_n[n + 2] * sin(run_data->phi_n[n] + run_data->psi_n[n + 1] + run_data->psi_n[n + 2]);
-                // Third term
-                run_data->energy_flux[i] += (1.0 / 4.0 * run_data->k[i]) * run_data->b_n[n - 1] * run_data->a_n[n] * run_data->b_n[n + 1] * sin(run_data->phi_n[n] + run_data->psi_n[n + 1]);
-                run_data->energy_flux[i] += 1.0 / 6.0 * run_data->k[i] * run_data->b_n[n] * run_data->a_n[n + 1] * run_data->b_n[n + 2] * sin(run_data->psi_n[n] + run_data->phi_n[n + 1] + run_data->psi_n[n + 2]);
-                // Fourth term
-                run_data->energy_flux[i] += -(1.0 / 6.0 * run_data->k[i]) * run_data->b_n[n - 1] * run_data->b_n[n] * run_data->a_n[n + 1] * sin(run_data->psi_n[n] + run_data->psi_n[n + 1]);
-                run_data->energy_flux[i] += - 1.0 / 6.0 * run_data->k[i] * run_data->b_n[n] * run_data->b_n[n + 1] * run_data->a_n[n + 2] * sin(run_data->psi_n[n] + run_data->psi_n[n + 1] + run_data->psi_n[n + 2]);
-                #endif
-                #else
-                // First term
-                run_data->energy_flux[i] = cimag((- 1.0 / 4.0 * run_data->k[i]) * run_data->u[n - 1] * run_data->u[n] * run_data->u[n + 1] + run_data->k[i] * run_data->u[n] * run_data->u[n + 1] * run_data->u[n + 2]);
-                #if defined(__MAGNETO)
-                // Second term
-                run_data->energy_flux[i] += cimag((1.0/6.0 * run_data->k[i]) * run_data->u[n - 1] * run_data->b[n] * run_data->b[n + 1] - run_data->k[i] * run_data->u[n] * run_data->b[n + 1] * run_data->b[n + 2]);
-                // Third term
-                run_data->energy_flux[i] += cimag((1.0 / 4.0 * run_data->k[i]) * run_data->b[n - 1] * run_data->u[n] * run_data->b[n + 1] + 1.0 / 6.0 * run_data->k[i] * run_data->b[n] * run_data->u[n + 1] * run_data->b[n + 2]);
-                // Fourth term
-                run_data->energy_flux[i] += cimag(-(1.0 / 6.0 * run_data->k[i]) * run_data->b[n - 1] * run_data->b[n] * run_data->u[n + 1] - 1.0 / 6.0 * run_data->k[i] * run_data->b[n] * run_data->b[n + 1] * run_data->u[n + 2]);
-                #endif
+                k_pre_fac_2 = run_data->k[i] * interact_coeff_b_2;
+                k_pre_fac_3 = run_data->k[i] * interact_coeff_u_1;
+                k_pre_fac_4 = run_data->k[i] * interact_coeff_b_2;
                 #endif
             }
             else {
-                #if defined(PHASE_ONLY_DIRECT)
-                // First term
-                run_data->energy_flux[i] = (run_data->k[i - 1] - 1.0 / 4.0 * run_data->k[i]) * run_data->a_n[n - 1] * run_data->a_n[n] * run_data->a_n[n + 1] * sin(run_data->phi_n[n - 1] + run_data->phi_n[n] + run_data->phi_n[n]);
-                run_data->energy_flux[i] += run_data->k[i] * run_data->a_n[n] * run_data->a_n[n + 1] * run_data->a_n[n + 2] * sin(run_data->phi_n[n] + run_data->phi_n[n + 1] + run_data->phi_n[n + 2]);
+                k_pre_fac_1 = run_data->k[i - 1] - run_data->k[i] * interact_coeff_u_1;
                 #if defined(__MAGNETO)
-                // Second term
-                run_data->energy_flux[i] += -(run_data->k[i - 1] - 1.0/6.0 * run_data->k[i]) * run_data->a_n[n - 1] * run_data->b_n[n] * run_data->b_n[n + 1] * sin(run_data->phi_n[n - 1] + run_data->psi_n[n] + run_data->psi_n[n + 1]);
-                run_data->energy_flux[i] += run_data->k[i] * run_data->a_n[n] * run_data->b_n[n + 1] * run_data->b_n[n + 2] * sin(run_data->phi_n[n] + run_data->psi_n[n + 1] + run_data->psi_n[n + 2]);
-                // Third term
-                run_data->energy_flux[i] += (1.0 / 6.0 * run_data->k[i] + 1.0 / 4.0 * run_data->k[i]) * run_data->b_n[n - 1] * run_data->a_n[n] * run_data->b_n[n + 1] * sin(run_data->psi_n[n - 1] + run_data->phi_n[n] + run_data->psi_n[n + 1]);
-                run_data->energy_flux[i] += 1.0 / 6.0 * run_data->k[i] * run_data->b_n[n] * run_data->a_n[n + 1] * run_data->b_n[n + 2] * sin(run_data->psi_n[n] + run_data->phi_n[n + 1] + run_data->psi_n[n + 2]);
-                // Fourth term
-                run_data->energy_flux[i] += -(1.0 / 6.0 * run_data->k[i - 1] + 1.0 / 6.0 * run_data->k[i]) * run_data->b_n[n - 1] * run_data->b_n[n] * run_data->a_n[n + 1] * sin(run_data->psi_n[n - 1] + run_data->psi_n[n] + run_data->psi_n[n + 1]);
-                run_data->energy_flux[i] += - 1.0 / 6.0 * run_data->k[i] * run_data->b_n[n] * run_data->b_n[n + 1] * run_data->a_n[n + 2] * sin(run_data->psi_n[n] + run_data->psi_n[n + 1] + run_data->psi_n[n + 2]);
-                #endif
-                #else
-                // First term
-                run_data->energy_flux[i] = cimag((run_data->k[i - 1] - 1.0 / 4.0 * run_data->k[i]) * run_data->u[n - 1] * run_data->u[n] * run_data->u[n + 1] + run_data->k[i] * run_data->u[n] * run_data->u[n + 1] * run_data->u[n + 2]);
-                #if defined(__MAGNETO)
-                // Second term
-                run_data->energy_flux[i] += cimag((1.0/6.0 * run_data->k[i] - run_data->k[i - 1]) * run_data->u[n - 1] * run_data->b[n] * run_data->b[n + 1] - run_data->k[i] * run_data->u[n] * run_data->b[n + 1] * run_data->b[n + 2]);
-                // Third term
-                run_data->energy_flux[i] += cimag((1.0 / 4.0 * run_data->k[i] + 1.0 / 6.0 * run_data->k[i - 1]) * run_data->b[n - 1] * run_data->u[n] * run_data->b[n + 1] + 1.0 / 6.0 * run_data->k[i] * run_data->b[n] * run_data->u[n + 1] * run_data->b[n + 2]);
-                // Fourth term
-                run_data->energy_flux[i] += cimag(-(1.0 / 6.0 * run_data->k[i] + 1.0 / 6.0 * run_data->k[i - 1]) * run_data->b[n - 1] * run_data->b[n] * run_data->u[n + 1] - 1.0 / 6.0 * run_data->k[i] * run_data->b[n] * run_data->b[n + 1] * run_data->u[n + 2]);
-                #endif
+                k_pre_fac_2 = - run_data->k[i - 1] + run_data->k[i] * interact_coeff_b_2;
+                k_pre_fac_3 = run_data->k[i - 1] * interact_coeff_b_1 + run_data->k[i] * interact_coeff_u_1;
+                k_pre_fac_4 = run_data->k[i - 1] * interact_coeff_b_1 + run_data->k[i] * interact_coeff_b_2;
                 #endif
             }
+
+            // Compute the energy flux
+            #if defined(PHASE_ONLY_DIRECT)
+            // First term
+            run_data->energy_flux[i] = k_pre_fac_1 * run_data->a_n[n - 1] * run_data->a_n[n] * run_data->a_n[n + 1] * sin(run_data->phi_n[n - 1] + run_data->phi_n[n] + run_data->phi_n[n + 1]);
+            run_data->energy_flux[i] += run_data->k[i] * run_data->a_n[n] * run_data->a_n[n + 1] * run_data->a_n[n + 2] * sin(run_data->phi_n[n] + run_data->phi_n[n + 1] + run_data->phi_n[n + 2]);
+            #if defined(__MAGNETO)
+            // Second term
+            run_data->energy_flux[i] += k_pre_fac_2 * run_data->a_n[n - 1] * run_data->b_n[n] * run_data->b_n[n + 1] * sin(run_data->phi_n[n - 1] + run_data->psi_n[n] + run_data->psi_n[n + 1]);
+            run_data->energy_flux[i] += -run_data->k[i] * run_data->a_n[n] * run_data->b_n[n + 1] * run_data->b_n[n + 2] * sin(run_data->phi_n[n] + run_data->psi_n[n + 1] + run_data->psi_n[n + 2]);
+            // Third term
+            run_data->energy_flux[i] += k_pre_fac_3 * run_data->b_n[n - 1] * run_data->a_n[n] * run_data->b_n[n + 1] * sin(run_data->psi_n[n - 1] + run_data->phi_n[n] + run_data->psi_n[n + 1]);
+            run_data->energy_flux[i] += interact_coeff_b_1 * run_data->k[i] * run_data->b_n[n] * run_data->a_n[n + 1] * run_data->b_n[n + 2] * sin(run_data->psi_n[n] + run_data->phi_n[n + 1] + run_data->psi_n[n + 2]);
+            // Fourth term
+            run_data->energy_flux[i] += -k_pre_fac_4 * run_data->b_n[n - 1] * run_data->a_n[n] * run_data->b_n[n + 1] * sin(run_data->psi_n[n - 1] + run_data->psi_n[n] + run_data->psi_n[n + 1]);
+            run_data->energy_flux[i] += - interact_coeff_b_1 * run_data->k[i] * run_data->b_n[n] * run_data->a_n[n + 1] * run_data->b_n[n + 2] * sin(run_data->psi_n[n] + run_data->psi_n[n + 1] + run_data->psi_n[n + 2]);
+            #endif
+            #else
+            // First term
+            run_data->energy_flux[i] = cimag(k_pre_fac_1 * run_data->u[n - 1] * run_data->u[n] * run_data->u[n + 1] + run_data->k[i] * run_data->u[n] * run_data->u[n + 1] * run_data->u[n + 2]);
+            #if defined(__MAGNETO)
+            // Second term
+            run_data->energy_flux[i] += cimag(k_pre_fac_2 * run_data->u[n - 1] * run_data->b[n] * run_data->b[n + 1] - run_data->k[i] * run_data->u[n] * run_data->b[n + 1] * run_data->b[n + 2]);
+            // Third term
+            run_data->energy_flux[i] += cimag(k_pre_fac_3 * run_data->b[n - 1] * run_data->u[n] * run_data->b[n + 1] + interact_coeff_b_1 * run_data->k[i] * run_data->b[n] * run_data->u[n + 1] * run_data->b[n + 2]);
+            // Fourth term
+            run_data->energy_flux[i] += cimag(-k_pre_fac_4 * run_data->b[n - 1] * run_data->b[n] * run_data->u[n + 1] - interact_coeff_b_1 * run_data->k[i] * run_data->b[n] * run_data->b[n + 1] * run_data->u[n + 2]);
+            #endif
+            #endif
             #endif
         }
     }    
@@ -273,6 +272,12 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
     run_data->energy_diss = (double* )fftw_malloc(sizeof(double) * sys_vars->N);
     if (run_data->energy_diss == NULL) {
         fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Energy Dissipation");
+        exit(1);
+    }
+    // Allocate energy input
+    run_data->energy_force = (double* )fftw_malloc(sizeof(double) * sys_vars->N);
+    if (run_data->energy_force == NULL) {
+        fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Energy Input");
         exit(1);
     }
     #endif

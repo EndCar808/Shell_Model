@@ -529,12 +529,12 @@ void NonlinearTerm(double* u, double* b, double* u_nonlin, double* b_nonlin, con
 
 	// Initialize variables
 	int n;
-	double lambda_pow         = sys_vars->Lambda * sys_vars->Lambda;
-	double interact_coeff_u_1 = sys_vars->EPS / sys_vars->Lambda;
-	double interact_coeff_u_2 = (1.0 - sys_vars->EPS) / lambda_pow;
-	double interact_coeff_b_1 = 1.0 - sys_vars->EPS - sys_vars->EPS_M;
-	double interact_coeff_b_2 = sys_vars->EPS_M / sys_vars->Lambda;
-	double interact_coeff_b_3 = (1.0 - sys_vars->EPS_M) / lambda_pow;
+	const double lambda_pow         = sys_vars->Lambda * sys_vars->Lambda;
+	const double interact_coeff_u_1 = sys_vars->EPS / sys_vars->Lambda;
+	const double interact_coeff_u_2 = (1.0 - sys_vars->EPS) / lambda_pow;
+	const double interact_coeff_b_1 = 1.0 - sys_vars->EPS - sys_vars->EPS_M;
+	const double interact_coeff_b_2 = sys_vars->EPS_M / sys_vars->Lambda;
+	const double interact_coeff_b_3 = (1.0 - sys_vars->EPS_M) / lambda_pow;
 	double u_tmp_1, u_tmp_2, u_tmp_3;
 	#if defined(__MAGNETO)
 	double b_tmp_1, b_tmp_2, b_tmp_3;
@@ -590,12 +590,12 @@ void NonlinearTerm(fftw_complex* u, fftw_complex* b, fftw_complex* u_nonlin, fft
 
 	// Initialize variables
 	int n;
-	double lambda_pow         = sys_vars->Lambda * sys_vars->Lambda;
-	double interact_coeff_u_1 = sys_vars->EPS / sys_vars->Lambda;
-	double interact_coeff_u_2 = (1.0 - sys_vars->EPS) / lambda_pow;
-	double interact_coeff_b_1 = 1.0 - sys_vars->EPS - sys_vars->EPS_M;
-	double interact_coeff_b_2 = sys_vars->EPS_M / sys_vars->Lambda;
-	double interact_coeff_b_3 = (1.0 - sys_vars->EPS_M) / lambda_pow;
+	const double lambda_pow         = sys_vars->Lambda * sys_vars->Lambda;
+	const double interact_coeff_u_1 = sys_vars->EPS / sys_vars->Lambda;
+	const double interact_coeff_u_2 = (1.0 - sys_vars->EPS) / lambda_pow;
+	const double interact_coeff_b_1 = 1.0 - sys_vars->EPS - sys_vars->EPS_M;
+	const double interact_coeff_b_2 = sys_vars->EPS_M / sys_vars->Lambda;
+	const double interact_coeff_b_3 = (1.0 - sys_vars->EPS_M) / lambda_pow;
 	fftw_complex u_tmp_1, u_tmp_2, u_tmp_3;
 	#if defined(__MAGNETO)
 	fftw_complex b_tmp_1, b_tmp_2, b_tmp_3;
@@ -844,7 +844,8 @@ void InitializeForicing(const long int N) {
 	// ------------------------------------------------
 	// Allocate Memory for Forcing Data
 	// ------------------------------------------------
-	run_data->forcing = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
+	run_data->forcing_u = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
+	run_data->forcing_b = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
 
 	// ------------------------------------------------
 	// Initialize Forcing Data
@@ -1042,96 +1043,73 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 	// Runge-Kutta Integration arrays
 	#if defined(PHASE_ONLY_DIRECT)
 	RK_data->RK1_u       = (double* )fftw_malloc(sizeof(double) * (N + 4));
+	RK_data->RK2_u       = (double* )fftw_malloc(sizeof(double) * (N + 4));
+	RK_data->RK3_u       = (double* )fftw_malloc(sizeof(double) * (N + 4));
+	RK_data->RK4_u       = (double* )fftw_malloc(sizeof(double) * (N + 4));
+	RK_data->RK_u_tmp    = (double* )fftw_malloc(sizeof(double) * (N + 4));
+	#if defined(__MAGNETO)
+	RK_data->RK1_b       = (double* )fftw_malloc(sizeof(double) * (N + 4));
+	RK_data->RK2_b       = (double* )fftw_malloc(sizeof(double) * (N + 4));
+	RK_data->RK3_b       = (double* )fftw_malloc(sizeof(double) * (N + 4));
+	RK_data->RK4_b       = (double* )fftw_malloc(sizeof(double) * (N + 4));
+	RK_data->RK_b_tmp    = (double* )fftw_malloc(sizeof(double) * (N + 4));
+	#endif
 	#else
 	RK_data->RK1_u       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
+	RK_data->RK2_u       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
+	RK_data->RK3_u       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
+	RK_data->RK4_u       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
+	#if defined(__MAGNETO)
+	RK_data->RK1_b       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
+	RK_data->RK2_b       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
+	RK_data->RK3_b       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
+	RK_data->RK4_b       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
+	RK_data->RK_u_tmp    = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
+	RK_data->RK_b_tmp    = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
+	#endif
 	#endif
 	if (RK_data->RK1_u == NULL) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Integration Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "RK1 Velocity");
 		exit(1);
 	}
-	#if defined(PHASE_ONLY_DIRECT)
-	RK_data->RK2_u       = (double* )fftw_malloc(sizeof(double) * (N + 4));
-	#else
-	RK_data->RK2_u       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
-	#endif
 	if (RK_data->RK2_u == NULL) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Integration Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "RK2 Velocity");
 		exit(1);
 	}
-	#if defined(PHASE_ONLY_DIRECT)
-	RK_data->RK3_u       = (double* )fftw_malloc(sizeof(double) * (N + 4));
-	#else
-	RK_data->RK3_u       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
-	#endif
 	if (RK_data->RK3_u == NULL) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Integration Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "RK3 Velocity");
 		exit(1);
 	}
-	#if defined(PHASE_ONLY_DIRECT)
-	RK_data->RK4_u       = (double* )fftw_malloc(sizeof(double) * (N + 4));
-	#else
-	RK_data->RK4_u       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
-	#endif
 	if (RK_data->RK4_u == NULL) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Integration Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "RK4 Velocity");
 		exit(1);
 	}
-	#if defined(__MAGNETO)
-	RK_data->RK1_b       = (double* )fftw_malloc(sizeof(double) * (N + 4));
-	#if defined(PHASE_ONLY_DIRECT)
-	#else
-	RK_data->RK1_b       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
-	#endif
-	if (RK_data->RK1_b == NULL) {
-		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Integration Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "RK1 Magnetic");
-		exit(1);
-	}
-	#if defined(PHASE_ONLY_DIRECT)
-	RK_data->RK2_b       = (double* )fftw_malloc(sizeof(double) * (N + 4));
-	#else
-	RK_data->RK2_b       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
-	#endif
-	if (RK_data->RK2_b == NULL) {
-		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Integration Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "RK2 Magnetic");
-		exit(1);
-	}
-	#if defined(PHASE_ONLY_DIRECT)
-	RK_data->RK3_b       = (double* )fftw_malloc(sizeof(double) * (N + 4));
-	#else
-	RK_data->RK3_b       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
-	#endif
-	if (RK_data->RK3_b == NULL) {
-		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Integration Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "RK3 Magnetic");
-		exit(1);
-	}
-	#if defined(PHASE_ONLY_DIRECT)
-	RK_data->RK4_b       = (double* )fftw_malloc(sizeof(double) * (N + 4));
-	#else
-	RK_data->RK4_b       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
-	#endif
-	if (RK_data->RK4_b == NULL) {
-		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Integration Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "RK4 Magnetic");
-		exit(1);
-	}
-	#endif
-	#if defined(PHASE_ONLY_DIRECT)
-	RK_data->RK_u_tmp    = (double* )fftw_malloc(sizeof(double) * (N + 4));
-	#else
-	RK_data->RK_u_tmp    = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
-	#endif
 	if (RK_data->RK_u_tmp == NULL) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Integration Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "RK_u_tmp");
 		exit(1);
 	}
-	#if defined(PHASE_ONLY_DIRECT)
-	RK_data->RK_b_tmp    = (double* )fftw_malloc(sizeof(double) * (N + 4));
-	#else
-	RK_data->RK_b_tmp    = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
-	#endif
+	#if defined(__MAGNETO)
+	if (RK_data->RK1_b == NULL) {
+		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Integration Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "RK1 Magnetic");
+		exit(1);
+	}
+	if (RK_data->RK2_b == NULL) {
+		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Integration Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "RK2 Magnetic");
+		exit(1);
+	}
+	if (RK_data->RK3_b == NULL) {
+		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Integration Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "RK3 Magnetic");
+		exit(1);
+	}
+	if (RK_data->RK4_b == NULL) {
+		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Integration Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "RK4 Magnetic");
+		exit(1);
+	}
 	if (RK_data->RK_b_tmp == NULL) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Integration Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "RK_b_tmp");
 		exit(1);
 	}
+	#endif
 
 	// -------------------------------
 	// Initialize All Data 
@@ -1204,8 +1182,10 @@ void FreeMemory(RK_data_struct* RK_data) {
 	#if defined(__ENRG_FLUX)
 	fftw_free(run_data->energy_flux);
 	fftw_free(run_data->energy_diss);
+	fftw_free(run_data->energy_force);
 	#endif
-	fftw_free(run_data->forcing);
+	fftw_free(run_data->forcing_u);
+	fftw_free(run_data->forcing_b);
 
 	// Free integration variables
 	fftw_free(RK_data->RK1_u);
