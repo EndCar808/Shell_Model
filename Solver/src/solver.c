@@ -211,8 +211,21 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 
 	// Initialize vairables
 	int n;
+	#if defined(PHASE_ONLY_DIRECT)
+	double int_fac_u;
+	double int_fac_u_1;
+	#if defined(__MAGNETO)
+	double int_fac_b;
+	double int_fac_b_1;
+	#endif
+	#else
 	fftw_complex int_fac_u;
+	fftw_complex int_fac_u_1;
+	#if defined(__MAGNETO)
 	fftw_complex int_fac_b;
+	fftw_complex int_fac_b_1;
+	#endif
+	#endif
 	#if defined(PHASE_ONLY)
 	double po_norm_fac_u;
 	#if defined(__MAGNETO)
@@ -229,87 +242,106 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 	#else
 	NonlinearTerm(run_data->u, run_data->b, RK_data->RK1_u, RK_data->RK1_b, N);
 	#endif
-	for (int i = 0; i < N; ++i) {
-		// Get tmp index
-		n = i + 2;
-
-		// Get the integrating factor
-		int_fac_u = exp(-sys_vars->NU * dt * run_data->k[i] * run_data->k[i] / 2.0);
-		int_fac_b = exp(-sys_vars->ETA * dt * run_data->k[i] * run_data->k[i] / 2.0);
+	for (int i = 0; i < N + 4; ++i) {
 
 		#if defined(PHASE_ONLY_DIRECT)
+		// Get the integrating factor
+		int_fac_u = exp(-sys_vars->NU * dt * run_data->k[i] * run_data->k[i] / 2.0 + cabs(run_data->forcing_u[i]) * sin(carg(run_data->forcing_u[i]) - run_data->phi_n[i]));
+
 		// Update temorary velocity term
-		RK_data->RK_u_tmp[n] = run_data->phi_n[n] * int_fac_u + dt * RK4_A21 * RK_data->RK1_u[n] * int_fac_u;
+		RK_data->RK_u_tmp[i] = run_data->phi_n[i] * int_fac_u + dt * RK4_A21 * RK_data->RK1_u[i] * int_fac_u;
 		#if defined(__MAGNETO)
+		// Get the integrating factor
+		int_fac_b = exp(-sys_vars->ETA * dt * run_data->k[i] * run_data->k[i] / 2.0 + cabs(run_data->forcing_b[i]) * sin(carg(run_data->forcing_b[i]) - run_data->psi_n[i]));
+
 		// Update temporary magnetic term
-		RK_data->RK_b_tmp[n] = run_data->psi_n[n] * int_fac_b + dt * RK4_A21 * RK_data->RK1_b[n] * int_fac_b;		
+		RK_data->RK_b_tmp[i] = run_data->psi_n[i] * int_fac_b + dt * RK4_A21 * RK_data->RK1_b[i] * int_fac_b;		
 		#endif
 		#else
+		// Get the integrating factor
+		int_fac_u = exp(-sys_vars->NU * dt * run_data->k[i] * run_data->k[i] / 2.0 + run_data->forcing_u[i]);
+
 		// Update temorary velocity term
-		RK_data->RK_u_tmp[n] = run_data->u[n] * int_fac_u + dt * RK4_A21 * RK_data->RK1_u[n] * int_fac_u;
+		RK_data->RK_u_tmp[i] = run_data->u[i] * int_fac_u + dt * RK4_A21 * RK_data->RK1_u[i] * int_fac_u;
 		#if defined(__MAGNETO)
+		// Get the integrating factor
+		int_fac_b = exp(-sys_vars->ETA * dt * run_data->k[i] * run_data->k[i] / 2.0 + run_data->forcing_b[i]);
+		
 		// Update temporary magnetic term
-		RK_data->RK_b_tmp[n] = run_data->b[n] * int_fac_b + dt * RK4_A21 * RK_data->RK1_b[n] * int_fac_b;		
+		RK_data->RK_b_tmp[i] = run_data->b[i] * int_fac_b + dt * RK4_A21 * RK_data->RK1_b[i] * int_fac_b;		
 		#endif
 		#endif
 	}
 
 	// ----------------------- Stage 2
 	NonlinearTerm(RK_data->RK_u_tmp, RK_data->RK_b_tmp, RK_data->RK2_u, RK_data->RK2_b, N);
-	for (int i = 0; i < N; ++i) {
-		// Get tmp index
-		n = i + 2;
-
-		// Get the integrating factor
-		int_fac_u = cexp(-sys_vars->NU * dt * run_data->k[i] * run_data->k[i] / 2.0);
-		int_fac_b = cexp(-sys_vars->ETA * dt * run_data->k[i] * run_data->k[i] / 2.0);
-
+	for (int i = 0; i < N + 4; ++i) {
 		#if defined(PHASE_ONLY_DIRECT)
+		// Get the integrating factor
+		int_fac_u = cexp(-sys_vars->NU * dt * run_data->k[i] * run_data->k[i] / 2.0 + cabs(run_data->forcing_u[i]) * sin(carg(run_data->forcing_u[i]) - run_data->phi_n[i]));
+
 		// Update temorary velocity term
-		RK_data->RK_u_tmp[n] = run_data->phi_n[n] * int_fac_u + dt * RK4_A32 * RK_data->RK2_u[n];
+		RK_data->RK_u_tmp[i] = run_data->phi_n[i] * int_fac_u + dt * RK4_A32 * RK_data->RK2_u[i];
 		#if defined(__MAGNETO)
+		// Get the integrating factor
+		int_fac_b = cexp(-sys_vars->ETA * dt * run_data->k[i] * run_data->k[i] / 2.0 + cabs(run_data->forcing_b[i]) * sin(carg(run_data->forcing_b[i]) - run_data->psi_n[i]));
+
 		// Update temporary magnetic term
-		RK_data->RK_b_tmp[n] = run_data->psi_n[n] * int_fac_b + dt * RK4_A32 * RK_data->RK2_b[n];		
+		RK_data->RK_b_tmp[i] = run_data->psi_n[i] * int_fac_b + dt * RK4_A32 * RK_data->RK2_b[i];		
 		#endif
 		#else
+		// Get the integrating factor
+		int_fac_u = cexp(-sys_vars->NU * dt * run_data->k[i] * run_data->k[i] / 2.0 + run_data->forcing_u[i]);
+
 		// Update temorary velocity term
-		RK_data->RK_u_tmp[n] = run_data->u[n] * int_fac_u + dt * RK4_A32 * RK_data->RK2_u[n];
+		RK_data->RK_u_tmp[i] = run_data->u[i] * int_fac_u + dt * RK4_A32 * RK_data->RK2_u[i];
 		#if defined(__MAGNETO)
+		// Get the integrating factor
+		int_fac_b = cexp(-sys_vars->ETA * dt * run_data->k[i] * run_data->k[i] / 2.0 + run_data->forcing_b[i]);
+
 		// Update temporary magnetic term
-		RK_data->RK_b_tmp[n] = run_data->b[n] * int_fac_b + dt * RK4_A32 * RK_data->RK2_b[n];		
+		RK_data->RK_b_tmp[i] = run_data->b[i] * int_fac_b + dt * RK4_A32 * RK_data->RK2_b[i];		
 		#endif
 		#endif
 	}
 
 	// ----------------------- Stage 3
 	NonlinearTerm(RK_data->RK_u_tmp, RK_data->RK_b_tmp, RK_data->RK3_u, RK_data->RK3_b, N);
-	for (int i = 0; i < N; ++i) {
-		// Get tmp index
-		n = i + 2;
-
-		// Get the integrating factor
-		int_fac_u = cexp(-sys_vars->NU * dt * run_data->k[i] * run_data->k[i]);
-		int_fac_b = cexp(-sys_vars->ETA * dt * run_data->k[i] * run_data->k[i]);
-
-
+	for (int i = 0; i < N + 4; ++i) {
 		#if defined(PHASE_ONLY_DIRECT)
+		// Get the integrating factor
+		int_fac_u   = cexp(-sys_vars->NU * dt * run_data->k[i] * run_data->k[i] + cabs(run_data->forcing_u[i]) * sin(carg(run_data->forcing_u[i]) - run_data->phi_n[i]));
+		int_fac_u_1 = cexp(-sys_vars->NU * dt * run_data->k[i] * run_data->k[i] / 2.0 + cabs(run_data->forcing_u[i]) * sin(carg(run_data->forcing_u[i]) - run_data->phi_n[i]));
+
 		// Update temorary velocity term
-		RK_data->RK_u_tmp[n] = run_data->phi_n[n] * int_fac_u + dt * RK4_A43 * RK_data->RK3_u[n] * sqrt(int_fac_u);
+		RK_data->RK_u_tmp[i] = run_data->phi_n[i] * int_fac_u + dt * RK4_A43 * RK_data->RK3_u[i] * int_fac_u_1;
 		#if defined(__MAGNETO)
+		// Get the integrating factor
+		int_fac_b   = cexp(-sys_vars->ETA * dt * run_data->k[i] * run_data->k[i] + cabs(run_data->forcing_b[i]) * sin(carg(run_data->forcing_b[i]) - run_data->psi_n[i]));
+		int_fac_b_1 = cexp(-sys_vars->ETA * dt * run_data->k[i] * run_data->k[i] / 2.0 + cabs(run_data->forcing_b[i]) * sin(carg(run_data->forcing_b[i]) - run_data->psi_n[i]));
+
 		// Update temporary magnetic term
-		RK_data->RK_b_tmp[n] = run_data->psi_n[n] * int_fac_b + dt * RK4_A43 * RK_data->RK3_b[n] * sqrt(int_fac_b);		
+		RK_data->RK_b_tmp[i] = run_data->psi_n[i] * int_fac_b + dt * RK4_A43 * RK_data->RK3_b[i] * int_fac_b_1;		
 		#endif
 		#else
+		// Get the integrating factor
+		int_fac_u   = cexp(-sys_vars->NU * dt * run_data->k[i] * run_data->k[i] + run_data->forcing_u[i]);
+		int_fac_u_1 = cexp(-sys_vars->NU * dt * run_data->k[i] * run_data->k[i] / 2.0 + run_data->forcing_u[i]);
+
 		// Update temorary velocity term
-		RK_data->RK_u_tmp[n] = run_data->u[n] * int_fac_u + dt * RK4_A43 * RK_data->RK3_u[n] * sqrt(int_fac_u);
+		RK_data->RK_u_tmp[i] = run_data->u[i] * int_fac_u + dt * RK4_A43 * RK_data->RK3_u[i] * int_fac_u_1;
 		#if defined(__MAGNETO)
+		// Get the integrating factor
+		int_fac_b   = cexp(-sys_vars->ETA * dt * run_data->k[i] * run_data->k[i] + run_data->forcing_b[i]);
+		int_fac_b_1 = cexp(-sys_vars->ETA * dt * run_data->k[i] * run_data->k[i] / 2.0 + run_data->forcing_b[i]);
+		
 		// Update temporary magnetic term
-		RK_data->RK_b_tmp[n] = run_data->b[n] * int_fac_b + dt * RK4_A43 * RK_data->RK3_b[n] * sqrt(int_fac_b);		
+		RK_data->RK_b_tmp[i] = run_data->b[i] * int_fac_b + dt * RK4_A43 * RK_data->RK3_b[i] * int_fac_b_1;		
 		#endif
 		#endif
 	}
 
-	// ----------------------- Stage 2
+	// ----------------------- Stage 4
 	NonlinearTerm(RK_data->RK_u_tmp, RK_data->RK_b_tmp, RK_data->RK4_u, RK_data->RK4_b, N);
 
 
@@ -317,12 +349,8 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 	/// UPDATE STEP
 	/////////////////////
 	for (int i = 0; i < N; ++i) {
-		// Get tmp index
+		// Get temporary index
 		n = i + 2;
-
-		// Get the integrating factors
-		int_fac_u = cexp(-sys_vars->NU * dt * run_data->k[i] * run_data->k[i]);
-		int_fac_b = cexp(-sys_vars->ETA * dt * run_data->k[i] * run_data->k[i]);
 
 		#if defined(PHASE_ONLY)
 		// Pre-record the amplitudes for resetting after update step
@@ -334,34 +362,48 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 
 		///-------------------- Update Step
 		#if defined(PHASE_ONLY_DIRECT)
+		// Get the integrating factors
+		int_fac_u   = cexp(-sys_vars->NU * dt * run_data->k[n] * run_data->k[n] + cabs(run_data->forcing_u[n]) * sin(carg(run_data->forcing_u[n]) - run_data->phi_n[n]));
+		int_fac_u_1 = cexp(-sys_vars->NU * dt * run_data->k[n] * run_data->k[n] / 2.0 + cabs(run_data->forcing_u[n]) * sin(carg(run_data->forcing_u[n]) - run_data->phi_n[n]));
+
 		// Update the new velocity field
-		run_data->phi_n[n] = int_fac_u * run_data->phi_n[n] + dt * RK4_B1 * int_fac_u * RK_data->RK1_u[n] + dt * RK4_B2 * sqrt(int_fac_u) * RK_data->RK2_u[n] + dt * RK4_B3 * sqrt(int_fac_u) * RK_data->RK3_u[n] + dt * RK4_B4 * RK_data->RK4_u[n];
-		// run_data->phi_n[n] = int_fac_u * run_data->phi_n[n] + (dt / 6.0) * (int_fac_u * RK_data->RK1_u[n] + 2.0 * sqrt(int_fac_u) * RK_data->RK2_u[n] + 2.0 * sqrt(int_fac_u) * RK_data->RK3_u[n] + RK_data->RK4_u[n]);
+		run_data->phi_n[n] = int_fac_u * run_data->phi_n[n] + dt * RK4_B1 * int_fac_u * RK_data->RK1_u[n] + dt * RK4_B2 * int_fac_u_1 * RK_data->RK2_u[n] + dt * RK4_B3 * int_fac_u_1 * RK_data->RK3_u[n] + dt * RK4_B4 * RK_data->RK4_u[n];
 		#if defined(__MAGNETO)
+		// Get the integrating factors
+		int_fac_b   = cexp(-sys_vars->ETA * dt * run_data->k[n] * run_data->k[n] + cabs(run_data->forcing_b[n]) * sin(carg(run_data->forcing_b[n]) - run_data->psi_n[n]));
+		int_fac_b_1 = cexp(-sys_vars->ETA * dt * run_data->k[n] * run_data->k[n] / 2.0 + cabs(run_data->forcing_b[n]) * sin(carg(run_data->forcing_b[n]) - run_data->psi_n[n]));
+
 		// Update the new magnetic field
-		run_data->psi_n[n] = int_fac_b * run_data->psi_n[n] + dt * RK4_B1 * int_fac_b * RK_data->RK1_b[n] + dt * RK4_B2 * sqrt(int_fac_b) * RK_data->RK2_b[n] + dt * RK4_B3 * sqrt(int_fac_b) * RK_data->RK3_b[n] + dt * RK4_B4 * RK_data->RK4_b[n];
-		// run_data->psi_n[n] = int_fac_b * run_data->psi_n[n] + (dt / 6.0) * (int_fac_b * RK_data->RK1_b[n] + 2.0 * sqrt(int_fac_b) * RK_data->RK2_b[n] + 2.0 * sqrt(int_fac_b) * RK_data->RK3_b[n] + RK_data->RK4_b[n]);
+		run_data->psi_n[n] = int_fac_b * run_data->psi_n[n] + dt * RK4_B1 * int_fac_b * RK_data->RK1_b[n] + dt * RK4_B2 * int_fac_b_1 * RK_data->RK2_b[n] + dt * RK4_B3 * int_fac_b_1 * RK_data->RK3_b[n] + dt * RK4_B4 * RK_data->RK4_b[n];
 		#endif
 		#else
+		// Get the integrating factors
+		int_fac_u   = cexp(-sys_vars->NU * dt * run_data->k[n] * run_data->k[n] + run_data->forcing_u[n]);
+		int_fac_u_1 = cexp(-sys_vars->NU * dt * run_data->k[n] * run_data->k[n] / 2.0 + run_data->forcing_u[n]);
+
 		// Update the new velocity field
-		run_data->u[n] = int_fac_u * run_data->u[n] + dt * RK4_B1 * int_fac_u * RK_data->RK1_u[n] + dt * RK4_B2 * sqrt(int_fac_u) * RK_data->RK2_u[n] + dt * RK4_B3 * sqrt(int_fac_u) * RK_data->RK3_u[n] + dt * RK4_B4 * RK_data->RK4_u[n];
-		// run_data->u[n] = int_fac_u * run_data->u[n] + (dt / 6.0) * (int_fac_u * RK_data->RK1_u[n] + 2.0 * sqrt(int_fac_u) * RK_data->RK2_u[n] + 2.0 * sqrt(int_fac_u) * RK_data->RK3_u[n] + RK_data->RK4_u[n]);
+		run_data->u[n] = int_fac_u * run_data->u[n] + dt * RK4_B1 * int_fac_u * RK_data->RK1_u[n] + dt * RK4_B2 * int_fac_u_1 * RK_data->RK2_u[n] + dt * RK4_B3 * int_fac_u_1 * RK_data->RK3_u[n] + dt * RK4_B4 * RK_data->RK4_u[n];
 		#if defined(__MAGNETO)
+		// Get the integrating factors
+		int_fac_b   = cexp(-sys_vars->ETA * dt * run_data->k[n] * run_data->k[n] + run_data->forcing_b[n]);
+		int_fac_b_1 = cexp(-sys_vars->ETA * dt * run_data->k[n] * run_data->k[n] / 2.0 + run_data->forcing_b[n]);
+
 		// Update the new magnetic field
-		run_data->b[n] = int_fac_b * run_data->b[n] + dt * RK4_B1 * int_fac_b * RK_data->RK1_b[n] + dt * RK4_B2 * sqrt(int_fac_b) * RK_data->RK2_b[n] + dt * RK4_B3 * sqrt(int_fac_b) * RK_data->RK3_b[n] + dt * RK4_B4 * RK_data->RK4_b[n];
-		// run_data->b[n] = int_fac_b * run_data->b[n] + (dt / 6.0) * (int_fac_b * RK_data->RK1_b[n] + 2.0 * sqrt(int_fac_b) * RK_data->RK2_b[n] + 2.0 * sqrt(int_fac_b) * RK_data->RK3_b[n] + RK_data->RK4_b[n]);
+		run_data->b[n] = int_fac_b * run_data->b[n] + dt * RK4_B1 * int_fac_b * RK_data->RK1_b[n] + dt * RK4_B2 * int_fac_b_1 * RK_data->RK2_b[n] + dt * RK4_B3 * int_fac_b_1 * RK_data->RK3_b[n] + dt * RK4_B4 * RK_data->RK4_b[n];
 		#endif
 		#endif
 
 		#if defined(PHASE_ONLY)
 		// Reset the amplitudes 
 		run_data->u[n] *= (po_norm_fac_u / cabs(run_data->u[n]));
+		
 		// Record the phases and amplitudes
 		run_data->a_n[n]   = cabs(run_data->u[n]);
 		run_data->phi_n[n] = carg(run_data->u[n]);
 
 		#if defined(__MAGNETO)
 		run_data->b[n] *= (po_norm_fac_b / cabs(run_data->b[n]));
+		
 		// Record the phases and amplitudes
 		run_data->b_n[n]   = cabs(run_data->b[n]);
 		run_data->psi_n[n] = carg(run_data->b[n]);
@@ -382,6 +424,10 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 	#endif
 	#endif
 
+	///----------------------- Forcing
+	// Compute the forcing for the current iteration
+	ComputeForicing()
+
 	/////////////////////
 	/// RK STAGES
 	/////////////////////
@@ -391,77 +437,108 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 	#else
 	NonlinearTerm(run_data->u, run_data->b, RK_data->RK1_u, RK_data->RK1_b, N);
 	#endif
-	for (int i = 0; i < N; ++i) {
-		// Get tmp index
-		n = i + 2;
-
+	for (int i = 0; i < N + 4; ++i) {
 		#if defined(PHASE_ONLY_DIRECT)
-		// Update temorary velocity term
-		RK_data->RK_u_tmp[n] = run_data->phi_n[n] + dt * RK4_A21 * RK_data->RK1_u[n];
+		// Add forcing & Update temorary velocity term
+		if (run_data->a_n[i] != 0) {
+			RK_data->RK1_u[i] += cabs(run_data->forcing_u[i]) * sin(carg(run_data->forcing_u[i]) - run_data->phi_n[i]) / run_data->a_n[i];
+		}
+		RK_data->RK_u_tmp[i] = run_data->phi_n[i] + dt * RK4_A21 * RK_data->RK1_u[i];
 		#if defined(__MAGNETO)
-		// Update temporary magnetic term
-		RK_data->RK_b_tmp[n] = run_data->psi_n[n] + dt * RK4_A21 * RK_data->RK1_b[n];		
+		// Add forcing & Update temporary magnetic term
+		if (run_data->b_n[i] != 0) {
+			RK_data->RK1_b[i] += cabs(run_data->forcing_b[i]) * sin(carg(run_data->forcing_b[i]) - run_data->psi_n[i]) / run_data->b_n[i];
+		}
+		RK_data->RK_b_tmp[i] = run_data->psi_n[i] + dt * RK4_A21 * RK_data->RK1_b[i];		
 		#endif
 		#else
-		// Update temorary velocity term
-		RK_data->RK_u_tmp[n] = run_data->u[n] + dt * RK4_A21 * RK_data->RK1_u[n];
+		// Add dissipative and forcing terms & Update temorary velocity term
+		RK_data->RK1_u[i] += - sys_vars->NU * run_data->k[i] * run_data->k[i] * run_data->u[i] + run_data->forcing_u[i];
+		RK_data->RK_u_tmp[i] = run_data->u[i] + dt * RK4_A21 * RK_data->RK1_u[i];
 		#if defined(__MAGNETO)
-		// Update temporary magnetic term
-		RK_data->RK_b_tmp[n] = run_data->b[n] + dt * RK4_A21 * RK_data->RK1_b[n];		
+		// Add dissipative and forcing terms & Update temporary magnetic term
+		RK_data->RK1_b[i] += - sys_vars->ETA * run_data->k[i] * run_data->k[i] * run_data->b[i] + run_data->forcing_b[i];
+		RK_data->RK_b_tmp[i] = run_data->b[i] + dt * RK4_A21 * RK_data->RK1_b[i];
 		#endif
 		#endif
 	}
 
 	// ----------------------- Stage 2
 	NonlinearTerm(RK_data->RK_u_tmp, RK_data->RK_b_tmp, RK_data->RK2_u, RK_data->RK2_b, N);
-	for (int i = 0; i < N; ++i) {
-		// Get tmp index
-		n = i + 2;
-
+	for (int i = 0; i < N + 4; ++i) {
 		#if defined(PHASE_ONLY_DIRECT)
-		// Update temorary velocity term
-		RK_data->RK_u_tmp[n] = run_data->phi_n[n] + dt * RK4_A32 * RK_data->RK2_u[n];
+		// Add forcing & Update temorary velocity term
+		if (run_data->a_n[i] != 0) {
+			RK_data->RK2_u[i] += cabs(run_data->forcing_u[i]) * sin(carg(run_data->forcing_u[i]) - run_data->phi_n[i]) / run_data->a_n[i];
+		}
+		RK_data->RK_u_tmp[i] = run_data->phi_n[i] + dt * RK4_A32 * RK_data->RK2_u[i];
 		#if defined(__MAGNETO)
-		// Update temporary magnetic term
-		RK_data->RK_b_tmp[n] = run_data->psi_n[n] + dt * RK4_A32 * RK_data->RK2_b[n];		
+		// Add forcing & Update temporary magnetic term
+		if (run_data->b_n[i] != 0) {
+			RK_data->RK2_b[i] += cabs(run_data->forcing_b[i]) * sin(carg(run_data->forcing_b[i]) - run_data->psi_n[i]) / run_data->b_n[i];
+		}
+		RK_data->RK_b_tmp[i] = run_data->psi_n[i] + dt * RK4_A32 * RK_data->RK2_b[i];		
 		#endif
 		#else
-		// Update temorary velocity term
-		RK_data->RK_u_tmp[n] = run_data->u[n] + dt * RK4_A32 * RK_data->RK2_u[n];
+		// Add dissipative and forcing terms & Update temorary velocity term
+		RK_data->RK2_u[i] += - sys_vars->NU * run_data->k[i] * run_data->k[i] * run_data->u[i] + run_data->forcing_u[i];
+		RK_data->RK_u_tmp[i] = run_data->u[i] + dt * RK4_A32 * RK_data->RK2_u[i];
 		#if defined(__MAGNETO)
-		// Update temporary magnetic term
-		RK_data->RK_b_tmp[n] = run_data->b[n] + dt * RK4_A32 * RK_data->RK2_b[n];		
+		// Add dissipative and forcing terms & Update temporary magnetic term
+		RK_data->RK2_b[i] += - sys_vars->ETA * run_data->k[i] * run_data->k[i] * run_data->b[i] + run_data->forcing_b[i];
+		RK_data->RK_b_tmp[i] = run_data->b[i] + dt * RK4_A32 * RK_data->RK2_b[i];
 		#endif
 		#endif
 	}
 
 	// ----------------------- Stage 3
 	NonlinearTerm(RK_data->RK_u_tmp, RK_data->RK_b_tmp, RK_data->RK3_u, RK_data->RK3_b, N);
-	for (int i = 0; i < N; ++i) {
-		// Get tmp index
-		n = i + 2;
-
-
+	for (int i = 0; i < N + 4; ++i) {
 		#if defined(PHASE_ONLY_DIRECT)
-		// Update temorary velocity term
-		RK_data->RK_u_tmp[n] = run_data->phi_n[n] + dt * RK4_A43 * RK_data->RK3_u[n];
+		// Add forcing & Update temorary velocity term
+		if (run_data->a_n[i] != 0) {
+			RK_data->RK3_u[i] += cabs(run_data->forcing_u[i]) * sin(carg(run_data->forcing_u[i]) - run_data->phi_n[i]) / run_data->a_n[i];
+		}
+		RK_data->RK_u_tmp[i] = run_data->phi_n[i] + dt * RK4_A43 * RK_data->RK3_u[i];
 		#if defined(__MAGNETO)
-		// Update temporary magnetic term
-		RK_data->RK_b_tmp[n] = run_data->psi_n[n] + dt * RK4_A43 * RK_data->RK3_b[n];		
+		// Add forcing & Update temporary magnetic term
+		if (run_data->b_n[i] != 0) {
+			RK_data->RK3_b[i] += cabs(run_data->forcing_b[i]) * sin(carg(run_data->forcing_b[i]) - run_data->psi_n[i]) / run_data->b_n[i];
+		}
+		RK_data->RK_b_tmp[i] = run_data->psi_n[i] + dt * RK4_A43 * RK_data->RK3_b[i];		
 		#endif
 		#else
-		// Update temorary velocity term
-		RK_data->RK_u_tmp[n] = run_data->u[n] + dt * RK4_A43 * RK_data->RK3_u[n];
+		// Add dissipative and forcing terms & Update temorary velocity term
+		RK_data->RK3_u[i] += - sys_vars->NU * run_data->k[i] * run_data->k[i] * run_data->u[i] + run_data->forcing_u[i];
+		RK_data->RK_u_tmp[i] = run_data->u[i] + dt * RK4_A43 * RK_data->RK3_u[i];
 		#if defined(__MAGNETO)
-		// Update temporary magnetic term
-		RK_data->RK_b_tmp[n] = run_data->b[n] + dt * RK4_A43 * RK_data->RK3_b[n];		
+		// Add dissipative and forcing terms & Update temporary magnetic term
+		RK_data->RK3_b[i] += - sys_vars->ETA * run_data->k[i] * run_data->k[i] * run_data->b[i] + run_data->forcing_b[i];
+		RK_data->RK_b_tmp[i] = run_data->b[i] + dt * RK4_A43 * RK_data->RK3_b[i];
 		#endif
 		#endif
 	}
 
-	// ----------------------- Stage 2
+	// ----------------------- Stage 4
 	NonlinearTerm(RK_data->RK_u_tmp, RK_data->RK_b_tmp, RK_data->RK4_u, RK_data->RK4_b, N);
-
+	// Add the forcing and the linear term
+	for (int i = 0; i < N + 4; ++i) {
+		#if defined(PHASE_ONLY_DIRECT)
+		if (run_data->a_n[i] != 0) {
+			RK_data->RK4_u[i] += cabs(run_data->forcing_u[i]) * sin(carg(run_data->forcing_u[i]) - run_data->phi_n[i]) / run_data->a_n[i];
+		}
+		#if defined(__MAGNETO)
+		if (run_data->b_n[i] != 0) {
+			RK_data->RK4_b[i] += cabs(run_data->forcing_b[i]) * sin(carg(run_data->forcing_b[i]) - run_data->psi_n[i]) / run_data->b_n[i];
+		}
+		#endif
+		#else
+		RK_data->RK4_u[i] += - sys_vars->NU * run_data->k[i] * run_data->k[i] * run_data->u[i] + run_data->forcing_u[i];
+		#if defined(__MAGNETO)
+		RK_data->RK4_b[i] += - sys_vars->ETA * run_data->k[i] * run_data->k[i] * run_data->b[i] + run_data->forcing_b[i];
+		#endif
+		#endif
+	}
 
 	/////////////////////
 	/// UPDATE STEP
@@ -482,20 +559,16 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		#if defined(PHASE_ONLY_DIRECT)
 		// Update the new velocity field
 		run_data->phi_n[n] = run_data->phi_n[n] + dt * RK4_B1 * RK_data->RK1_u[n] + dt * RK4_B2 * RK_data->RK2_u[n] + dt * RK4_B3 * RK_data->RK3_u[n] + dt * RK4_B4 * RK_data->RK4_u[n];
-		// run_data->phi_n[n] = run_data->phi_n[n] + (dt / 6.0) * (RK_data->RK1_u[n] + 2.0 * RK_data->RK2_u[n] + 2.0 * RK_data->RK3_u[n] + RK_data->RK4_u[n]);
 		#if defined(__MAGNETO)
 		// Update the new magnetic field
 		run_data->psi_n[n] = run_data->psi_n[n] + dt * RK4_B1 * RK_data->RK1_b[n] + dt * RK4_B2 * RK_data->RK2_b[n] + dt * RK4_B3 * RK_data->RK3_b[n] + dt * RK4_B4 * RK_data->RK4_b[n];
-		// run_data->psi_n[n] = run_data->psi_n[n] + (dt / 6.0) * (RK_data->RK1_b[n] + 2.0 * RK_data->RK2_b[n] + 2.0 * RK_data->RK3_b[n] + RK_data->RK4_b[n]);
 		#endif
 		#else
 		// Update the new velocity field
 		run_data->u[n] = run_data->u[n] + dt * RK4_B1 * RK_data->RK1_u[n] + dt * RK4_B2 * RK_data->RK2_u[n] + dt * RK4_B3 * RK_data->RK3_u[n] + dt * RK4_B4 * RK_data->RK4_u[n];
-		// run_data->u[n] = run_data->u[n] + (dt / 6.0) * (RK_data->RK1_u[n] + 2.0 * RK_data->RK2_u[n] + 2.0 * RK_data->RK3_u[n] + RK_data->RK4_u[n]);
 		#if defined(__MAGNETO)
 		// Update the new magnetic field
 		run_data->b[n] = run_data->b[n] + dt * RK4_B1 * RK_data->RK1_b[n] + dt * RK4_B2 * RK_data->RK2_b[n] + dt * RK4_B3 * RK_data->RK3_b[n] + dt * RK4_B4 * RK_data->RK4_b[n];
-		// run_data->b[n] = run_data->b[n] + (dt / 6.0) * (RK_data->RK1_b[n] + 2.0 * RK_data->RK2_b[n] + 2.0 * RK_data->RK3_b[n] + RK_data->RK4_b[n]);
 		#endif
 		#endif
 
@@ -604,7 +677,7 @@ void NonlinearTerm(fftw_complex* u, fftw_complex* b, fftw_complex* u_nonlin, fft
 	// -----------------------------------
 	// Compute The Nonlinear Terms
 	// -----------------------------------
-	for (int i = 0; i < N; ++i) {
+	for (int i = 0; i < N + 4; ++i) {
 		// Get tmp array index
 		n = i + 2;
 
@@ -645,7 +718,6 @@ void NonlinearTerm(fftw_complex* u, fftw_complex* b, fftw_complex* u_nonlin, fft
 void InitialConditions(const long int N) {
 
 	// Initialize variables
-	int n;
 	double r1, r3;
 	#if defined(__MAGNETO)
 	double r2, r4;
@@ -657,164 +729,178 @@ void InitialConditions(const long int N) {
     srand(123456789);
 
 
-	if(!(strcmp(sys_vars->u0, "N_SCALING"))) {
-		// ------------------------------------------------
-		// Scaling in N Initial Condition
-		// ------------------------------------------------
-		for (int i = 0; i < N; ++i) {
-			// Get temp indx;
-			n = i + 2;
+	for (int i = 0; i < N + 4; ++i) {
 
-			// Initialize the velocity field
-			run_data->u[n] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) * cexp(I * pow(i + 1, 2.0));
+		// Initialize the edges shells
+		if (i < 2 || i > N + 2) {
+			run_data->u[i] = 0.0 + 0.0 * I;
 
 			#if defined(PHASE_ONLY)
 			// Record the phases and amplitudes
-			run_data->a_n[n]   = cabs(run_data->u[n]);
-			run_data->phi_n[n] = carg(run_data->u[n]);
+			run_data->a_n[i]   = 0.0;
+			run_data->phi_n[i] = 0.0;
 			#endif
 			#if defined(PHASE_ONLY_DIRECT)
-			run_data->a_n[n]   = 1.0 / pow(run_data->k[i], sys_vars->ALPHA);
-			run_data->phi_n[n] = pow(i + 1, 2.0);
+			run_data->a_n[i]   = 0.0;
+			run_data->phi_n[i] = 0.0;
 			#endif
-
 			#if defined(__MAGNETO)
 			// Initialize the magnetic field
-			run_data->b[n] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * cexp(I * pow(i + 1, 4.0)) * 1e-2;
+			run_data->b[i] = 0.0 + 0.0 * I;
 			#if defined(PHASE_ONLY)
 			// Record the phases and amplitudes
-			run_data->b_n[n]   = cabs(run_data->b[n]);
-			run_data->psi_n[n] = carg(run_data->b[n]);
+			run_data->b_n[i]   = 0.0;
+			run_data->psi_n[i] = 0.0;
 			#endif
 			#if defined(PHASE_ONLY_DIRECT)
-			run_data->b_n[n]   = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-2;
-			run_data->psi_n[n] = pow(i + 1, 4.0);
+			run_data->b_n[i]   = 0.0;
+			run_data->psi_n[i] = 0.0;
 			#endif
 			#endif
-			// printf("a_n[%d]:\t%1.16lf\tphi[%d]:\t%1.16lf\tb_n[%d]:\t%1.16lf\tpsi[%d]:\t%1.16lf\n", i, run_data->a_n[n], i, run_data->phi_n[n], i, run_data->b_n[n], i, run_data->psi_n[n]);
-		}	
-	}
-	else if(!(strcmp(sys_vars->u0, "RANDOM"))) {
-		// ------------------------------------------------
-		// Default - Random Initial Conditions
-		// ------------------------------------------------	
-		for (int i = 0; i < N; ++i) {
-			// Get temp indx;
-			n = i + 2;
+		}
+		// Initialize the interior shells
+		else {
+			if(!(strcmp(sys_vars->u0, "N_SCALING"))) {
+				// ------------------------------------------------
+				// Scaling in N Initial Condition
+				// ------------------------------------------------
+				// Initialize the velocity field
+				run_data->u[i] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) * cexp(I * pow(i - 1, 2.0));
 
-			// Get random uniform number
-			r1 = (double)rand() / (double)RAND_MAX;
-			#if defined(__MAGNETO)
-			r2 = (double)rand() / (double)RAND_MAX;
-			#endif
+				#if defined(PHASE_ONLY)
+				// Record the phases and amplitudes
+				run_data->a_n[i]   = cabs(run_data->u[i]);
+				run_data->phi_n[i] = carg(run_data->u[i]);
+				#endif
+				#if defined(PHASE_ONLY_DIRECT)
+				run_data->a_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->ALPHA);
+				run_data->phi_n[i] = pow(i + 1, 2.0);
+				#endif
 
-			// Initialize the velocity field
-			run_data->u[n] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) * cexp(I * r1 * 2.0 * M_PI);
+				#if defined(__MAGNETO)
+				// Initialize the magnetic field
+				run_data->b[i] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * cexp(I * pow(i - 1, 4.0)) * 1e-2;
+				#if defined(PHASE_ONLY)
+				// Record the phases and amplitudes
+				run_data->b_n[i]   = cabs(run_data->b[i]);
+				run_data->psi_n[i] = carg(run_data->b[i]);
+				#endif
+				#if defined(PHASE_ONLY_DIRECT)
+				run_data->b_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-2;
+				run_data->psi_n[i] = pow(i + 1, 4.0);
+				#endif
+				#endif
+				// printf("a_n[%d]:\t%1.16lf\tphi[%d]:\t%1.16lf\tb_n[%d]:\t%1.16lf\tpsi[%d]:\t%1.16lf\n", i, run_data->a_n[i], i, run_data->phi_n[i], i, run_data->b_n[i], i, run_data->psi_n[i]);
+			}
+			else if(!(strcmp(sys_vars->u0, "RANDOM"))) {
+				// ------------------------------------------------
+				// Default - Random Initial Conditions
+				// ------------------------------------------------	
+				// Get random uniform number
+				r1 = (double)rand() / (double)RAND_MAX;
+				#if defined(__MAGNETO)
+				r2 = (double)rand() / (double)RAND_MAX;
+				#endif
 
-			#if defined(PHASE_ONLY)
-			// Record the phases and amplitudes
-			run_data->a_n[n]   = cabs(run_data->u[n]);
-			run_data->phi_n[n] = carg(run_data->u[n]);
-			#endif
-			#if defined(PHASE_ONLY_DIRECT)
-			run_data->a_n[n]   = 1.0 / pow(run_data->k[i], sys_vars->ALPHA);
-			run_data->phi_n[n] = r1 * 2.0 * M_PI;
-			#endif
+				// Initialize the velocity field
+				run_data->u[i] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) * cexp(I * r1 * 2.0 * M_PI);
 
-			#if defined(__MAGNETO)
-			// Initialize the magnetic field
-			run_data->b[n] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * cexp(I * r2 * 2.0 * M_PI) * 1e-2;
-			#if defined(PHASE_ONLY)
-			// Record the phases and amplitudes
-			run_data->b_n[n]   = cabs(run_data->b[n]);
-			run_data->psi_n[n] = carg(run_data->b[n]);
-			#endif
-			#if defined(PHASE_ONLY_DIRECT)
-			run_data->b_n[n]   = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-2;
-			run_data->psi_n[n] = r2 * 2.0 * M_PI;
-			#endif
-			#endif
-		}	
-	}
-	else if(!(strcmp(sys_vars->u0, "ZERO"))) {
-		// ------------------------------------------------
-		// Zero Initial Conditions
-		// ------------------------------------------------	
-		for (int i = 0; i < N; ++i) {
-			// Get temp indx;
-			n = i + 2;
+				#if defined(PHASE_ONLY)
+				// Record the phases and amplitudes
+				run_data->a_n[i]   = cabs(run_data->u[i]);
+				run_data->phi_n[i] = carg(run_data->u[i]);
+				#endif
+				#if defined(PHASE_ONLY_DIRECT)
+				run_data->a_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->ALPHA);
+				run_data->phi_n[i] = r1 * 2.0 * M_PI;
+				#endif
 
-			// Initialize the velocity field
-			run_data->u[n] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA);
+				#if defined(__MAGNETO)
+				// Initialize the magnetic field
+				run_data->b[i] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * cexp(I * r2 * 2.0 * M_PI) * 1e-2;
+				#if defined(PHASE_ONLY)
+				// Record the phases and amplitudes
+				run_data->b_n[i]   = cabs(run_data->b[i]);
+				run_data->psi_n[i] = carg(run_data->b[i]);
+				#endif
+				#if defined(PHASE_ONLY_DIRECT)
+				run_data->b_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-2;
+				run_data->psi_n[i] = r2 * 2.0 * M_PI;
+				#endif
+				#endif
+			}
+			else if(!(strcmp(sys_vars->u0, "ZERO"))) {
+				// ------------------------------------------------
+				// Zero Initial Conditions
+				// ------------------------------------------------	
+				// Initialize the velocity field
+				run_data->u[i] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA);
 
-			#if defined(PHASE_ONLY)
-			// Record the phases and amplitudes
-			run_data->a_n[n]   = cabs(run_data->u[n]);
-			run_data->phi_n[n] = carg(run_data->u[n]);
-			#endif
-			#if defined(PHASE_ONLY_DIRECT)
-			run_data->a_n[n]   = 1.0 / pow(run_data->k[i], sys_vars->ALPHA);
-			run_data->phi_n[n] = 0.0;
-			#endif
+				#if defined(PHASE_ONLY)
+				// Record the phases and amplitudes
+				run_data->a_n[i]   = cabs(run_data->u[i]);
+				run_data->phi_n[i] = carg(run_data->u[i]);
+				#endif
+				#if defined(PHASE_ONLY_DIRECT)
+				run_data->a_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->ALPHA);
+				run_data->phi_n[i] = 0.0;
+				#endif
 
-			#if defined(__MAGNETO)
-			// Initialize the magnetic field
-			run_data->b[n] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-2;
-			#if defined(PHASE_ONLY)
-			// Record the phases and amplitudes
-			run_data->b_n[n]   = cabs(run_data->b[n]);
-			run_data->psi_n[n] = carg(run_data->b[n]);
-			#endif
-			#if defined(PHASE_ONLY_DIRECT)
-			run_data->b_n[n]   = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-2;
-			run_data->psi_n[n] = 0.0;
-			#endif
-			#endif
-		}	
-	}
-	else {
-		// ------------------------------------------------
-		// Default - Pure Random Initial Conditions
-		// ------------------------------------------------
-		for (int i = 0; i < N; ++i) {
-			// Get temp indx;
-			n = i + 2;
+				#if defined(__MAGNETO)
+				// Initialize the magnetic field
+				run_data->b[i] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-2;
+				#if defined(PHASE_ONLY)
+				// Record the phases and amplitudes
+				run_data->b_n[i]   = cabs(run_data->b[i]);
+				run_data->psi_n[i] = carg(run_data->b[i]);
+				#endif
+				#if defined(PHASE_ONLY_DIRECT)
+				run_data->b_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-2;
+				run_data->psi_n[i] = 0.0;
+				#endif
+				#endif
+			}
+			else {
+				// ------------------------------------------------
+				// Default - Pure Random Initial Conditions
+				// ------------------------------------------------
+				// Get random uniform number
+				r1 = (double)rand() / (double)RAND_MAX;
+				r3 = (double)rand() / (double)RAND_MAX;
+				#if defined(__MAGNETO)
+				r2 = (double)rand() / (double)RAND_MAX;
+				r4 = (double)rand() / (double)RAND_MAX;
+				#endif
 
-			// Get random uniform number
-			r1 = (double)rand() / (double)RAND_MAX;
-			r3 = (double)rand() / (double)RAND_MAX;
-			#if defined(__MAGNETO)
-			r2 = (double)rand() / (double)RAND_MAX;
-			r4 = (double)rand() / (double)RAND_MAX;
-			#endif
+				// Initialize the velocity field
+				run_data->u[i] = r1 + r3 * I;
 
-			// Initialize the velocity field
-			run_data->u[n] = r1 + r3 * I;
+				#if defined(PHASE_ONLY)
+				// Record the phases and amplitudes
+				run_data->a_n[i]   = cabs(run_data->u[i]);
+				run_data->phi_n[i] = carg(run_data->u[i]);
+				#endif
+				#if defined(PHASE_ONLY_DIRECT)
+				run_data->a_n[i]   = r1;
+				run_data->phi_n[i] = r3;
+				#endif
 
-			#if defined(PHASE_ONLY)
-			// Record the phases and amplitudes
-			run_data->a_n[n]   = cabs(run_data->u[n]);
-			run_data->phi_n[n] = carg(run_data->u[n]);
-			#endif
-			#if defined(PHASE_ONLY_DIRECT)
-			run_data->a_n[n]   = r1;
-			run_data->phi_n[n] = r3;
-			#endif
-
-			#if defined(__MAGNETO)
-			// Initialize the magnetic field
-			run_data->b[n] = (r2 + r4) * 1e-2;
-			#if defined(PHASE_ONLY)
-			// Record the phases and amplitudes
-			run_data->b_n[n]   = cabs(run_data->b[n]);
-			run_data->psi_n[n] = carg(run_data->b[n]);
-			#endif
-			#if defined(PHASE_ONLY_DIRECT)
-			run_data->b_n[n]   = r2;
-			run_data->psi_n[n] = r4;
-			#endif
-			#endif
-		}	
+				#if defined(__MAGNETO)
+				// Initialize the magnetic field
+				run_data->b[i] = (r2 + r4) * 1e-2;
+				#if defined(PHASE_ONLY)
+				// Record the phases and amplitudes
+				run_data->b_n[i]   = cabs(run_data->b[i]);
+				run_data->psi_n[i] = carg(run_data->b[i]);
+				#endif
+				#if defined(PHASE_ONLY_DIRECT)
+				run_data->b_n[i]   = r2;
+				run_data->psi_n[i] = r4;
+				#endif
+				#endif
+			}
+		}
+		
 	}
 }
 /**
@@ -828,8 +914,13 @@ void InitializeShellWavenumbers(double* k, const long int N) {
 	// -------------------------------
 	// Define Shell Wavenumbers
 	// -------------------------------
-	for (int i = 0; i < N; ++i) {
-		k[i] = sys_vars->k_0 * pow(sys_vars->Lambda, i);
+	for (int i = 0; i < N + 4; ++i) {
+		if (i >= 2 && i <= N + 2) {
+			k[i] = sys_vars->k_0 * pow(sys_vars->Lambda, i - 2);
+		}
+		else {
+			k[i] = 0.0;
+		}
 	}
 }
 /**
@@ -837,9 +928,6 @@ void InitializeShellWavenumbers(double* k, const long int N) {
  * @param N Number of shells
  */
 void InitializeForicing(const long int N) {
-
-	// Initialize variables
-	int n;
 
 	// ------------------------------------------------
 	// Allocate Memory for Forcing Data
@@ -851,9 +939,6 @@ void InitializeForicing(const long int N) {
 	// Initialize Forcing Data
 	// ------------------------------------------------
 	for (int i = 0; i < N + 4; ++i) {
-		// Get temporary index
-		int n = i;
-
 		// Compute the forcing and intialize
 		if(!(strcmp(sys_vars->forcing, "DELTA"))) {
 			// ------------------------------------------------
@@ -1012,7 +1097,7 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 	// Allocate Shell Wavenumbers
 	// -------------------------------
 	// Allocate the shell wavenumbers
-	run_data->k = (double* )fftw_malloc(sizeof(double) * N);  // k
+	run_data->k = (double* )fftw_malloc(sizeof(double) * (N + 4));  // k
 	if (run_data->k == NULL) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Shell Wavenumber List");
 		exit(1);
@@ -1147,9 +1232,7 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 	// -------------------------------
 	for (int i = 0; i < N + 4; ++i) {
 		// Initialize the arrays
-		if (i < N) {
-			run_data->k[i] = 0;
-		}
+		run_data->k[i]       = 0;
 		run_data->u[i]       = 0.0 + 0.0 * I;
 		RK_data->RK1_u[i]    = 0.0 + 0.0 * I;
 		RK_data->RK2_u[i]    = 0.0 + 0.0 * I;

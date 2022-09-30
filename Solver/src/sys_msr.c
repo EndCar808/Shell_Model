@@ -64,8 +64,8 @@ void ComputeSystemMeasurables(double t, int iter, RK_data_struct* RK_data) {
     if (iter < sys_vars->num_print_steps) {
         // Initialize totals
         run_data->tot_energy[iter]    = 0.0;
-        #if defined(__MAGNETO)
         run_data->tot_hel_u[iter]     = 0.0;
+        #if defined(__MAGNETO)
         run_data->tot_hel_b[iter]     = 0.0;
         run_data->tot_cross_hel[iter] = 0.0;
         #endif
@@ -74,11 +74,23 @@ void ComputeSystemMeasurables(double t, int iter, RK_data_struct* RK_data) {
     #if defined(__ENRG_FLUX)
     for (int i = 0; i < N; ++i) {
         // Initialize the energy dissipation
-        run_data->energy_flux[i] = 0.0;
-        run_data->energy_diss[i] = 0.0;
+        run_data->energy_flux[i]  = 0.0;
+        run_data->energy_diss[i]  = 0.0;
+        run_data->energy_input[i] = 0.0;
     }
     #endif
 
+    // ------------------------------------
+    // Remove Forcing
+    // ------------------------------------
+    // Remove forcing to compute the energy flux balance terms
+    for (int i = 0; i < (N + 4); ++i) {
+        run_data->u[n] -= run_data->forcing_u[n];
+        #if defined(__MAGNETO)
+        run_data->b[n] -= run_data->forcing_b[n];
+        #endif
+    }
+    
     // -------------------------------------
     // Compute Measurables
     // -------------------------------------
@@ -99,18 +111,18 @@ void ComputeSystemMeasurables(double t, int iter, RK_data_struct* RK_data) {
             // Update sum for totals
             #if defined(PHASE_ONLY_DIRECT)
             run_data->tot_energy[iter]    += run_data->a_n[n] * run_data->a_n[n];
+            run_data->tot_hel_u[iter]     += pow(sgn(sys_vars->EPS - 1.0), i) * (run_data->a_n[n] * run_data->a_n[n]) * k_fac;
             #else
             run_data->tot_energy[iter]    += cabs(run_data->u[n] * conj(run_data->u[n]));
+            run_data->tot_hel_u[iter]     += pow(sgn(sys_vars->EPS - 1.0), i) * cabs(run_data->u[n] * conj(run_data->u[n])) * k_fac;
             #endif
             #if defined(__MAGNETO)
             #if defined(PHASE_ONLY_DIRECT)
             run_data->tot_energy[iter]    += run_data->b_n[n] * run_data->b_n[n];
-            run_data->tot_hel_u[iter]     += pow(sgn(sys_vars->EPS - 1.0), i) * (run_data->a_n[n] * run_data->a_n[n]) * k_fac;
             run_data->tot_hel_b[iter]     += pow(sgn(sys_vars->EPS - 1.0), i) * (run_data->b_n[n] * run_data->b_n[n]) / run_data->k[i];
             run_data->tot_cross_hel[iter] += creal(run_data->a_n[n] * run_data->b_n[n]);
             #else
             run_data->tot_energy[iter]    += cabs(run_data->b[n] * conj(run_data->b[n]));
-            run_data->tot_hel_u[iter]     += pow(sgn(sys_vars->EPS - 1.0), i) * cabs(run_data->u[n] * conj(run_data->u[n])) * k_fac;
             run_data->tot_hel_b[iter]     += pow(sgn(sys_vars->EPS - 1.0), i) * cabs(run_data->b[n] * conj(run_data->b[n])) / run_data->k[i];
             run_data->tot_cross_hel[iter] += creal(run_data->u[n] * conj(run_data->b[n]));
             #endif
@@ -127,7 +139,7 @@ void ComputeSystemMeasurables(double t, int iter, RK_data_struct* RK_data) {
                 run_data->energy_diss[i]  += run_data->k[j] * run_data->k[j] * sys_vars->NU * run_data->a_n[n] * run_data->a_n[n];
                 run_data->energy_force[i] += run_data->a_n[l] * cabs(run_data->forcing_u[l]) * cos(run_data->phi_n[l] - carg(run_data->forcing_u[l]));
                 #if defined(__MAGNETO) 
-                run_data->energy_diss[i] += run_data->k[j] * run_data->k[j] * sys_vars->ETA * run_data->b_n[n] * run_data->b_n[n];
+                run_data->energy_diss[i]  += run_data->k[j] * run_data->k[j] * sys_vars->ETA * run_data->b_n[n] * run_data->b_n[n];
                 run_data->energy_force[i] += run_data->b_n[l] * cabs(run_data->forcing_b[l]) * cos(run_data->psi_n[l] - carg(run_data->forcing_b[l]));
                 #endif
                 #else
@@ -196,13 +208,24 @@ void ComputeSystemMeasurables(double t, int iter, RK_data_struct* RK_data) {
     #if defined(__SYS_MEASURES)
     if (iter < sys_vars->num_print_steps) {
         run_data->tot_energy[iter]    *= 0.5;
-        #if defined(__MAGNETO)
         run_data->tot_hel_u[iter]     *= 0.5;
+        #if defined(__MAGNETO)
         run_data->tot_hel_b[iter]     *= 0.5;
         run_data->tot_cross_hel[iter] *= 0.5;
         #endif
     }
     #endif
+
+    // ------------------------------------
+    // Add Back Forcing
+    // ------------------------------------
+    // Add back forcing after computing the energy flux balance terms
+    for (int i = 0; i < (N + 4); ++i) {
+        run_data->u[n] += run_data->forcing_u[n];
+        #if defined(__MAGNETO)
+        run_data->b[n] += run_data->forcing_b[n];
+        #endif
+    }
 }
 /**
  * Function to initialize and compute the system measurables and spectra of the initial conditions
