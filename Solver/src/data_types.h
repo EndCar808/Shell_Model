@@ -102,6 +102,7 @@
 // Choose whether to save the Nonlinear term or RHS of equation of motion
 // #define __RHS
 // #define __NONLIN
+// define __FORCING
 // Choose whether to compute system measures
 // #define __SYS_MEASURES
 // #define __ENRG_FLUX
@@ -117,7 +118,10 @@
 #define DSET_MAG_PSI 5
 #define DSET_ENRG_FLUX 6
 #define DSET_ENRG_DISS 7
-#define NUM_DSETS 8
+#define DSET_ENRG_INPT 8
+#define DSET_FORCING_U 9
+#define DSET_FORCING_B 10
+#define NUM_DSETS 11
 // ---------------------------------------------------------------------
 //  Global Variables
 // ---------------------------------------------------------------------

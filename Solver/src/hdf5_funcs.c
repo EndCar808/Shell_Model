@@ -108,7 +108,20 @@ void CreateOutputFilesWriteICs(const long int N) {
 	CreateSlabbedDSet(0.0, 0, "EnergyFlux", &(file_info->file_space[DSET_ENRG_FLUX]), &(file_info->data_set[DSET_ENRG_FLUX]), &(file_info->mem_space[DSET_ENRG_FLUX]), H5T_NATIVE_DOUBLE, dims, maxdims, chunkdims, Dim);
 	// Create slabbed dataset for the diss
 	CreateSlabbedDSet(0.0, 0, "EnergyDiss", &(file_info->file_space[DSET_ENRG_DISS]), &(file_info->data_set[DSET_ENRG_DISS]), &(file_info->mem_space[DSET_ENRG_DISS]), H5T_NATIVE_DOUBLE, dims, maxdims, chunkdims, Dim);
+	// Create slabbed dataset for the input
+	CreateSlabbedDSet(0.0, 0, "EnergyInput", &(file_info->file_space[DSET_ENRG_INPT]), &(file_info->data_set[DSET_ENRG_INPT]), &(file_info->mem_space[DSET_ENRG_INPT]), H5T_NATIVE_DOUBLE, dims, maxdims, chunkdims, Dim);
 	#endif
+
+	///--------------------------------------- Forcing
+	#if defined(__FORCING)
+	if(!(strcmp(sys_vars->forcing, "STOC"))) {
+		// Velocity Forcing
+		CreateSlabbedDSet(0.0, 0, "VelocityForcingInTime", &(file_info->file_space[DSET_FORCING_U]), &(file_info->data_set[DSET_FORCING_U]), &(file_info->mem_space[DSET_FORCING_U]), file_info->COMPLEX_DTYPE, dims, maxdims, chunkdims, Dim);	
+		// Magnetic Forcing
+		CreateSlabbedDSet(0.0, 0, "MagneticForcingInTime", &(file_info->file_space[DSET_FORCING_B]), &(file_info->data_set[DSET_FORCING_B]), &(file_info->mem_space[DSET_FORCING_B]), file_info->COMPLEX_DTYPE, dims, maxdims, chunkdims, Dim);	
+	}
+	#endif
+
 
 	////////////////////////////////
 	/// Write Initial Condtions
@@ -150,6 +163,18 @@ void CreateOutputFilesWriteICs(const long int N) {
 		WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_ENRG_FLUX], file_info->data_set[DSET_ENRG_FLUX], file_info->mem_space[DSET_ENRG_FLUX], H5T_NATIVE_DOUBLE, run_data->energy_flux, "EnergyFlux", N, 0);
 		// Create slabbed dataset for the diss
 		WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_ENRG_DISS], file_info->data_set[DSET_ENRG_DISS], file_info->mem_space[DSET_ENRG_DISS], H5T_NATIVE_DOUBLE, run_data->energy_diss, "EnergyDiss", N, 0);
+		// Create slabbed dataset for the input
+		WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_ENRG_INPT], file_info->data_set[DSET_ENRG_INPT], file_info->mem_space[DSET_ENRG_INPT], H5T_NATIVE_DOUBLE, run_data->energy_input, "EnergyInput", N, 0);
+		#endif
+
+		///--------------------------------------- Forcing
+		#if defined(__FORCING)
+		if(!(strcmp(sys_vars->forcing, "STOC"))) {
+			// Velocity Forcing
+			WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_FORCING_U], file_info->data_set[DSET_FORCING_U], file_info->mem_space[DSET_FORCING_U], file_info->COMPLEX_DTYPE, &(run_data->forcing_u[2]), "VelocityForcingInTime", N, 0);
+			// Magnetic Forcing
+			WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_FORCING_B], file_info->data_set[DSET_FORCING_B], file_info->mem_space[DSET_FORCING_B], file_info->COMPLEX_DTYPE, &(run_data->forcing_b[2]), "MagneticForcingInTime", N, 0);
+		}
 		#endif
 	}
 
@@ -419,6 +444,18 @@ void WriteDataToFile(double t, double dt, long int iters) {
 	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_ENRG_FLUX], file_info->data_set[DSET_ENRG_FLUX], file_info->mem_space[DSET_ENRG_FLUX], H5T_NATIVE_DOUBLE, run_data->energy_flux, "EnergyFlux", sys_vars->N, iters);
 	// Create slabbed dataset for the diss
 	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_ENRG_DISS], file_info->data_set[DSET_ENRG_DISS], file_info->mem_space[DSET_ENRG_DISS], H5T_NATIVE_DOUBLE, run_data->energy_diss, "EnergyDiss", sys_vars->N, iters);
+	// Create slabbed dataset for the input
+	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_ENRG_INPT], file_info->data_set[DSET_ENRG_INPT], file_info->mem_space[DSET_ENRG_INPT], H5T_NATIVE_DOUBLE, run_data->energy_input, "EnergyInput", sys_vars->N, iters);
+	#endif
+
+	///--------------------------------------- Forcing
+	#if defined(__FORCING)
+	if(!(strcmp(sys_vars->forcing, "STOC"))) {
+		// Velocity Forcing
+		WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_FORCING_U], file_info->data_set[DSET_FORCING_U], file_info->mem_space[DSET_FORCING_U], file_info->COMPLEX_DTYPE, &(run_data->forcing_u[2]), "VelocityForcingInTime", N, iters);
+		// Magnetic Forcing
+		WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_FORCING_B], file_info->data_set[DSET_FORCING_B], file_info->mem_space[DSET_FORCING_B], file_info->COMPLEX_DTYPE, &(run_data->forcing_b[2]), "MagneticForcingInTime", N, iters);
+	}
 	#endif
 
 	// -------------------------------
@@ -654,6 +691,24 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalCrossHelicity");
 	}
 	#endif
+	#endif
+
+	// -------------------------------
+	// Write Forcing
+	// -------------------------------
+	#if defined(__FORCING)
+	if(strcmp(sys_vars->forcing, "STOC") != 0) {
+		// Velocity Forcing
+		if ( (H5LTmake_dataset(file_info->output_file_handle, "VelocityForcing", D1, dims1D, file_info->COMPLEX_DTYPE, &(run_data->forcing_u[2]))) < 0) {
+			printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelocityForcing");
+		}
+		#if defined(__MAGNETO)
+		// Magnetic Forcing
+		if ( (H5LTmake_dataset(file_info->output_file_handle, "MagneticForcing", D1, dims1D, file_info->COMPLEX_DTYPE, &(run_data->forcing_b[2]))) < 0) {
+			printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "MagneticForcing");
+		}
+		#endif
+	}
 	#endif
 
 	// -----------------------------------

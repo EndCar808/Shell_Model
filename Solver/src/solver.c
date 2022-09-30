@@ -860,7 +860,10 @@ void InitializeForicing(const long int N) {
 			// Delta function on the zero mode
 			// ------------------------------------------------
 			// Record the forcing 
-			run_data->forcing[i] = sys_vars->force_scale_var * (1.0 + 1.0 * I) * my_delta(sys_vars->force_k, 0.0);
+			run_data->forcing_u[i] = sys_vars->force_scale_var * (1.0 + 1.0 * I) * my_delta(sys_vars->force_k, 0.0);
+			#if defined(__MAGNETO)
+			run_data->forcing_b[i] = sys_vars->force_scale_var * (1.0 + 1.0 * I) * my_delta(sys_vars->force_k, 0.0);
+			#endif			
 		}
 		else if(!(strcmp(sys_vars->forcing, "STOC"))) {
 			// ------------------------------------------------
@@ -872,13 +875,41 @@ void InitializeForicing(const long int N) {
 			// ------------------------------------------------
 			// No Forcing
 			// ------------------------------------------------
-			
+			run_data->forcing_u[i] = 0.0 + 0.0 * I;
+			#if defined(__MAGNETO)
+			run_data->forcing_b[i] = 0.0 + 0.0 * I;
+			#endif
 		}
 		else {
 			if (i == 0) {
 				// Print warning to screen that no valid forcing (incl. NONE) was selected
 				printf("\n["MAGENTA"WARNING"RESET"] --- No valid forcing was selected!!!\n");
 			}
+		}
+	}
+}
+/**
+ * Function compute the forcing for the current timestep
+ * @param N Number of shells
+ */
+void ComputeForicing(const long int N) {
+
+	// Initialize variables
+	int n;
+
+	// ------------------------------------------------
+	// Initialize Forcing Data
+	// ------------------------------------------------
+	for (int i = 0; i < N + 4; ++i) {
+		// Get temporary index
+		int n = i;
+
+		// Compute the forcing and intialize
+		 if(!(strcmp(sys_vars->forcing, "STOC"))) {
+			// ------------------------------------------------
+			// Stochastic Forcing
+			// ------------------------------------------------
+			
 		}
 	}
 }
