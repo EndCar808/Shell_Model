@@ -101,6 +101,7 @@ void Solve(void) {
 	// Print update of the initial conditions to the terminal
 	PrintUpdateToTerminal(0, t0, dt, T, 0);
 
+
 	//////////////////////////////
 	// Begin Integration
 	//////////////////////////////
@@ -136,7 +137,7 @@ void Solve(void) {
 			// If and when transient steps are complete write to file
 			if (iters > trans_steps) {
 				// Write the appropriate datasets to file 
-				WriteDataToFile(t, dt, save_data_indx);
+				WriteDataToFile(t, iters, save_data_indx);
 				
 				// Update saving data index
 				save_data_indx++;
@@ -233,6 +234,10 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 	#endif
 	#endif
 
+	///----------------------- Forcing
+	// Compute the forcing for the current iteration
+	ComputeForicing(N);
+
 	/////////////////////
 	/// RK STAGES
 	/////////////////////
@@ -271,6 +276,8 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		RK_data->RK_b_tmp[i] = run_data->b[i] * int_fac_b + dt * RK4_A21 * RK_data->RK1_b[i] * int_fac_b;		
 		#endif
 		#endif
+
+		// printf("u[%d]:\t%1.16lf\t%1.16lf i\tb[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(RK_data->RK1_u[i]), cimag(RK_data->RK1_u[i]),  i - 1, creal(RK_data->RK1_b[i]), cimag(RK_data->RK1_b[i]));		
 	}
 
 	// ----------------------- Stage 2
@@ -426,7 +433,7 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 
 	///----------------------- Forcing
 	// Compute the forcing for the current iteration
-	ComputeForicing()
+	ComputeForicing(N);
 
 	/////////////////////
 	/// RK STAGES
@@ -605,9 +612,11 @@ void NonlinearTerm(double* u, double* b, double* u_nonlin, double* b_nonlin, con
 	const double lambda_pow         = sys_vars->Lambda * sys_vars->Lambda;
 	const double interact_coeff_u_1 = sys_vars->EPS / sys_vars->Lambda;
 	const double interact_coeff_u_2 = (1.0 - sys_vars->EPS) / lambda_pow;
+	#if defined(__MAGNETO)
 	const double interact_coeff_b_1 = 1.0 - sys_vars->EPS - sys_vars->EPS_M;
 	const double interact_coeff_b_2 = sys_vars->EPS_M / sys_vars->Lambda;
 	const double interact_coeff_b_3 = (1.0 - sys_vars->EPS_M) / lambda_pow;
+	#endif
 	double u_tmp_1, u_tmp_2, u_tmp_3;
 	#if defined(__MAGNETO)
 	double b_tmp_1, b_tmp_2, b_tmp_3;
@@ -643,10 +652,10 @@ void NonlinearTerm(double* u, double* b, double* u_nonlin, double* b_nonlin, con
 		// Compute Nonlinear Terms
 		// -----------------------------------
 		// Compute the nonlinear term for the velocity field
-		u_nonlin[n] = (run_data->k[i] / run_data->a_n[n]) * (u_tmp_1 - interact_coeff_u_1 * u_tmp_2 - interact_coeff_u_2 *  u_tmp_3);
+		u_nonlin[n] = (run_data->k[n] / run_data->a_n[n]) * (u_tmp_1 - interact_coeff_u_1 * u_tmp_2 - interact_coeff_u_2 *  u_tmp_3);
 		#if defined(__MAGNETO)
 		// Compute the nonlinear term for the magnetic field
-		b_nonlin[n] = (run_data->k[i] / run_data->b_n[n]) * (interact_coeff_b_1 * b_tmp_1 + interact_coeff_b_2 * b_tmp_2 + interact_coeff_b_3 * b_tmp_3); 
+		b_nonlin[n] = (run_data->k[n] / run_data->b_n[n]) * (interact_coeff_b_1 * b_tmp_1 + interact_coeff_b_2 * b_tmp_2 + interact_coeff_b_3 * b_tmp_3); 
 		#endif
 	}
 }
@@ -666,9 +675,11 @@ void NonlinearTerm(fftw_complex* u, fftw_complex* b, fftw_complex* u_nonlin, fft
 	const double lambda_pow         = sys_vars->Lambda * sys_vars->Lambda;
 	const double interact_coeff_u_1 = sys_vars->EPS / sys_vars->Lambda;
 	const double interact_coeff_u_2 = (1.0 - sys_vars->EPS) / lambda_pow;
+	#if defined(__MAGNETO)
 	const double interact_coeff_b_1 = 1.0 - sys_vars->EPS - sys_vars->EPS_M;
 	const double interact_coeff_b_2 = sys_vars->EPS_M / sys_vars->Lambda;
 	const double interact_coeff_b_3 = (1.0 - sys_vars->EPS_M) / lambda_pow;
+	#endif
 	fftw_complex u_tmp_1, u_tmp_2, u_tmp_3;
 	#if defined(__MAGNETO)
 	fftw_complex b_tmp_1, b_tmp_2, b_tmp_3;
@@ -677,7 +688,7 @@ void NonlinearTerm(fftw_complex* u, fftw_complex* b, fftw_complex* u_nonlin, fft
 	// -----------------------------------
 	// Compute The Nonlinear Terms
 	// -----------------------------------
-	for (int i = 0; i < N + 4; ++i) {
+	for (int i = 0; i < N; ++i) {
 		// Get tmp array index
 		n = i + 2;
 
@@ -704,10 +715,10 @@ void NonlinearTerm(fftw_complex* u, fftw_complex* b, fftw_complex* u_nonlin, fft
 		// Compute Nonlinear Terms
 		// -----------------------------------
 		// Compute the nonlinear term for the velocity field
-		u_nonlin[n] = I * run_data->k[i] * conj(u_tmp_1 - interact_coeff_u_1 * u_tmp_2 - interact_coeff_u_2 *  u_tmp_3); 
+		u_nonlin[n] = I * run_data->k[n] * conj(u_tmp_1 - interact_coeff_u_1 * u_tmp_2 - interact_coeff_u_2 *  u_tmp_3);
 		#if defined(__MAGNETO)
 		// Compute the nonlinear term for the magnetic field
-		b_nonlin[n] = I * run_data->k[i] * conj(interact_coeff_b_1 * b_tmp_1 + interact_coeff_b_2 * b_tmp_2 + interact_coeff_b_3 * b_tmp_3); 
+		b_nonlin[n] = I * run_data->k[n] * conj(interact_coeff_b_1 * b_tmp_1 + interact_coeff_b_2 * b_tmp_2 + interact_coeff_b_3 * b_tmp_3); 
 		#endif
 	}
 }
@@ -732,7 +743,7 @@ void InitialConditions(const long int N) {
 	for (int i = 0; i < N + 4; ++i) {
 
 		// Initialize the edges shells
-		if (i < 2 || i > N + 2) {
+		if (i < 2 || i > N + 1) {
 			run_data->u[i] = 0.0 + 0.0 * I;
 
 			#if defined(PHASE_ONLY)
@@ -766,7 +777,6 @@ void InitialConditions(const long int N) {
 				// ------------------------------------------------
 				// Initialize the velocity field
 				run_data->u[i] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) * cexp(I * pow(i - 1, 2.0));
-
 				#if defined(PHASE_ONLY)
 				// Record the phases and amplitudes
 				run_data->a_n[i]   = cabs(run_data->u[i]);
@@ -774,7 +784,7 @@ void InitialConditions(const long int N) {
 				#endif
 				#if defined(PHASE_ONLY_DIRECT)
 				run_data->a_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->ALPHA);
-				run_data->phi_n[i] = pow(i + 1, 2.0);
+				run_data->phi_n[i] = pow(i - 1, 2.0);
 				#endif
 
 				#if defined(__MAGNETO)
@@ -787,10 +797,9 @@ void InitialConditions(const long int N) {
 				#endif
 				#if defined(PHASE_ONLY_DIRECT)
 				run_data->b_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-2;
-				run_data->psi_n[i] = pow(i + 1, 4.0);
+				run_data->psi_n[i] = pow(i - 1, 4.0);
 				#endif
 				#endif
-				// printf("a_n[%d]:\t%1.16lf\tphi[%d]:\t%1.16lf\tb_n[%d]:\t%1.16lf\tpsi[%d]:\t%1.16lf\n", i, run_data->a_n[i], i, run_data->phi_n[i], i, run_data->b_n[i], i, run_data->psi_n[i]);
 			}
 			else if(!(strcmp(sys_vars->u0, "RANDOM"))) {
 				// ------------------------------------------------
@@ -900,8 +909,10 @@ void InitialConditions(const long int N) {
 				#endif
 			}
 		}
-		
+		// printf("u[%d]:\t%1.16lf\t%1.16lf i\tb[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]),  i - 1, creal(run_data->b[i]), cimag(run_data->b[i]));		
+		// printf("a_n[%d]:\t%1.16lf\tphi[%d]:\t%1.16lf\tb_n[%d]:\t%1.16lf\tpsi[%d]:\t%1.16lf\n", i, run_data->a_n[i], i, run_data->phi_n[i], i, run_data->b_n[i], i, run_data->psi_n[i]);
 	}
+	printf("\n");
 }
 /**
  * Function to initialize the shell wavenumber array
@@ -915,13 +926,16 @@ void InitializeShellWavenumbers(double* k, const long int N) {
 	// Define Shell Wavenumbers
 	// -------------------------------
 	for (int i = 0; i < N + 4; ++i) {
-		if (i >= 2 && i <= N + 2) {
+		if (i >= 2 && i < N + 2) {
 			k[i] = sys_vars->k_0 * pow(sys_vars->Lambda, i - 2);
 		}
 		else {
 			k[i] = 0.0;
 		}
+		printf("k[%d]: %lf\n", i - 1, k[i]);
 	}
+	printf("\n");
+
 }
 /**
  * Function to initialize the forcing 
@@ -971,7 +985,9 @@ void InitializeForicing(const long int N) {
 				printf("\n["MAGENTA"WARNING"RESET"] --- No valid forcing was selected!!!\n");
 			}
 		}
+		printf("f_u[%d]:\t%1.16lf\t%1.16lf i\t\tf_b[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->forcing_u[i]), creal(run_data->forcing_u[i]), i - 1, creal(run_data->forcing_b[i]), creal(run_data->forcing_b[i]));
 	}
+	printf("\n");
 }
 /**
  * Function compute the forcing for the current timestep
@@ -987,7 +1003,7 @@ void ComputeForicing(const long int N) {
 	// ------------------------------------------------
 	for (int i = 0; i < N + 4; ++i) {
 		// Get temporary index
-		int n = i;
+		n = i;
 
 		// Compute the forcing and intialize
 		 if(!(strcmp(sys_vars->forcing, "STOC"))) {
@@ -1016,8 +1032,8 @@ void InitializeIntegrationVariables(double* t0, double* t, double* dt, double* T
 	(*t ) = sys_vars->t0;
 	(*dt) = sys_vars->dt;
 	(*T ) = sys_vars->T;
-	sys_vars->min_dt = 10;
-	sys_vars->max_dt = MIN_STEP_SIZE;
+	sys_vars->min_dt = MIN_STEP_SIZE;
+	sys_vars->max_dt = 10;
 
 	// -------------------------------
 	// Integration Counters
@@ -1175,12 +1191,12 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 	RK_data->RK2_u       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
 	RK_data->RK3_u       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
 	RK_data->RK4_u       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
+	RK_data->RK_u_tmp    = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
 	#if defined(__MAGNETO)
 	RK_data->RK1_b       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
 	RK_data->RK2_b       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
 	RK_data->RK3_b       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
 	RK_data->RK4_b       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
-	RK_data->RK_u_tmp    = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
 	RK_data->RK_b_tmp    = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
 	#endif
 	#endif
@@ -1284,8 +1300,8 @@ void FreeMemory(RK_data_struct* RK_data) {
 	#endif
 	#if defined(__SYS_MEASURES)
 	fftw_free(run_data->tot_energy);
-	#if defined(__MAGNETO)
 	fftw_free(run_data->tot_hel_u);
+	#if defined(__MAGNETO)
 	fftw_free(run_data->tot_hel_b);
 	fftw_free(run_data->tot_cross_hel);
 	#endif
@@ -1296,7 +1312,7 @@ void FreeMemory(RK_data_struct* RK_data) {
 	#if defined(__ENRG_FLUX)
 	fftw_free(run_data->energy_flux);
 	fftw_free(run_data->energy_diss);
-	fftw_free(run_data->energy_force);
+	fftw_free(run_data->energy_input);
 	#endif
 	fftw_free(run_data->forcing_u);
 	fftw_free(run_data->forcing_b);

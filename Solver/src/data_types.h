@@ -216,7 +216,7 @@ typedef struct runtime_data_struct {
 	double* tot_cross_hel;	  			// Array to hold the total cross helicity
 	double* energy_flux;				// Array to hold the energy flux
 	double* energy_diss;				// Array to hold the energy dissipation
-	double* energy_force;				// Array to hold the energy input in the flux balance computation
+	double* energy_input;				// Array to hold the energy input in the flux balance computation
 	fftw_complex* forcing_u;  			// Array to hold the forcing for the current timestep for the velocity field
 	fftw_complex* forcing_b;  			// Array to hold the forcing for the current timestep for the magnetic field
 	double* forcing_scaling;  			// Array to hold the initial scaling for the forced modes

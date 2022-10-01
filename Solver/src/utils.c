@@ -122,7 +122,6 @@ int GetCMLArgs(int argc, char** argv) {
 			case 's':
 				// Read in intial time
 				sys_vars->t0 = atof(optarg);
-
 				if (sys_vars->t0 < 0) {
 				    fprintf(stderr, "\n["RED"ERROR"RESET"] Parsing of Command Line Arguements Failed: The integration start time [%lf] must be a positive\n-->> Exiting!\n", sys_vars->t0);      
 				    exit(1);
@@ -144,6 +143,7 @@ int GetCMLArgs(int argc, char** argv) {
 				if (time_step_flag == 0) {
 					// Read in initial timestep
 					sys_vars->dt = atof(optarg);
+
 					if (sys_vars->dt <= 0) {
 						fprintf(stderr, "\n["RED"ERROR"RESET"] Parsing of Command Line Arguements Failed: The provided timestep: [%lf] must be strictly positive\n-->> Exiting!\n\n", sys_vars->dt);		
 						exit(1);
@@ -234,7 +234,6 @@ int GetCMLArgs(int argc, char** argv) {
 						fprintf(stderr, "\n["RED"ERROR"RESET"] Parsing of Command Line Arguements Failed: The provided hyperviscosity power: [%lf] must be strictly positive\n-->> Exiting!\n\n", sys_vars->HYPER_VISC_POW);		
 						exit(1);
 					}
-					// visc_flag = 3;
 					break;
 				}
 				break;
@@ -284,7 +283,7 @@ int GetCMLArgs(int argc, char** argv) {
 				}
 				else if (shell_wave_flag == 1) {
 					// Read in the intershell ratio for the shell radius
-					sys_vars->Lambda = atoi(optarg);
+					sys_vars->Lambda = atof(optarg);
 					if (sys_vars->Lambda < 0) {
 						fprintf(stderr, "\n["RED"ERROR"RESET"] Parsing of Command Line Arguements Failed: The provided intershell ratio lambda: [%lf] must be positive\n-->> Exiting!\n\n", sys_vars->Lambda);		
 						exit(1);
@@ -305,7 +304,7 @@ int GetCMLArgs(int argc, char** argv) {
 				}
 				else if (interact_flag == 1) {
 					// Read in the interaction coefficient for the magnetic equation
-					sys_vars->EPS_M = atoi(optarg);
+					sys_vars->EPS_M = atof(optarg);
 					if (sys_vars->EPS_M < 0) {
 						fprintf(stderr, "\n["RED"ERROR"RESET"] Parsing of Command Line Arguements Failed: The magnetic interaction coefficient: [%lf] must be positive\n-->> Exiting!\n\n", sys_vars->EPS_M);		
 						exit(1);

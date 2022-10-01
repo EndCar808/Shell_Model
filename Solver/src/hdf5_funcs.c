@@ -66,11 +66,11 @@ void CreateOutputFilesWriteICs(const long int N) {
 
 	// Initialize the hyperslab arrays
 	dims[0]      = sys_vars->num_print_steps;    // Number of timesteps
-	dims[1]      = N;              				 // Number of shells
+	dims[1]      = N + 1;          				 // Number of shells + 0 mode
 	maxdims[0]   = H5S_UNLIMITED;                // Setting max time index to unlimited means we must chunk our data
-	maxdims[1]   = N;                            // Same as before = number of shells
+	maxdims[1]   = N + 1;                        // Same as before = number of shells + 0 mode
 	chunkdims[0] = 1;                            // 1D chunk to be saved 
-	chunkdims[1] = N;                            // 1D chunk of size number of shells
+	chunkdims[1] = N + 1;                        // 1D chunk of size number of shells + 0 mode
 
 	///--------------------------------------- Velocity Modes
 	#if defined(__VEL) && !(defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT))
@@ -102,16 +102,6 @@ void CreateOutputFilesWriteICs(const long int N) {
 	#endif
 	#endif
 
-	///--------------------------------------- Energy Flux
-	#if defined(__ENRG_FLUX)
-	// Create slabbed dataset for the flux
-	CreateSlabbedDSet(0.0, 0, "EnergyFlux", &(file_info->file_space[DSET_ENRG_FLUX]), &(file_info->data_set[DSET_ENRG_FLUX]), &(file_info->mem_space[DSET_ENRG_FLUX]), H5T_NATIVE_DOUBLE, dims, maxdims, chunkdims, Dim);
-	// Create slabbed dataset for the diss
-	CreateSlabbedDSet(0.0, 0, "EnergyDiss", &(file_info->file_space[DSET_ENRG_DISS]), &(file_info->data_set[DSET_ENRG_DISS]), &(file_info->mem_space[DSET_ENRG_DISS]), H5T_NATIVE_DOUBLE, dims, maxdims, chunkdims, Dim);
-	// Create slabbed dataset for the input
-	CreateSlabbedDSet(0.0, 0, "EnergyInput", &(file_info->file_space[DSET_ENRG_INPT]), &(file_info->data_set[DSET_ENRG_INPT]), &(file_info->mem_space[DSET_ENRG_INPT]), H5T_NATIVE_DOUBLE, dims, maxdims, chunkdims, Dim);
-	#endif
-
 	///--------------------------------------- Forcing
 	#if defined(__FORCING)
 	if(!(strcmp(sys_vars->forcing, "STOC"))) {
@@ -122,6 +112,25 @@ void CreateOutputFilesWriteICs(const long int N) {
 	}
 	#endif
 
+	// Initialize the hyperslab arrays for the flux datasets
+	dims[0]      = sys_vars->num_print_steps;    // Number of timesteps
+	dims[1]      = N;	          				 // Number of shells + 0 mode
+	maxdims[0]   = H5S_UNLIMITED;                // Setting max time index to unlimited means we must chunk our data
+	maxdims[1]   = N;	                         // Same as before = number of shells + 0 mode
+	chunkdims[0] = 1;                            // 1D chunk to be saved 
+	chunkdims[1] = N;	                         // 1D chunk of size number of shells + 0 mode
+
+	///--------------------------------------- Energy Flux
+	#if defined(__ENRG_FLUX)
+	// Create slabbed dataset for the flux
+	CreateSlabbedDSet(0.0, 0, "EnergyFlux", &(file_info->file_space[DSET_ENRG_FLUX]), &(file_info->data_set[DSET_ENRG_FLUX]), &(file_info->mem_space[DSET_ENRG_FLUX]), H5T_NATIVE_DOUBLE, dims, maxdims, chunkdims, Dim);
+	// Create slabbed dataset for the diss
+	CreateSlabbedDSet(0.0, 0, "EnergyDiss", &(file_info->file_space[DSET_ENRG_DISS]), &(file_info->data_set[DSET_ENRG_DISS]), &(file_info->mem_space[DSET_ENRG_DISS]), H5T_NATIVE_DOUBLE, dims, maxdims, chunkdims, Dim);
+	// Create slabbed dataset for the input
+	CreateSlabbedDSet(0.0, 0, "EnergyInput", &(file_info->file_space[DSET_ENRG_INPT]), &(file_info->data_set[DSET_ENRG_INPT]), &(file_info->mem_space[DSET_ENRG_INPT]), H5T_NATIVE_DOUBLE, dims, maxdims, chunkdims, Dim);
+	#endif
+
+
 
 	////////////////////////////////
 	/// Write Initial Condtions
@@ -129,32 +138,42 @@ void CreateOutputFilesWriteICs(const long int N) {
 	if (sys_vars->TRANS_ITERS_FLAG != TRANSIENT_ITERS) {
 		///--------------------------------------- Velocity Modes
 		#if defined(__VEL) && !(defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT))
-		WriteSlabbedDataFourier(0.0, 0, file_info->file_space[DSET_VEL], file_info->data_set[DSET_VEL], file_info->mem_space[DSET_VEL], file_info->COMPLEX_DTYPE, &(run_data->u[2]), "VelModes", N, 0);
+		WriteSlabbedDataFourier(0.0, 0, file_info->file_space[DSET_VEL], file_info->data_set[DSET_VEL], file_info->mem_space[DSET_VEL], file_info->COMPLEX_DTYPE, &(run_data->u[1]), "VelModes", N + 1, 0);
 		#endif
 
 		///--------------------------------------- Velocity Amplitudes
 		#if defined(__VEL_AMP) && (defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT))
-		WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_VEL_AMP], file_info->data_set[DSET_VEL_AMP], file_info->mem_space[DSET_VEL_AMP], H5T_NATIVE_DOUBLE, &(run_data->a_n[2]), "VelAmps", N, 0);
+		WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_VEL_AMP], file_info->data_set[DSET_VEL_AMP], file_info->mem_space[DSET_VEL_AMP], H5T_NATIVE_DOUBLE, &(run_data->a_n[1]), "VelAmps", N + 1, 0);
 		#endif
 		///--------------------------------------- Velocity Phases
 		#if defined(__VEL_PHI) && (defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT)) 
-		WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_VEL_PHI], file_info->data_set[DSET_VEL_PHI], file_info->mem_space[DSET_VEL_PHI], H5T_NATIVE_DOUBLE, &(run_data->phi_n[2]), "VelPhases", N, 0);
+		WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_VEL_PHI], file_info->data_set[DSET_VEL_PHI], file_info->mem_space[DSET_VEL_PHI], H5T_NATIVE_DOUBLE, &(run_data->phi_n[1]), "VelPhases", N + 1, 0);
 		#endif
 
 		#if defined(__MAGNETO)
 		///--------------------------------------- Magnetic Modes
 		#if defined(__MAG) && !(defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT))
-		WriteSlabbedDataFourier(0.0, 0, file_info->file_space[DSET_MAG], file_info->data_set[DSET_MAG], file_info->mem_space[DSET_MAG], file_info->COMPLEX_DTYPE, &(run_data->b[2]), "MagModes", N, 0);
+		WriteSlabbedDataFourier(0.0, 0, file_info->file_space[DSET_MAG], file_info->data_set[DSET_MAG], file_info->mem_space[DSET_MAG], file_info->COMPLEX_DTYPE, &(run_data->b[1]), "MagModes", N + 1, 0);
 		#endif
 
 		///--------------------------------------- Magnetic Amplitudes
 		#if defined(__MAG_AMP) && (defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT))
-		WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_MAG_AMP], file_info->data_set[DSET_MAG_AMP], file_info->mem_space[DSET_MAG_AMP], H5T_NATIVE_DOUBLE, &(run_data->b_n[2]), "MagAmps", N, 0);
+		WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_MAG_AMP], file_info->data_set[DSET_MAG_AMP], file_info->mem_space[DSET_MAG_AMP], H5T_NATIVE_DOUBLE, &(run_data->b_n[1]), "MagAmps", N + 1, 0);
 		#endif
 		///--------------------------------------- Magnetic Phases
 		#if defined(__MAG_PSI) && (defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT))
-		WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_MAG_PSI], file_info->data_set[DSET_MAG_PSI], file_info->mem_space[DSET_MAG_PSI], H5T_NATIVE_DOUBLE, &(run_data->psi_n[2]), "MagPhases", N, 0);
+		WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_MAG_PSI], file_info->data_set[DSET_MAG_PSI], file_info->mem_space[DSET_MAG_PSI], H5T_NATIVE_DOUBLE, &(run_data->psi_n[1]), "MagPhases", N + 1, 0);
 		#endif
+		#endif
+
+		///--------------------------------------- Forcing
+		#if defined(__FORCING)
+		if(!(strcmp(sys_vars->forcing, "STOC"))) {
+			// Velocity Forcing
+			WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_FORCING_U], file_info->data_set[DSET_FORCING_U], file_info->mem_space[DSET_FORCING_U], file_info->COMPLEX_DTYPE, &(run_data->forcing_u[1]), "VelocityForcingInTime", N + 1, 0);
+			// Magnetic Forcing
+			WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_FORCING_B], file_info->data_set[DSET_FORCING_B], file_info->mem_space[DSET_FORCING_B], file_info->COMPLEX_DTYPE, &(run_data->forcing_b[1]), "MagneticForcingInTime", N + 1, 0);
+		}
 		#endif
 
 		///--------------------------------------- Energy Flux
@@ -167,15 +186,6 @@ void CreateOutputFilesWriteICs(const long int N) {
 		WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_ENRG_INPT], file_info->data_set[DSET_ENRG_INPT], file_info->mem_space[DSET_ENRG_INPT], H5T_NATIVE_DOUBLE, run_data->energy_input, "EnergyInput", N, 0);
 		#endif
 
-		///--------------------------------------- Forcing
-		#if defined(__FORCING)
-		if(!(strcmp(sys_vars->forcing, "STOC"))) {
-			// Velocity Forcing
-			WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_FORCING_U], file_info->data_set[DSET_FORCING_U], file_info->mem_space[DSET_FORCING_U], file_info->COMPLEX_DTYPE, &(run_data->forcing_u[2]), "VelocityForcingInTime", N, 0);
-			// Magnetic Forcing
-			WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_FORCING_B], file_info->data_set[DSET_FORCING_B], file_info->mem_space[DSET_FORCING_B], file_info->COMPLEX_DTYPE, &(run_data->forcing_b[2]), "MagneticForcingInTime", N, 0);
-		}
-		#endif
 	}
 
 	// ------------------------------------
@@ -371,19 +381,14 @@ void GetOutputDirPath(void) {
 }
 /**
  * Wrapper function that writes the data to file by openining it, creating a group for the current iteration and writing the data under this group. The file is then closed again 
- * @param t     The current time of the simulation
- * @param dt    The current timestep being used
- * @param iters The current iteration
+ * @param t     	The current time of the simulation
+ * @param iters 	The current iteration
+ * @param save_indx The current iteration
  */
-void WriteDataToFile(double t, double dt, long int iters) {
+void WriteDataToFile(double t, long int iters, long int save_indx) {
 
 	// Initialize variables
 	herr_t status;
-	static const int d_set_rank2D = 2;
-	hsize_t dset_dims2D[d_set_rank2D];        // array to hold dims of the dataset to be created
-	hsize_t slab_dims2D[d_set_rank2D];	      // Array to hold the dimensions of the hyperslab
-	hsize_t mem_space_dims2D[d_set_rank2D];   // Array to hold the dimensions of the memoray space - for real data this will be different to slab_dims due to 0 padding
-
 
 	// --------------------------------------
 	// Check if files exist and Open/Create
@@ -410,53 +415,54 @@ void WriteDataToFile(double t, double dt, long int iters) {
 	// -------------------------------
 	///--------------------------------------- Velocity Modes
 	#if defined(__VEL) && !(defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT)) 
-	WriteSlabbedDataFourier(t, iters, file_info->file_space[DSET_VEL], file_info->data_set[DSET_VEL], file_info->mem_space[DSET_VEL], file_info->COMPLEX_DTYPE, &(run_data->u[2]), "VelModes", sys_vars->N, iters);
+	WriteSlabbedDataFourier(t, iters, file_info->file_space[DSET_VEL], file_info->data_set[DSET_VEL], file_info->mem_space[DSET_VEL], file_info->COMPLEX_DTYPE, &(run_data->u[1]), "VelModes", sys_vars->N + 1, save_indx);
 	#endif
 
 	///--------------------------------------- Velocity Amplitudes
 	#if defined(__VEL_AMP) && (defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT))
-	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_VEL_AMP], file_info->data_set[DSET_VEL_AMP], file_info->mem_space[DSET_VEL_AMP], H5T_NATIVE_DOUBLE, &(run_data->a_n[2]), "VelAmps", sys_vars->N, iters);
+	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_VEL_AMP], file_info->data_set[DSET_VEL_AMP], file_info->mem_space[DSET_VEL_AMP], H5T_NATIVE_DOUBLE, &(run_data->a_n[1]), "VelAmps", sys_vars->N + 1, save_indx);
 	#endif
 	///--------------------------------------- Velocity Phases
 	#if defined(__VEL_PHI) && (defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT))
-	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_VEL_PHI], file_info->data_set[DSET_VEL_PHI], file_info->mem_space[DSET_VEL_PHI], H5T_NATIVE_DOUBLE, &(run_data->phi_n[2]), "VelPhases", sys_vars->N, iters);
+	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_VEL_PHI], file_info->data_set[DSET_VEL_PHI], file_info->mem_space[DSET_VEL_PHI], H5T_NATIVE_DOUBLE, &(run_data->phi_n[1]), "VelPhases", sys_vars->N + 1, save_indx);
 	#endif
 
 	#if defined(__MAGNETO)
 	///--------------------------------------- Magnetic Modes
 	#if defined(__MAG) && !(defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT))
-	WriteSlabbedDataFourier(t, iters, file_info->file_space[DSET_MAG], file_info->data_set[DSET_MAG], file_info->mem_space[DSET_MAG], file_info->COMPLEX_DTYPE, &(run_data->b[2]), "MagModes", sys_vars->N, iters);
+	WriteSlabbedDataFourier(t, iters, file_info->file_space[DSET_MAG], file_info->data_set[DSET_MAG], file_info->mem_space[DSET_MAG], file_info->COMPLEX_DTYPE, &(run_data->b[1]), "MagModes", sys_vars->N + 1, save_indx);
 	#endif
 
 	///--------------------------------------- Magnetic Amplitudes
 	#if defined(__MAG_AMP) && (defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT))
-	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_MAG_AMP], file_info->data_set[DSET_MAG_AMP], file_info->mem_space[DSET_MAG_AMP], H5T_NATIVE_DOUBLE, &(run_data->b_n[2]), "MagAmps", sys_vars->N, iters);
+	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_MAG_AMP], file_info->data_set[DSET_MAG_AMP], file_info->mem_space[DSET_MAG_AMP], H5T_NATIVE_DOUBLE, &(run_data->b_n[1]), "MagAmps", sys_vars->N + 1, save_indx);
 	#endif
 	///--------------------------------------- Magnetic Phases
 	#if defined(__MAG_PSI) && (defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT))
-	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_MAG_PSI], file_info->data_set[DSET_MAG_PSI], file_info->mem_space[DSET_MAG_PSI], H5T_NATIVE_DOUBLE, &(run_data->psi_n[2]), "MagPhases", sys_vars->N, iters);
+	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_MAG_PSI], file_info->data_set[DSET_MAG_PSI], file_info->mem_space[DSET_MAG_PSI], H5T_NATIVE_DOUBLE, &(run_data->psi_n[1]), "MagPhases", sys_vars->N + 1, save_indx);
 	#endif
-	#endif
-
-	///--------------------------------------- Energy Flux
-	#if defined(__ENRG_FLUX)
-	// Create slabbed dataset for the flux
-	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_ENRG_FLUX], file_info->data_set[DSET_ENRG_FLUX], file_info->mem_space[DSET_ENRG_FLUX], H5T_NATIVE_DOUBLE, run_data->energy_flux, "EnergyFlux", sys_vars->N, iters);
-	// Create slabbed dataset for the diss
-	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_ENRG_DISS], file_info->data_set[DSET_ENRG_DISS], file_info->mem_space[DSET_ENRG_DISS], H5T_NATIVE_DOUBLE, run_data->energy_diss, "EnergyDiss", sys_vars->N, iters);
-	// Create slabbed dataset for the input
-	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_ENRG_INPT], file_info->data_set[DSET_ENRG_INPT], file_info->mem_space[DSET_ENRG_INPT], H5T_NATIVE_DOUBLE, run_data->energy_input, "EnergyInput", sys_vars->N, iters);
 	#endif
 
 	///--------------------------------------- Forcing
 	#if defined(__FORCING)
 	if(!(strcmp(sys_vars->forcing, "STOC"))) {
 		// Velocity Forcing
-		WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_FORCING_U], file_info->data_set[DSET_FORCING_U], file_info->mem_space[DSET_FORCING_U], file_info->COMPLEX_DTYPE, &(run_data->forcing_u[2]), "VelocityForcingInTime", N, iters);
+		WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_FORCING_U], file_info->data_set[DSET_FORCING_U], file_info->mem_space[DSET_FORCING_U], file_info->COMPLEX_DTYPE, &(run_data->forcing_u[1]), "VelocityForcingInTime", sys_vars->N + 1, save_indx);
 		// Magnetic Forcing
-		WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_FORCING_B], file_info->data_set[DSET_FORCING_B], file_info->mem_space[DSET_FORCING_B], file_info->COMPLEX_DTYPE, &(run_data->forcing_b[2]), "MagneticForcingInTime", N, iters);
+		WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_FORCING_B], file_info->data_set[DSET_FORCING_B], file_info->mem_space[DSET_FORCING_B], file_info->COMPLEX_DTYPE, &(run_data->forcing_b[1]), "MagneticForcingInTime", sys_vars->N + 1, save_indx);
 	}
 	#endif
+
+	///--------------------------------------- Energy Flux
+	#if defined(__ENRG_FLUX)
+	// Create slabbed dataset for the flux
+	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_ENRG_FLUX], file_info->data_set[DSET_ENRG_FLUX], file_info->mem_space[DSET_ENRG_FLUX], H5T_NATIVE_DOUBLE, run_data->energy_flux, "EnergyFlux", sys_vars->N, save_indx);
+	// Create slabbed dataset for the diss
+	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_ENRG_DISS], file_info->data_set[DSET_ENRG_DISS], file_info->mem_space[DSET_ENRG_DISS], H5T_NATIVE_DOUBLE, run_data->energy_diss, "EnergyDiss", sys_vars->N, save_indx);
+	// Create slabbed dataset for the input
+	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_ENRG_INPT], file_info->data_set[DSET_ENRG_INPT], file_info->mem_space[DSET_ENRG_INPT], H5T_NATIVE_DOUBLE, run_data->energy_input, "EnergyInput", sys_vars->N, save_indx);
+	#endif
+
 
 	// -------------------------------
 	// Close identifiers and File
@@ -698,13 +704,15 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	// -------------------------------
 	#if defined(__FORCING)
 	if(strcmp(sys_vars->forcing, "STOC") != 0) {
+		dims1D[0] = N + 1;
+
 		// Velocity Forcing
-		if ( (H5LTmake_dataset(file_info->output_file_handle, "VelocityForcing", D1, dims1D, file_info->COMPLEX_DTYPE, &(run_data->forcing_u[2]))) < 0) {
+		if ( (H5LTmake_dataset(file_info->output_file_handle, "VelocityForcing", D1, dims1D, file_info->COMPLEX_DTYPE, &(run_data->forcing_u[1]))) < 0) {
 			printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelocityForcing");
 		}
 		#if defined(__MAGNETO)
 		// Magnetic Forcing
-		if ( (H5LTmake_dataset(file_info->output_file_handle, "MagneticForcing", D1, dims1D, file_info->COMPLEX_DTYPE, &(run_data->forcing_b[2]))) < 0) {
+		if ( (H5LTmake_dataset(file_info->output_file_handle, "MagneticForcing", D1, dims1D, file_info->COMPLEX_DTYPE, &(run_data->forcing_b[1]))) < 0) {
 			printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "MagneticForcing");
 		}
 		#endif

@@ -263,9 +263,6 @@ if __name__ == '__main__':
     par_runs_output_dir = os.path.split(output_dir)[0]
     par_runs_output_dir += '/ParallelRunsDump/'
 
-    for h, save in zip(dt, save_every):
-        print(T[0] / h)
-
     #########################
     ##      RUN SOLVER     ##
     #########################
@@ -281,7 +278,7 @@ if __name__ == '__main__':
             solver_error  = []
 
         ## Generate command list 
-        cmd_list = [["{} -o {} -n {} -s {:3.5f} -e {:3.5f} -T {} -c {} -c {:1.6f} -h {:1.6f} -h {} -a {:1.10f} -b {:1.10f} -w {:1.3f} -w {:1.3f} -y {:1.3f} -y {:1.3f} -v {:1.10f} -v {} -v {:1.1f} -d {:1.6f} -d {} -d {:1.1f} -i {} -t {} -f {} -f {} -f {} -p {}".format(
+        cmd_list = [["{} -o {} -n {} -s {:3.5f} -e {:3.5f} -T {} -c {} -c {:1.6f} -h {:1.6f} -h {} -a {:1.10f} -b {:1.10f} -w {:1.3f} -w {:1.3f} -y {:1.16f} -y {:1.16f} -v {:1.10f} -v {} -v {:1.1f} -d {:1.10f} -d {} -d {:1.1f} -i {} -t {} -f {} -f {} -f {} -p {}".format(
                                                                                                                                                     executable, 
                                                                                                                                                     output_dir,
                                                                                                                                                     n,

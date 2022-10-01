@@ -127,11 +127,13 @@ if __name__ == '__main__':
     # -----------------------------------------
     # # --------  Load in Sasha's PO Data
     # -----------------------------------------
+    # Y = np.loadtxt("./Sashas_Work/codes/Updated_Codes/Phase_only_"+ str(10) + "_" + str(1e-3)+ "_" + str(0.4)+".txt")
     Y = np.loadtxt("./Sashas_Work/codes/Updated_Codes/Phase_only_"+ str(10) + "_" + str(1e-3)+ "_" + str(0.4)+".txt")
     Phi = Y[0:sys_vars.N] %(2*np.pi)
     Psi = Y[sys_vars.N:2*sys_vars.N] %(2*np.pi)
 
-    Y = np.loadtxt("./Sashas_Work/codes/Data_Temp/Complex_"+ str(12) + "_" + str(1e-3) + ".txt", dtype=complex)
+    # Y = np.loadtxt("./Sashas_Work/codes/Data_Temp/Complex_"+ str(12) + "_" + str(1e-3) + ".txt", dtype=complex)
+    Y = np.loadtxt("./Sashas_Work/codes/Data_Temp/Complex_12_0.001.txt", dtype=complex)
     U = Y[0:sys_vars.N]
     B = Y[sys_vars.N:2*sys_vars.N]
    
@@ -164,12 +166,14 @@ if __name__ == '__main__':
             plt.close()
 
         if cmdargs.PO is False:
+
             ##-------------- Plot Velocity and Magnetic Tseries
-            i = -1
+            i = 2
+            my_i = i + 1
             fig = plt.figure(figsize = (16, 8))
             gs  = GridSpec(2, 2)
             ax1 = fig.add_subplot(gs[0, 0])
-            ax1.plot(np.real(run_data.u[:, i]), '--', label = "Mine Real")
+            ax1.plot(np.real(run_data.u[:, my_i]), '--', label = "Mine Real")
             ax1.plot(np.real(np.transpose(U)[:, i]), '.-', label = "Sashas Real")
             ax1.set_ylabel(r"$u$")
             ax1.set_xlabel(r'$t$')
@@ -177,7 +181,7 @@ if __name__ == '__main__':
             ax1.legend()
 
             ax2 = fig.add_subplot(gs[0, 1])
-            ax2.plot(np.real(run_data.b[:, i]), '--', label = "Mine Real")
+            ax2.plot(np.real(run_data.b[:, my_i]), '--', label = "Mine Real")
             ax2.plot(np.real(np.transpose(B)[:, i]), '.-', label = "Sashas Real")
             ax2.set_ylabel(r"$b$")
             ax2.set_xlabel(r'$t$')
@@ -185,7 +189,7 @@ if __name__ == '__main__':
             ax2.legend()
 
             ax1 = fig.add_subplot(gs[1, 0])
-            ax1.plot(np.imag(run_data.u[:, i]), '--', label = "Mine Imag")
+            ax1.plot(np.imag(run_data.u[:, my_i]), '--', label = "Mine Imag")
             ax1.plot(np.imag(np.transpose(U)[:, i]), '.-', label = "Sashas Imag")
             ax1.set_ylabel(r"$u$")
             ax1.set_xlabel(r'$t$')
@@ -193,7 +197,7 @@ if __name__ == '__main__':
             ax1.legend()
 
             ax2 = fig.add_subplot(gs[1, 1])
-            ax2.plot(np.imag(run_data.b[:, i]), '--', label = "Mine Imag")
+            ax2.plot(np.imag(run_data.b[:, my_i]), '--', label = "Mine Imag")
             ax2.plot(np.imag(np.transpose(B)[:, i]), '.-', label = "Sashas Imag")
             ax2.set_ylabel(r"$b$")
             ax2.set_xlabel(r'$t$')
@@ -206,6 +210,7 @@ if __name__ == '__main__':
 
             ##-------------- Plot Error Tseries
             i = -1
+            my = -1
             fig = plt.figure(figsize = (16, 8))
             gs  = GridSpec(1, 2)
             ax1 = fig.add_subplot(gs[0, 0])
@@ -226,5 +231,5 @@ if __name__ == '__main__':
             ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
             ax2.legend()
 
-            plt.savefig(cmdargs.out_dir + "/UB_Compare.png")
+            plt.savefig(cmdargs.out_dir + "/Error_Tseries.png")
             plt.close()

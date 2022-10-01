@@ -42,7 +42,7 @@ endif
 #  Executable flags
 # ---------------------------------------------------------------------
 # Flags to be passed to the solver for normal runs
-SOLVER_FLAGS := -D__INT_FAC_RK4 #-D__MAGNETO -D__HYPER -D__ADAPTIVE_STEP -D__CFL_STEP #-D__TRANSIENTS  -D__EKMN_DRAG
+SOLVER_FLAGS := -D__INT_FAC_RK4 -D__MAGNETO #-D__HYPER -D__ADAPTIVE_STEP -D__CFL_STEP #-D__TRANSIENTS  -D__EKMN_DRAG
 
 # Phase only flags to be passed to solver
 PHASE_ONLY_FLAGS := -D__MAGNETO -D__PHASE_ONLY -D__RK4 # -D__HYPER -D__TRANSIENTS
