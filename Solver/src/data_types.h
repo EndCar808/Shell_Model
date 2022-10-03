@@ -20,7 +20,9 @@
 #endif
 	
 #include <gsl/gsl_histogram.h> 
-#include <gsl/gsl_statistics.h>
+#include <gsl/gsl_statistics_double.h>
+#include <gsl/gsl_rstat.h>
+#include <gsl/gsl_math.h>
 
 // ---------------------------------------------------------------------
 //  Compile Time Macros and Definitions
@@ -75,6 +77,10 @@
 #if defined(__PHASE_ONLY_DIRECT) // Turn on phase only direct mode if called for at compilation
 #define PHASE_ONLY_DIRECT
 #endif
+// Computing stats will be decided at compilation time
+#if defined(__STATS)
+#define STATS
+#endif
 // Testing the solver will be decided at compilation
 #if defined(__TESTING)
 #define TESTING
@@ -109,6 +115,13 @@
 // Choose whether to save the time, collocation points and wavenumbers
 #define __TIME
 #define __WAVELIST
+// Choose which stats data to record
+#if defined(__STATS)
+#define __STR_FUNC_VEL
+#define __STR_FUNC_MAG
+#define __STR_FUNC_VEL_FLUX
+#define __STR_FUNC_MAG_FLUX
+#endif
 // Writing datasets to file
 #define DSET_VEL 0
 #define DSET_VEL_AMP 1
@@ -137,6 +150,9 @@
 #define MIN_STEP_SIZE 1e-10 	// The minimum allowed stepsize for the solver 
 #define MAX_ITERS 1e+12			// The maximum iterations to perform
 #define MAX_FIELD_LIM 1e+100     // The maximum allowed velocity &/or magnetic
+// Stats parameters
+#define NUM_POW 7 				// The highest moment to compute for the structure function
+#define NUM_RUN_STATS 7 		// The number of running stats moments to record
 // // Dormand Prince integrator parameters
 // #define DP_ABS_TOL 1e-7		    // The absolute error tolerance for the Dormand Prince Scheme
 // #define DP_REL_TOL 1e-7         // The relative error tolerance for the Dormand Prince Scheme
@@ -222,42 +238,21 @@ typedef struct runtime_data_struct {
 	double* forcing_scaling;  			// Array to hold the initial scaling for the forced modes
 	int* forcing_indx;		  			// Array to hold the indices of the forced modes
 	int* forcing_k;			  			// Array containg the wavenumbers for the forced modes
-	// double* tot_enstr;		  			// Array to hold the total entrophy over the simulation
-	// double* tot_palin;		  			// Array to hold the total palinstrophy over the simulaiotns
-	// double* enrg_diss; 		  			// Array to hold the energy dissipation rate 
-	// double* enst_diss;		  			// Array to hold the enstrophy dissipation rate
-	// double* d_enst_dt_sbst;   			// Array to hold the time derivative of the enstrophy in a subset of modes
-	// double* enst_flux_sbst;   			// Array to hold the enstrophy flux in/out of a subset of modes
-	// double* enst_diss_sbst;   			// Array to hold the enstrophy dissipation for a subset of modes
-	// double* d_enrg_dt_sbst;   			// Array to hold the time derivative of the energy in a subset of modes
-	// double* enrg_flux_sbst;   			// Array to hold the energy flux in/out of a subset of modes
-	// double* enrg_diss_sbst;   			// Array to hold the energy dissipation for a subset of modes
-	// double* enrg_spect;		  			// Array to hold the energy spectrum of the system 
-	// double* enst_spect;       			// Array to hold the enstrophy spectrum of the system
-	// double* d_enst_dt_spect;  			// Array to hold the spectrum of the time derivative of the enstorphy
-	// double* enst_flux_spect;  			// Array to hold the spectrum of enstrophy flux of the system
-	// double* enst_diss_spect;  			// Array to hold the spectrum enstrophy dissipation of the system
-	// double* d_enrg_dt_spect;  			// Array to hold the spectrum of the time derivative  of energy
-	// double* enrg_flux_spect;  			// Array to hold the energy flux spectrum
-	// double* enrg_diss_spect;  			// Array to hold the energy dissiaption spectrum
-	// fftw_complex* phase_order_k;		// Array to hold the scale dependent collective phase
-	// fftw_complex* normed_phase_order_k;	// Array to hold the scale dependent collective phase
-	// double* tg_soln;	  	  			// Array for computing the Taylor Green vortex solution
 } runtime_data_struct;
 
 // Runge-Kutta Integration struct
 typedef struct RK_data_struct {
 	#if defined(PHASE_ONLY_DIRECT)
-	double* RK1_u;		  // Array to hold the result of the first stage for the velocity field
-	double* RK2_u;		  // Array to hold the result of the second stage for the velocity field
-	double* RK3_u;		  // Array to hold the result of the third stage for the velocity field
-	double* RK4_u;		  // Array to hold the result of the fourth stage for the velocity field
-	double* RK1_b;		  // Array to hold the result of the first stage for the magnetic field
-	double* RK2_b;		  // Array to hold the result of the second stage for the magnetic field
-	double* RK3_b;		  // Array to hold the result of the third stage for the magnetic field
-	double* RK4_b;		  // Array to hold the result of the fourth stage for the magnetic field
-	double* RK_u_tmp;		  // Array to hold the tempory updates to u - input to Nonlinear term function
-	double* RK_b_tmp;		  // Array to hold the tempory updates to b - input to Nonlinear term function
+	double* RK1_u;		  		 // Array to hold the result of the first stage for the velocity field
+	double* RK2_u;		  		 // Array to hold the result of the second stage for the velocity field
+	double* RK3_u;		  		 // Array to hold the result of the third stage for the velocity field
+	double* RK4_u;		  		 // Array to hold the result of the fourth stage for the velocity field
+	double* RK1_b;		  		 // Array to hold the result of the first stage for the magnetic field
+	double* RK2_b;		  		 // Array to hold the result of the second stage for the magnetic field
+	double* RK3_b;		  		 // Array to hold the result of the third stage for the magnetic field
+	double* RK4_b;		  		 // Array to hold the result of the fourth stage for the magnetic field
+	double* RK_u_tmp;		     // Array to hold the tempory updates to u - input to Nonlinear term function
+	double* RK_b_tmp;		     // Array to hold the tempory updates to b - input to Nonlinear term function
 	#else
 	fftw_complex* RK1_u;		  // Array to hold the result of the first stage for the velocity field
 	fftw_complex* RK2_u;		  // Array to hold the result of the second stage for the velocity field
@@ -270,14 +265,6 @@ typedef struct RK_data_struct {
 	fftw_complex* RK_u_tmp;		  // Array to hold the tempory updates to u - input to Nonlinear term function
 	fftw_complex* RK_b_tmp;		  // Array to hold the tempory updates to b - input to Nonlinear term function
 	#endif
-	// fftw_complex* RK5;		  // Array to hold the result of the fifth stage of RK5 scheme
-	// fftw_complex* RK6;		  // Array to hold the result of the sixth stage of RK5 scheme
-	// fftw_complex* RK7; 		  // Array to hold the result of the seventh stage of the Dormand Prince Scheme
-	// fftw_complex* w_hat_last; // Array to hold the values of the Fourier space vorticity from the previous iteration - used in the stepsize control in DP scheme
-	// double* nabla_psi;		  // Batch array the velocities u = d\psi_dy and v = -d\psi_dx
-	// double* nabla_w;		  // Batch array to hold \nabla\omega - the vorticity derivatives
-	// double DP_err; 			  // Variable to hold the error between the embedded methods in the Dormand Prince scheme
-	// int DP_fails;
 } RK_data_struct;
 
 // HDF5 file info struct
@@ -298,6 +285,19 @@ typedef struct HDF_file_info_struct {
 	hid_t mem_space[NUM_DSETS]; 	 // Identifier for Size of memory for the slabbed datasets
 } HDF_file_info_struct;
 
+// Stats data struct
+typedef struct stats_data_struct {
+	double* vel_str_func[NUM_POW - 2];				// Array to hold the structure functions of the Velocity modes
+	double* mag_str_func[NUM_POW - 2];		  		// Array to hold the structure functions of the magnetic modes
+	double* vel_flux_str_func[2][NUM_POW - 2];		// Array to hold the structure functions of the flux Velocity modes
+	double* mag_flux_str_func[2][NUM_POW - 2];		// Array to hold the structure functions of the flux magnetic modes
+	gsl_rstat_workspace** vel_moments;				// Struct to hold the running stats for the velocity field
+	gsl_rstat_workspace** mag_moments;				// Struct to hold the running stats for the magnetic field
+	gsl_histogram* real_vel_hist;					// Struct to hold the histogram info for the velocity field
+	long int num_stats_steps;						// Counter for the number of steps statistics have been computed
+} stats_data_struct;
+
+
 // Complex datatype struct for HDF5
 typedef struct complex_type_tmp {
 	double re;   			 // real part 
@@ -309,6 +309,7 @@ typedef struct complex_type_tmp {
 extern system_vars_struct *sys_vars; 		    // Global pointer to system parameters struct
 extern runtime_data_struct *run_data; 			// Global pointer to system runtime variables struct 
 extern HDF_file_info_struct *file_info; 		// Global pointer to system forcing variables struct 
+extern stats_data_struct *stats_data;           // Globale pointer to the statistics struct
 
 #define __DATA_TYPES
 #endif

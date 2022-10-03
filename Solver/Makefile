@@ -16,7 +16,7 @@ ifeq ($(OS), Ubuntu)
 	GCC := gcc
 	CCFLAG := -O3 -W -Wall -g
 	LIBFLAG := -lfftw3 -lm -lhdf5 -lhdf5_hl #-fopenmp -lpthread -lfftw3_omp
-	# GSLFLAG := -lgsl -lgslcblas
+	GSLFLAG := -lgsl -lgslcblas
 	# LAPACKFLAG := -llapacke -llapack -lblas -lgfortran
 	INCDIR = -I/usr/include/hdf5/serial/  -I/usr/include/gsl/ 
 	LIBDIR = -L/usr/lib/x86_64-linux-gnu/hdf5/serial/ 
@@ -42,7 +42,9 @@ endif
 #  Executable flags
 # ---------------------------------------------------------------------
 # Flags to be passed to the solver for normal runs
-SOLVER_FLAGS := -D__INT_FAC_RK4 -D__MAGNETO #-D__HYPER -D__ADAPTIVE_STEP -D__CFL_STEP #-D__TRANSIENTS  -D__EKMN_DRAG
+HYDRO_SOLVER_FLAGS := -D__INT_FAC_RK4 -D__STATS #-D__HYPER -D__ADAPTIVE_STEP -D__CFL_STEP #-D__TRANSIENTS  -D__EKMN_DRAG
+
+MAG_HYDRO_SOLVER_FLAGS := -D__INT_FAC_RK4 -D__MAGNETO #-D__STATS -D__HYPER -D__ADAPTIVE_STEP -D__CFL_STEP #-D__TRANSIENTS  -D__EKMN_DRAG
 
 # Phase only flags to be passed to solver
 PHASE_ONLY_FLAGS := -D__MAGNETO -D__PHASE_ONLY -D__RK4 # -D__HYPER -D__TRANSIENTS
@@ -69,7 +71,8 @@ OUTDIR := $(shell mkdir -p $(OUT))
 
 SRCDIR      := src
 SRCFILE     := $(wildcard $(SRCDIR)/*.c)
-SRCOBJ      := $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%.o, $(SRCFILE))
+SRCOBJ_H    := $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_hydro.o, $(SRCFILE))
+SRCOBJ_MHD  := $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_mag_hydro.o, $(SRCFILE))
 SRCOBJ_PO  	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_phase_only.o, $(SRCFILE))
 SRCOBJ_PO_D := $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_phase_only_direct.o, $(SRCFILE))
 SRCOBJ_Test := $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_test.o, $(SRCFILE))
@@ -84,19 +87,27 @@ DEPS = $(wildcard *.h)
 ############
 
 
-all: $(BIN)/solver $(BIN)/solver_phase_only $(BIN)/solver_phase_only_direct $(BIN)/solver_test
+all: $(BIN)/solver_hydro $(BIN)/solver_mag_hydro $(BIN)/solver_phase_only $(BIN)/solver_phase_only_direct $(BIN)/solver_test
 
 
 ####--------
 #  Solver
 ####--------
-solver: $(BIN)/solver 
+solver_hydro: $(BIN)/solver_hydro
 
-$(BIN)/solver: $(SRCOBJ) $(DEPS)
-	$(GCC) $(CCFLAG) $(SOLVER_FLAGS) $(DSET_FLAGS) -o $@ $^ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+$(BIN)/solver_hydro: $(SRCOBJ_H) $(DEPS)
+	$(GCC) $(CCFLAG) $(HYDRO_SOLVER_FLAGS) $(DSET_FLAGS) -o $@ $^ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
 
-$(OBJBIN)/%.o: $(SRCDIR)/%.c $(DEPS)
-	$(GCC) $(CCFLAG) $(SOLVER_FLAGS) $(DSET_FLAGS) -c $^ -o $@ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+$(OBJBIN)/%_hydro.o: $(SRCDIR)/%.c $(DEPS)
+	$(GCC) $(CCFLAG) $(HYDRO_SOLVER_FLAGS) $(DSET_FLAGS) -c $^ -o $@ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+
+solver_mag_hydro: $(BIN)/solver_mag_hydro 
+
+$(BIN)/solver_mag_hydro: $(SRCOBJ_MHD) $(DEPS)
+	$(GCC) $(CCFLAG) $(MAG_HYDRO_SOLVER_FLAGS) $(DSET_FLAGS) -o $@ $^ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+
+$(OBJBIN)/%_mag_hydro.o: $(SRCDIR)/%.c $(DEPS)
+	$(GCC) $(CCFLAG) $(MAG_HYDRO_SOLVER_FLAGS) $(DSET_FLAGS) -c $^ -o $@ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
 
 ####-----------
 #  Phase Only 

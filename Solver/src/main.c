@@ -10,8 +10,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
-#include <gsl/gsl_histogram.h> 
-#include <gsl/gsl_statistics.h>
+
 // ---------------------------------------------------------------------
 //  User Libraries and Headers
 // ---------------------------------------------------------------------
@@ -25,6 +24,7 @@
 // Define the global points that will be pointed to the global structs
 runtime_data_struct*      run_data;
 system_vars_struct*       sys_vars;
+stats_data_struct*      stats_data;
 HDF_file_info_struct*    file_info;
 
 // ---------------------------------------------------------------------
@@ -33,14 +33,16 @@ HDF_file_info_struct*    file_info;
 int main(int argc, char** argv) {
 
 	// Create instances of global variables structs
-	runtime_data_struct runtime_data;
-	system_vars_struct   system_vars;
-	HDF_file_info_struct   HDF_file_info;
+	runtime_data_struct   runtime_data;
+	system_vars_struct     system_vars;
+	HDF_file_info_struct HDF_file_info;
+	stats_data_struct  statistics_data;
 	
 	// Point the global pointers to these structs
-	run_data  = &runtime_data;
-	sys_vars  = &system_vars;
-	file_info = &HDF_file_info;
+	run_data   = &runtime_data;
+	sys_vars   = &system_vars;
+	file_info  = &HDF_file_info;
+	stats_data = &statistics_data;
 
 	clock_t begin = clock();
 	

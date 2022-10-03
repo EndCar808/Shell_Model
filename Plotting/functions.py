@@ -97,19 +97,25 @@ def sim_data(input_dir, method = "default"):
         """
 
         ## Initialize class
-        def __init__(self, N = 0, nu = 0.0, eta = 0.0, a = 0.0, b = 0.0, t0 = 0.0, T = 0.0, ndata = 0, u0 = "N_SCALING", dt = 0.):
-            self.N         = int(N)
-            self.nu        = float(nu)
-            self.eta       = float(eta)
-            self.a         = float(a)
-            self.b         = float(b)
-            self.t0        = float(t0)
-            self.dt        = float(dt)
-            self.T         = float(T)
-            self.ndata     = int(ndata)
-            self.u0        = str(u0)
-            self.dt        = float(dt)
-
+        def __init__(self, N = 0, nu = 0.0, eta = 0.0, a = 0.0, b = 0.0, k0 = 1.0, eps = 0.5, eps_m = 1.0/3.0, Lambda = 2.0, t0 = 0.0, T = 0.0, ndata = 0, forc = "NONE", forc_k = 0, forc_scale = 1.0, u0 = "N_SCALING", dt = 0.):
+            self.N          = int(N)
+            self.nu         = float(nu)
+            self.eta        = float(eta)
+            self.a          = float(a)
+            self.b          = float(b)
+            self.t0         = float(t0)
+            self.dt         = float(dt)
+            self.T          = float(T)
+            self.ndata      = int(ndata)
+            self.u0         = str(u0)
+            self.dt         = float(dt)
+            self.k0         = float(k0)
+            self.Lambda     = float(Lambda)
+            self.eps        = float(eps)
+            self.eps_m      = float(eps_m)
+            self.forc       = str(forc)
+            self.forc_k     = int(forc_k)
+            self.forc_scale = str(forc_scale)
 
     ## Create instance of class
     data = SimulationData()
@@ -157,6 +163,26 @@ def sim_data(input_dir, method = "default"):
                 ## Parse the timestep
                 if line.startswith('Finishing Timestep'):
                     data.dt = float(line.split()[-1])
+
+                ## Parse the shell wavenumber prefactor
+                if line.startswith('Shell Wavenumber Prefactor'):
+                    data.k0 = float(line.split()[-1])
+
+                ## Parse the intershell ratio
+                if line.startswith('Intershell Ratio'):
+                    data.Lambda = float(line.split()[-1])
+
+                ## Parse the forcing type
+                if line.startswith('Forcing Type'):
+                    data.forc = str(line.split()[-1])
+
+                ## Parse the forcing wavenumber
+                if line.startswith('Forcing Wavenumber'):
+                    data.forc_k = int(line.split()[-1])
+
+                ## Parse the forcing scale val
+                if line.startswith('Forcing Scale Val'):
+                    data.forc_scale = float(line.split()[-1])
     else:
         for term in input_dir.split('_'):
 
@@ -256,6 +282,20 @@ def import_data(input_file, sim_data, method = "default"):
                     self.tot_hel_b       = f["TotalMagneticHelicity"][:]
                 if 'TotalCrossHelicity' in list(f.keys()):
                     self.tot_cross_hel = f["TotalCrossHelicity"][:]
+                ## Allocate stats arrays
+                if 'VelStats' in list(f.keys()):
+                    self.vel_stats = f["VelStats"][:, :]
+                if 'MagStats' in list(f.keys()):
+                    self.mag_stats = f["MagStats"][:, :]
+                if 'StructureFunctionVel' in list(f.keys()):
+                    self.vel_str_func = f["StructureFunctionVel"][:, :]
+                if 'StructureFunctionVelFlux' in list(f.keys()):
+                    self.vel_flux_str_func = f["StructureFunctionVelFlux"][:, :]
+                if 'StructureFunctionMag' in list(f.keys()):
+                    self.mag_str_func = f["StructureFunctionMag"][:, :]
+                if 'StructureFunctionMagFlux' in list(f.keys()):
+                    self.mag_flux_str_func = f["StructureFunctionMagFlux"][:, :]
+
 
     ## Create instance of data class
     data = SolverData()

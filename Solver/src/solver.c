@@ -17,11 +17,11 @@
 //  User Libraries and Headers
 // ---------------------------------------------------------------------
 #include "data_types.h"
+#include "stats.h"
 #include "hdf5_funcs.h"
 #include "utils.h"
 #include "solver.h"
 #include "sys_msr.h"
-// #include "force.h"
 // ---------------------------------------------------------------------
 //  Global Variables
 // ---------------------------------------------------------------------
@@ -75,6 +75,11 @@ void Solve(void) {
 
 	// Initialize the forcing
 	InitializeForicing(N);
+
+	// Initialize stats objects if required
+	#if defined(STATS)
+	InitializeStats();
+	#endif
 
 	// -------------------------------
 	// Integration Variables
@@ -133,6 +138,11 @@ void Solve(void) {
 
 			// Record System Measurables
 			ComputeSystemMeasurables(t, save_data_indx, RK_data);
+
+			// Compute stats
+			#if defined(STATS)
+			ComputeStats();
+			#endif
 
 			// If and when transient steps are complete write to file
 			if (iters > trans_steps) {
@@ -959,10 +969,19 @@ void InitializeForicing(const long int N) {
 			// Delta function on the zero mode
 			// ------------------------------------------------
 			// Record the forcing 
-			run_data->forcing_u[i] = sys_vars->force_scale_var * (1.0 + 1.0 * I) * my_delta(sys_vars->force_k, 0.0);
-			#if defined(__MAGNETO)
-			run_data->forcing_b[i] = sys_vars->force_scale_var * (1.0 + 1.0 * I) * my_delta(sys_vars->force_k, 0.0);
-			#endif			
+			if (i - 1 == sys_vars->force_k) {
+				run_data->forcing_u[i] = sys_vars->force_scale_var * (1.0 + 1.0 * I) * my_delta(0.0, 0.0);
+				#if defined(__MAGNETO)
+				run_data->forcing_b[i] = sys_vars->force_scale_var * (1.0 + 1.0 * I) * my_delta(0.0, 0.0);
+				#endif				
+			}
+			else {
+				run_data->forcing_u[i] = 0.0 + 0.0 * I;
+				#if defined(__MAGNETO)
+				run_data->forcing_b[i] = 0.0 + 0.0 * I;
+				#endif			
+			}
+			
 		}
 		else if(!(strcmp(sys_vars->forcing, "STOC"))) {
 			// ------------------------------------------------
@@ -1316,6 +1335,35 @@ void FreeMemory(RK_data_struct* RK_data) {
 	#endif
 	fftw_free(run_data->forcing_u);
 	fftw_free(run_data->forcing_b);
+
+	// Free stats objects
+	#if defined(STATS)
+	for (int i = 0; i < NUM_POW - 2; ++i) {
+		#if defined(__STR_FUNC_VEL)
+		fftw_free(stats_data->vel_str_func[i]);
+		#endif
+		#if defined(__STR_FUNC_VEL_FLUX)
+		fftw_free(stats_data->vel_flux_str_func[0][i]);
+		fftw_free(stats_data->vel_flux_str_func[1][i]);
+		#endif
+		#if defined(__MAGNETO)
+		#if defined(__STR_FUNC_MAG)
+		fftw_free(stats_data->mag_str_func[i]);
+		#endif
+		#if defined(__STR_FUNC_MAG_FLUX)
+		fftw_free(stats_data->mag_fluxstr_func[0][i]);
+		fftw_free(stats_data->mag_fluxstr_func[1][i]);
+		#endif
+		#endif
+	}
+	for (int i = 0; i < sys_vars->N; ++i) {
+		gsl_rstat_free(stats_data->vel_moments[i]);
+		#if defined(__MAGNETO)
+		gsl_rstat_free(stats_data->mag_moments[i]);
+		#endif
+	}
+	#endif
+
 
 	// Free integration variables
 	fftw_free(RK_data->RK1_u);

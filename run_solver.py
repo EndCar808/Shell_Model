@@ -195,7 +195,7 @@ if __name__ == '__main__':
             if 'forcing_wavenumber' in parser[section]:
                 force_k = int(float(parser[section]['forcing_wavenumber']))
             if 'forcing_scale' in parser[section]:
-                force_scale = int(float(parser[section]['forcing_scale']))
+                force_scale = float(parser[section]['forcing_scale'])
             if 'save_data_every' in parser[section]:
                 for n in parser[section]['save_data_every'].lstrip('[').rstrip(']').split(', '):
                     save_every.append(int(n))
@@ -278,7 +278,7 @@ if __name__ == '__main__':
             solver_error  = []
 
         ## Generate command list 
-        cmd_list = [["{} -o {} -n {} -s {:3.5f} -e {:3.5f} -T {} -c {} -c {:1.6f} -h {:1.6f} -h {} -a {:1.10f} -b {:1.10f} -w {:1.3f} -w {:1.3f} -y {:1.16f} -y {:1.16f} -v {:1.10f} -v {} -v {:1.1f} -d {:1.10f} -d {} -d {:1.1f} -i {} -t {} -f {} -f {} -f {} -p {}".format(
+        cmd_list = [["{} -o {} -n {} -s {:3.5f} -e {:3.5f} -T {} -c {} -c {:1.6f} -h {:1.6f} -h {} -a {:1.10f} -b {:1.10f} -w {:1.3f} -w {:1.3f} -y {:1.16f} -y {:1.16f} -v {:1.10f} -v {} -v {:1.1f} -d {:1.10f} -d {} -d {:1.1f} -i {} -t {} -f {} -f {} -f {:1.3f} -p {}".format(
                                                                                                                                                     executable, 
                                                                                                                                                     output_dir,
                                                                                                                                                     n,

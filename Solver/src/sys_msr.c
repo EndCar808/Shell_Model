@@ -1,7 +1,7 @@
 /**
 * @file utils.c  
 * @author Enda Carroll
-* @date Jun 2021
+* @date Sept 2022
 * @brief File containing the system measurables functions for the pseudospectral solver
 */
 // ---------------------------------------------------------------------
@@ -261,13 +261,14 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
         fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Total Energy");
         exit(1);
     }
-    #if defined(__MAGNETO)
     // Total Velocity Helicity
     run_data->tot_hel_u = (double* )fftw_malloc(sizeof(double) * print_steps);
     if (run_data->tot_hel_u == NULL) {
         fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Total Velocity Helicity");
         exit(1);
-    }   
+    }  
+     
+    #if defined(__MAGNETO)
     // Total Magnetic Helicity
     run_data->tot_hel_b = (double* )fftw_malloc(sizeof(double) * print_steps);
     if (run_data->tot_hel_b == NULL) {

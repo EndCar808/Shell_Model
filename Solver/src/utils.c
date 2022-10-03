@@ -504,29 +504,31 @@ void PrintSimulationDetails(int argc, char** argv, double sim_time) {
 		fprintf(sim_file, "Hyperviscosity Power: %1.1lf\n", VISC_POW);	
 	}
 	else {
-		fprintf(sim_file, "Hyperviscosity: NO\n");
+		fprintf(sim_file, "Hyperviscosity: NO\n\n");
 	}
 	// Equation Interaction coefficients
-	fprintf(sim_file, "\nVelocity Interaction Coefficient: %1.3lf\n", sys_vars->EPS);
+	fprintf(sim_file, "Velocity Interaction Coefficient: %1.3lf\n", sys_vars->EPS);
 	fprintf(sim_file, "Magnetic Interaction Coefficient: %1.3lf\n\n", sys_vars->EPS_M);
 
 
 	// Shell Wavenumber variables
-	fprintf(sim_file, "\nShell Wavenumber Prefactor: %1.3lf\n", sys_vars->k_0);
+	fprintf(sim_file, "Shell Wavenumber Prefactor: %1.3lf\n", sys_vars->k_0);
 	fprintf(sim_file, "Intershell Ratio: %1.3lf\n\n", sys_vars->Lambda);
 
 	// Spectra Slopes
-	fprintf(sim_file, "\nVelocity Spect Slope: %1.3lf\n", sys_vars->ALPHA);
+	fprintf(sim_file, "Velocity Spect Slope: %1.3lf\n", sys_vars->ALPHA);
 	fprintf(sim_file, "Magnetic Spect Slope: %1.3lf\n\n", sys_vars->BETA);
 	
 	// Spatial details
 	fprintf(sim_file, "Fourier Modes: %ld\n\n", sys_vars->N);
 
 	// Initial Conditions
-	fprintf(sim_file, "Initial Conditions: %s\n", sys_vars->u0);
+	fprintf(sim_file, "Initial Conditions: %s\n\n", sys_vars->u0);
 
 	// Forcing
-	fprintf(sim_file, "Forcing Type: %s\n\n", sys_vars->forcing);
+	fprintf(sim_file, "Forcing Type: %s\n", sys_vars->forcing);
+	fprintf(sim_file, "Forcing Wavenumber: %d\n", sys_vars->force_k);
+	fprintf(sim_file, "Forcing Scale Val: %lf\n\n", sys_vars->force_scale_var);
 
 	// Time details
 	fprintf(sim_file, "Time Range: [%1.1lf - %1.1lf]\n", sys_vars->t0, sys_vars->T);
@@ -592,12 +594,17 @@ double log_lambda(double x) {
  * @return   Returns the Kronecker delta of the input
  */
 double my_delta(double i, double j) {
+
+	double ans;
+
 	if (i == j) {
-		return 1.0;
+		ans = 1.0;
 	}
 	else {
-		return 0.0;
+		ans = 0.0;
 	}
+
+	return ans;
 }
 // ---------------------------------------------------------------------
 //  End of File

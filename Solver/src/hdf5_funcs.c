@@ -264,7 +264,7 @@ void GetOutputDirPath(void) {
 		// -------------------------------------
 		#if defined(__MAGNETO)
 		// Construct file label from simulation data
-		sprintf(file_data, "_SIM_DATA_[%s-%s-%s]_N[%ld]_T[%1.1lf,%g,%1.3lf]_NU[%1.8lf]_ETA[%1.8lf]_ALPHA[%1.3lf]_BETA[%1.3lf]_K[%1.3lf,%lf]_EPS[%1.2lf,%1.2lf]_u0[%s].h5", 
+		sprintf(file_data, "_SIM_DATA_[%s-%s-%s]_N[%ld]_T[%1.1lf,%g,%1.3lf]_NU[%1.8lf]_ETA[%1.8lf]_ALPHA[%1.3lf]_BETA[%1.3lf]_K[%1.3lf,%lf]_EPS[%1.2lf,%1.2lf]_FORC[%s,%d,%1.3lf]_u0[%s].h5", 
 							sys_type, solv_type, model_type, 
 							sys_vars->N, 
 							sys_vars->t0, sys_vars->dt, sys_vars->T, 
@@ -273,17 +273,19 @@ void GetOutputDirPath(void) {
 							sys_vars->ALPHA, 
 							sys_vars->BETA, 
 							sys_vars->k_0, sys_vars->Lambda, 
-							sys_vars->EPS, sys_vars->EPS_M, 
+							sys_vars->EPS, sys_vars->EPS_M,
+							sys_vars->forcing, sys_vars->force_k, sys_vars->force_scale_var, 
 							sys_vars->u0);
 		#else
-		sprintf(file_data, "_SIM_DATA_[%s-%s-%s]_N[%ld]_T[%1.1lf,%g,%1.3lf]_NU[%1.8lf]_ALPHA[%1.3lf]_K[%1.3lf,%lf]_EPS[%1.2lf]_u0[%s].h5", 
+		sprintf(file_data, "_SIM_DATA_[%s-%s-%s]_N[%ld]_T[%1.1lf,%g,%1.3lf]_NU[%1.8lf]_ALPHA[%1.3lf]_K[%1.3lf,%lf]_EPS[%1.2lf]_FORC[%s,%d,%1.3lf]_u0[%s].h5", 
 							sys_type, solv_type, model_type, 
 							sys_vars->N, 
 							sys_vars->t0, sys_vars->dt, sys_vars->T, 
 							sys_vars->NU, 
 							sys_vars->ALPHA, 
 							sys_vars->k_0, sys_vars->Lambda, 
-							sys_vars->EPS, 
+							sys_vars->EPS,
+							sys_vars->forcing, sys_vars->force_k, sys_vars->force_scale_var, 
 							sys_vars->u0);
 		#endif
 
@@ -332,7 +334,7 @@ void GetOutputDirPath(void) {
 		// ----------------------------------
 		#if defined(__MAGNETO)
 		// Construct file label from simulation data
-		sprintf(file_data, "SIM_DATA_[%s-%s-%s]_N[%ld]_T[%1.1lf,%g,%1.3lf]_NU[%1.8lf]_ETA[%1.8lf]_ALPHA[%1.3lf]_BETA[%1.3lf]_K[%1.3lf,%lf]_EPS[%1.2lf,%1.2lf]_u0[%s]_TAG[%s]/", 
+		sprintf(file_data, "SIM_DATA_[%s-%s-%s]_N[%ld]_T[%1.1lf,%g,%1.3lf]_NU[%1.8lf]_ETA[%1.8lf]_ALPHA[%1.3lf]_BETA[%1.3lf]_K[%1.3lf,%lf]_EPS[%1.2lf,%1.2lf]_FORC[%s,%d,%1.3lf]_u0[%s]_TAG[%s]/", 
 							sys_type, solv_type, model_type, 
 							sys_vars->N, 
 							sys_vars->t0, sys_vars->dt, sys_vars->T, 
@@ -341,17 +343,19 @@ void GetOutputDirPath(void) {
 							sys_vars->ALPHA,
 							sys_vars->BETA, 
 							sys_vars->k_0, sys_vars->Lambda, 
-							sys_vars->EPS, sys_vars->EPS_M, 
+							sys_vars->EPS, sys_vars->EPS_M,
+							sys_vars->forcing, sys_vars->force_k, sys_vars->force_scale_var, 
 							sys_vars->u0, 
 							file_info->output_tag);
 		#else
-		sprintf(file_data, "SIM_DATA_[%s-%s-%s]_N[%ld]_T[%1.1lf,%g,%1.3lf]_NU[%1.8lf]_ALPHA[%1.3lf]_K[%1.3lf,%lf]_EPS[%1.2lf]_u0[%s]_TAG[%s]/", 
+		sprintf(file_data, "SIM_DATA_[%s-%s-%s]_N[%ld]_T[%1.1lf,%g,%1.3lf]_NU[%1.8lf]_ALPHA[%1.3lf]_K[%1.3lf,%lf]_EPS[%1.2lf]_FORC[%s,%d,%1.3lf]_u0[%s]_TAG[%s]/", 
 							sys_type, solv_type, model_type, 
 							sys_vars->N, 
 							sys_vars->t0, sys_vars->dt, sys_vars->T, 
 							sys_vars->NU, sys_vars->ALPHA, 
 							sys_vars->k_0, sys_vars->Lambda, 
-							sys_vars->EPS, 
+							sys_vars->EPS,
+							sys_vars->forcing, sys_vars->force_k, sys_vars->force_scale_var, 
 							sys_vars->u0, 
 							file_info->output_tag);
 		#endif
@@ -640,6 +644,12 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	herr_t status;
 	static const hsize_t D1 = 1;
 	hsize_t dims1D[D1];
+	#if defined(STATS)
+	const hsize_t D2 = 2;
+	hsize_t dims2D[D2];
+	const hsize_t D3 = 3;
+	hsize_t dims3D[D3];
+	#endif
 
 	// Record total iterations
 	sys_vars->tot_iters      = (long int)iters - 1;
@@ -661,7 +671,7 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	#if defined(__WAVELIST)
 	// Allocate array to gather the wavenumbers from each of the local arrays - in the x direction
 	dims1D[0] = N;
-	if ( (H5LTmake_dataset(file_info->output_file_handle, "k", D1, dims1D, H5T_NATIVE_INT, run_data->k)) < 0) {
+	if ( (H5LTmake_dataset(file_info->output_file_handle, "k", D1, dims1D, H5T_NATIVE_DOUBLE, &(run_data->k[2]))) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "k");
 	}
 	#endif
@@ -719,6 +729,148 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	}
 	#endif
 
+	// -------------------------------
+	// Write Stats
+	// -------------------------------
+	#if defined(STATS)
+	///--------------- Velocity field stats
+	double* tmp_vel_stats = (double* )fftw_malloc(sizeof(double) * (NUM_RUN_STATS) * N);
+	for (int i = 0; i < N; ++i) {
+		tmp_vel_stats[i * (NUM_RUN_STATS) + 0] = gsl_rstat_mean(stats_data->vel_moments[i]);
+		tmp_vel_stats[i * (NUM_RUN_STATS) + 1] = gsl_rstat_variance(stats_data->vel_moments[i]);
+		tmp_vel_stats[i * (NUM_RUN_STATS) + 2] = gsl_rstat_skew(stats_data->vel_moments[i]);
+		tmp_vel_stats[i * (NUM_RUN_STATS) + 3] = gsl_rstat_kurtosis(stats_data->vel_moments[i]);		
+		tmp_vel_stats[i * (NUM_RUN_STATS) + 4] = gsl_rstat_rms(stats_data->vel_moments[i]);
+		tmp_vel_stats[i * (NUM_RUN_STATS) + 5] = gsl_rstat_min(stats_data->vel_moments[i]);
+		tmp_vel_stats[i * (NUM_RUN_STATS) + 6] = gsl_rstat_max(stats_data->vel_moments[i]);
+	}
+
+	// Write data 
+	dims2D[0] = N;
+	dims2D[1] = NUM_RUN_STATS;
+	if ( (H5LTmake_dataset(file_info->output_file_handle, "VelStats", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_vel_stats)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelStats");
+	}
+
+	// Free temp memory
+	fftw_free(tmp_vel_stats);
+
+	///--------------- Velocity structure function
+	#if defined(__STR_FUNC_VEL)
+	// Allocate temporary contiguous array
+	double* tmp_vel_str = (double* )fftw_malloc(sizeof(double) * (NUM_POW - 2) * N);
+	for (int i = 0; i < N; ++i) {
+		for (int p = 0; p < NUM_POW - 2; ++p) {
+			tmp_vel_str[i * (NUM_POW - 2) + p] = stats_data->vel_str_func[p][i] / stats_data->num_stats_steps;
+		}
+	}
+
+	// Write data 
+	dims2D[0] = N;
+	dims2D[1] = NUM_POW - 2;
+	if ( (H5LTmake_dataset(file_info->output_file_handle, "StructureFunctionVel", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_vel_str)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "StructureFunctionVel");
+	}
+
+	// Free temp memory
+	fftw_free(tmp_vel_str);
+	#endif
+
+	///--------------- Velocity Flux structure function
+	#if defined(__STR_FUNC_VEL_FLUX)
+	// Allocate temporary contiguous array
+	double* tmp_vel_str_flux = (double* )fftw_malloc(sizeof(double) * 2 * (NUM_POW - 2) * N);
+	for (int i = 0; i < N; ++i) {
+		for (int p = 0; p < NUM_POW - 2; ++p) {
+			tmp_vel_str_flux[2 * (i * (NUM_POW - 2) + p) + 0] = stats_data->vel_flux_str_func[0][p][i] / stats_data->num_stats_steps;
+			tmp_vel_str_flux[2 * (i * (NUM_POW - 2) + p) + 1] = stats_data->vel_flux_str_func[1][p][i] / stats_data->num_stats_steps;
+		}
+	}
+
+	// Write data 
+	dims3D[0] = N;
+	dims3D[1] = NUM_POW - 2;
+	dims3D[2] = 2;
+	if ( (H5LTmake_dataset(file_info->output_file_handle, "StructureFunctionVelFlux", D3, dims3D, H5T_NATIVE_DOUBLE, tmp_vel_str_flux)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "StructureFunctionVelFlux");
+	}
+
+	// Free temp memory
+	fftw_free(tmp_vel_str_flux);
+	#endif
+
+
+
+	#if defined(__MAGNETO)
+	///--------------- Magnetic field stats
+	double* tmp_mag_stat = (double* )fftw_malloc(sizeof(double) * (NUM_RUN_STATS) * N);
+	for (int i = 0; i < N; ++i) {
+		tmp_mag_stat[i * (NUM_RUN_STATS) + 0] = gsl_rstat_mean(stats_data->mag_moments[i]);
+		tmp_mag_stat[i * (NUM_RUN_STATS) + 1] = gsl_rstat_variance(stats_data->mag_moments[i]);
+		tmp_mag_stat[i * (NUM_RUN_STATS) + 2] = gsl_rstat_skew(stats_data->mag_moments[i]);
+		tmp_mag_stat[i * (NUM_RUN_STATS) + 3] = gsl_rstat_kurtosis(stats_data->mag_moments[i]);		
+		tmp_mag_stat[i * (NUM_RUN_STATS) + 4] = gsl_rstat_rms(stats_data->mag_moments[i]);
+		tmp_mag_stat[i * (NUM_RUN_STATS) + 5] = gsl_rstat_min(stats_data->mag_moments[i]);
+		tmp_mag_stat[i * (NUM_RUN_STATS) + 6] = gsl_rstat_max(stats_data->mag_moments[i]);
+	}
+
+	// Write data 
+	dims2D[0] = N;
+	dims2D[1] = NUM_RUN_STATS;
+	if ( (H5LTmake_dataset(file_info->output_file_handle, "MagStats", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_mag_stat)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "MagStats");
+	}
+
+	// Free temp memory
+	fftw_free(tmp_mag_stat);
+
+
+	///--------------- Magnetic structure function
+	#if defined(__STR_FUNC_MAG) 
+	// Allocate temporary contiguous array
+	double* tmp_mag_str = (double* )fftw_malloc(sizeof(double) * (NUM_POW - 2) * N);
+	for (int i = 0; i < N; ++i) {
+		for (int p = 0; p < NUM_POW - 2; ++p) {
+			tmp_mag_str[i * (NUM_POW - 2) + p] = stats_data->mag_str_func[p][i] / stats_data->num_stats_steps;
+		}
+	}
+
+	// Write data 
+	dims2D[0] = N;
+	dims2D[1] = NUM_POW - 2;
+	if ( (H5LTmake_dataset(file_info->output_file_handle, "StructureFunctionMag", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_mag_str)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "StructureFunctionMag");
+	}
+
+	// Free temp memory
+	fftw_free(tmp_mag_str);
+	#endif
+
+	///--------------- Magnetic flux structure function
+	#if defined(__STR_FUNC_MAG_FLUX)
+	// Allocate temporary contiguous array
+	double* tmp_mag_str_flux = (double* )fftw_malloc(sizeof(double) * 2 * (NUM_POW - 2) * N);
+	for (int i = 0; i < N; ++i) {
+		for (int p = 0; p < NUM_POW - 2; ++p) {
+			tmp_mag_str_flux[2 * (i * (NUM_POW - 2) + p) + 0] = stats_data->mag_flux_str_func[0][p][i] / stats_data->num_stats_steps;
+			tmp_mag_str_flux[2 * (i * (NUM_POW - 2) + p) + 1] = stats_data->mag_flux_str_func[1][p][i] / stats_data->num_stats_steps;
+		}
+	}
+
+	// Write data 
+	dims3D[0] = N;
+	dims3D[1] = NUM_POW - 2;
+	dims3D[2] = 2;
+	if ( (H5LTmake_dataset(file_info->output_file_handle, "StructureFunctionMagFlux", D3, dims3D, H5T_NATIVE_DOUBLE, tmp_mag_str_flux)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "StructureFunctionMagFlux");
+	}
+
+	// Free temp memory
+	fftw_free(tmp_mag_str_flux);
+	#endif
+	#endif
+	#endif
+	
 	// -----------------------------------
 	// Close Files for the final time
 	// -----------------------------------
