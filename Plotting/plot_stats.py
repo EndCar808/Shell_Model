@@ -205,6 +205,8 @@ if __name__ == '__main__':
         ax1.set_xscale('log')
         ax1.legend()
 
+
+        print(run_data.vel_flux_str_func[:, :, 1])
         ax2 = fig.add_subplot(gs[0, 1])
         indx_shift = 2
         for i in [4 - indx_shift, 6 - indx_shift]:

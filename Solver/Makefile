@@ -42,7 +42,7 @@ endif
 #  Executable flags
 # ---------------------------------------------------------------------
 # Flags to be passed to the solver for normal runs
-HYDRO_SOLVER_FLAGS := -D__INT_FAC_RK4 -D__STATS #-D__HYPER -D__ADAPTIVE_STEP -D__CFL_STEP #-D__TRANSIENTS  -D__EKMN_DRAG
+HYDRO_SOLVER_FLAGS := -D__RK4 -D__STATS #-D__HYPER -D__ADAPTIVE_STEP -D__CFL_STEP #-D__TRANSIENTS  -D__EKMN_DRAG
 
 MAG_HYDRO_SOLVER_FLAGS := -D__INT_FAC_RK4 -D__MAGNETO #-D__STATS -D__HYPER -D__ADAPTIVE_STEP -D__CFL_STEP #-D__TRANSIENTS  -D__EKMN_DRAG
 

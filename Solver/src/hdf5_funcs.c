@@ -758,16 +758,16 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	///--------------- Velocity structure function
 	#if defined(__STR_FUNC_VEL)
 	// Allocate temporary contiguous array
-	double* tmp_vel_str = (double* )fftw_malloc(sizeof(double) * (NUM_POW - 2) * N);
+	double* tmp_vel_str = (double* )fftw_malloc(sizeof(double) * NUM_POW * N);
 	for (int i = 0; i < N; ++i) {
-		for (int p = 0; p < NUM_POW - 2; ++p) {
-			tmp_vel_str[i * (NUM_POW - 2) + p] = stats_data->vel_str_func[p][i] / stats_data->num_stats_steps;
+		for (int p = 0; p < NUM_POW; ++p) {
+			tmp_vel_str[i * NUM_POW + p] = stats_data->vel_str_func[p][i] / stats_data->num_stats_steps;
 		}
 	}
 
 	// Write data 
 	dims2D[0] = N;
-	dims2D[1] = NUM_POW - 2;
+	dims2D[1] = NUM_POW;
 	if ( (H5LTmake_dataset(file_info->output_file_handle, "StructureFunctionVel", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_vel_str)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "StructureFunctionVel");
 	}
@@ -779,17 +779,17 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	///--------------- Velocity Flux structure function
 	#if defined(__STR_FUNC_VEL_FLUX)
 	// Allocate temporary contiguous array
-	double* tmp_vel_str_flux = (double* )fftw_malloc(sizeof(double) * 2 * (NUM_POW - 2) * N);
+	double* tmp_vel_str_flux = (double* )fftw_malloc(sizeof(double) * 2 * NUM_POW * N);
 	for (int i = 0; i < N; ++i) {
-		for (int p = 0; p < NUM_POW - 2; ++p) {
-			tmp_vel_str_flux[2 * (i * (NUM_POW - 2) + p) + 0] = stats_data->vel_flux_str_func[0][p][i] / stats_data->num_stats_steps;
-			tmp_vel_str_flux[2 * (i * (NUM_POW - 2) + p) + 1] = stats_data->vel_flux_str_func[1][p][i] / stats_data->num_stats_steps;
+		for (int p = 0; p < NUM_POW; ++p) {
+			tmp_vel_str_flux[2 * (i * NUM_POW + p) + 0] = stats_data->vel_flux_str_func[0][p][i] / stats_data->num_stats_steps;
+			tmp_vel_str_flux[2 * (i * NUM_POW + p) + 1] = stats_data->vel_flux_str_func[1][p][i] / stats_data->num_stats_steps;
 		}
 	}
 
 	// Write data 
 	dims3D[0] = N;
-	dims3D[1] = NUM_POW - 2;
+	dims3D[1] = NUM_POW;
 	dims3D[2] = 2;
 	if ( (H5LTmake_dataset(file_info->output_file_handle, "StructureFunctionVelFlux", D3, dims3D, H5T_NATIVE_DOUBLE, tmp_vel_str_flux)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "StructureFunctionVelFlux");
@@ -828,16 +828,16 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	///--------------- Magnetic structure function
 	#if defined(__STR_FUNC_MAG) 
 	// Allocate temporary contiguous array
-	double* tmp_mag_str = (double* )fftw_malloc(sizeof(double) * (NUM_POW - 2) * N);
+	double* tmp_mag_str = (double* )fftw_malloc(sizeof(double) * NUM_POW * N);
 	for (int i = 0; i < N; ++i) {
-		for (int p = 0; p < NUM_POW - 2; ++p) {
-			tmp_mag_str[i * (NUM_POW - 2) + p] = stats_data->mag_str_func[p][i] / stats_data->num_stats_steps;
+		for (int p = 0; p < NUM_POW; ++p) {
+			tmp_mag_str[i * NUM_POW + p] = stats_data->mag_str_func[p][i] / stats_data->num_stats_steps;
 		}
 	}
 
 	// Write data 
 	dims2D[0] = N;
-	dims2D[1] = NUM_POW - 2;
+	dims2D[1] = NUM_POW;
 	if ( (H5LTmake_dataset(file_info->output_file_handle, "StructureFunctionMag", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_mag_str)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "StructureFunctionMag");
 	}
@@ -849,17 +849,17 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	///--------------- Magnetic flux structure function
 	#if defined(__STR_FUNC_MAG_FLUX)
 	// Allocate temporary contiguous array
-	double* tmp_mag_str_flux = (double* )fftw_malloc(sizeof(double) * 2 * (NUM_POW - 2) * N);
+	double* tmp_mag_str_flux = (double* )fftw_malloc(sizeof(double) * 2 * NUM_POW * N);
 	for (int i = 0; i < N; ++i) {
-		for (int p = 0; p < NUM_POW - 2; ++p) {
-			tmp_mag_str_flux[2 * (i * (NUM_POW - 2) + p) + 0] = stats_data->mag_flux_str_func[0][p][i] / stats_data->num_stats_steps;
-			tmp_mag_str_flux[2 * (i * (NUM_POW - 2) + p) + 1] = stats_data->mag_flux_str_func[1][p][i] / stats_data->num_stats_steps;
+		for (int p = 0; p < NUM_POW; ++p) {
+			tmp_mag_str_flux[2 * (i * NUM_POW + p) + 0] = stats_data->mag_flux_str_func[0][p][i] / stats_data->num_stats_steps;
+			tmp_mag_str_flux[2 * (i * NUM_POW + p) + 1] = stats_data->mag_flux_str_func[1][p][i] / stats_data->num_stats_steps;
 		}
 	}
 
 	// Write data 
 	dims3D[0] = N;
-	dims3D[1] = NUM_POW - 2;
+	dims3D[1] = NUM_POW;
 	dims3D[2] = 2;
 	if ( (H5LTmake_dataset(file_info->output_file_handle, "StructureFunctionMagFlux", D3, dims3D, H5T_NATIVE_DOUBLE, tmp_mag_str_flux)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "StructureFunctionMagFlux");

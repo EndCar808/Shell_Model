@@ -59,23 +59,23 @@ void ComputeStats(void) {
 		#endif
 
     	// Compute the moments for the structure functions
-    	for (int p = 2; p < NUM_POW; ++p) {
+    	for (int p = 1; p <= NUM_POW; ++p) {
     		
     		// Compute the moments of the fields
     		#if defined(__STR_FUNC_MAG) || defined(__STR_FUNC_VEL)
-			stats_data->vel_str_func[p - 2][i] += pow(cabs(run_data->u[n]), p);
+			stats_data->vel_str_func[p - 1][i] += pow(cabs(run_data->u[n]), p);
 			#if defined(__MAGNETO)
-			stats_data->mag_str_func[p - 2][i] += pow(cabs(run_data->b[n]), p);
+			stats_data->mag_str_func[p - 1][i] += pow(cabs(run_data->b[n]), p);
     		#endif
     		#endif
 
 			// Compute the moments of the fluxes
 			#if defined(__STR_FUNC_VEL_FLUX) || defined(__STR_FUNC_MAG_FLUX)
-			stats_data->vel_flux_str_func[0][p - 2][i] += pow(vel_enrg_flux_term, p / 3.0);
-			stats_data->vel_flux_str_func[1][p - 2][i] += pow(vel_hel_flux_term, p / 3.0);
+			stats_data->vel_flux_str_func[0][p - 1][i] += pow(vel_enrg_flux_term, p / 3.0);
+			stats_data->vel_flux_str_func[1][p - 1][i] += pow(vel_hel_flux_term, p / 3.0);
     		#if defined(__MAGNETO)
-			// stats_data->mag_flux_str_func[0][p - 2][i] += pow(mag_enrg_flux_term, p);
-			// stats_data->mag_flux_str_func[1][p - 2][i] += pow(mag_hel_flux_term, p);
+			// stats_data->mag_flux_str_func[0][p - 1][i] += pow(mag_enrg_flux_term, p);
+			// stats_data->mag_flux_str_func[1][p - 1][i] += pow(mag_hel_flux_term, p);
     		#endif
     		#endif
     	}
@@ -92,11 +92,12 @@ void InitializeStats(void) {
 	// Initialize the stats counter
 	stats_data->num_stats_steps = 0;
 
+
 	// ------------------------------------
     // Allocate & Initialize Stats Objects
     // ------------------------------------
 	// Allocate memory for the structure functions
-	for (int i = 0; i < NUM_POW - 2; ++i) {
+	for (int i = 0; i < NUM_POW; ++i) {
 		#if defined(__STR_FUNC_VEL)
 		stats_data->vel_str_func[i]      	= (double* )fftw_malloc(sizeof(double) * N);
 		#endif

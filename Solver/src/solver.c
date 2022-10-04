@@ -76,6 +76,7 @@ void Solve(void) {
 	// Initialize the forcing
 	InitializeForicing(N);
 
+
 	// Initialize stats objects if required
 	#if defined(STATS)
 	InitializeStats();
@@ -283,11 +284,9 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		int_fac_b = exp(-sys_vars->ETA * dt * run_data->k[i] * run_data->k[i] / 2.0 + run_data->forcing_b[i]);
 		
 		// Update temporary magnetic term
-		RK_data->RK_b_tmp[i] = run_data->b[i] * int_fac_b + dt * RK4_A21 * RK_data->RK1_b[i] * int_fac_b;		
+		RK_data->RK_b_tmp[i] = run_data->b[i] * int_fac_b + dt * RK4_A21 * RK_data->RK1_b[i] * int_fac_b;
 		#endif
 		#endif
-
-		// printf("u[%d]:\t%1.16lf\t%1.16lf i\tb[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(RK_data->RK1_u[i]), cimag(RK_data->RK1_u[i]),  i - 1, creal(RK_data->RK1_b[i]), cimag(RK_data->RK1_b[i]));		
 	}
 
 	// ----------------------- Stage 2
@@ -365,9 +364,9 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 	/////////////////////
 	/// UPDATE STEP
 	/////////////////////
-	for (int i = 0; i < N; ++i) {
+	for (int i = 0; i < N + 1; ++i) {
 		// Get temporary index
-		n = i + 2;
+		n = i + 1;
 
 		#if defined(PHASE_ONLY)
 		// Pre-record the amplitudes for resetting after update step
@@ -425,6 +424,12 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		run_data->b_n[n]   = cabs(run_data->b[n]);
 		run_data->psi_n[n] = carg(run_data->b[n]);
 		#endif
+		#endif
+
+		#if defined(__MAGNETO)
+		printf("u[%d]:\t%1.16lf\t%1.16lf i\tb[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]),  i - 1, creal(run_data->b[i]), cimag(run_data->b[i]));
+		#else
+		printf("u[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]));		
 		#endif
 	}
 }
@@ -560,9 +565,9 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 	/////////////////////
 	/// UPDATE STEP
 	/////////////////////
-	for (int i = 0; i < N; ++i) {
+	for (int i = 0; i < N + 1; ++i) {
 		// Get tmp index
-		n = i + 2;
+		n = i + 1;
 
 		#if defined(PHASE_ONLY)
 		// Pre-record the amplitudes for resetting after update step
@@ -603,6 +608,12 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		run_data->psi_n[n] = carg(run_data->b[n]);
 		#endif
 		#endif
+
+		#if defined(__MAGNETO)
+		printf("u[%d]:\t%1.16lf\t%1.16lf i\tb[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]),  i - 1, creal(run_data->b[i]), cimag(run_data->b[i]));
+		#else
+		printf("u[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]));		
+		#endif
 	}
 }
 #endif
@@ -635,9 +646,9 @@ void NonlinearTerm(double* u, double* b, double* u_nonlin, double* b_nonlin, con
 	// -----------------------------------
 	// Compute The Nonlinear Terms
 	// -----------------------------------
-	for (int i = 0; i < N; ++i) {
+	for (int i = 0; i < N + 1; ++i) {
 		// Get tmp array index
-		n = i + 2;
+		n = i + 1;
 
 		// -----------------------------------
 		// Compute Temporary Terms
@@ -698,9 +709,9 @@ void NonlinearTerm(fftw_complex* u, fftw_complex* b, fftw_complex* u_nonlin, fft
 	// -----------------------------------
 	// Compute The Nonlinear Terms
 	// -----------------------------------
-	for (int i = 0; i < N; ++i) {
+	for (int i = 0; i < N + 1; ++i) {
 		// Get tmp array index
-		n = i + 2;
+		n = i + 1;
 
 		// -----------------------------------
 		// Compute Temporary Terms

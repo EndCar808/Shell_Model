@@ -151,7 +151,7 @@
 #define MAX_ITERS 1e+12			// The maximum iterations to perform
 #define MAX_FIELD_LIM 1e+100     // The maximum allowed velocity &/or magnetic
 // Stats parameters
-#define NUM_POW 7 				// The highest moment to compute for the structure function
+#define NUM_POW 6 				// The highest moment to compute for the structure function
 #define NUM_RUN_STATS 7 		// The number of running stats moments to record
 // // Dormand Prince integrator parameters
 // #define DP_ABS_TOL 1e-7		    // The absolute error tolerance for the Dormand Prince Scheme
@@ -287,10 +287,10 @@ typedef struct HDF_file_info_struct {
 
 // Stats data struct
 typedef struct stats_data_struct {
-	double* vel_str_func[NUM_POW - 2];				// Array to hold the structure functions of the Velocity modes
-	double* mag_str_func[NUM_POW - 2];		  		// Array to hold the structure functions of the magnetic modes
-	double* vel_flux_str_func[2][NUM_POW - 2];		// Array to hold the structure functions of the flux Velocity modes
-	double* mag_flux_str_func[2][NUM_POW - 2];		// Array to hold the structure functions of the flux magnetic modes
+	double* vel_str_func[NUM_POW];					// Array to hold the structure functions of the Velocity modes
+	double* mag_str_func[NUM_POW];			  		// Array to hold the structure functions of the magnetic modes
+	double* vel_flux_str_func[2][NUM_POW];			// Array to hold the structure functions of the flux Velocity modes
+	double* mag_flux_str_func[2][NUM_POW];			// Array to hold the structure functions of the flux magnetic modes
 	gsl_rstat_workspace** vel_moments;				// Struct to hold the running stats for the velocity field
 	gsl_rstat_workspace** mag_moments;				// Struct to hold the running stats for the magnetic field
 	gsl_histogram* real_vel_hist;					// Struct to hold the histogram info for the velocity field
