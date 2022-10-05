@@ -26,11 +26,14 @@
 //  Global Variables
 // ---------------------------------------------------------------------
 // Define RK4 variables - Butcher Tableau
-#if defined(RK4) || defined(INT_FAC_RK4)
+#if defined(RK4) || defined(INT_FAC_RK4) || defined(AB4CN)
 static const double RK4_C2 = 0.5, 	  RK4_A21 = 0.5, \
 				  	RK4_C3 = 0.5,	           					RK4_A32 = 0.5, \
 				  	RK4_C4 = 1.0,                      									   RK4_A43 = 1.0, \
 				              	 	  RK4_B1 = 1.0/6.0, 		RK4_B2  = 1.0/3.0, 		   RK4_B3  = 1.0/3.0, 		RK4_B4 = 1.0/6.0;
+#endif
+#if defined(AB4CN)
+static const double AB4_1 = 55.0/24.0, AB4_2 = -59.0/24.0,		AB4_3 = 37.0/24.0,			AB4_4 = -3.0/8.0;
 #endif
 // ---------------------------------------------------------------------
 //  Function Definitions
@@ -130,6 +133,9 @@ void Solve(void) {
 		#endif
 		#if defined(RK4)
 		RK4Step(dt, N, RK_data);
+		#endif
+		#if defined(AB4CN)
+		AB4CNStep(dt, (long int)iters, N, RK_data);
 		#endif
 
 		// -------------------------------
@@ -434,7 +440,13 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 	}
 }
 #endif
-#if defined(RK4)
+/**
+ * Function to perform one step using the 4th order Runge-Kutta method
+ * @param dt       The current timestep of the system
+ * @param N        int defining the number of shells
+ * @param RK_data  Struct pointing the Integration variables: stages, tmp arrays, rhs and arrays needed for NonlinearRHS function
+ */
+#if defined(RK4) || defined(AB4CN)
 void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 
 	// Initialize vairables
@@ -617,6 +629,95 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 	// 	#endif
 	// }
 	
+}
+#endif
+#if defined(AB4CN)
+/**
+ * Function to perform an integration step using the 4th order Adams Bashforth shceme with Crank Nicholson differencing on the viscosity term.
+ * @param dt      The current timestep in the simulation
+ * @param iters   The current iteration of the simulation
+ * @param N       The number of shell modes	
+ * @param RK_data Struct containing the integration arrays
+ */
+void AB4CNStep(const double dt, const long iters, const long int N, RK_data_struct* RK_data) {
+
+	// Initialize variables
+	int n;
+	double D_fac_u;
+	#if defined(__MAGNETO)	
+	double D_fac_b;
+	#endif
+
+	/////////////////////
+	/// AB Pre Steps
+	/////////////////////
+	if (iters <= RK_data->AB_pre_steps) {
+		// -----------------------------------
+		// Perform RK4 Step
+		// -----------------------------------
+		// March the field forward in time using RK4 step
+		RK4Step(dt, N, RK_data);
+
+		// Save the nonlinear term for each pre step for use in the update step of the AB4CN scheme
+		memcpy(&(RK_data->AB_tmp_nonlin_u[iters - 1][0]), RK_data->RK1_u, sizeof(fftw_complex) * (N + 4));
+		#if defined(__MAGNETO)
+		memcpy(&(RK_data->AB_tmp_nonlin_b[iters - 1][0]), RK_data->RK1_b, sizeof(fftw_complex) * (N + 4));		
+		#endif
+	}
+	else {
+		// -----------------------------------
+		// Compute Forcing
+		// -----------------------------------
+		// Compute the forcing for the current iteration
+		ComputeForicing(N);
+
+		// -----------------------------------
+		// Compute RHS
+		// -----------------------------------
+		// Get the nonlinear term for the current step
+		NonlinearTerm(run_data->u, run_data->b, RK_data->AB_tmp_u, RK_data->AB_tmp_b, N);
+		// Add the forcing 
+		for (int i = 0; i < N + 4; ++i) {
+			RK_data->AB_tmp_u[i] += run_data->forcing_u[i];
+			#if defined(__MAGNETO)
+			RK_data->AB_tmp_b[i] += run_data->forcing_b[i];
+			#endif
+		}
+
+		/////////////////////
+		/// AB Update Step
+		/////////////////////
+		for (int i = 0; i < N + 1; ++i) {
+			// Get tmp index
+			n = i + 1;
+
+			// Compute the D factor for the velocity field
+			D_fac_u = dt * (sys_vars->NU * run_data->k[i] * run_data->k[i]);
+
+			// Update the new velocity field
+			run_data->u[n] = run_data->u[n] * ((2.0 - D_fac_u) / (2.0 + D_fac_u)) + (2.0 * dt / (2.0 + D_fac_u)) * (AB4_1 * RK_data->AB_tmp_u[n] + AB4_2 * RK_data->AB_tmp_nonlin_u[2][n] + AB4_3 * RK_data->AB_tmp_nonlin_u[1][n] + AB4_4 * RK_data->AB_tmp_nonlin_u[0][n]);
+			#if defined(__MAGNETO)
+			// Compute the D factor for the velocity field
+			D_fac_b = dt * (sys_vars->ETA * run_data->k[i] * run_data->k[i]);
+
+			// Update the new magnetic field
+			run_data->b[n] = run_data->b[n] * ((2.0 - D_fac_b) / (2.0 + D_fac_b)) + (2.0 * dt / (2.0 + D_fac_b)) * (AB4_1 * RK_data->AB_tmp_b[n] + AB4_2 * RK_data->AB_tmp_nonlin_b[2][n] + AB4_3 * RK_data->AB_tmp_nonlin_b[1][n] + AB4_4 * RK_data->AB_tmp_nonlin_b[0][n]);
+			#endif
+		}
+
+		// -----------------------------------
+		// Update Previous Nonlinear Terms
+		// -----------------------------------
+		// Update the previous Nonlinear term arrays for next iteration
+		memcpy(&(RK_data->AB_tmp_nonlin_u[0][0]), &(RK_data->AB_tmp_nonlin_u[1][0]), sizeof(fftw_complex) * (N + 4));
+		memcpy(&(RK_data->AB_tmp_nonlin_u[1][0]), &(RK_data->AB_tmp_nonlin_u[2][0]), sizeof(fftw_complex) * (N + 4));
+		memcpy(&(RK_data->AB_tmp_nonlin_u[2][0]), RK_data->AB_tmp_u, sizeof(fftw_complex) * (N + 4));
+		#if defined(__MAGNETO)
+		memcpy(&(RK_data->AB_tmp_nonlin_b[0][0]), &(RK_data->AB_tmp_nonlin_b[1][0]), sizeof(fftw_complex) * (N + 4));
+		memcpy(&(RK_data->AB_tmp_nonlin_b[1][0]), &(RK_data->AB_tmp_nonlin_b[2][0]), sizeof(fftw_complex) * (N + 4));
+		memcpy(&(RK_data->AB_tmp_nonlin_b[2][0]), RK_data->AB_tmp_b, sizeof(fftw_complex) * (N + 4));
+		#endif
+	}
 }
 #endif
 #if defined(PHASE_ONLY_DIRECT) && !defined(PHASE_ONLY)
@@ -1212,12 +1313,24 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 	RK_data->RK3_u       = (double* )fftw_malloc(sizeof(double) * (N + 4));
 	RK_data->RK4_u       = (double* )fftw_malloc(sizeof(double) * (N + 4));
 	RK_data->RK_u_tmp    = (double* )fftw_malloc(sizeof(double) * (N + 4));
+	#if defined(AB4CN)
+	RK_data->AB_tmp_u	 = (double* )fftw_malloc(sizeof(double) * (N + 4));
+	for (int i = 0; i < 3; ++i) {
+		RK_data->AB_tmp_nonlin_u[i] = (double* )fftw_malloc(sizeof(double) * (N + 4));
+	}
+	#endif
 	#if defined(__MAGNETO)
 	RK_data->RK1_b       = (double* )fftw_malloc(sizeof(double) * (N + 4));
 	RK_data->RK2_b       = (double* )fftw_malloc(sizeof(double) * (N + 4));
 	RK_data->RK3_b       = (double* )fftw_malloc(sizeof(double) * (N + 4));
 	RK_data->RK4_b       = (double* )fftw_malloc(sizeof(double) * (N + 4));
 	RK_data->RK_b_tmp    = (double* )fftw_malloc(sizeof(double) * (N + 4));
+	#if defined(AB4CN)
+	RK_data->AB_tmp_b	 = (double* )fftw_malloc(sizeof(double) * (N + 4));
+	for (int i = 0; i < 3; ++i) {
+		RK_data->AB_tmp_nonlin_b[i] = (double* )fftw_malloc(sizeof(double) * (N + 4));
+	}
+	#endif
 	#endif
 	#else
 	RK_data->RK1_u       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
@@ -1225,12 +1338,24 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 	RK_data->RK3_u       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
 	RK_data->RK4_u       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
 	RK_data->RK_u_tmp    = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
+	#if defined(AB4CN)
+	RK_data->AB_tmp_u	 = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
+	for (int i = 0; i < 3; ++i) {
+		RK_data->AB_tmp_nonlin_u[i] = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
+	}
+	#endif
 	#if defined(__MAGNETO)
 	RK_data->RK1_b       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
 	RK_data->RK2_b       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
 	RK_data->RK3_b       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
 	RK_data->RK4_b       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
 	RK_data->RK_b_tmp    = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
+	#if defined(AB4CN)
+	RK_data->AB_tmp_b	 = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
+	for (int i = 0; i < 3; ++i) {
+		RK_data->AB_tmp_nonlin_b[i] = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
+	}
+	#endif
 	#endif
 	#endif
 	if (RK_data->RK1_u == NULL) {
@@ -1253,6 +1378,19 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Integration Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "RK_u_tmp");
 		exit(1);
 	}
+
+	#if defined(AB4CN)
+	if (RK_data->AB_tmp_u == NULL) {
+		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Integration Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "AB_tmp_u");
+		exit(1);
+	}
+	for (int i = 0; i < 3; ++i) {
+		if (RK_data->AB_tmp_nonlin_u[i] == NULL) {
+			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Integration Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "AB_tmp_nonlin_u");
+			exit(1);
+		}
+	}
+	#endif
 	#if defined(__MAGNETO)
 	if (RK_data->RK1_b == NULL) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Integration Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "RK1 Magnetic");
@@ -1274,6 +1412,18 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Integration Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "RK_b_tmp");
 		exit(1);
 	}
+	#if defined(AB4CN)
+	if (RK_data->AB_tmp_b == NULL) {
+		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Integration Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "AB_tmp_b");
+		exit(1);
+	}
+	for (int i = 0; i < 3; ++i) {
+		if (RK_data->AB_tmp_nonlin_b[i] == NULL) {
+			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Integration Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "AB_tmp_nonlin_b");
+			exit(1);
+		}
+	}
+	#endif
 	#endif
 
 	// -------------------------------
@@ -1288,6 +1438,12 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 		RK_data->RK3_u[i]    = 0.0 + 0.0 * I;
 		RK_data->RK4_u[i]    = 0.0 + 0.0 * I;
 		RK_data->RK_u_tmp[i] = 0.0 + 0.0 * I;
+		#if defined(AB4CN)
+		RK_data->AB_tmp_u[i] = 0.0 + 0.0 * I;
+		for (int j = 0; j < 3; ++j) {
+			RK_data->AB_tmp_nonlin_u[j][i] = 0.0 + 0.0 * I;
+		}
+		#endif
 		#if defined(PHASE_ONLY)
 		run_data->a_n[i]   = 0.0;
 		run_data->phi_n[i] = 0.0;
@@ -1299,6 +1455,12 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 		RK_data->RK3_b[i]    = 0.0 + 0.0 * I;
 		RK_data->RK4_b[i]    = 0.0 + 0.0 * I;
 		RK_data->RK_b_tmp[i] = 0.0 + 0.0 * I;
+		#if defined(AB4CN)
+		RK_data->AB_tmp_b[i] = 0.0 + 0.0 * I;
+		for (int j = 0; j < 3; ++j) {
+			RK_data->AB_tmp_nonlin_b[j][i] = 0.0 + 0.0 * I;
+		}
+		#endif
 		#if defined(PHASE_ONLY)
 		run_data->b_n[i]   = 0.0;
 		run_data->psi_n[i] = 0.0;
@@ -1385,12 +1547,24 @@ void FreeMemory(RK_data_struct* RK_data) {
 	fftw_free(RK_data->RK3_u);
 	fftw_free(RK_data->RK4_u);
 	fftw_free(RK_data->RK_u_tmp);
+	#if defined(AB4CN)
+	fftw_free(RK_data->AB_tmp_u);
+	for (int i = 0; i < 3; ++i)	{
+		fftw_free(RK_data->AB_tmp_nonlin_u[i]);
+	}
+	#endif
 	#if defined(__MAGNETO)
 	fftw_free(RK_data->RK1_b);
 	fftw_free(RK_data->RK2_b);
 	fftw_free(RK_data->RK3_b);
 	fftw_free(RK_data->RK4_b);
 	fftw_free(RK_data->RK_b_tmp);
+	#if defined(AB4CN)
+	fftw_free(RK_data->AB_tmp_b);
+	for (int i = 0; i < 3; ++i)	{
+		fftw_free(RK_data->AB_tmp_nonlin_b[i]);
+	}
+	#endif
 	#endif
 }
 // ---------------------------------------------------------------------

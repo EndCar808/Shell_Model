@@ -28,6 +28,10 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data);
 #if defined(RK4)
 void RK4Step(const double dt, const long int N, RK_data_struct* RK_data);
 #endif
+#if defined(AB4)
+void RK4Step(const double dt, const long int N, RK_data_struct* RK_data);
+void AB4CNStep(const double dt, const long int iters, const long int N, RK_data_struct* RK_data);
+#endif
 #if defined(PHASE_ONLY_DIRECT) && !defined(PHASE_ONLY)
 void NonlinearTerm(double* u, double* b, double* u_nonlin, double* b_nonlin, const long int N);
 #else

@@ -55,8 +55,8 @@
 #if defined(__RK4)
 #define RK4
 #endif
-#if defined(__AB4)
-#define AB4
+#if defined(__AB4CN)
+#define AB4CN
 #endif
 // #define __RK5
 // #define __DPRK5
@@ -246,28 +246,37 @@ typedef struct runtime_data_struct {
 // Runge-Kutta Integration struct
 typedef struct RK_data_struct {
 	#if defined(PHASE_ONLY_DIRECT)
-	double* RK1_u;		  		 // Array to hold the result of the first stage for the velocity field
-	double* RK2_u;		  		 // Array to hold the result of the second stage for the velocity field
-	double* RK3_u;		  		 // Array to hold the result of the third stage for the velocity field
-	double* RK4_u;		  		 // Array to hold the result of the fourth stage for the velocity field
-	double* RK1_b;		  		 // Array to hold the result of the first stage for the magnetic field
-	double* RK2_b;		  		 // Array to hold the result of the second stage for the magnetic field
-	double* RK3_b;		  		 // Array to hold the result of the third stage for the magnetic field
-	double* RK4_b;		  		 // Array to hold the result of the fourth stage for the magnetic field
-	double* RK_u_tmp;		     // Array to hold the tempory updates to u - input to Nonlinear term function
-	double* RK_b_tmp;		     // Array to hold the tempory updates to b - input to Nonlinear term function
+	double* RK1_u;		  		 	// Array to hold the result of the first stage for the velocity field
+	double* RK2_u;		  		 	// Array to hold the result of the second stage for the velocity field
+	double* RK3_u;		  		 	// Array to hold the result of the third stage for the velocity field
+	double* RK4_u;		  		 	// Array to hold the result of the fourth stage for the velocity field
+	double* RK1_b;		  		 	// Array to hold the result of the first stage for the magnetic field
+	double* RK2_b;		  		 	// Array to hold the result of the second stage for the magnetic field
+	double* RK3_b;		  		 	// Array to hold the result of the third stage for the magnetic field
+	double* RK4_b;		  		 	// Array to hold the result of the fourth stage for the magnetic field
+	double* RK_u_tmp;		     	// Array to hold the tempory updates to u - input to Nonlinear term function
+	double* RK_b_tmp;		     	// Array to hold the tempory updates to b - input to Nonlinear term function
+	double* AB_tmp_u;	  			// Array to hold the result of the RHS/Nonlinear term for the Adams Bashforth scheme
+	double* AB_tmp_nonlin_u[3];	 	// Array to hold the previous 3 RHS/Nonlinear terms to update the Adams Bashforth scheme
+	double* AB_tmp_b;	  			// Array to hold the result of the RHS/Nonlinear term for the Adams Bashforth scheme
+	double* AB_tmp_nonlin_b[3];	 	// Array to hold the previous 3 RHS/Nonlinear terms to update the Adams Bashforth scheme
 	#else
-	fftw_complex* RK1_u;		  // Array to hold the result of the first stage for the velocity field
-	fftw_complex* RK2_u;		  // Array to hold the result of the second stage for the velocity field
-	fftw_complex* RK3_u;		  // Array to hold the result of the third stage for the velocity field
-	fftw_complex* RK4_u;		  // Array to hold the result of the fourth stage for the velocity field
-	fftw_complex* RK1_b;		  // Array to hold the result of the first stage for the magnetic field
-	fftw_complex* RK2_b;		  // Array to hold the result of the second stage for the magnetic field
-	fftw_complex* RK3_b;		  // Array to hold the result of the third stage for the magnetic field
-	fftw_complex* RK4_b;		  // Array to hold the result of the fourth stage for the magnetic field
-	fftw_complex* RK_u_tmp;		  // Array to hold the tempory updates to u - input to Nonlinear term function
-	fftw_complex* RK_b_tmp;		  // Array to hold the tempory updates to b - input to Nonlinear term function
+	fftw_complex* RK1_u;		  		// Array to hold the result of the first stage for the velocity field
+	fftw_complex* RK2_u;		  		// Array to hold the result of the second stage for the velocity field
+	fftw_complex* RK3_u;		  		// Array to hold the result of the third stage for the velocity field
+	fftw_complex* RK4_u;		  		// Array to hold the result of the fourth stage for the velocity field
+	fftw_complex* RK1_b;		  		// Array to hold the result of the first stage for the magnetic field
+	fftw_complex* RK2_b;		  		// Array to hold the result of the second stage for the magnetic field
+	fftw_complex* RK3_b;		  		// Array to hold the result of the third stage for the magnetic field
+	fftw_complex* RK4_b;		  		// Array to hold the result of the fourth stage for the magnetic field
+	fftw_complex* RK_u_tmp;		  		// Array to hold the tempory updates to u - input to Nonlinear term function
+	fftw_complex* RK_b_tmp;		  		// Array to hold the tempory updates to b - input to Nonlinear term function
+	fftw_complex* AB_tmp_u;	  			// Array to hold the result of the RHS/Nonlinear term for the Adams Bashforth scheme
+	fftw_complex* AB_tmp_nonlin_u[3];	// Array to hold the previous 3 RHS/Nonlinear terms to update the Adams Bashforth scheme
+	fftw_complex* AB_tmp_b;	  			// Array to hold the result of the RHS/Nonlinear term for the Adams Bashforth scheme
+	fftw_complex* AB_tmp_nonlin_b[3];	// Array to hold the previous 3 RHS/Nonlinear terms to update the Adams Bashforth scheme
 	#endif
+	int AB_pre_steps;				// The number of derivatives to perform for the AB4 scheme
 } RK_data_struct;
 
 // HDF5 file info struct

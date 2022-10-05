@@ -244,10 +244,8 @@ void GetOutputDirPath(void) {
 		sprintf(solv_type, "%s", "INTFACRK4");
 		#elif defined(RK4)
 		sprintf(solv_type, "%s", "RK4");
-		#elif defined(__RK5)
-		sprintf(solv_type, "%s", "RK5");
-		#elif defined(__DPRK5)
-		sprintf(solv_type, "%s", "DP5");
+		#elif defined(AB4CN)
+		sprintf(solv_type, "%s", "AB4CN");
 		#else 
 		sprintf(solv_type, "%s", "UKN");
 		#endif
@@ -312,12 +310,10 @@ void GetOutputDirPath(void) {
 		#endif
 		#if defined(INT_FAC_RK4)
 		sprintf(solv_type, "%s", "INTFACRK4");
-		#elif defined(__RK5)
-		sprintf(solv_type, "%s", "RK5");
+		#elif defined(AB4CN)
+		sprintf(solv_type, "%s", "AB4CN");
 		#elif defined(RK4)
 		sprintf(solv_type, "%s", "RK4");
-		#elif defined(__DPRK5)
-		sprintf(solv_type, "%s", "DP5");
 		#else 
 		sprintf(solv_type, "%s", "UKN");
 		#endif
@@ -693,11 +689,11 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	if ( (H5LTmake_dataset(file_info->output_file_handle, "TotalEnergy", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_energy)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalEnergy");
 	}
-	#if defined(__MAGNETO)
 	// Velocity Helicity
 	if ( (H5LTmake_dataset(file_info->output_file_handle, "TotalVelocityHelicity", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_hel_u)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalVelocityHelicity");
 	}
+	#if defined(__MAGNETO)
 	// Magnetic Helicity
 	if ( (H5LTmake_dataset(file_info->output_file_handle, "TotalMagneticHelicity", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_hel_b)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalMagneticHelicity");

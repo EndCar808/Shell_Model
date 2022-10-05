@@ -168,9 +168,9 @@ if __name__ == '__main__':
         if cmdargs.PO is False:
 
             ##-------------- Plot Velocity and Magnetic Tseries
-            for i in range(1, sys_vars.N + 1):
-                print(run_data.u[-10:, i])
-                my_i = i
+            for i in range(sys_vars.N):
+                print(run_data.u[-10:-1, i])
+                my_i = i + 1
                 fig = plt.figure(figsize = (16, 8))
                 if hasattr(run_data, 'b'):
                     gs  = GridSpec(2, 2)
@@ -207,9 +207,9 @@ if __name__ == '__main__':
                     ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
                     ax2.legend()
 
-                plt.suptitle(r"$n = {}$".format(i))
+                plt.suptitle(r"$n = {}$".format(i + 1))
 
-                plt.savefig(cmdargs.out_dir + "/UB_Compare_N{}.png".format(i))
+                plt.savefig(cmdargs.out_dir + "/UB_Compare_N{}.png".format(i + 1))
                 plt.close()
 
 
