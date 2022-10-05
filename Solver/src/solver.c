@@ -426,11 +426,11 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		#endif
 		#endif
 
-		#if defined(__MAGNETO)
-		printf("u[%d]:\t%1.16lf\t%1.16lf i\tb[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]),  i - 1, creal(run_data->b[i]), cimag(run_data->b[i]));
-		#else
-		printf("u[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]));		
-		#endif
+		// #if defined(__MAGNETO)
+		// printf("u[%d]:\t%1.16lf\t%1.16lf i\tb[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]),  i - 1, creal(run_data->b[i]), cimag(run_data->b[i]));
+		// #else
+		// printf("u[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]));		
+		// #endif
 	}
 }
 #endif
@@ -609,11 +609,11 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		#endif
 		#endif
 
-		#if defined(__MAGNETO)
-		printf("u[%d]:\t%1.16lf\t%1.16lf i\tb[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]),  i - 1, creal(run_data->b[i]), cimag(run_data->b[i]));
-		#else
-		printf("u[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]));		
-		#endif
+		// #if defined(__MAGNETO)
+		// printf("u[%d]:\t%1.16lf\t%1.16lf i\tb[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]),  i - 1, creal(run_data->b[i]), cimag(run_data->b[i]));
+		// #else
+		// printf("u[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]));		
+		// #endif
 	}
 }
 #endif
@@ -1070,6 +1070,7 @@ void InitializeIntegrationVariables(double* t0, double* t, double* dt, double* T
 	// -------------------------------
 	// Number of time steps and saving steps
 	sys_vars->num_t_steps = (int)round( ((*T) - (*t0)) / (*dt) );
+	// printf("\n\n%1.16lf,%1.16lf,%1.16lf--%1.16lf\t%1.16lf\t%1.16lf\n\n", (*T), (*t0), (*dt), ((*T) - (*t0)) / (*dt), round(((*T) - (*t0)) / (*dt)));
 	if (sys_vars->TRANS_ITERS_FLAG == TRANSIENT_ITERS) {
 		// Get the transient iterations
 		(* trans_steps)       = (long int)(sys_vars->TRANS_ITERS_FRAC * sys_vars->num_t_steps);

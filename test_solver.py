@@ -80,6 +80,10 @@ if __name__ == '__main__':
 
 	## Sort folders
 	test_dirs.sort(reverse = True, key = lambda x: float(x.split("_")[0]))
+	for dirs in test_dirs:
+		print(dirs)
+
+	print("\nNo. of Data Directories: {}\n".format(len(test_dirs)))
 
 	#####################
 	##  READ IN DATA  ##
@@ -110,21 +114,22 @@ if __name__ == '__main__':
 			break
 
 	## Compute error
-	err = []
+	err_at_T = []
 	for i in range(1, len(time)):
-		err.append(np.sum(np.abs(data[i][-1,:]-data[i-1][-1,:])**2, axis=0))
+		err_at_T.append(np.sum(np.abs(data[i][-1,:]-data[i-1][-1,:])**2, axis=0))
 		print(np.sum(np.abs(data[i][-1,:]-data[i-1][-1,:])**2, axis=0))
 
 	plot_steps = steps[1:]
 	## Get fit of the data
-	p = np.polyfit(np.log(plot_steps[:-2]), np.log(err[:-2]), 1)
+	p = np.polyfit(np.log(plot_steps[:-2]), np.log(err_at_T[:-2]), 1)
 
 	#################
 	##  PLOT DATA  ##
 	#################
 	plt.figure()
-	plt.plot(plot_steps, err, 'o')
-	plt.plot(plot_steps[:-2], np.exp(p[1]) * plot_steps[:-2]**p[0], '--', color='orangered',label="Erreur $\propto$ dt^{:.2f}".format(p[0]))
+	plt.plot(plot_steps, err_at_T, 'o')
+	plt.plot(plot_steps[:-2], np.exp(p[1]) * plot_steps[:-2]**p[0], '--', color='orangered',label="Error $\propto$ dt^{:.2f} (Best fit)".format(p[0]))
+	plt.plot(plot_steps[:-2], np.array(plot_steps[:-2])**8, "--", color = 'black', label = "$h^8$")
 	plt.xscale('log')
 	plt.yscale('log')
 	plt.ylabel(r"Error at T")
@@ -132,5 +137,5 @@ if __name__ == '__main__':
 	plt.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
 	plt.legend()
 
-	plt.savefig(cmdargs.in_dir + "/Test_Solver_Error_vs_dt.png")
+	plt.savefig(cmdargs.in_dir + "/Error_vs_dt_" + cmdargs.solver_tag + ".png")
 	plt.close()
