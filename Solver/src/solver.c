@@ -608,13 +608,15 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		run_data->psi_n[n] = carg(run_data->b[n]);
 		#endif
 		#endif
-
-		// #if defined(__MAGNETO)
-		// printf("u[%d]:\t%1.16lf\t%1.16lf i\tb[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]),  i - 1, creal(run_data->b[i]), cimag(run_data->b[i]));
-		// #else
-		// printf("u[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]));		
-		// #endif
 	}
+	// for (int i = 0; i < N + 4; ++i) {
+	// 	#if defined(__MAGNETO)
+	// 	printf("u[%d]:\t%1.16lf\t%1.16lf i\tb[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]),  i - 1, creal(run_data->b[i]), cimag(run_data->b[i]));
+	// 	#else
+	// 	printf("u[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]));		
+	// 	#endif
+	// }
+	
 }
 #endif
 #if defined(PHASE_ONLY_DIRECT) && !defined(PHASE_ONLY)

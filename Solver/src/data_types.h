@@ -55,6 +55,9 @@
 #if defined(__RK4)
 #define RK4
 #endif
+#if defined(__AB4)
+#define AB4
+#endif
 // #define __RK5
 // #define __DPRK5
 // Choose whether to print updates to screen

@@ -47,11 +47,6 @@ def parse_cml(argv):
 	## Parse command line args
 	for opt, arg in opts:
 
-		if opt in ['-i']:
-			## Read in input directory
-			cargs.in_dir = str(arg)
-			print("Input Directory: " + tc.C + cargs.in_dir + tc.Rst)
-
 		if opt in ['-t']:
 			## Read in solver tag to search for test data
 			cargs.solver_tag = str(arg)
@@ -121,15 +116,15 @@ if __name__ == '__main__':
 
 	plot_steps = steps[1:]
 	## Get fit of the data
-	p = np.polyfit(np.log(plot_steps[:-2]), np.log(err_at_T[:-2]), 1)
+	p = np.polyfit(np.log(plot_steps[:]), np.log(err_at_T[:]), 1)
 
 	#################
 	##  PLOT DATA  ##
 	#################
 	plt.figure()
 	plt.plot(plot_steps, err_at_T, 'o')
-	plt.plot(plot_steps[:-2], np.exp(p[1]) * plot_steps[:-2]**p[0], '--', color='orangered',label="Error $\propto$ dt^{:.2f} (Best fit)".format(p[0]))
-	plt.plot(plot_steps[:-2], np.array(plot_steps[:-2])**8, "--", color = 'black', label = "$h^8$")
+	plt.plot(plot_steps[:], np.exp(p[1]) * plot_steps[:]**p[0], '--', color='orangered',label="Error $\propto$ dt^{:.2f} (Best fit)".format(p[0]))
+	plt.plot(plot_steps[:], np.array(plot_steps[:])**round(p[0]), "--", color = 'black', label = "$h^{}$".format(int(round(p[0]))))
 	plt.xscale('log')
 	plt.yscale('log')
 	plt.ylabel(r"Error at T")
@@ -137,5 +132,5 @@ if __name__ == '__main__':
 	plt.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
 	plt.legend()
 
-	plt.savefig(cmdargs.in_dir + "/Error_vs_dt_" + cmdargs.solver_tag + ".png")
+	plt.savefig(cmdargs.in_dir + "/TestResults/Error_vs_dt_" + cmdargs.solver_tag + ".png")
 	plt.close()
