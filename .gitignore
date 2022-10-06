@@ -57,6 +57,7 @@ Data/*
 Data
 Sashas_Work/*
 Sashas_Work
+Solver/bin/*
 # ./Sashas_Work/codes/*.pdf
 # ./Sashas_Work/codes/*.png
 # ./Sashas_Work/codes/*.txt

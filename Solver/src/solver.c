@@ -263,33 +263,17 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		// Get proper indx
 		n = i + 2;
 
-
-		#if defined(PHASE_ONLY_DIRECT)
 		// Get the integrating factor
-		int_fac_u = exp(-sys_vars->NU * dt * run_data->k[n] * run_data->k[n] / 2.0 + cabs(run_data->forcing_u[n]) * sin(carg(run_data->forcing_u[n]) - run_data->phi_n[n]));
-
-		// Update temorary velocity term
-		RK_data->RK_u_tmp[n] = run_data->phi_n[n] * int_fac_u + dt * RK4_A21 * RK_data->RK1_u[n] * int_fac_u;
-		#if defined(__MAGNETO)
-		// Get the integrating factor
-		int_fac_b = exp(-sys_vars->ETA * dt * run_data->k[n] * run_data->k[n] / 2.0 + cabs(run_data->forcing_b[n]) * sin(carg(run_data->forcing_b[n]) - run_data->psi_n[n]));
-
-		// Update temporary magnetic term
-		RK_data->RK_b_tmp[n] = run_data->psi_n[n] * int_fac_b + dt * RK4_A21 * RK_data->RK1_b[n] * int_fac_b;		
-		#endif
-		#else
-		// Get the integrating factor
-		int_fac_u = exp(-sys_vars->NU * dt * run_data->k[n] * run_data->k[n] / 2.0 + run_data->forcing_u[n]);
+		int_fac_u = exp(-sys_vars->NU * dt * run_data->k[n] * run_data->k[n] / 2.0);
 
 		// Update temorary velocity term
 		RK_data->RK_u_tmp[n] = run_data->u[n] * int_fac_u + dt * RK4_A21 * RK_data->RK1_u[n] * int_fac_u;
 		#if defined(__MAGNETO)
 		// Get the integrating factor
-		int_fac_b = exp(-sys_vars->ETA * dt * run_data->k[n] * run_data->k[n] / 2.0 + run_data->forcing_b[n]);
+		int_fac_b = exp(-sys_vars->ETA * dt * run_data->k[n] * run_data->k[n] / 2.0);
 		
 		// Update temporary magnetic term
 		RK_data->RK_b_tmp[n] = run_data->b[n] * int_fac_b + dt * RK4_A21 * RK_data->RK1_b[n] * int_fac_b;
-		#endif
 		#endif
 	}
 
@@ -299,32 +283,17 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		// Get proper indx
 		n = i + 2;
 
-		#if defined(PHASE_ONLY_DIRECT)
 		// Get the integrating factor
-		int_fac_u = cexp(-sys_vars->NU * dt * run_data->k[n] * run_data->k[n] / 2.0 + cabs(run_data->forcing_u[n]) * sin(carg(run_data->forcing_u[n]) - run_data->phi_n[n]));
-
-		// Update temorary velocity term
-		RK_data->RK_u_tmp[n] = run_data->phi_n[n] * int_fac_u + dt * RK4_A32 * RK_data->RK2_u[n];
-		#if defined(__MAGNETO)
-		// Get the integrating factor
-		int_fac_b = cexp(-sys_vars->ETA * dt * run_data->k[n] * run_data->k[n] / 2.0 + cabs(run_data->forcing_b[n]) * sin(carg(run_data->forcing_b[n]) - run_data->psi_n[n]));
-
-		// Update temporary magnetic term
-		RK_data->RK_b_tmp[n] = run_data->psi_n[n] * int_fac_b + dt * RK4_A32 * RK_data->RK2_b[n];		
-		#endif
-		#else
-		// Get the integrating factor
-		int_fac_u = cexp(-sys_vars->NU * dt * run_data->k[n] * run_data->k[n] / 2.0 + run_data->forcing_u[n]);
+		int_fac_u = cexp(-sys_vars->NU * dt * run_data->k[n] * run_data->k[n] / 2.0);
 
 		// Update temorary velocity term
 		RK_data->RK_u_tmp[n] = run_data->u[n] * int_fac_u + dt * RK4_A32 * RK_data->RK2_u[n];
 		#if defined(__MAGNETO)
 		// Get the integrating factor
-		int_fac_b = cexp(-sys_vars->ETA * dt * run_data->k[n] * run_data->k[n] / 2.0 + run_data->forcing_b[n]);
+		int_fac_b = cexp(-sys_vars->ETA * dt * run_data->k[n] * run_data->k[n] / 2.0);
 
 		// Update temporary magnetic term
 		RK_data->RK_b_tmp[n] = run_data->b[n] * int_fac_b + dt * RK4_A32 * RK_data->RK2_b[n];		
-		#endif
 		#endif
 	}
 
@@ -334,36 +303,19 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		// Get proper indx
 		n = i + 2;
 
-		#if defined(PHASE_ONLY_DIRECT)
 		// Get the integrating factor
-		int_fac_u   = cexp(-sys_vars->NU * dt * run_data->k[n] * run_data->k[n] + cabs(run_data->forcing_u[n]) * sin(carg(run_data->forcing_u[n]) - run_data->phi_n[n]));
-		int_fac_u_1 = cexp(-sys_vars->NU * dt * run_data->k[n] * run_data->k[n] / 2.0 + cabs(run_data->forcing_u[n]) * sin(carg(run_data->forcing_u[n]) - run_data->phi_n[n]));
-
-		// Update temorary velocity term
-		RK_data->RK_u_tmp[n] = run_data->phi_n[n] * int_fac_u + dt * RK4_A43 * RK_data->RK3_u[n] * int_fac_u_1;
-		#if defined(__MAGNETO)
-		// Get the integrating factor
-		int_fac_b   = cexp(-sys_vars->ETA * dt * run_data->k[n] * run_data->k[n] + cabs(run_data->forcing_b[n]) * sin(carg(run_data->forcing_b[n]) - run_data->psi_n[n]));
-		int_fac_b_1 = cexp(-sys_vars->ETA * dt * run_data->k[n] * run_data->k[n] / 2.0 + cabs(run_data->forcing_b[n]) * sin(carg(run_data->forcing_b[n]) - run_data->psi_n[n]));
-
-		// Update temporary magnetic term
-		RK_data->RK_b_tmp[n] = run_data->psi_n[n] * int_fac_b + dt * RK4_A43 * RK_data->RK3_b[n] * int_fac_b_1;		
-		#endif
-		#else
-		// Get the integrating factor
-		int_fac_u   = cexp(-sys_vars->NU * dt * run_data->k[n] * run_data->k[n] + run_data->forcing_u[n]);
-		int_fac_u_1 = cexp(-sys_vars->NU * dt * run_data->k[n] * run_data->k[n] / 2.0 + run_data->forcing_u[n]);
+		int_fac_u   = cexp(-sys_vars->NU * dt * run_data->k[n] * run_data->k[n]);
+		int_fac_u_1 = cexp(-sys_vars->NU * dt * run_data->k[n] * run_data->k[n] / 2.0);
 
 		// Update temorary velocity term
 		RK_data->RK_u_tmp[n] = run_data->u[n] * int_fac_u + dt * RK4_A43 * RK_data->RK3_u[n] * int_fac_u_1;
 		#if defined(__MAGNETO)
 		// Get the integrating factor
-		int_fac_b   = cexp(-sys_vars->ETA * dt * run_data->k[n] * run_data->k[n] + run_data->forcing_b[n]);
-		int_fac_b_1 = cexp(-sys_vars->ETA * dt * run_data->k[n] * run_data->k[n] / 2.0 + run_data->forcing_b[n]);
+		int_fac_b   = cexp(-sys_vars->ETA * dt * run_data->k[n] * run_data->k[n]);
+		int_fac_b_1 = cexp(-sys_vars->ETA * dt * run_data->k[n] * run_data->k[n] / 2.0);
 		
 		// Update temporary magnetic term
 		RK_data->RK_b_tmp[n] = run_data->b[n] * int_fac_b + dt * RK4_A43 * RK_data->RK3_b[n] * int_fac_b_1;		
-		#endif
 		#endif
 	}
 
@@ -387,38 +339,23 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		#endif
 
 		///-------------------- Update Step
-		#if defined(PHASE_ONLY_DIRECT)
 		// Get the integrating factors
-		int_fac_u   = cexp(-sys_vars->NU * dt * run_data->k[n] * run_data->k[n] + cabs(run_data->forcing_u[n]) * sin(carg(run_data->forcing_u[n]) - run_data->phi_n[n]));
-		int_fac_u_1 = cexp(-sys_vars->NU * dt * run_data->k[n] * run_data->k[n] / 2.0 + cabs(run_data->forcing_u[n]) * sin(carg(run_data->forcing_u[n]) - run_data->phi_n[n]));
-
-		// Update the new velocity field
-		run_data->phi_n[n] = int_fac_u * run_data->phi_n[n] + dt * RK4_B1 * int_fac_u * RK_data->RK1_u[n] + dt * RK4_B2 * int_fac_u_1 * RK_data->RK2_u[n] + dt * RK4_B3 * int_fac_u_1 * RK_data->RK3_u[n] + dt * RK4_B4 * RK_data->RK4_u[n];
-		#if defined(__MAGNETO)
-		// Get the integrating factors
-		int_fac_b   = cexp(-sys_vars->ETA * dt * run_data->k[n] * run_data->k[n] + cabs(run_data->forcing_b[n]) * sin(carg(run_data->forcing_b[n]) - run_data->psi_n[n]));
-		int_fac_b_1 = cexp(-sys_vars->ETA * dt * run_data->k[n] * run_data->k[n] / 2.0 + cabs(run_data->forcing_b[n]) * sin(carg(run_data->forcing_b[n]) - run_data->psi_n[n]));
-
-		// Update the new magnetic field
-		run_data->psi_n[n] = int_fac_b * run_data->psi_n[n] + dt * RK4_B1 * int_fac_b * RK_data->RK1_b[n] + dt * RK4_B2 * int_fac_b_1 * RK_data->RK2_b[n] + dt * RK4_B3 * int_fac_b_1 * RK_data->RK3_b[n] + dt * RK4_B4 * RK_data->RK4_b[n];
-		#endif
-		#else
-		// Get the integrating factors
-		int_fac_u   = cexp(-sys_vars->NU * dt * run_data->k[n] * run_data->k[n] + run_data->forcing_u[n]);
-		int_fac_u_1 = cexp(-sys_vars->NU * dt * run_data->k[n] * run_data->k[n] / 2.0 + run_data->forcing_u[n]);
+		int_fac_u   = cexp(-sys_vars->NU * dt * run_data->k[n] * run_data->k[n]);
+		int_fac_u_1 = cexp(-sys_vars->NU * dt * run_data->k[n] * run_data->k[n] / 2.0);
 
 		// Update the new velocity field
 		run_data->u[n] = int_fac_u * run_data->u[n] + dt * RK4_B1 * int_fac_u * RK_data->RK1_u[n] + dt * RK4_B2 * int_fac_u_1 * RK_data->RK2_u[n] + dt * RK4_B3 * int_fac_u_1 * RK_data->RK3_u[n] + dt * RK4_B4 * RK_data->RK4_u[n];
 		#if defined(__MAGNETO)
 		// Get the integrating factors
-		int_fac_b   = cexp(-sys_vars->ETA * dt * run_data->k[n] * run_data->k[n] + run_data->forcing_b[n]);
-		int_fac_b_1 = cexp(-sys_vars->ETA * dt * run_data->k[n] * run_data->k[n] / 2.0 + run_data->forcing_b[n]);
+		int_fac_b   = cexp(-sys_vars->ETA * dt * run_data->k[n] * run_data->k[n]);
+		int_fac_b_1 = cexp(-sys_vars->ETA * dt * run_data->k[n] * run_data->k[n] / 2.0);
 
 		// Update the new magnetic field
 		run_data->b[n] = int_fac_b * run_data->b[n] + dt * RK4_B1 * int_fac_b * RK_data->RK1_b[n] + dt * RK4_B2 * int_fac_b_1 * RK_data->RK2_b[n] + dt * RK4_B3 * int_fac_b_1 * RK_data->RK3_b[n] + dt * RK4_B4 * RK_data->RK4_b[n];
 		#endif
-		#endif
 
+
+		///-------------------- Phase Only resetting
 		#if defined(PHASE_ONLY)
 		// Reset the amplitudes 
 		run_data->u[n] *= (po_norm_fac_u / cabs(run_data->u[n]));
@@ -480,25 +417,17 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		n = i + 2;
 
 		#if defined(PHASE_ONLY_DIRECT)
-		// Add forcing & Update temorary velocity term
-		if (run_data->a_n[n] != 0) {
-			RK_data->RK1_u[n] += cabs(run_data->forcing_u[n]) * sin(carg(run_data->forcing_u[n]) - run_data->phi_n[n]) / run_data->a_n[n];
-		}
 		RK_data->RK_u_tmp[n] = run_data->phi_n[n] + dt * RK4_A21 * RK_data->RK1_u[n];
 		#if defined(__MAGNETO)
-		// Add forcing & Update temporary magnetic term
-		if (run_data->b_n[n] != 0) {
-			RK_data->RK1_b[n] += cabs(run_data->forcing_b[n]) * sin(carg(run_data->forcing_b[n]) - run_data->psi_n[n]) / run_data->b_n[n];
-		}
 		RK_data->RK_b_tmp[n] = run_data->psi_n[n] + dt * RK4_A21 * RK_data->RK1_b[n];		
 		#endif
 		#else
 		// Add dissipative and forcing terms & Update temorary velocity term
-		RK_data->RK1_u[n] += - sys_vars->NU * run_data->k[n] * run_data->k[n] * run_data->u[n] + run_data->forcing_u[n];
+		RK_data->RK1_u[n] -= sys_vars->NU * run_data->k[n] * run_data->k[n] * run_data->u[n];
 		RK_data->RK_u_tmp[n] = run_data->u[n] + dt * RK4_A21 * RK_data->RK1_u[n];
 		#if defined(__MAGNETO)
 		// Add dissipative and forcing terms & Update temporary magnetic term
-		RK_data->RK1_b[n] += - sys_vars->ETA * run_data->k[n] * run_data->k[n] * run_data->b[n] + run_data->forcing_b[n];
+		RK_data->RK1_b[n] -= sys_vars->ETA * run_data->k[n] * run_data->k[n] * run_data->b[n];
 		RK_data->RK_b_tmp[n] = run_data->b[n] + dt * RK4_A21 * RK_data->RK1_b[n];
 		#endif
 		#endif
@@ -511,25 +440,17 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		n = i + 2;
 
 		#if defined(PHASE_ONLY_DIRECT)
-		// Add forcing & Update temorary velocity term
-		if (run_data->a_n[n] != 0) {
-			RK_data->RK2_u[n] += cabs(run_data->forcing_u[n]) * sin(carg(run_data->forcing_u[n]) - run_data->phi_n[n]) / run_data->a_n[n];
-		}
 		RK_data->RK_u_tmp[n] = run_data->phi_n[n] + dt * RK4_A32 * RK_data->RK2_u[n];
 		#if defined(__MAGNETO)
-		// Add forcing & Update temporary magnetic term
-		if (run_data->b_n[n] != 0) {
-			RK_data->RK2_b[n] += cabs(run_data->forcing_b[n]) * sin(carg(run_data->forcing_b[n]) - run_data->psi_n[n]) / run_data->b_n[n];
-		}
 		RK_data->RK_b_tmp[n] = run_data->psi_n[n] + dt * RK4_A32 * RK_data->RK2_b[n];		
 		#endif
 		#else
-		// Add dissipative and forcing terms & Update temorary velocity term
-		RK_data->RK2_u[n] += - sys_vars->NU * run_data->k[n] * run_data->k[n] * run_data->u[n] + run_data->forcing_u[n];
+		// Add dissipative & Update temorary velocity term
+		RK_data->RK2_u[n] -= sys_vars->NU * run_data->k[n] * run_data->k[n] * run_data->u[n];
 		RK_data->RK_u_tmp[n] = run_data->u[n] + dt * RK4_A32 * RK_data->RK2_u[n];
 		#if defined(__MAGNETO)
-		// Add dissipative and forcing terms & Update temporary magnetic term
-		RK_data->RK2_b[n] += - sys_vars->ETA * run_data->k[n] * run_data->k[n] * run_data->b[n] + run_data->forcing_b[n];
+		// Add dissipative & Update temporary magnetic term
+		RK_data->RK2_b[n] -= sys_vars->ETA * run_data->k[n] * run_data->k[n] * run_data->b[n];
 		RK_data->RK_b_tmp[n] = run_data->b[n] + dt * RK4_A32 * RK_data->RK2_b[n];
 		#endif
 		#endif
@@ -542,25 +463,17 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		n = i + 2;
 
 		#if defined(PHASE_ONLY_DIRECT)
-		// Add forcing & Update temorary velocity term
-		if (run_data->a_n[n] != 0) {
-			RK_data->RK3_u[n] += cabs(run_data->forcing_u[n]) * sin(carg(run_data->forcing_u[n]) - run_data->phi_n[n]) / run_data->a_n[n];
-		}
 		RK_data->RK_u_tmp[n] = run_data->phi_n[n] + dt * RK4_A43 * RK_data->RK3_u[n];
 		#if defined(__MAGNETO)
-		// Add forcing & Update temporary magnetic term
-		if (run_data->b_n[n] != 0) {
-			RK_data->RK3_b[n] += cabs(run_data->forcing_b[n]) * sin(carg(run_data->forcing_b[n]) - run_data->psi_n[n]) / run_data->b_n[n];
-		}
 		RK_data->RK_b_tmp[n] = run_data->psi_n[n] + dt * RK4_A43 * RK_data->RK3_b[n];		
 		#endif
 		#else
-		// Add dissipative and forcing terms & Update temorary velocity term
-		RK_data->RK3_u[n] += - sys_vars->NU * run_data->k[n] * run_data->k[n] * run_data->u[n] + run_data->forcing_u[n];
+		// Add dissipative & Update temorary velocity term
+		RK_data->RK3_u[n] -= sys_vars->NU * run_data->k[n] * run_data->k[n] * run_data->u[n];
 		RK_data->RK_u_tmp[n] = run_data->u[n] + dt * RK4_A43 * RK_data->RK3_u[n];
 		#if defined(__MAGNETO)
-		// Add dissipative and forcing terms & Update temporary magnetic term
-		RK_data->RK3_b[n] += - sys_vars->ETA * run_data->k[n] * run_data->k[n] * run_data->b[n] + run_data->forcing_b[n];
+		// Add dissipative & Update temporary magnetic term
+		RK_data->RK3_b[n] -= sys_vars->ETA * run_data->k[n] * run_data->k[n] * run_data->b[n];
 		RK_data->RK_b_tmp[n] = run_data->b[n] + dt * RK4_A43 * RK_data->RK3_b[n];
 		#endif
 		#endif
@@ -568,25 +481,14 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 
 	// ----------------------- Stage 4
 	NonlinearTerm(RK_data->RK_u_tmp, RK_data->RK_b_tmp, RK_data->RK4_u, RK_data->RK4_b, N);
-	// Add the forcing and the linear term
+	// Add the linear term
 	for (int i = 0; i < N; ++i) {
 		// Get proper index
 		n = i + 2;
 
-		#if defined(PHASE_ONLY_DIRECT)
-		if (run_data->a_n[n] != 0) {
-			RK_data->RK4_u[n] += cabs(run_data->forcing_u[n]) * sin(carg(run_data->forcing_u[n]) - run_data->phi_n[n]) / run_data->a_n[n];
-		}
+		RK_data->RK4_u[n] -= sys_vars->NU * run_data->k[n] * run_data->k[n] * run_data->u[n];
 		#if defined(__MAGNETO)
-		if (run_data->b_n[n] != 0) {
-			RK_data->RK4_b[n] += cabs(run_data->forcing_b[n]) * sin(carg(run_data->forcing_b[n]) - run_data->psi_n[n]) / run_data->b_n[n];
-		}
-		#endif
-		#else
-		RK_data->RK4_u[n] += - sys_vars->NU * run_data->k[n] * run_data->k[n] * run_data->u[n] + run_data->forcing_u[n];
-		#if defined(__MAGNETO)
-		RK_data->RK4_b[n] += - sys_vars->ETA * run_data->k[n] * run_data->k[n] * run_data->b[n] + run_data->forcing_b[n];
-		#endif
+		RK_data->RK4_b[n] -= sys_vars->ETA * run_data->k[n] * run_data->k[n] * run_data->b[n];
 		#endif
 	}
 
@@ -692,13 +594,7 @@ void AB4CNStep(const double dt, const long iters, const long int N, RK_data_stru
 		// -----------------------------------
 		// Get the nonlinear term for the current step
 		NonlinearTerm(run_data->u, run_data->b, RK_data->AB_tmp_u, RK_data->AB_tmp_b, N);
-		// Add the forcing 
-		for (int i = 0; i < N + 4; ++i) {
-			RK_data->AB_tmp_u[i] += run_data->forcing_u[i];
-			#if defined(__MAGNETO)
-			RK_data->AB_tmp_b[i] += run_data->forcing_b[i];
-			#endif
-		}
+		
 
 		/////////////////////
 		/// AB Update Step
@@ -797,6 +693,16 @@ void NonlinearTerm(double* u, double* b, double* u_nonlin, double* b_nonlin, con
 		// Compute the nonlinear term for the magnetic field
 		b_nonlin[n] = (run_data->k[n] / run_data->b_n[n]) * (interact_coeff_b_1 * b_tmp_1 + interact_coeff_b_2 * b_tmp_2 + interact_coeff_b_3 * b_tmp_3); 
 		#endif
+
+		// -----------------------------------
+		// Add Forcing
+		// -----------------------------------
+		// Add forcing here for the velocity field
+		u_nonlin[n] += cabs(run_data->forcing_u[n]) * sin(carg(run_data->forcing_u[n]) - u[n]) / run_data->a_n[n] ;
+		#if defined(__MAGNETO)
+		// Add forcing here for the magnetic field
+		b_nonlin[n] += cabs(run_data->forcing_b[n]) * sin(carg(run_data->forcing_b[n]) - b[n]) / run_data->b_n[n]; 
+		#endif
 	}
 }
 #else
@@ -859,6 +765,16 @@ void NonlinearTerm(fftw_complex* u, fftw_complex* b, fftw_complex* u_nonlin, fft
 		#if defined(__MAGNETO)
 		// Compute the nonlinear term for the magnetic field
 		b_nonlin[n] = I * run_data->k[n] * conj(interact_coeff_b_1 * b_tmp_1 + interact_coeff_b_2 * b_tmp_2 + interact_coeff_b_3 * b_tmp_3); 
+		#endif
+
+		// -----------------------------------
+		// Add Forcing
+		// -----------------------------------
+		// Add forcing here for the velocity field
+		u_nonlin[n] += run_data->forcing_u[n];
+		#if defined(__MAGNETO)
+		// Add forcing here for the magnetic field
+		b_nonlin[n] += run_data->forcing_b[n]; 
 		#endif
 	}
 }
@@ -1534,7 +1450,7 @@ void FreeMemory(RK_data_struct* RK_data) {
 
 	// Free stats objects
 	#if defined(STATS)
-	for (int i = 0; i < NUM_POW - 2; ++i) {
+	for (int i = 0; i < NUM_POW; ++i) {
 		#if defined(__STR_FUNC_VEL)
 		fftw_free(stats_data->vel_str_func[i]);
 		#endif
