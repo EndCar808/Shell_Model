@@ -127,18 +127,31 @@ if __name__ == '__main__':
         ##-------------- Plot Conserved quntities
         fig = plt.figure(figsize = (32, 8))
         if hasattr(run_data, 'b'):
-            gs  = GridSpec(1, 4)
+            gs  = GridSpec(2, 4)
         else:
-            gs  = GridSpec(1, 2)
+            gs  = GridSpec(2, 2)
         ## Plot the relative energy
         ax1 = fig.add_subplot(gs[0, 0])
         ax1.plot(run_data.time, run_data.tot_enrg / run_data.tot_enrg[0] - 1)
         ax1.set_xlabel(r"$t$")
-        ax1.set_title(r"Total Energy")
+        ax1.set_title(r"Relative Energy")
         ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
         ## Plot the relative helicity
         ax2 = fig.add_subplot(gs[0, 1])
         ax2.plot(run_data.time, 1 - run_data.tot_hel_u / run_data.tot_hel_u[0])
+        ax2.set_xlabel(r"$t$")
+        ax2.set_title(r"Relative Velocity Helicity")
+        ax2.set_yscale('symlog')
+        ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        ## Plot the relative energy
+        ax1 = fig.add_subplot(gs[1, 0])
+        ax1.plot(run_data.time, run_data.tot_enrg)
+        ax1.set_xlabel(r"$t$")
+        ax1.set_title(r"Total Energy")
+        ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        ## Plot the relative helicity
+        ax2 = fig.add_subplot(gs[1, 1])
+        ax2.plot(run_data.time, run_data.tot_hel_u)
         ax2.set_xlabel(r"$t$")
         ax2.set_title(r"Total Velocity Helicity")
         ax2.set_yscale('symlog')
@@ -148,11 +161,23 @@ if __name__ == '__main__':
             ax2 = fig.add_subplot(gs[0, 2])
             ax2.plot(run_data.time, 1 - run_data.tot_hel_b / run_data.tot_hel_b[0])
             ax2.set_xlabel(r"$t$")
-            ax2.set_title(r"Total Magnetic Helicity")
+            ax2.set_title(r"Relative Magnetic Helicity")
             ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
             ## Plot the relative cross helicity
             ax3 = fig.add_subplot(gs[0, 3])
             ax3.plot(run_data.time, 1 - run_data.tot_cross_hel / run_data.tot_cross_hel[0])
+            ax3.set_xlabel(r"$t$")
+            ax3.set_title(r"Relative Cross Helicity")
+            ax3.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+            ## Plot the relative helicity
+            ax2 = fig.add_subplot(gs[1, 2])
+            ax2.plot(run_data.time, run_data.tot_hel_b)
+            ax2.set_xlabel(r"$t$")
+            ax2.set_title(r"Total Magnetic Helicity")
+            ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+            ## Plot the relative cross helicity
+            ax3 = fig.add_subplot(gs[1, 3])
+            ax3.plot(run_data.time, run_data.tot_cross_hel)
             ax3.set_xlabel(r"$t$")
             ax3.set_title(r"Total Cross Helicity")
             ax3.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
@@ -282,7 +307,7 @@ if __name__ == '__main__':
 
 
         ##-------------- Compute triads
-        T_ppp = np.zeros((run_data.u.shape[0], run_data.u.shape[1] - 3))
+        T_ppp = np.zeros((run_data.u.shape[0], run_data.u.shape[1] - 2))
         if hasattr(run_data, 'b'):
             T_pss = np.zeros((run_data.u.shape[0], run_data.u.shape[1] - 2))
             T_sps = np.zeros((run_data.u.shape[0], run_data.u.shape[1] - 2))
@@ -418,32 +443,26 @@ if __name__ == '__main__':
 
         ##-------------- Plot The Total Flux & Diss over time
         fig = plt.figure(figsize = (16, 8))
-        gs  = GridSpec(2, 2)
+        gs  = GridSpec(1, 3)
         ## Plot the velocity amplitudes
         ax1 = fig.add_subplot(gs[0, 0])
         for i in range(sys_vars.N):
             ax1.plot(run_data.time, run_data.enrg_flux[:, i])
         ax1.set_xlabel("$t$")
         ax1.set_title("Energ Flux")
-        ax1.set_yscale('symlog')
+        ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
         ax2 = fig.add_subplot(gs[0, 1])
         for i in range(sys_vars.N):
-            ax2.plot(run_data.time, run_data.enrg_diss[:, i])
+            ax2.plot(run_data.time, run_data.enrg_diss_u[:, i])
         ax2.set_xlabel("$t$")
-        ax2.set_title("Energy Dissipation")
-        ax2.set_yscale('symlog')
-        ax1 = fig.add_subplot(gs[1, 0])
-
+        ax2.set_title("Velocity Energy Dissipation")
+        ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        ax1 = fig.add_subplot(gs[0, 2])
         for i in range(sys_vars.N):
-            ax1.plot(run_data.time, run_data.enrg_flux[:, i])
+            ax1.plot(run_data.time, run_data.enrg_input_u[:, i])
         ax1.set_xlabel("$t$")
-        ax1.set_title("Energ Flux")
-        ax2 = fig.add_subplot(gs[1, 1])
-        for i in range(sys_vars.N):
-            ax2.plot(run_data.time, run_data.enrg_diss[:, i])
-        ax2.set_xlabel("$t$")
-        ax2.set_title("Energy Dissipation")
+        ax1.set_title("Velocity Energ Input")
+        ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
 
-
-        plt.savefig(cmdargs.out_dir + "EnergyFlux_EnergyDiss_Tseries.png")
+        plt.savefig(cmdargs.out_dir + "EnergyFlux_EnergyDiss_EnergyInput_Tseries.png")
         plt.close()

@@ -133,11 +133,13 @@
 #define DSET_MAG_AMP 4
 #define DSET_MAG_PSI 5
 #define DSET_ENRG_FLUX 6
-#define DSET_ENRG_DISS 7
-#define DSET_ENRG_INPT 8
-#define DSET_FORCING_U 9
-#define DSET_FORCING_B 10
-#define NUM_DSETS 11
+#define DSET_ENRG_DISS_VEL 7
+#define DSET_ENRG_INPT_VEL 8
+#define DSET_ENRG_DISS_MAG 9
+#define DSET_ENRG_INPT_MAG 10
+#define DSET_FORCING_U 11
+#define DSET_FORCING_B 12
+#define NUM_DSETS 13
 // ---------------------------------------------------------------------
 //  Global Variables
 // ---------------------------------------------------------------------
@@ -234,8 +236,10 @@ typedef struct runtime_data_struct {
 	double* tot_hel_b;		  			// Array to hold the total helicity in the magnetic field
 	double* tot_cross_hel;	  			// Array to hold the total cross helicity
 	double* energy_flux;				// Array to hold the energy flux
-	double* energy_diss;				// Array to hold the energy dissipation
-	double* energy_input;				// Array to hold the energy input in the flux balance computation
+	double* energy_diss_u;				// Array to hold the energy dissipation for the velocity field
+	double* energy_diss_b;				// Array to hold the energy dissipation for the magnetic field
+	double* energy_input_u;				// Array to hold the energy input for the velocity field in the flux balance computation
+	double* energy_input_b;				// Array to hold the energy input for the magnetic field in the flux balance computation
 	fftw_complex* forcing_u;  			// Array to hold the forcing for the current timestep for the velocity field
 	fftw_complex* forcing_b;  			// Array to hold the forcing for the current timestep for the magnetic field
 	double* forcing_scaling;  			// Array to hold the initial scaling for the forced modes

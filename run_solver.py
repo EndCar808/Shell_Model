@@ -50,7 +50,7 @@ def parse_cml(argv):
         if opt in ['-i']:
             ## Read in config file
             cargs.init_file = str(arg)
-            print("Input configuration file: " + tc.C + cargs.init_file + tc.Rst)
+            print("\nInput configuration file: " + tc.C + cargs.init_file + tc.Rst)
 
             if not os.path.isfile(cargs.init_file):
                 print("[" + tc.R + "ERROR" + tc.Rst + "] ---> File Does not exist, double check input file path.")
@@ -87,7 +87,7 @@ if __name__ == '__main__':
     ekmn_hypo_pow  = -2.0
     eps            = 0.5
     esp_m          = 1.0/3.0
-    k_0            = 1.0
+    k0             = 1.0
     Lambda         = 2.0
     alpha          = 1.4
     beta           = 1.4
@@ -219,6 +219,8 @@ if __name__ == '__main__':
                 cfl_cond = int(parser[section]['cfl_cond'] == 'True')
             if 'trans_iters' in parser[section]:
                 trans_iters = int(parser[section]['trans_iters'] == 'True')
+            if 'trans_iters_frac' in parser[section]:
+                trans_iters_frac = float(parser[section]['trans_iters_frac'])
             if 'adaptive_step_type' in parser[section]:
                 step_type = int(parser[section]['adaptive_step_type'] == 'True')
         if section in ['DIRECTORIES']:
@@ -276,7 +278,7 @@ if __name__ == '__main__':
 
         ## Get the number of processes to launch
         proc_limit = num_solver_job_threads
-        print("Number of Solver Processes Created = [" + tc.C + "{}".format(proc_limit) + tc.Rst + "]")
+        print("Number of Solver Processes Created = [" + tc.C + "{}".format(proc_limit) + tc.Rst + "]\n")
 
         # Create output objects to store process error and output
         if collect_data:
@@ -284,16 +286,16 @@ if __name__ == '__main__':
             solver_error  = []
 
         ## Generate command list 
-        cmd_list = [["{} -o {} -n {} -s {:3.5f} -e {:3.5f} -T {} -c {} -c {:1.6f} -h {:1.16f} -h {} -a {:1.10f} -b {:1.10f} -w {:1.3f} -w {:1.3f} -y {:1.16f} -y {:1.16f} -v {:1.10f} -v {} -v {:1.1f} -d {:1.10f} -d {} -d {:1.1f} -i {} -t {} -f {} -f {} -f {:1.3f} -p {}".format(
+        cmd_list = [["{} -o {} -n {} -s {:3.5f} -e {:3.5f} -T {} -T {} -c {} -c {:1.6f} -h {:1.16f} -h {} -a {:1.10f} -b {:1.10f} -w {:1.3f} -w {:1.3f} -y {:1.16f} -y {:1.16f} -v {:1.10f} -v {} -v {:1.1f} -d {:1.10f} -d {} -d {:1.1f} -i {} -t {} -f {} -f {} -f {:1.3f} -p {}".format(
                                                                                                                                                     executable, 
                                                                                                                                                     output_dir,
                                                                                                                                                     n,
-                                                                                                                                                    t0, t, trans_iters, 
+                                                                                                                                                    t0, t, trans_iters, trans_iters_frac,
                                                                                                                                                     cfl_cond, c, 
                                                                                                                                                     h, step_type,
                                                                                                                                                     a,
                                                                                                                                                     b,
-                                                                                                                                                    k_0, Lambda,
+                                                                                                                                                    k0, Lambda,
                                                                                                                                                     ep, ep_m, 
                                                                                                                                                     v, hypervisc, hypervisc_pow, 
                                                                                                                                                     et, ekmn_hypo_diff, ekmn_hypo_pow,
@@ -315,7 +317,7 @@ if __name__ == '__main__':
             for processes in zip_longest(*groups): 
                 for proc in filter(None, processes): # filters out 'None' fill values if proc_limit does not divide evenly into cmd_list
                     ## Print command to screen
-                    print("Executing the following command:\n\t" + tc.C + "{}".format(proc.args[0]) + tc.Rst)
+                    print("Executing the following command:\n\n\t" + tc.C + "{}\n".format(proc.args[0]) + tc.Rst)
                     
                     # ## Print output to terminal as it comes
                     # for line in proc.stdout:

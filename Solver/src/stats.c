@@ -25,6 +25,7 @@ void ComputeStats(void) {
 
 	// Initialize variables
 	int n;
+	int gsl_status;
 	const long int N = sys_vars->N;
 	double vel_enrg_flux_term, vel_hel_flux_term;
 	#if defined(__MAGNETO)
@@ -43,9 +44,17 @@ void ComputeStats(void) {
     	n = i + 2;
 
     	// Update the running sums for the field stats
-    	gsl_rstat_add(creal(run_data->u[n]), stats_data->vel_moments[i]);
+    	gsl_status = gsl_rstat_add(creal(run_data->u[n]), stats_data->vel_moments[i]);
+    	if (gsl_status != 0) {
+			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to running stats counter ["CYAN"%s"RESET"] - Error Value: ["CYAN"%d"RESET"] Field Value: ["CYAN"%lf"RESET"] \n-->> Exiting!!!\n", "Velocity Stats", gsl_status, creal(run_data->u[n]));
+			exit(1);
+		}
     	#if defined(__MAGNETO)
-    	gsl_rstat_add(creal(run_data->b[n]), stats_data->mag_moments[i]);
+    	gsl_status = gsl_rstat_add(creal(run_data->b[n]), stats_data->mag_moments[i]);
+	    if (gsl_status != 0) {
+			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to running stats counter ["CYAN"%s"RESET"] - Error Value: ["CYAN"%d"RESET"] Field Value: ["CYAN"%lf"RESET"] \n-->> Exiting!!!\n", "Magnetic Stats", gsl_status, creal(run_data->b[n]));
+			exit(1);
+		}
     	#endif
     	
     	// Compute the flux terms
@@ -100,33 +109,73 @@ void InitializeStats(void) {
 	for (int i = 0; i < NUM_POW; ++i) {
 		#if defined(__STR_FUNC_VEL)
 		stats_data->vel_str_func[i]      	= (double* )fftw_malloc(sizeof(double) * N);
+		if (stats_data->vel_str_func[i] == NULL) {
+			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Stats Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Velocity Structure Function");
+			exit(1);
+		}
 		#endif
 		#if defined(__STR_FUNC_VEL_FLUX)
 		stats_data->vel_flux_str_func[0][i] = (double* )fftw_malloc(sizeof(double) * N);
+		if (stats_data->vel_flux_str_func[0][i] == NULL) {
+			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Stats Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Velocity Flux Structure Function");
+			exit(1);
+		}
 		stats_data->vel_flux_str_func[1][i] = (double* )fftw_malloc(sizeof(double) * N);
+		if (stats_data->vel_flux_str_func[1][i] == NULL) {
+			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Stats Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Velocity Flux Structure Function");
+			exit(1);
+		}
 		#endif
 		#if defined(__MAGNETO)
 		#if defined(__STR_FUNC_MAG)
 		stats_data->mag_str_func[i]         = (double* )fftw_malloc(sizeof(double) * N);
+		if (stats_data->mag_str_func[i] == NULL) {
+			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Stats Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Magnetic Structure Function");
+			exit(1);
+		}
 		#endif
 		#if defined(__STR_FUNC_MAG_FLUX)
 		stats_data->mag_flux_str_func[0][i] = (double* )fftw_malloc(sizeof(double) * N);
+		if (stats_data->mag_flux_str_func[0][i] == NULL) {
+			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Stats Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Magnetic Flux Sturcure Function");
+			exit(1);
+		}
 		stats_data->mag_flux_str_func[1][i] = (double* )fftw_malloc(sizeof(double) * N);
+		if (stats_data->mag_flux_str_func[1][i] == NULL) {
+			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Stats Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Magnetic Flux Sturcure Function");
+			exit(1);
+		}
 		#endif
 		#endif
 	}
 
 	// Allocate memory for the running stats objects
 	stats_data->vel_moments = (double** )fftw_malloc(sizeof(double* ) * N);
+	if (stats_data->vel_moments == NULL) {
+		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Stats Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Velocity Stats");
+		exit(1);
+	}
 	#if defined(__MAGNETO)
 	stats_data->mag_moments = (double** )fftw_malloc(sizeof(double* ) * N);
+	if (stats_data->mag_moments == NULL) {
+		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Stats Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Magnetic Stats");
+		exit(1);
+	}
 	#endif
 
 	// Initialize the running stats objects
 	for (int i = 0; i < N; ++i) {
 		stats_data->vel_moments[i] = gsl_rstat_alloc();
+		if (stats_data->vel_moments[i] == NULL) {
+			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Running stats object: ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Velocity Stats");
+			exit(1);
+		}
 		#if defined(__MAGNETO)
 		stats_data->mag_moments[i] = gsl_rstat_alloc();
+		if (stats_data->mag_moments[i] == NULL) {
+			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Running stats object: ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Magnetic Stats");
+			exit(1);
+		}
 		#endif
 	}
 }

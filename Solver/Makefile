@@ -42,7 +42,9 @@ endif
 #  Executable flags
 # ---------------------------------------------------------------------
 # Flags to be passed to the solver for normal runs
-HYDRO_SOLVER_FLAGS := -D__AB4CN #-D__STATS #-D__HYPER -D__ADAPTIVE_STEP -D__CFL_STEP #-D__TRANSIENTS  -D__EKMN_DRAG
+HYDRO_SOLVER_IFRK4_FLAGS := -D__INT_FAC_RK4 -D__STATS #-D__HYPER -D__ADAPTIVE_STEP -D__CFL_STEP #-D__TRANSIENTS  -D__EKMN_DRAG
+HYDRO_SOLVER_RK4_FLAGS := -D__RK4 -D__STATS #-D__HYPER -D__ADAPTIVE_STEP -D__CFL_STEP #-D__TRANSIENTS  -D__EKMN_DRAG
+HYDRO_SOLVER_AB4CN_FLAGS := -D__AB4CN -D__STATS #-D__HYPER -D__ADAPTIVE_STEP -D__CFL_STEP #-D__TRANSIENTS  -D__EKMN_DRAG
 
 MAG_HYDRO_SOLVER_FLAGS := -D__INT_FAC_RK4 -D__MAGNETO #-D__STATS -D__HYPER -D__ADAPTIVE_STEP -D__CFL_STEP #-D__TRANSIENTS  -D__EKMN_DRAG
 
@@ -69,13 +71,15 @@ BINDIR := $(shell mkdir -p $(BIN))
 OUT    := output
 OUTDIR := $(shell mkdir -p $(OUT))
 
-SRCDIR      := src
-SRCFILE     := $(wildcard $(SRCDIR)/*.c)
-SRCOBJ_H    := $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_hydro.o, $(SRCFILE))
-SRCOBJ_MHD  := $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_mag_hydro.o, $(SRCFILE))
-SRCOBJ_PO  	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_phase_only.o, $(SRCFILE))
-SRCOBJ_PO_D := $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_phase_only_direct.o, $(SRCFILE))
-SRCOBJ_Test := $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_test.o, $(SRCFILE))
+SRCDIR      	:= src
+SRCFILE     	:= $(wildcard $(SRCDIR)/*.c)
+SRCOBJ_H_IF    	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_hydro_IF.o, $(SRCFILE))
+SRCOBJ_H_RK    	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_hydro_RK.o, $(SRCFILE))
+SRCOBJ_H_AB    	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_hydro_AB.o, $(SRCFILE))
+SRCOBJ_MHD  	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_mag_hydro.o, $(SRCFILE))
+SRCOBJ_PO  		:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_phase_only.o, $(SRCFILE))
+SRCOBJ_PO_D 	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_phase_only_direct.o, $(SRCFILE))
+SRCOBJ_Test 	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_test.o, $(SRCFILE))
 
 DEPS = $(wildcard *.h) 
 
@@ -87,19 +91,35 @@ DEPS = $(wildcard *.h)
 ############
 
 
-all: $(BIN)/solver_hydro $(BIN)/solver_mag_hydro $(BIN)/solver_phase_only $(BIN)/solver_phase_only_direct $(BIN)/solver_test
+all: $(BIN)/solver_hydro_IF $(BIN)/solver_hydro_RK $(BIN)/solver_hydro_AB $(BIN)/solver_mag_hydro $(BIN)/solver_phase_only $(BIN)/solver_phase_only_direct $(BIN)/solver_test
 
 
 ####--------
 #  Solver
 ####--------
-solver_hydro: $(BIN)/solver_hydro
+solver_hydro_IF: $(BIN)/solver_hydro_IF
 
-$(BIN)/solver_hydro: $(SRCOBJ_H) $(DEPS)
-	$(GCC) $(CCFLAG) $(HYDRO_SOLVER_FLAGS) $(DSET_FLAGS) -o $@ $^ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+$(BIN)/solver_hydro_IF: $(SRCOBJ_H_IF) $(DEPS)
+	$(GCC) $(CCFLAG) $(HYDRO_SOLVER_IFRK4_FLAGS) $(DSET_FLAGS) -o $@ $^ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
 
-$(OBJBIN)/%_hydro.o: $(SRCDIR)/%.c $(DEPS)
-	$(GCC) $(CCFLAG) $(HYDRO_SOLVER_FLAGS) $(DSET_FLAGS) -c $^ -o $@ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+$(OBJBIN)/%_hydro_IF.o: $(SRCDIR)/%.c $(DEPS)
+	$(GCC) $(CCFLAG) $(HYDRO_SOLVER_IFRK4_FLAGS) $(DSET_FLAGS) -c $^ -o $@ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+
+solver_hydro_RK: $(BIN)/solver_hydro_RK
+
+$(BIN)/solver_hydro_RK: $(SRCOBJ_H_RK) $(DEPS)
+	$(GCC) $(CCFLAG) $(HYDRO_SOLVER_RK4_FLAGS) $(DSET_FLAGS) -o $@ $^ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+
+$(OBJBIN)/%_hydro_RK.o: $(SRCDIR)/%.c $(DEPS)
+	$(GCC) $(CCFLAG) $(HYDRO_SOLVER_RK4_FLAGS) $(DSET_FLAGS) -c $^ -o $@ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+
+solver_hydro_AB: $(BIN)/solver_hydro_AB
+
+$(BIN)/solver_hydro_AB: $(SRCOBJ_H_AB) $(DEPS)
+	$(GCC) $(CCFLAG) $(HYDRO_SOLVER_AB4CN_FLAGS) $(DSET_FLAGS) -o $@ $^ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+
+$(OBJBIN)/%_hydro_AB.o: $(SRCDIR)/%.c $(DEPS)
+	$(GCC) $(CCFLAG) $(HYDRO_SOLVER_AB4CN_FLAGS) $(DSET_FLAGS) -c $^ -o $@ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
 
 solver_mag_hydro: $(BIN)/solver_mag_hydro 
 

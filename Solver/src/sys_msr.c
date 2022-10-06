@@ -79,9 +79,13 @@ void ComputeSystemMeasurables(double t, int iter, RK_data_struct* RK_data) {
     #if defined(__ENRG_FLUX)
     for (int i = 0; i < N; ++i) {
         // Initialize the energy dissipation
-        run_data->energy_flux[i]  = 0.0;
-        run_data->energy_diss[i]  = 0.0;
-        run_data->energy_input[i] = 0.0;
+        run_data->energy_flux[i]    = 0.0;
+        run_data->energy_diss_u[i]  = 0.0;
+        run_data->energy_input_u[i] = 0.0;
+        #if defined(__MAGNETO)
+        run_data->energy_diss_b[i]  = 0.0;
+        run_data->energy_input_b[i] = 0.0;
+        #endif
     }
     #endif
 
@@ -90,7 +94,7 @@ void ComputeSystemMeasurables(double t, int iter, RK_data_struct* RK_data) {
     // ------------------------------------
     // Remove forcing to compute the energy flux balance terms
     if (iter > 0) {
-        for (int i = 0; i < (N + 4); ++i) {
+        for (int i = 2; i < N; ++i) {
             run_data->u[i] -= run_data->forcing_u[i];
             #if defined(__MAGNETO)
             run_data->b[i] -= run_data->forcing_b[i];
@@ -143,18 +147,18 @@ void ComputeSystemMeasurables(double t, int iter, RK_data_struct* RK_data) {
                 // Get temp indx
                 l = j + 2;
                 #if defined(PHASE_ONLY_DIRECT)
-                run_data->energy_diss[i]  += run_data->k[j] * run_data->k[j] * sys_vars->NU * run_data->a_n[n] * run_data->a_n[n];
-                run_data->energy_input[i] += run_data->a_n[l] * cabs(run_data->forcing_u[l]) * cos(run_data->phi_n[l] - carg(run_data->forcing_u[l]));
+                run_data->energy_diss_u[i]  += run_data->k[j] * run_data->k[j] * run_data->a_n[n] * run_data->a_n[n];
+                run_data->energy_input_u[i] += run_data->a_n[l] * cabs(run_data->forcing_u[l]) * cos(run_data->phi_n[l] - carg(run_data->forcing_u[l]));
                 #if defined(__MAGNETO) 
-                run_data->energy_diss[i]  += run_data->k[j] * run_data->k[j] * sys_vars->ETA * run_data->b_n[n] * run_data->b_n[n];
-                run_data->energy_input[i] += run_data->b_n[l] * cabs(run_data->forcing_b[l]) * cos(run_data->psi_n[l] - carg(run_data->forcing_b[l]));
+                run_data->energy_diss_b[i]  += run_data->k[j] * run_data->k[j] * run_data->b_n[n] * run_data->b_n[n];
+                run_data->energy_input_b[i] += run_data->b_n[l] * cabs(run_data->forcing_b[l]) * cos(run_data->psi_n[l] - carg(run_data->forcing_b[l]));
                 #endif
                 #else
-                run_data->energy_diss[i]  += run_data->k[j] * run_data->k[j] * sys_vars->NU * cabs(run_data->u[l] * conj(run_data->u[l]));
-                run_data->energy_input[i] += creal(run_data->u[l] * conj(run_data->forcing_u[l]));
+                run_data->energy_diss_u[i]  += run_data->k[j] * run_data->k[j] * cabs(run_data->u[l] * conj(run_data->u[l]));
+                run_data->energy_input_u[i] += creal(run_data->u[l] * conj(run_data->forcing_u[l]));
                 #if defined(__MAGNETO) 
-                run_data->energy_diss[i]  += run_data->k[j] * run_data->k[j] * sys_vars->ETA * cabs(run_data->b[l] * conj(run_data->b[l])); 
-                run_data->energy_input[i] += creal(run_data->b[l] * conj(run_data->forcing_b[l]));
+                run_data->energy_diss_b[i]  += run_data->k[j] * run_data->k[j] * cabs(run_data->b[l] * conj(run_data->b[l])); 
+                run_data->energy_input_b[i] += creal(run_data->b[l] * conj(run_data->forcing_b[l]));
                 #endif
                 #endif                  
             }
@@ -228,7 +232,7 @@ void ComputeSystemMeasurables(double t, int iter, RK_data_struct* RK_data) {
     // ------------------------------------
     // Add back forcing after computing the energy flux balance terms
     if (iter > 0) {
-        for (int i = 0; i < (N + 4); ++i) {
+        for (int i = 2; i < N; ++i) {
             run_data->u[i] += run_data->forcing_u[i];
             #if defined(__MAGNETO)
             run_data->b[i] += run_data->forcing_b[i];
@@ -301,18 +305,32 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
         fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Energy Flux");
         exit(1);
     }
-    // Allocate energy dissipation
-    run_data->energy_diss = (double* )fftw_malloc(sizeof(double) * sys_vars->N);
-    if (run_data->energy_diss == NULL) {
-        fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Energy Dissipation");
+    // Allocate energy dissipation for the velocity field
+    run_data->energy_diss_u = (double* )fftw_malloc(sizeof(double) * sys_vars->N);
+    if (run_data->energy_diss_u == NULL) {
+        fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Velocity Energy Dissipation");
         exit(1);
     }
-    // Allocate energy input
-    run_data->energy_input = (double* )fftw_malloc(sizeof(double) * sys_vars->N);
-    if (run_data->energy_input == NULL) {
-        fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Energy Input");
+    // Allocate energy input for the velocity field
+    run_data->energy_input_u = (double* )fftw_malloc(sizeof(double) * sys_vars->N);
+    if (run_data->energy_input_u == NULL) {
+        fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Velocity Energy Input");
         exit(1);
     }
+    #if defined(__MAGNETO)
+    // Allocate energy dissipation for the magnetic field
+    run_data->energy_diss_b = (double* )fftw_malloc(sizeof(double) * sys_vars->N);
+    if (run_data->energy_diss_b == NULL) {
+        fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Magnetic Energy Dissipation");
+        exit(1);
+    }
+    // Allocate energy input for the magnetic field
+    run_data->energy_input_b = (double* )fftw_malloc(sizeof(double) * sys_vars->N);
+    if (run_data->energy_input_b == NULL) {
+        fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Magnetic Energy Input");
+        exit(1);
+    }
+    #endif
     #endif
 
     // ----------------------------

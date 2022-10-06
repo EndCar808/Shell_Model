@@ -357,9 +357,10 @@ int GetCMLArgs(int argc, char** argv) {
 					sys_vars->TRANS_ITERS_FRAC = atof(optarg);
 					if ((sys_vars->TRANS_ITERS_FRAC >= 1.0) || (sys_vars->TRANS_ITERS_FRAC <= 0.0)) {
 						fprintf(stderr, "\n["RED"ERROR"RESET"] Parsing of Command Line Arguements Failed: Incorrect transient iterations fraction: [%lf] Must be between 0 and 1 -- Set to 0.2 by default\n-->> Exiting!\n\n", sys_vars->TRANS_ITERS_FRAC);		
-						exit(1);
+						// exit(1);
+						sys_vars->TRANS_ITERS_FRAC = 0.2;
 					}
-					// trans_iter_flag = 2;
+					trans_iter_flag = 2;
 					break;
 				}
 				break;				

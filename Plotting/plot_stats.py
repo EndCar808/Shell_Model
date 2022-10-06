@@ -173,13 +173,11 @@ if __name__ == '__main__':
 
         ax1 = fig.add_subplot(gs[0, 0])
         for i in [4 - indx_shift, 6 - indx_shift]:
-            ax1.plot(k_n, run_data.vel_str_func[:, i], label = "$p = {}$".format(i + indx_shift))
+            ax1.plot(np.log2(k_n), np.log2(run_data.vel_str_func[:, i]), label = "$p = {}$".format(i + indx_shift))
         ax1.set_xlabel(r"$k_n$")
         ax1.set_ylabel(r"$S_p(k_n)$")
         ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
-        ax1.set_xlim(1, k_n[-1])
-        ax1.set_yscale('log')
-        ax1.set_xscale('log')
+        ax1.set_xlim(1, np.log2(k_n[-1]))
         ax1.legend()
 
         plt.savefig(cmdargs.out_dir + "/VelStrFunc.png")
@@ -196,13 +194,11 @@ if __name__ == '__main__':
         indx_shift = 2
         ax1 = fig.add_subplot(gs[0, 0])
         for i in [4 - indx_shift, 6 - indx_shift]:
-            ax1.plot(k_n, run_data.vel_flux_str_func[:, i, 0], label = "$p = {}$".format(i + indx_shift))
+            ax1.plot(np.log2(k_n), np.log2(run_data.vel_flux_str_func[:, i, 0]), label = "$p = {}$".format(i + indx_shift))
         ax1.set_xlabel(r"$k_n$")
         ax1.set_ylabel(r"$S_p^{E}(k_n)$")
         ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
-        ax1.set_xlim(1, k_n[-1])
-        ax1.set_yscale('log')
-        ax1.set_xscale('log')
+        ax1.set_xlim(1, np.log2(k_n[-1]))
         ax1.legend()
 
 
@@ -210,13 +206,11 @@ if __name__ == '__main__':
         ax2 = fig.add_subplot(gs[0, 1])
         indx_shift = 2
         for i in [4 - indx_shift, 6 - indx_shift]:
-            ax2.plot(k_n, run_data.vel_flux_str_func[:, i, 1], label = "$p = {}$".format(i + indx_shift))
+            ax2.plot(np.log2(k_n), np.log2(run_data.vel_flux_str_func[:, i, 1]), label = "$p = {}$".format(i + indx_shift))
         ax2.set_xlabel(r"$k_n$")
         ax2.set_ylabel(r"$S_p^{H}(k_n)$")
         ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
-        ax2.set_xlim(1, k_n[-1])
-        ax2.set_yscale('log')
-        ax2.set_xscale('log')
+        ax2.set_xlim(1, np.log2(k_n[-1]))
         ax2.legend()
 
         plt.savefig(cmdargs.out_dir + "/VelFluxStrFunc.png")

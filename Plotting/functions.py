@@ -267,8 +267,14 @@ def import_data(input_file, sim_data, method = "default"):
                     self.psi_n = f["MagPhases"][:, :]
                 if 'EnergyFlux' in list(f.keys()):
                     self.enrg_flux = f["EnergyFlux"][:, :]
-                if 'EnergyDiss' in list(f.keys()):
-                    self.enrg_diss = f["EnergyDiss"][:, :]
+                if 'VelEnergyDiss' in list(f.keys()):
+                    self.enrg_diss_u = f["VelEnergyDiss"][:, :]
+                if 'VelEnergyInput' in list(f.keys()):
+                    self.enrg_input_u = f["VelEnergyInput"][:, :]
+                if 'MagEnergyDiss' in list(f.keys()):
+                    self.enrg_diss_b = f["MagEnergyDiss"][:, :]
+                if 'MagEnergyInput' in list(f.keys()):
+                    self.enrg_input_b = f["MagEnergyInput"][:, :]
                 if 'Time' in list(f.keys()):
                     self.time  = f["Time"][:]
                 if 'k' in list(f.keys()):
