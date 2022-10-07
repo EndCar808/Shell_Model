@@ -65,10 +65,10 @@ def compute_pdf(data, bin_lims = None, nbins = 1000, normed = False):
 
     if normed is True:
         ## Compute the variance from the PDF data
-        var         = np.sqrt(np.sum(pdf * bin_centres**2 * bin_width))
-        pdf         *= var
-        bin_centres /= var
-        bin_width   /= var
+        std         = np.sqrt(np.sum(pdf * bin_centres**2 * bin_width))
+        pdf         *= std
+        bin_centres /= std
+        bin_width   /= std
 
     return pdf, bin_centres
 

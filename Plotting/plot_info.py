@@ -185,6 +185,19 @@ if __name__ == '__main__':
         plt.savefig(cmdargs.out_dir + "Quadratic_Invariants.png")
         plt.close()
 
+        ##-------------- Plot the energy spectrum
+        fig = plt.figure(figsize = (16, 8))
+        gs  = GridSpec(1, 1)
+        ax1 = fig.add_subplot(gs[0, 0])
+        for i in [0, 100, -1]:
+            ax1.plot(run_data.k, np.absolute(run_data.u[i, :])**2, label = "Iter = {}".format(i))
+        ax1.set_xlabel("$k$")
+        ax1.set_ylabel("$E$")
+        ax1.set_yscale('log')
+        ax1.set_xscale('log')
+        ax1.legend()
+        plt.savefig(cmdargs.out_dir + "EnergySpectrum.png")
+        plt.close()
 
         ##-------------- Plot Amplitudes over time
         fig = plt.figure(figsize = (16, 8))
@@ -334,7 +347,7 @@ if __name__ == '__main__':
             ax1.plot(run_data.time, T_ppp[:, i])
         ax1.set_xlabel("$t$")
         ax1.set_title("$\phi_n + \phi_{n + 1} + \phi_{n + 2}$")
-        ax1.set_xlim(t_i, t_f)
+        # ax1.set_xlim(t_i, t_f)
 
         if hasattr(run_data, 'b'):
             ## Plot the velocity amplitudes
@@ -343,21 +356,21 @@ if __name__ == '__main__':
                 ax2.plot(run_data.time, T_pss[:, i])
             ax2.set_xlabel("$t$")
             ax2.set_title("$\phi_n + \psi_{n + 1} + \psi_{n + 2}$")
-            ax2.set_xlim(t_i, t_f)
+            # ax2.set_xlim(t_i, t_f)
             ## Plot the velocity amplitudes
             ax1 = fig.add_subplot(gs[1, 0])
             for i in range(sys_vars.N - 2):
                 ax1.plot(run_data.time, T_sps[:, i])
             ax1.set_xlabel("$t$")
             ax1.set_title("$\psi_n + \phi_{n + 1} + \psi_{n + 2}$")
-            ax1.set_xlim(t_i, t_f)
+            # ax1.set_xlim(t_i, t_f)
             ## Plot the velocity amplitudes
             ax2 = fig.add_subplot(gs[1, 1])
             for i in range(sys_vars.N - 2):
                 ax2.plot(run_data.time, T_ssp[:, i])
             ax2.set_xlabel("$t$")
             ax2.set_title("$\psi_n + \psi_{n + 1} + \phi_{n + 2}$")
-            ax2.set_xlim(t_i, t_f)
+            # ax2.set_xlim(t_i, t_f)
 
         plt.savefig(cmdargs.out_dir + "Triads_Tseries.png")
         plt.close()
@@ -444,7 +457,6 @@ if __name__ == '__main__':
         ##-------------- Plot The Total Flux & Diss over time
         fig = plt.figure(figsize = (16, 8))
         gs  = GridSpec(1, 3)
-        ## Plot the velocity amplitudes
         ax1 = fig.add_subplot(gs[0, 0])
         for i in range(sys_vars.N):
             ax1.plot(run_data.time, run_data.enrg_flux[:, i])
@@ -465,4 +477,31 @@ if __name__ == '__main__':
         ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
 
         plt.savefig(cmdargs.out_dir + "EnergyFlux_EnergyDiss_EnergyInput_Tseries.png")
+        plt.close()
+
+
+        ##-------------- Plot The Total Flux & Diss over time
+        fig = plt.figure(figsize = (16, 8))
+        gs  = GridSpec(1, 3)
+        ax1 = fig.add_subplot(gs[0, 0])
+        ax1.plot(run_data.time, np.sum(run_data.enrg_flux[:, :], axis = -1))
+        ax1.set_xlabel("$t$")
+        ax1.set_title("Energ Flux")
+        ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        ax2 = fig.add_subplot(gs[0, 1])
+        ax2.plot(run_data.time, np.sum(run_data.enrg_diss_u[:, :], axis = -1))
+        ax2.set_xlabel("$t$")
+        ax2.set_title("Velocity Energy Dissipation")
+        ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        ax1 = fig.add_subplot(gs[0, 2])
+        ax1.plot(run_data.time, np.sum(run_data.enrg_input_u[:, :], axis = -1))
+        ax1.set_xlabel("$t$")
+        ax1.set_title("Velocity Energ Input")
+        ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+
+        print(run_data.enrg_input_u[:, 0])
+        print(run_data.enrg_diss_u[:, 0])
+        print(run_data.enrg_flux[:, 0])
+
+        plt.savefig(cmdargs.out_dir + "Totals_EnergyFlux_EnergyDiss_EnergyInput_Tseries.png")
         plt.close()

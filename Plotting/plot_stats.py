@@ -129,8 +129,7 @@ if __name__ == '__main__':
         gs  = GridSpec(1, 4)
         for j, i in enumerate([1, 5, 10, 15]):
             ax1 = fig.add_subplot(gs[0, j])
-            var = np.sqrt(np.mean(np.real(run_data.u[:, i])**2))
-            pdf, centres = compute_pdf(np.real(run_data.u[:, i]), nbins = 100)
+            pdf, centres = compute_pdf(np.real(run_data.u[:, i]), nbins = 50, normed = True)
             ax1.plot(centres, pdf, label = "$n = {}$".format(i))
             ax1.set_xlabel(r"$\Re u_n / \langle (\Re u_n)^2 \rangle^{1/2}$")
             ax1.set_ylabel(r"PDF")
@@ -141,13 +140,27 @@ if __name__ == '__main__':
         plt.savefig(cmdargs.out_dir + "/RealVel_PDF.png")
         plt.close()
 
+        fig = plt.figure(figsize = (16, 8))
+        gs  = GridSpec(1, 1)
+        ax1 = fig.add_subplot(gs[0, 0])
+        for j, i in enumerate([5, 10, 15]):
+            pdf, centres = compute_pdf(np.real(run_data.u[:, i]), nbins = 50, normed = True)
+            ax1.plot(centres, pdf, label = "$n = {}$".format(i))
+            ax1.set_xlabel(r"$\Re u_n / \langle (\Re u_n)^2 \rangle^{1/2}$")
+            ax1.set_ylabel(r"PDF")
+            ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+            ax1.set_yscale('log')
+            ax1.legend()
+
+        plt.savefig(cmdargs.out_dir + "/RealVel_PDF_InOne.png")
+        plt.close()
+
         if hasattr(run_data, "b"):
             fig = plt.figure(figsize = (16, 8))
             gs  = GridSpec(1, 4)
             for j, i in enumerate([1, 5, 10, 15]):
                 ax2 = fig.add_subplot(gs[0, j])
-                var = np.sqrt(np.mean(np.real(run_data.b[:, i])**2))
-                pdf, centres = compute_pdf(np.real(run_data.b[:, i]), nbins = 100)
+                pdf, centres = compute_pdf(np.real(run_data.b[:, i]), nbins = 50, normed = True)
                 ax2.plot(centres, pdf, label = "$n = {}$".format(i + 1))
                 ax2.set_xlabel(r"$\Re u_n / \langle (\Re u_n)^2 \rangle^{1/2}$")
                 ax2.set_ylabel(r"PDF")

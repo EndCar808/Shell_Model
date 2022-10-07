@@ -147,7 +147,7 @@ void Solve(void) {
 			#endif
 
 			// If and when transient steps are complete write to file
-			if (iters > trans_steps) {
+			if (iters >= trans_steps) {
 				// Write the appropriate datasets to file 
 				WriteDataToFile(t, iters, save_data_indx);
 				
@@ -776,6 +776,8 @@ void NonlinearTerm(fftw_complex* u, fftw_complex* b, fftw_complex* u_nonlin, fft
 		// Add forcing here for the magnetic field
 		b_nonlin[n] += run_data->forcing_b[n]; 
 		#endif
+
+		// printf("u[%d]:\t%lf\t%lfi\t-\tf[%d]:\t%lf\t%lfi\t----\t%lf\t%lf\n", i + 1, creal(u_nonlin[n]), cimag(u_nonlin[n]), i + i, creal(run_data->forcing_u[n]), cimag(run_data->forcing_u[n]), creal(u_nonlin[n]) / creal(run_data->forcing_u[n]), cimag(u_nonlin[n]) / cimag(run_data->forcing_u[n]));
 	}
 }
 #endif
@@ -832,7 +834,7 @@ void InitialConditions(const long int N) {
 				// Scaling in N Initial Condition
 				// ------------------------------------------------
 				// Initialize the velocity field
-				run_data->u[i] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) * cexp(I * pow(i - 1, 2.0));
+				run_data->u[i] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) * cexp(I * pow(i - 1, 2.0)) / sqrt(75);
 				#if defined(PHASE_ONLY)
 				// Record the phases and amplitudes
 				run_data->a_n[i]   = cabs(run_data->u[i]);
@@ -868,7 +870,7 @@ void InitialConditions(const long int N) {
 				#endif
 
 				// Initialize the velocity field
-				run_data->u[i] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) * cexp(I * r1 * 2.0 * M_PI);
+				run_data->u[i] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) * cexp(I * r1 * 2.0 * M_PI) / sqrt(100);
 
 				#if defined(PHASE_ONLY)
 				// Record the phases and amplitudes

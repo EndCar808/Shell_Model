@@ -51,9 +51,7 @@ void ComputeSystemMeasurables(double t, int iter, RK_data_struct* RK_data) {
 
     // Record the initial time
     #if defined(__TIME)
-    if (sys_vars->TRANS_ITERS_FLAG != TRANSIENT_ITERS) {
-        run_data->time[iter] = t;
-    }
+    run_data->time[iter] = t;
     #endif
 
     // If adaptive stepping check if within memory limits
@@ -143,9 +141,10 @@ void ComputeSystemMeasurables(double t, int iter, RK_data_struct* RK_data) {
             //-------------- Energy Flux and Dissipation
             #if defined(__ENRG_FLUX)
             // Compute the energy dissipation
-            for (int j = 0; j < i; ++j) {
+            for (int j = 0; j < i + 1; ++j) {
                 // Get temp indx
                 l = j + 2;
+
                 #if defined(PHASE_ONLY_DIRECT)
                 run_data->energy_diss_u[i]  += run_data->k[j] * run_data->k[j] * run_data->a_n[n] * run_data->a_n[n];
                 run_data->energy_input_u[i] += run_data->a_n[l] * cabs(run_data->forcing_u[l]) * cos(run_data->phi_n[l] - carg(run_data->forcing_u[l]));
