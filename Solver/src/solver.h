@@ -28,7 +28,7 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data);
 #if defined(RK4)
 void RK4Step(const double dt, const long int N, RK_data_struct* RK_data);
 #endif
-#if defined(AB4)
+#if defined(AB4CN)
 void RK4Step(const double dt, const long int N, RK_data_struct* RK_data);
 void AB4CNStep(const double dt, const long int iters, const long int N, RK_data_struct* RK_data);
 #endif
@@ -50,7 +50,7 @@ void FreeMemory(RK_data_struct* RK_data);
 // Print Update
 void PrintUpdateToTerminal(int iters, double t, double dt, double T, int save_data_indx);
 // Check System
-void SystemCheck(double dt, int iters);
+void SystemCheck(double dt, int iters, int save_data_indx);
 // ---------------------------------------------------------------------
 //  End of File
 // ---------------------------------------------------------------------

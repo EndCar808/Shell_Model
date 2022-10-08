@@ -111,6 +111,7 @@
 // Choose whether to save the Nonlinear term or RHS of equation of motion
 // #define __RHS
 // #define __NONLIN
+// Choose whether to save the forcing or not
 // define __FORCING
 // Choose whether to compute system measures
 // #define __SYS_MEASURES
@@ -153,7 +154,7 @@
 #define EPSILON_M 1.0/3.0 		// Interaction coefficient for the MHD shell model
 // System checking parameters
 #define MIN_STEP_SIZE 1e-10 	// The minimum allowed stepsize for the solver 
-#define MAX_ITERS 1e+12			// The maximum iterations to perform
+#define MAX_ITERS 1e+20			// The maximum iterations to perform
 #define MAX_FIELD_LIM 1e+100     // The maximum allowed velocity &/or magnetic
 // Stats parameters
 #define NUM_POW 6 				// The highest moment to compute for the structure function

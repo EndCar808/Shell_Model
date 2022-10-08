@@ -335,9 +335,7 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
     // ----------------------------
     // Get Measurables of the ICs
     // ----------------------------
-    if (sys_vars->TRANS_ITERS_FLAG != TRANSIENT_ITERS) {
-        ComputeSystemMeasurables(0.0, 0, RK_data);
-    }
+    ComputeSystemMeasurables(0.0, 0, RK_data);
 }
 // ---------------------------------------------------------------------
 //  End of File

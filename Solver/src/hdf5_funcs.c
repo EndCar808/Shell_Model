@@ -33,8 +33,10 @@ void CreateOutputFilesWriteICs(const long int N) {
 	// Initialize variables
 	herr_t status;
 
+	#if defined(__VEL) || defined(__MAG) || defined(__FORCING)
 	// Create compound datatype for the complex datasets
 	file_info->COMPLEX_DTYPE = CreateComplexDatatype();
+	#endif
 
 
 	///////////////////////////
@@ -168,9 +170,9 @@ void CreateOutputFilesWriteICs(const long int N) {
 		#if defined(__FORCING)
 		if(!(strcmp(sys_vars->forcing, "STOC"))) {
 			// Velocity Forcing
-			WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_FORCING_U], file_info->data_set[DSET_FORCING_U], file_info->mem_space[DSET_FORCING_U], file_info->COMPLEX_DTYPE, &(run_data->forcing_u[2]), "VelocityForcingInTime", N, 0);
+			WriteSlabbedDataFourier(0.0, 0, file_info->file_space[DSET_FORCING_U], file_info->data_set[DSET_FORCING_U], file_info->mem_space[DSET_FORCING_U], file_info->COMPLEX_DTYPE, &(run_data->forcing_u[2]), "VelocityForcingInTime", N, 0);
 			// Magnetic Forcing
-			WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_FORCING_B], file_info->data_set[DSET_FORCING_B], file_info->mem_space[DSET_FORCING_B], file_info->COMPLEX_DTYPE, &(run_data->forcing_b[2]), "MagneticForcingInTime", N, 0);
+			WriteSlabbedDataFourier(0.0, 0, file_info->file_space[DSET_FORCING_B], file_info->data_set[DSET_FORCING_B], file_info->mem_space[DSET_FORCING_B], file_info->COMPLEX_DTYPE, &(run_data->forcing_b[2]), "MagneticForcingInTime", N, 0);
 		}
 		#endif
 
@@ -397,7 +399,7 @@ void WriteDataToFile(double t, long int iters, long int save_indx) {
 	// --------------------------------------
 	// Check if files exist and Open/Create
 	// --------------------------------------
-	// /// Check if main file exists - open it if it does if not create it
+	// Check if main file exists - open it if it does if not create it
 	if (access(file_info->output_file_name, F_OK) != 0) {
 		file_info->output_file_handle = H5Fcreate(file_info->output_file_name, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 		if (file_info->output_file_handle < 0) {
@@ -451,9 +453,9 @@ void WriteDataToFile(double t, long int iters, long int save_indx) {
 	#if defined(__FORCING)
 	if(!(strcmp(sys_vars->forcing, "STOC"))) {
 		// Velocity Forcing
-		WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_FORCING_U], file_info->data_set[DSET_FORCING_U], file_info->mem_space[DSET_FORCING_U], file_info->COMPLEX_DTYPE, &(run_data->forcing_u[2]), "VelocityForcingInTime", sys_vars->N, save_indx);
+		WriteSlabbedDataFourier(t, iters, file_info->file_space[DSET_FORCING_U], file_info->data_set[DSET_FORCING_U], file_info->mem_space[DSET_FORCING_U], file_info->COMPLEX_DTYPE, &(run_data->forcing_u[2]), "VelocityForcingInTime", sys_vars->N, save_indx);
 		// Magnetic Forcing
-		WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_FORCING_B], file_info->data_set[DSET_FORCING_B], file_info->mem_space[DSET_FORCING_B], file_info->COMPLEX_DTYPE, &(run_data->forcing_b[2]), "MagneticForcingInTime", sys_vars->N, save_indx);
+		WriteSlabbedDataFourier(t, iters, file_info->file_space[DSET_FORCING_B], file_info->data_set[DSET_FORCING_B], file_info->mem_space[DSET_FORCING_B], file_info->COMPLEX_DTYPE, &(run_data->forcing_b[2]), "MagneticForcingInTime", sys_vars->N, save_indx);
 	}
 	#endif
 
@@ -580,7 +582,13 @@ void WriteSlabbedDataReal(double t, int iters, hid_t file_space, hid_t data_set,
 	// ------------------------------------
 	// Select appropriate hyperslab 
 	if ((H5Sselect_hyperslab(file_space, H5S_SELECT_SET, start_index, NULL, count, NULL)) < 0) {
+		// Print error message to error stream 
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to select hyperslab in file for datset ["CYAN"%s"RESET"] at: Iter = ["CYAN"%d"RESET"] t = ["CYAN"%lf"RESET"]\n-->> Exiting...\n", dset_name, iters, t);
+
+		// Save current state of system to file before exiting
+		FinalWriteAndCloseOutputFile(sys_vars->N, iters, index);
+		
+		// Exit programme
 		exit(1);
 	}
 
@@ -589,7 +597,13 @@ void WriteSlabbedDataReal(double t, int iters, hid_t file_space, hid_t data_set,
 	// ------------------------------------
 	// Then write the current chunk to this hyperslab
 	if ((H5Dwrite(data_set, dtype, mem_space, file_space, H5P_DEFAULT, data)) < 0) {
+		// Print error message to error stream 
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to write data to datset ["CYAN"%s"RESET"] at: Iter = ["CYAN"%d"RESET"] t = ["CYAN"%lf"RESET"]\n-->> Exiting...\n", dset_name, iters, t);
+
+		// Save current state of system to file before exiting
+		FinalWriteAndCloseOutputFile(sys_vars->N, iters, index);
+
+		// Exit programme
 		exit(1);
 	}
 }
@@ -625,7 +639,13 @@ void WriteSlabbedDataFourier(double t, int iters, hid_t file_space, hid_t data_s
 	// ------------------------------------
 	// Select appropriate hyperslab 
 	if ((H5Sselect_hyperslab(file_space, H5S_SELECT_SET, start_index, NULL, count, NULL)) < 0) {
+		// Print error message to error stream
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to select hyperslab in file for datset ["CYAN"%s"RESET"] at: Iter = ["CYAN"%d"RESET"] t = ["CYAN"%lf"RESET"]\n-->> Exiting...\n", dset_name, iters, t);
+		
+		// Save current state of system to file before exiting
+		FinalWriteAndCloseOutputFile(sys_vars->N, iters, index);
+		
+		// Exit programme
 		exit(1);
 	}
 
@@ -634,7 +654,13 @@ void WriteSlabbedDataFourier(double t, int iters, hid_t file_space, hid_t data_s
 	// ------------------------------------
 	// Then write the current chunk to this hyperslab
 	if ((H5Dwrite(data_set, dtype, mem_space, file_space, H5P_DEFAULT, data)) < 0) {
+		// Print error message to error stream
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to write data to datset ["CYAN"%s"RESET"] at: Iter = ["CYAN"%d"RESET"] t = ["CYAN"%lf"RESET"]\n-->> Exiting...\n", dset_name, iters, t);
+		
+		// Save current state of system to file before exiting
+		FinalWriteAndCloseOutputFile(sys_vars->N, iters, index);
+		
+		// Exit programme
 		exit(1);
 	}
 }
@@ -886,7 +912,7 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 		exit(1);
 	}
 
-	#if defined(__VORT_FOUR) || defined(__MODES)
+	#if defined(__VEL) || defined(__MAG) || defined(__FORCING)
 	// Close the complex datatype identifier
 	H5Tclose(file_info->COMPLEX_DTYPE);
 	#endif

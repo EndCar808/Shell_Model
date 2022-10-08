@@ -21,7 +21,12 @@
 // ---------------------------------------------------------------------
 //  Function Definitions
 // ---------------------------------------------------------------------
-void ComputeStats(void) {
+/**
+ * Function to compute the statistics for the current iteration
+ * @param iters          The current iteration of the simulation
+ * @param save_data_indx The current index for saving data to file
+ */
+void ComputeStats(const int iters, const int save_data_indx) {
 
 	// Initialize variables
 	int n;
@@ -46,13 +51,25 @@ void ComputeStats(void) {
     	// Update the running sums for the field stats
     	gsl_status = gsl_rstat_add(creal(run_data->u[n]), stats_data->vel_moments[i]);
     	if (gsl_status != 0) {
+    		// Print error message to error stream
 			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to running stats counter ["CYAN"%s"RESET"] - Error Value: ["CYAN"%d"RESET"] Field Value: ["CYAN"%lf"RESET"] \n-->> Exiting!!!\n", "Velocity Stats", gsl_status, creal(run_data->u[n]));
+
+			// Save current state of system to file before exiting
+			FinalWriteAndCloseOutputFile(N, iters, save_data_indx);
+			
+			// Exit programme
 			exit(1);
 		}
     	#if defined(__MAGNETO)
     	gsl_status = gsl_rstat_add(creal(run_data->b[n]), stats_data->mag_moments[i]);
 	    if (gsl_status != 0) {
+	    	// Print error message to error stream
 			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to running stats counter ["CYAN"%s"RESET"] - Error Value: ["CYAN"%d"RESET"] Field Value: ["CYAN"%lf"RESET"] \n-->> Exiting!!!\n", "Magnetic Stats", gsl_status, creal(run_data->b[n]));
+
+			// Save current state of system to file before exiting
+			FinalWriteAndCloseOutputFile(N, iters, save_data_indx);
+			
+			// Exit programme
 			exit(1);
 		}
     	#endif

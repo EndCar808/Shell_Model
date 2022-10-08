@@ -133,6 +133,8 @@ void Solve(void) {
 		AB4CNStep(dt, (long int)iters, N, RK_data);
 		#endif
 
+		// printf("Iter: %d\tnum_print_steps: %ld\tsave_indx: %d\tsave_every: %d\ttrans_steps: %ld\t\n", iters, sys_vars->num_print_steps, save_data_indx, sys_vars->SAVE_EVERY, trans_steps);
+
 		// -------------------------------
 		// Write To File
 		// -------------------------------
@@ -143,7 +145,7 @@ void Solve(void) {
 
 			// Compute stats
 			#if defined(STATS)
-			ComputeStats();
+			ComputeStats(iters, save_data_indx);
 			#endif
 
 			// If and when transient steps are complete write to file
@@ -197,7 +199,7 @@ void Solve(void) {
 		}
 
 		// Check System: Determine if system has blown up or integration limits reached
-		SystemCheck(dt, iters);
+		SystemCheck(dt, iters, save_data_indx);
 	}
 	//////////////////////////////
 	// End Integration
@@ -1114,7 +1116,7 @@ void InitializeIntegrationVariables(double* t0, double* t, double* dt, double* T
 		sys_vars->trans_iters = (* trans_steps);
 
 		// Get the number of steps to perform before printing to file -> allowing for a transient fraction of these to be ignored
-		sys_vars->num_print_steps = (sys_vars->num_t_steps >= sys_vars->SAVE_EVERY ) ? (sys_vars->num_t_steps - sys_vars->trans_iters) / sys_vars->SAVE_EVERY : sys_vars->num_t_steps - sys_vars->trans_iters;	 
+		sys_vars->num_print_steps = (sys_vars->num_t_steps >= sys_vars->SAVE_EVERY ) ? (sys_vars->num_t_steps - sys_vars->trans_iters) / sys_vars->SAVE_EVERY  + 1: sys_vars->num_t_steps - sys_vars->trans_iters + 1;	 
 		printf("Total Iters: %ld\t Saving Iters: %ld\t Transient Steps: %ld\n", sys_vars->num_t_steps, sys_vars->num_print_steps, sys_vars->trans_iters);
 	}
 	else {
@@ -1150,20 +1152,33 @@ void PrintUpdateToTerminal(int iters, double t, double dt, double T, int save_da
 }
 /**
  * Function that checks the system to see if it is ok to continue integrations. Checks for blow up, timestep and iteration limits etc
- * @param dt    The updated timestep for the next iteration
- * @param iters The number of iterations for the next iteration
+ * @param dt    		 The updated timestep for the next iteration
+ * @param iters 		 The number of iterations for the next iteration
+ * @param save_data_indx The current index for saving data to
  */
-void SystemCheck(double dt, int iters) {
+void SystemCheck(double dt, int iters, int save_data_indx) {
 
 	// -------------------------------
 	// Check Stopping Criteria 
 	// -------------------------------
 	if (dt <= MIN_STEP_SIZE) {
+		// Print error message to error stream
 		fprintf(stderr, "\n["YELLOW"SOVLER FAILURE"RESET"]--- Timestep has become too small to continue at Iter: ["CYAN"%d"RESET"]\n-->> Exiting!!!\n", iters);
+
+		// Write current state of the system to file
+		FinalWriteAndCloseOutputFile(sys_vars->N, iters, save_data_indx);
+
+		// Exit program
 		exit(1);		
 	}
 	else if (iters >= MAX_ITERS) {
+		// Print error message to error stream
 		fprintf(stderr, "\n["YELLOW"SOVLER FAILURE"RESET"]--- The maximum number of iterations has been reached at Iter: ["CYAN"%d"RESET"]\n-->> Exiting!!!\n", iters);
+
+		// Write current state of the system to file
+		FinalWriteAndCloseOutputFile(sys_vars->N, iters, save_data_indx);
+
+		// Exit program
 		exit(1);		
 	}
 }
