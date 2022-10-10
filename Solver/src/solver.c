@@ -1450,6 +1450,9 @@ void FreeMemory(RK_data_struct* RK_data) {
 	fftw_free(run_data->tot_cross_hel);
 	#endif
 	#endif
+	#if defined(__ENRG_SPECT)
+	fftw_free(run_data->enrg_spect);
+	#endif
 	#if defined(__TIME)
 	fftw_free(run_data->time);
 	#endif

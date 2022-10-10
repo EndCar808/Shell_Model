@@ -114,6 +114,12 @@ void CreateOutputFilesWriteICs(const long int N) {
 	}
 	#endif
 
+	///--------------------------------------- Energy Spectrum
+	#if defined(__ENRG_SPECT)
+	// Energy Spectrum
+	CreateSlabbedDSet(0.0, 0, "EnergySpectrum", &(file_info->file_space[DSET_ENRG_SPECT]), &(file_info->data_set[DSET_ENRG_SPECT]), &(file_info->mem_space[DSET_ENRG_SPECT]), H5T_NATIVE_DOUBLE, dims, maxdims, chunkdims, Dim);	
+	#endif
+
 	///--------------------------------------- Energy Flux
 	#if defined(__ENRG_FLUX)
 	// Create slabbed dataset for the flux
@@ -174,6 +180,12 @@ void CreateOutputFilesWriteICs(const long int N) {
 			// Magnetic Forcing
 			WriteSlabbedDataFourier(0.0, 0, file_info->file_space[DSET_FORCING_B], file_info->data_set[DSET_FORCING_B], file_info->mem_space[DSET_FORCING_B], file_info->COMPLEX_DTYPE, &(run_data->forcing_b[2]), "MagneticForcingInTime", N, 0);
 		}
+		#endif
+
+		///--------------------------------------- Energy Spectrum
+		#if defined(__ENRG_SPECT)
+		// Energy Spectrum
+		WriteSlabbedDataFourier(0.0, 0, file_info->file_space[DSET_ENRG_SPECT], file_info->data_set[DSET_ENRG_SPECT], file_info->mem_space[DSET_ENRG_SPECT], H5T_NATIVE_DOUBLE, run_data->energy_spect, "EnergySpectrum", N, 0);
 		#endif
 
 		///--------------------------------------- Energy Flux
@@ -457,6 +469,12 @@ void WriteDataToFile(double t, long int iters, long int save_indx) {
 		// Magnetic Forcing
 		WriteSlabbedDataFourier(t, iters, file_info->file_space[DSET_FORCING_B], file_info->data_set[DSET_FORCING_B], file_info->mem_space[DSET_FORCING_B], file_info->COMPLEX_DTYPE, &(run_data->forcing_b[2]), "MagneticForcingInTime", sys_vars->N, save_indx);
 	}
+	#endif
+
+	///--------------------------------------- Energy Spectrum
+	#if defined(__ENRG_SPECT)
+	// Energy Spectrum
+	WriteSlabbedDataFourier(t, iters, file_info->file_space[DSET_ENRG_SPECT], file_info->data_set[DSET_ENRG_SPECT], file_info->mem_space[DSET_ENRG_SPECT], H5T_NATIVE_DOUBLE, run_data->energy_spect, "EnergySpectrum", sys_vars->N, 0);
 	#endif
 
 	///--------------------------------------- Energy Flux

@@ -116,6 +116,7 @@
 // Choose whether to compute system measures
 // #define __SYS_MEASURES
 // #define __ENRG_FLUX
+// #define __ENRG_SPECT
 // Choose whether to save the time, collocation points and wavenumbers
 #define __TIME
 #define __WAVELIST
@@ -140,7 +141,8 @@
 #define DSET_ENRG_INPT_MAG 10
 #define DSET_FORCING_U 11
 #define DSET_FORCING_B 12
-#define NUM_DSETS 13
+#define DSET_ENRG_SPECT 13
+#define NUM_DSETS 14
 // ---------------------------------------------------------------------
 //  Global Variables
 // ---------------------------------------------------------------------
@@ -241,6 +243,7 @@ typedef struct runtime_data_struct {
 	double* energy_diss_b;				// Array to hold the energy dissipation for the magnetic field
 	double* energy_input_u;				// Array to hold the energy input for the velocity field in the flux balance computation
 	double* energy_input_b;				// Array to hold the energy input for the magnetic field in the flux balance computation
+	double* energy_spect;				// Array containing the energy spectrum for the current iteration 
 	fftw_complex* forcing_u;  			// Array to hold the forcing for the current timestep for the velocity field
 	fftw_complex* forcing_b;  			// Array to hold the forcing for the current timestep for the magnetic field
 	double* forcing_scaling;  			// Array to hold the initial scaling for the forced modes

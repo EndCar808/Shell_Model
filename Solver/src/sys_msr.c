@@ -74,8 +74,8 @@ void ComputeSystemMeasurables(double t, int iter, RK_data_struct* RK_data) {
         #endif
     }
     #endif
-    #if defined(__ENRG_FLUX)
     for (int i = 0; i < N; ++i) {
+        #if defined(__ENRG_FLUX)
         // Initialize the energy dissipation
         run_data->energy_flux[i]    = 0.0;
         run_data->energy_diss_u[i]  = 0.0;
@@ -84,8 +84,11 @@ void ComputeSystemMeasurables(double t, int iter, RK_data_struct* RK_data) {
         run_data->energy_diss_b[i]  = 0.0;
         run_data->energy_input_b[i] = 0.0;
         #endif
+        #endif
+        #if defined(__ENRG_SPECT)
+        run_data->energy_spect[i] = 0.0;
+        #endif
     }
-    #endif
 
     // ------------------------------------
     // Remove Forcing
@@ -138,6 +141,22 @@ void ComputeSystemMeasurables(double t, int iter, RK_data_struct* RK_data) {
             #endif
             #endif
 
+            //-------------- Energy Spectrum
+            #if defined(__ENRG_SPECT)
+            // Compute the energy spectrum
+            #if defined(PHASE_ONLY_DIRECT)
+            run_data->energy_spect[i] = run_data->a_n[n] * run_data->a_n[n];  
+            #if defined(__MAGNETO)        
+            run_data->energy_spect[i] += run_data->b_n[n] * run_data->b_n[n];  
+            #endif
+            #else
+            run_data->energy_spect[i] = cabs(run_data->u[n] * conj(run_data->u[n]));  
+            #if defined(__MAGNETO)        
+            run_data->energy_spect[i] += cabs(run_data->b[n] * conj(run_data->b[n]));  
+            #endif
+            #endif
+            #endif
+
             //-------------- Energy Flux and Dissipation
             #if defined(__ENRG_FLUX)
             // Compute the energy dissipation
@@ -172,11 +191,11 @@ void ComputeSystemMeasurables(double t, int iter, RK_data_struct* RK_data) {
                 #endif
             }
             else {
-                k_pre_fac_1 = run_data->k[i - 1] - run_data->k[n] * interact_coeff_u_1;
+                k_pre_fac_1 = run_data->k[n - 1] - run_data->k[n] * interact_coeff_u_1;
                 #if defined(__MAGNETO)
-                k_pre_fac_2 = - run_data->k[i - 1] + run_data->k[n] * interact_coeff_b_2;
-                k_pre_fac_3 = run_data->k[i - 1] * interact_coeff_b_1 + run_data->k[n] * interact_coeff_u_1;
-                k_pre_fac_4 = run_data->k[i - 1] * interact_coeff_b_1 + run_data->k[n] * interact_coeff_b_2;
+                k_pre_fac_2 = - run_data->k[n - 1] + run_data->k[n] * interact_coeff_b_2;
+                k_pre_fac_3 = run_data->k[n - 1] * interact_coeff_b_1 + run_data->k[n] * interact_coeff_u_1;
+                k_pre_fac_4 = run_data->k[n - 1] * interact_coeff_b_1 + run_data->k[n] * interact_coeff_b_2;
                 #endif
             }
 
@@ -293,6 +312,15 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
     run_data->time = (double* )fftw_malloc(sizeof(double) * print_steps);
     if (run_data->time == NULL) {
         fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Time");
+        exit(1);
+    }
+    #endif
+
+    #if defined(__ENRG_SPECT)
+    // Allocate energy flux
+    run_data->energy_spect = (double* )fftw_malloc(sizeof(double) * sys_vars->N);
+    if (run_data->energy_spect == NULL) {
+        fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Energy Spectrum");
         exit(1);
     }
     #endif

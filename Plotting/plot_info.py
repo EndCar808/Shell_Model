@@ -121,6 +121,13 @@ if __name__ == '__main__':
 
 
     # -----------------------------------------
+    # # --------  Compute Post data
+    # -----------------------------------------
+    for i in range(100):
+        # print(run_data.tot_enrg[i], 0.5 * np.sum(np.absolute(run_data.u[i, :])**2), run_data.tot_enrg[i]/np.sum(np.absolute(run_data.u[i, :])**2))
+        print(np.sqrt(run_data.tot_enrg), )
+    print()
+    # -----------------------------------------
     # # --------  Plot Data
     # -----------------------------------------
     if cmdargs.plotting is True:
