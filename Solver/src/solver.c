@@ -542,13 +542,15 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		#endif
 		#endif
 	}
-	// for (int i = 0; i < N + 4; ++i) {
-	// 	#if defined(__MAGNETO)
-	// 	printf("u[%d]:\t%1.16lf\t%1.16lf i\tb[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]),  i - 1, creal(run_data->b[i]), cimag(run_data->b[i]));
-	// 	#else
-	// 	printf("u[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]));		
-	// 	#endif
-	// }
+	for (int i = 0; i < N + 4; ++i) {
+		#if defined(__MAGNETO)
+		printf("u[%d]:\t%1.16lf\t%1.16lf i\tb[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]),  i - 1, creal(run_data->b[i]), cimag(run_data->b[i]));
+		#elif defined(PHASE_ONLY_DIRECT)
+		printf("a[%d]:\t%1.16lf\t--\tp[%d]:\t%1.16lf\t\n", i - 1, run_data->a_n[i], i - 1, RK_data->RK1_u[i]);
+		#else
+		printf("u[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]));		
+		#endif
+	}
 	
 }
 #endif
@@ -846,7 +848,7 @@ void InitialConditions(const long int N) {
 				run_data->phi_n[i] = carg(run_data->u[i]);
 				#endif
 				#if defined(PHASE_ONLY_DIRECT)
-				run_data->a_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) / sqrt(75);
+				run_data->a_n[i]   = (1.0 / pow(run_data->k[i], sys_vars->ALPHA)) / sqrt(75);
 				run_data->phi_n[i] = pow(i - 1, 2.0);
 				#endif
 
@@ -974,6 +976,7 @@ void InitialConditions(const long int N) {
 		}
 		// printf("u[%d]:\t%1.16lf\t%1.16lf i\tb[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]),  i - 1, creal(run_data->b[i]), cimag(run_data->b[i]));		
 		// printf("a_n[%d]:\t%1.16lf\tphi[%d]:\t%1.16lf\tb_n[%d]:\t%1.16lf\tpsi[%d]:\t%1.16lf\n", i, run_data->a_n[i], i, run_data->phi_n[i], i, run_data->b_n[i], i, run_data->psi_n[i]);
+		printf("a_n[%d]:\t%1.16lf\tphi[%d]:\t%1.16lf\n", i - 1, run_data->a_n[i], i - 1, run_data->phi_n[i]);
 	}
 	printf("\n");
 }
