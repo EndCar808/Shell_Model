@@ -26,7 +26,7 @@
  * @param iters          The current iteration of the simulation
  * @param save_data_indx The current index for saving data to file
  */
-void ComputeStats(const int iters, const int save_data_indx) {
+void ComputeStats(const long int iters, const long int save_data_indx) {
 
 	// Initialize variables
 	int n;
@@ -48,11 +48,28 @@ void ComputeStats(const int iters, const int save_data_indx) {
     for (int i = 0; i < N; ++i) {
     	n = i + 2;
 
+    	///---------------------------------- Histograms
+    	#if defined(__VEL_HIST)
+    	// Update Real velocity histogram
+    	gsl_status = gsl_histogram_increment(stats_data->real_vel_hist[i], creal(run_data->u[n]));
+    	if (gsl_status != 0) {
+    		// Print error message to error stream
+			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to increment histogram ["CYAN"%s"RESET"] - Error Value: ["CYAN"%d"RESET"] Field Value: ["CYAN"%lf"RESET"] \n-->> Exiting!!!\n", "Real Velocity", gsl_status, creal(run_data->u[n]));
+
+			// Save current state of system to file before exiting
+			FinalWriteAndCloseOutputFile(N, iters, save_data_indx);
+			
+			// Exit programme
+			exit(1);
+		}
+		#endif
+
+    	///---------------------------------- Running Stats
     	// Update the running sums for the field stats
     	gsl_status = gsl_rstat_add(creal(run_data->u[n]), stats_data->vel_moments[i]);
     	if (gsl_status != 0) {
     		// Print error message to error stream
-			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to running stats counter ["CYAN"%s"RESET"] - Error Value: ["CYAN"%d"RESET"] Field Value: ["CYAN"%lf"RESET"] \n-->> Exiting!!!\n", "Velocity Stats", gsl_status, creal(run_data->u[n]));
+			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to update running stats counter ["CYAN"%s"RESET"] - Error Value: ["CYAN"%d"RESET"] Field Value: ["CYAN"%lf"RESET"] \n-->> Exiting!!!\n", "Velocity Stats", gsl_status, creal(run_data->u[n]));
 
 			// Save current state of system to file before exiting
 			FinalWriteAndCloseOutputFile(N, iters, save_data_indx);
@@ -64,7 +81,7 @@ void ComputeStats(const int iters, const int save_data_indx) {
     	gsl_status = gsl_rstat_add(creal(run_data->b[n]), stats_data->mag_moments[i]);
 	    if (gsl_status != 0) {
 	    	// Print error message to error stream
-			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to running stats counter ["CYAN"%s"RESET"] - Error Value: ["CYAN"%d"RESET"] Field Value: ["CYAN"%lf"RESET"] \n-->> Exiting!!!\n", "Magnetic Stats", gsl_status, creal(run_data->b[n]));
+			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to update running stats counter ["CYAN"%s"RESET"] - Error Value: ["CYAN"%d"RESET"] Field Value: ["CYAN"%lf"RESET"] \n-->> Exiting!!!\n", "Magnetic Stats", gsl_status, creal(run_data->b[n]));
 
 			// Save current state of system to file before exiting
 			FinalWriteAndCloseOutputFile(N, iters, save_data_indx);
@@ -74,6 +91,7 @@ void ComputeStats(const int iters, const int save_data_indx) {
 		}
     	#endif
     	
+    	///---------------------------------- Structure Functions
     	// Compute the flux terms
     	#if defined(__STR_FUNC_VEL_FLUX) || defined(__STR_FUNC_MAG_FLUX)
 		vel_enrg_flux_term = fabs(cimag(run_data->u[n + 2] * run_data->u[n + 1] * run_data->u[n] + (1.0 - sys_vars->EPS) / sys_vars->Lambda * run_data->u[n + 1] * run_data->u[n] * run_data->u[n - 1]));
@@ -114,6 +132,7 @@ void InitializeStats(void) {
 
 	// Initialize variables
 	const long int N = sys_vars->N;
+	int gsl_status;
 
 	// Initialize the stats counter
 	stats_data->num_stats_steps = 0;
@@ -122,6 +141,7 @@ void InitializeStats(void) {
 	// ------------------------------------
     // Allocate & Initialize Stats Objects
     // ------------------------------------
+	///--------------------------------- Structure Functions
 	// Allocate memory for the structure functions
 	for (int i = 0; i < NUM_POW; ++i) {
 		#if defined(__STR_FUNC_VEL)
@@ -166,6 +186,8 @@ void InitializeStats(void) {
 		#endif
 	}
 
+
+	///--------------------------------- Running Stats Objects
 	// Allocate memory for the running stats objects
 	stats_data->vel_moments = (double** )fftw_malloc(sizeof(double* ) * N);
 	if (stats_data->vel_moments == NULL) {
@@ -195,6 +217,29 @@ void InitializeStats(void) {
 		}
 		#endif
 	}
+
+
+
+	///--------------------------------- Histograms
+	#if defined(__VEL_HIST)
+	// Allocate memory for the array of histogram structs
+	stats_data->real_vel_hist = (double** )fftw_malloc(sizeof(double* ) * N);
+	for (int i = 0; i < N; ++i) {
+		// Allocate	the histogram structs
+		stats_data->real_vel_hist[i] = gsl_histogram_alloc(VEL_NUM_BINS);
+		if (stats_data->real_vel_hist[i] == NULL) {
+			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for histogram struct for: ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Real Velocity Histogram");
+			exit(1);
+		}
+
+		// Set bin ranges for the histograms -> Set (in units) of standard deviations
+		gsl_status = gsl_histogram_set_ranges_uniform(stats_data->real_vel_hist[i], -VEL_BIN_LIM - 0.05, VEL_BIN_LIM + 0.05);
+		if (gsl_status != 0) {
+			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to set bin ranges for: ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Real Velocity Histogram");
+			exit(1);
+		}
+	}
+	#endif
 }
 // ---------------------------------------------------------------------
 //  End of File

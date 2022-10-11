@@ -403,7 +403,7 @@ void GetOutputDirPath(void) {
  * @param iters 	The current iteration
  * @param save_indx The current iteration
  */
-void WriteDataToFile(double t, long int iters, long int save_indx) {
+void WriteDataToFile(double t, const long int iters, const long int save_indx) {
 
 	// Initialize variables
 	herr_t status;
@@ -783,7 +783,7 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	// Write Stats
 	// -------------------------------
 	#if defined(STATS)
-	///--------------- Velocity field stats
+	///-------------------------- Velocity field stats
 	double* tmp_vel_stats = (double* )fftw_malloc(sizeof(double) * (NUM_RUN_STATS) * N);
 	for (int i = 0; i < N; ++i) {
 		tmp_vel_stats[i * (NUM_RUN_STATS) + 0] = gsl_rstat_mean(stats_data->vel_moments[i]);
@@ -805,7 +805,38 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	// Free temp memory
 	fftw_free(tmp_vel_stats);
 
-	///--------------- Velocity structure function
+	///-------------------------- Real Velocity Histogram
+	#if defined(__VEL_HIST)
+	double* tmp_vel_hist_bin    = (double* )fftw_malloc(sizeof(double) * (VEL_NUM_BINS) * N);
+	double* tmp_vel_hist_ranges = (double* )fftw_malloc(sizeof(double) * (VEL_NUM_BINS + 1) * N);
+	for (int i = 0; i < N; ++i) {
+		for (int j = 0; j < VEL_NUM_BINS + 1; ++j) {
+			if (j < VEL_NUM_BINS) {
+				tmp_vel_hist_bin[i * VEL_NUM_BINS + j] = stats_data->real_vel_hist[i]->bin[j];
+			}
+			tmp_vel_hist_ranges[i * (VEL_NUM_BINS + 1) + j] = stats_data->real_vel_hist[i]->range[j];
+		}
+	}
+
+	// Write Bin Count data 
+	dims2D[0] = N;
+	dims2D[1] = VEL_NUM_BINS;
+	if ( (H5LTmake_dataset(file_info->output_file_handle, "RealVelHist_Counts", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_vel_hist_bin)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "RealVelHist_Counts");
+	}
+	// Write Bin Range data 
+	dims2D[0] = N;
+	dims2D[1] = VEL_NUM_BINS + 1;
+	if ( (H5LTmake_dataset(file_info->output_file_handle, "RealVelHist_Ranges", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_vel_hist_ranges)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "RealVelHist_Ranges");
+	}
+
+	// Free temporary memory
+	fftw_free(tmp_vel_hist_bin);
+	fftw_free(tmp_vel_hist_ranges);
+	#endif
+
+	///-------------------------- Velocity structure function
 	#if defined(__STR_FUNC_VEL)
 	// Allocate temporary contiguous array
 	double* tmp_vel_str = (double* )fftw_malloc(sizeof(double) * NUM_POW * N);
@@ -826,7 +857,7 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	fftw_free(tmp_vel_str);
 	#endif
 
-	///--------------- Velocity Flux structure function
+	///-------------------------- Velocity Flux structure function
 	#if defined(__STR_FUNC_VEL_FLUX)
 	// Allocate temporary contiguous array
 	double* tmp_vel_str_flux = (double* )fftw_malloc(sizeof(double) * 2 * NUM_POW * N);
@@ -852,7 +883,7 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 
 
 	#if defined(__MAGNETO)
-	///--------------- Magnetic field stats
+	///-------------------------- Magnetic field stats
 	double* tmp_mag_stat = (double* )fftw_malloc(sizeof(double) * (NUM_RUN_STATS) * N);
 	for (int i = 0; i < N; ++i) {
 		tmp_mag_stat[i * (NUM_RUN_STATS) + 0] = gsl_rstat_mean(stats_data->mag_moments[i]);
@@ -875,7 +906,7 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	fftw_free(tmp_mag_stat);
 
 
-	///--------------- Magnetic structure function
+	///-------------------------- Magnetic structure function
 	#if defined(__STR_FUNC_MAG) 
 	// Allocate temporary contiguous array
 	double* tmp_mag_str = (double* )fftw_malloc(sizeof(double) * NUM_POW * N);
@@ -896,7 +927,7 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	fftw_free(tmp_mag_str);
 	#endif
 
-	///--------------- Magnetic flux structure function
+	///-------------------------- Magnetic flux structure function
 	#if defined(__STR_FUNC_MAG_FLUX)
 	// Allocate temporary contiguous array
 	double* tmp_mag_str_flux = (double* )fftw_malloc(sizeof(double) * 2 * NUM_POW * N);

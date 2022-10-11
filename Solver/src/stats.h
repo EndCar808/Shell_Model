@@ -16,7 +16,7 @@
 //  Function Definitions
 // ---------------------------------------------------------------------
 void InitializeStats(void);
-void ComputeStats(const int iters, const int save_data_indx);
+void ComputeStats(const long int iters, const long int save_data_indx);
 // ---------------------------------------------------------------------
 //  End of File
 // ---------------------------------------------------------------------

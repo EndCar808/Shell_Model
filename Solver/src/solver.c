@@ -110,8 +110,8 @@ void Solve(void) {
 	// Begin Integration
 	//////////////////////////////
 	t         += dt;
-	int iters = 1;
-	int save_data_indx;
+	long int iters = 1;
+	long int save_data_indx;
 	if (sys_vars->TRANS_ITERS_FLAG == TRANSIENT_ITERS) {
 		save_data_indx = 0;
 	}
@@ -187,7 +187,6 @@ void Solve(void) {
 		// Update timestep & iteration counter
 		iters++;
 		if (sys_vars->ADAPT_STEP_FLAG == ADAPTIVE_STEP) {
-			// GetTimestep(&dt);
 			t += dt; 
 		}
 		else {
@@ -488,9 +487,11 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		// Get proper index
 		n = i + 2;
 
+		#if !defined(PHASE_ONLY_DIRECT)
 		RK_data->RK4_u[n] -= sys_vars->NU * run_data->k[n] * run_data->k[n] * run_data->u[n];
 		#if defined(__MAGNETO)
 		RK_data->RK4_b[n] -= sys_vars->ETA * run_data->k[n] * run_data->k[n] * run_data->b[n];
+		#endif
 		#endif
 	}
 
@@ -705,6 +706,8 @@ void NonlinearTerm(double* u, double* b, double* u_nonlin, double* b_nonlin, con
 		// Add forcing here for the magnetic field
 		b_nonlin[n] += cabs(run_data->forcing_b[n]) * sin(carg(run_data->forcing_b[n]) - b[n]) / run_data->b_n[n]; 
 		#endif
+		// printf("u[%d]:\t%lf\t-\tf[%d]:\t%lf\t%lfi\t----\t%lf\n", i + 1, u_nonlin[n], i + i, creal(run_data->forcing_u[n]), cimag(run_data->forcing_u[n]), u_nonlin[n] / creal(run_data->forcing_u[n]));
+
 	}
 }
 #else
@@ -843,7 +846,7 @@ void InitialConditions(const long int N) {
 				run_data->phi_n[i] = carg(run_data->u[i]);
 				#endif
 				#if defined(PHASE_ONLY_DIRECT)
-				run_data->a_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->ALPHA);
+				run_data->a_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) / sqrt(75);
 				run_data->phi_n[i] = pow(i - 1, 2.0);
 				#endif
 
@@ -1103,17 +1106,20 @@ void InitializeIntegrationVariables(double* t0, double* t, double* dt, double* T
 	(*T ) = sys_vars->T;
 	sys_vars->min_dt = MIN_STEP_SIZE;
 	sys_vars->max_dt = 10;
+	double tmp_num_t_steps;
 
 	// -------------------------------
 	// Integration Counters
 	// -------------------------------
 	// Number of time steps and saving steps
-	sys_vars->num_t_steps = (int)round( ((*T) - (*t0)) / (*dt) );
-	// printf("\n\n%1.16lf,%1.16lf,%1.16lf--%1.16lf\t%1.16lf\t%1.16lf\n\n", (*T), (*t0), (*dt), ((*T) - (*t0)) / (*dt), round(((*T) - (*t0)) / (*dt)));
+	tmp_num_t_steps = ((*T) - (*t0)) / (*dt);
+	sys_vars->num_t_steps = (long int)round(tmp_num_t_steps);
 	if (sys_vars->TRANS_ITERS_FLAG == TRANSIENT_ITERS) {
 		// Get the transient iterations
-		(* trans_steps)       = (long int)(sys_vars->TRANS_ITERS_FRAC * sys_vars->num_t_steps);
+		(* trans_steps)       = (long int)(sys_vars->TRANS_ITERS_FRAC * tmp_num_t_steps);
 		sys_vars->trans_iters = (* trans_steps);
+
+		// printf("\n\nT:%1.16lf,t0:%1.16lf,dt:%1.16lf--numt:%1.16lf\tround(numt):%1.16lf\ttrans_frac:%1.16lf\ttans:%1.16lf\ttrans%ld\n\n", (*T), (*t0), (*dt), ((*T) - (*t0)) / (*dt), round(((*T) - (*t0)) / (*dt)), sys_vars->TRANS_ITERS_FRAC, (sys_vars->TRANS_ITERS_FRAC * (double)tmp_num_t_steps), (*trans_steps));
 
 		// Get the number of steps to perform before printing to file -> allowing for a transient fraction of these to be ignored
 		sys_vars->num_print_steps = (sys_vars->num_t_steps >= sys_vars->SAVE_EVERY ) ? (sys_vars->num_t_steps - sys_vars->trans_iters) / sys_vars->SAVE_EVERY  + 1: sys_vars->num_t_steps - sys_vars->trans_iters + 1;	 
@@ -1125,7 +1131,7 @@ void InitializeIntegrationVariables(double* t0, double* t, double* dt, double* T
 		sys_vars->trans_iters = (* trans_steps);
 
 		// Get the number of steps to perform before printing to file
-		sys_vars->num_print_steps = (sys_vars->num_t_steps >= sys_vars->SAVE_EVERY ) ? sys_vars->num_t_steps / sys_vars->SAVE_EVERY + 1 : sys_vars->num_t_steps + 1; // plus one to include initial condition
+		sys_vars->num_print_steps = (sys_vars->num_t_steps >= sys_vars->SAVE_EVERY ) ? sys_vars->num_t_steps / sys_vars->SAVE_EVERY + 1: sys_vars->num_t_steps + 1; // plus one to include initial condition
 		printf("Total Iters: %ld\t Saving Iters: %ld\n", sys_vars->num_t_steps, sys_vars->num_print_steps);
 	}
 
@@ -1140,14 +1146,14 @@ void InitializeIntegrationVariables(double* t0, double* t, double* dt, double* T
  * @param T              The final time of the simulation
  * @param save_data_indx The saving index for output data
  */
-void PrintUpdateToTerminal(int iters, double t, double dt, double T, int save_data_indx) {
+void PrintUpdateToTerminal(long int iters, double t, double dt, double T, long int save_data_indx) {
 
 	// Initialize variables
 	
 	#if defined(__MAGNETO)
-	printf("Iter: %d/%ld\tt: %1.6lf/%1.3lf\tdt: %1.6g\tKE: %6.6g\tHEL_U: %6.6g\tHEL_B: %6.6g\tX-HEL: %6.6g\n", iters, sys_vars->num_t_steps, t, T, dt, run_data->tot_energy[save_data_indx], run_data->tot_hel_u[save_data_indx], run_data->tot_hel_b[save_data_indx], run_data->tot_cross_hel[save_data_indx]);
+	printf("Iter: %ld/%ld\tt: %1.6lf/%1.3lf\tdt: %1.6g\tKE: %6.6g\tHEL_U: %6.6g\tHEL_B: %6.6g\tX-HEL: %6.6g\n", iters, sys_vars->num_t_steps, t, T, dt, run_data->tot_energy[save_data_indx], run_data->tot_hel_u[save_data_indx], run_data->tot_hel_b[save_data_indx], run_data->tot_cross_hel[save_data_indx]);
 	#else
-	printf("Iter: %d/%ld\tt: %1.6lf/%1.3lf\tdt: %1.6g\tKE: %6.6g\tHEL: %6.6g\t\n", iters, sys_vars->num_t_steps, t, T, dt, run_data->tot_energy[save_data_indx], run_data->tot_hel_u[save_data_indx]);
+	printf("Iter: %ld/%ld\tt: %1.6lf/%1.3lf\tdt: %1.6g\tKE: %6.6g\tHEL: %6.6g\t\n", iters, sys_vars->num_t_steps, t, T, dt, run_data->tot_energy[save_data_indx], run_data->tot_hel_u[save_data_indx]);
 	#endif
 }
 /**
@@ -1156,14 +1162,41 @@ void PrintUpdateToTerminal(int iters, double t, double dt, double T, int save_da
  * @param iters 		 The number of iterations for the next iteration
  * @param save_data_indx The current index for saving data to
  */
-void SystemCheck(double dt, int iters, int save_data_indx) {
+void SystemCheck(double dt, long int iters, long int save_data_indx) {
+
+	// Initialize variables
+	int n;
+	double max_vel = 0.0;
+	double max_mag = 0.0;
+	
+	// -------------------------------
+	// Check Stopping Criteria 
+	// -------------------------------	
+	// Get the max field value
+	for (int i = 0; i < sys_vars	->N; ++i) {
+		// Get temp index
+		n = i + 2;
+
+		// Check for max
+		#if defined(PHASE_ONLY_DIRECT)
+		max_vel = fmax(max_vel, cabs(run_data->a_n[n]));
+		#if defined(__MAGNETO)
+		max_mag = fmax(max_vel, cabs(run_data->b_n[n]));
+		#endif
+		#else
+		max_vel = fmax(max_vel, cabs(run_data->u[n]));
+		#if defined(__MAGNETO)
+		max_mag = fmax(max_vel, cabs(run_data->b[n]));
+		#endif
+		#endif
+	}
 
 	// -------------------------------
 	// Check Stopping Criteria 
 	// -------------------------------
 	if (dt <= MIN_STEP_SIZE) {
 		// Print error message to error stream
-		fprintf(stderr, "\n["YELLOW"SOVLER FAILURE"RESET"]--- Timestep has become too small to continue at Iter: ["CYAN"%d"RESET"]\n-->> Exiting!!!\n", iters);
+		fprintf(stderr, "\n["YELLOW"SOVLER FAILURE"RESET"]--- Timestep has become too small to continue at Iter: ["CYAN"%ld"RESET"]\n-->> Exiting!!!\n", iters);
 
 		// Write current state of the system to file
 		FinalWriteAndCloseOutputFile(sys_vars->N, iters, save_data_indx);
@@ -1173,13 +1206,23 @@ void SystemCheck(double dt, int iters, int save_data_indx) {
 	}
 	else if (iters >= MAX_ITERS) {
 		// Print error message to error stream
-		fprintf(stderr, "\n["YELLOW"SOVLER FAILURE"RESET"]--- The maximum number of iterations has been reached at Iter: ["CYAN"%d"RESET"]\n-->> Exiting!!!\n", iters);
+		fprintf(stderr, "\n["YELLOW"SOVLER FAILURE"RESET"]--- The maximum number of iterations has been reached at Iter: ["CYAN"%ld"RESET"]\n-->> Exiting!!!\n", iters);
 
 		// Write current state of the system to file
 		FinalWriteAndCloseOutputFile(sys_vars->N, iters, save_data_indx);
 
 		// Exit program
 		exit(1);		
+	}
+	else if ((max_vel >= MAX_FIELD_LIM) || (max_mag >= MAX_FIELD_LIM)) {
+		// Print error message to error stream
+		fprintf(stderr, "\n["YELLOW"SOVLER FAILURE"RESET"]--- The maximum field value has been reached at Iter: ["CYAN"%ld"RESET"]\n-->> Exiting!!!\n", iters);
+
+		// Write current state of the system to file
+		FinalWriteAndCloseOutputFile(sys_vars->N, iters, save_data_indx);
+
+		// Exit program
+		exit(1);
 	}
 }
 /**
@@ -1492,6 +1535,9 @@ void FreeMemory(RK_data_struct* RK_data) {
 		gsl_rstat_free(stats_data->vel_moments[i]);
 		#if defined(__MAGNETO)
 		gsl_rstat_free(stats_data->mag_moments[i]);
+		#endif
+		#if defined(__VEL_HIST)
+		gsl_histogram_free(stats_data->real_vel_hist[i]);
 		#endif
 	}
 	#endif

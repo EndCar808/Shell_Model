@@ -91,7 +91,7 @@ int GetCMLArgs(int argc, char** argv) {
 	sys_vars->HYPO_MAG_DIFF_FLAG = 0;
 	sys_vars->HYPO_MAG_DIFF_POW  = HYPO_DIFF_POW;
 	// Write to file every 
-	sys_vars->SAVE_EVERY = 100;
+	sys_vars->SAVE_EVERY = (long int)100;
 
 	// -------------------------------
 	// Parse CML Arguments
@@ -366,7 +366,7 @@ int GetCMLArgs(int argc, char** argv) {
 				break;				
 			case 'p':
 				// Read in how often to print to file
-				sys_vars->SAVE_EVERY = atoi(optarg);
+				sys_vars->SAVE_EVERY = (long int)atoi(optarg);
 				break;
 			case 'f':
 				// Read in the forcing type

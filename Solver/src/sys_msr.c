@@ -30,7 +30,7 @@
  * @param iter 		The index in the system arrays for the current timestep
  * @param RK_data 	Struct containing the integration varaiables needed for the nonlinear term function
  */
-void ComputeSystemMeasurables(double t, int iter, RK_data_struct* RK_data) {
+void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_data) {
 
 	// Initialize variables
     const long int N = sys_vars->N; 
@@ -57,7 +57,7 @@ void ComputeSystemMeasurables(double t, int iter, RK_data_struct* RK_data) {
     // If adaptive stepping check if within memory limits
     if ((iter >= sys_vars->num_print_steps) && (iter % 100 == 0)) {
         // Print warning to screen if we have exceeded the memory limits for the system measurables arrays
-        printf("\n["MAGENTA"WARNING"RESET"] --- Unable to write system measures at Indx: [%d] t: [%lf] ---- Number of intergration steps is now greater then memory allocated\n", iter, t);
+        printf("\n["MAGENTA"WARNING"RESET"] --- Unable to write system measures at Indx: [%ld] t: [%lf] ---- Number of intergration steps is now greater then memory allocated\n", iter, t);
     }
 
     // ------------------------------------

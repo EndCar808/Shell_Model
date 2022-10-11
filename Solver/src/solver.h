@@ -48,9 +48,9 @@ void ComputeForicing(const long int N);
 void AllocateMemory(const long int N, RK_data_struct* RK_data);
 void FreeMemory(RK_data_struct* RK_data);
 // Print Update
-void PrintUpdateToTerminal(int iters, double t, double dt, double T, int save_data_indx);
+void PrintUpdateToTerminal(long int iters, double t, double dt, double T, long int save_data_indx);
 // Check System
-void SystemCheck(double dt, int iters, int save_data_indx);
+void SystemCheck(double dt, long int iters, long int save_data_indx);
 // ---------------------------------------------------------------------
 //  End of File
 // ---------------------------------------------------------------------

@@ -39,6 +39,37 @@ class tc:
 #################################
 ##          MISC               ##
 #################################
+def compute_pdf_from_hist(counts, ranges, normed = False):
+
+    """
+    Computes the PDF of input data from a histogram of that data
+
+    Input Parameters:
+        counts : array
+                - Input array of the histogram counts
+        ranges : array
+                - Input array of the bin ranges
+        normed : bool
+                - Indicates if the PDF is to be normalized by the variances or not
+    """
+
+    ## Compute the bin info for plotting the pdf
+    bin_centres = (ranges[1:] + ranges[:-1]) * 0.5
+    bin_width   = ranges[1] - ranges[0]
+
+    ## Compute the PDF
+    pdf = counts / (np.sum(counts) * bin_width)
+
+    if normed is True:
+        ## Compute the variance from the PDF data
+        std         = np.sqrt(np.sum(pdf * bin_centres**2 * bin_width))
+        pdf         *= std
+        bin_centres /= std
+        bin_width   /= std
+
+    return pdf, bin_centres
+
+
 def compute_pdf(data, bin_lims = None, nbins = 1000, normed = False):
 
     """
@@ -255,6 +286,8 @@ def import_data(input_file, sim_data, method = "default"):
                 ## Allocate global arrays
                 if 'VelModes' in list(f.keys()):
                     self.u     = f["VelModes"][:, :]
+                if 'VelModes' not in list(f.keys()) and ('VelAmps' in list(f.keys()) and 'VelPhases' in list(f.keys())):
+                    self.u     = f["VelAmps"][:, :] * np.exp(1j * f["VelPhases"][:, :])
                 if 'VelAmps' in list(f.keys()):
                     self.a_n   = f["VelAmps"][:, :]
                 if 'VelPhases' in list(f.keys()):
@@ -289,6 +322,10 @@ def import_data(input_file, sim_data, method = "default"):
                 if 'TotalCrossHelicity' in list(f.keys()):
                     self.tot_cross_hel = f["TotalCrossHelicity"][:]
                 ## Allocate stats arrays
+                if 'RealVelHist_Counts' in list(f.keys()):
+                    self.vel_hist_counts = f["RealVelHist_Counts"][:, :]
+                if 'RealVelHist_Ranges' in list(f.keys()):
+                    self.vel_hist_ranges = f["RealVelHist_Ranges"][:, :]
                 if 'VelStats' in list(f.keys()):
                     self.vel_stats = f["VelStats"][:, :]
                 if 'MagStats' in list(f.keys()):

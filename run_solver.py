@@ -28,9 +28,10 @@ def parse_cml(argv):
         Class for command line arguments
         """
 
-        def __init__(self, init_file = None, cmd_only = False):
+        def __init__(self, init_file = None, cmd_only = False, print_updates = False):
             self.init_file = init_file
             self.cmd_only  = cmd_only
+            self.print     = print_updates
             
     ## Initialize class
     cargs = cmd_args()
@@ -38,7 +39,7 @@ def parse_cml(argv):
     # print(getopt.getopt(argv, "i:c:", ["cmdonly"]))
     try:
         ## Gather command line arguments
-        opts, args = getopt.getopt(argv, "i:c:", ["cmdonly"])
+        opts, args = getopt.getopt(argv, "i:c:", ["cmdonly", "print"])
     except Exception as e:
         print("[" + tc.R + "ERROR" + tc.Rst + "] ---> Incorrect Command Line Arguements.")
         print(e)
@@ -59,6 +60,10 @@ def parse_cml(argv):
         if opt in ['--cmdonly']:
             ## Read in indicator to print out commands to terminal only
             cargs.cmd_only = True
+
+        if opt in ['--print']:
+            ## Read in printing indicator
+            cargs.print = True
 
     return cargs
 
@@ -319,9 +324,10 @@ if __name__ == '__main__':
                     ## Print command to screen
                     print("Executing the following command:\n\n\t" + tc.C + "{}\n".format(proc.args[0]) + tc.Rst)
                     
-                    # ## Print output to terminal as it comes
-                    # for line in proc.stdout:
-                    #     sys.stdout.write(line)
+                    if cmdargs.print:
+                        ## Print output to terminal as it comes
+                        for line in proc.stdout:
+                            sys.stdout.write(line)
 
                     # Communicate with process to retrive output and error
                     [run_CodeOutput, run_CodeErr] = proc.communicate()
@@ -375,8 +381,8 @@ if __name__ == '__main__':
         else:
             cmd_list = [["python3 {} -i {} {}".format(
                                                 plot_script, 
-                                                post_input_dir + "N[{}]_T[{:1.1f},{:g},{:1.1f}]_NU[{:1.8f}]_ALPHA[{:1.3f}]_K[{:1.3f},{:1.3f}]_EPS[{:1.2f}]_FORC[{},{},{:1.3f}]_u0[{}]_TAG[{}]/".format(n, t0, h, t, v, a, k0, lam, ep, forcing, force_k, force_scale, u0, s_tag), 
-                                                plot_options)] for nx in N for h in dt for t in T for v in nu for a in alpha for ep in eps for u0 in ic for s_tag in solver_tag]
+                                                post_input_dir + "_N[{}]_T[{:1.1f},{:g},{:1.3f}]_NU[{:1.8f}]_ALPHA[{:1.3f}]_K[{:1.3f},{:1.6f}]_EPS[{:1.2f}]_FORC[{},{},{:1.3f}]_u0[{}]_TAG[{}]/".format(n, t0, h, t, v, a, k0, lam, ep, forcing, force_k, force_scale, u0, s_tag), 
+                                                plot_options)] for n in N for h in dt for t in T for v in nu for a in alpha for ep in eps for u0 in ic for s_tag in solver_tag]
 
         if cmdargs.cmd_only:
             print(tc.C + "\nPlotting Commands:\n" + tc.Rst)

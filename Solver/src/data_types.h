@@ -122,6 +122,7 @@
 #define __WAVELIST
 // Choose which stats data to record
 #if defined(__STATS)
+#define __VEL_HIST
 #define __STR_FUNC_VEL
 #define __STR_FUNC_MAG
 #define __STR_FUNC_VEL_FLUX
@@ -161,6 +162,8 @@
 // Stats parameters
 #define NUM_POW 6 				// The highest moment to compute for the structure function
 #define NUM_RUN_STATS 7 		// The number of running stats moments to record
+#define VEL_BIN_LIM	10			// The bin limits (in units of standard deviations) for the velocity histogram
+#define VEL_NUM_BINS 500		// The number of bins to use for the velocity histograms
 // // Dormand Prince integrator parameters
 // #define DP_ABS_TOL 1e-7		    // The absolute error tolerance for the Dormand Prince Scheme
 // #define DP_REL_TOL 1e-7         // The relative error tolerance for the Dormand Prince Scheme
@@ -196,7 +199,7 @@ typedef struct system_vars_struct {
 	double min_dt;						// Smallest timestep achieved when adaptive stepping is on
 	double max_dt;						// Largest timestep achieved when adaptive stepping is on
 	int print_every;                    // Records how many iterations are performed before printing to file
-	int SAVE_EVERY; 					// For specifying how often to print
+	long int SAVE_EVERY;				// For specifying how often to print
 	double force_scale_var;				// The scaling variable for the forced modes
 	int force_k; 						// The forcing wavenumber 
 	int local_forcing_proc;				// Identifier used to indicate which process contains modes that need to be forced
@@ -313,7 +316,7 @@ typedef struct stats_data_struct {
 	double* mag_flux_str_func[2][NUM_POW];			// Array to hold the structure functions of the flux magnetic modes
 	gsl_rstat_workspace** vel_moments;				// Struct to hold the running stats for the velocity field
 	gsl_rstat_workspace** mag_moments;				// Struct to hold the running stats for the magnetic field
-	gsl_histogram* real_vel_hist;					// Struct to hold the histogram info for the velocity field
+	gsl_histogram** real_vel_hist;					// Struct to hold the histogram info for the velocity field
 	long int num_stats_steps;						// Counter for the number of steps statistics have been computed
 } stats_data_struct;
 

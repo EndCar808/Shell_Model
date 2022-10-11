@@ -19,7 +19,7 @@
 //  Function Prototypes
 // ---------------------------------------------------------------------
 void InitializeSystemMeasurables(RK_data_struct* RK_data);
-void ComputeSystemMeasurables(double t, int iter, RK_data_struct* RK_data);
+void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_data);
 // ---------------------------------------------------------------------
 //  End of File
 // ---------------------------------------------------------------------
