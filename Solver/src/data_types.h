@@ -117,6 +117,7 @@
 // #define __SYS_MEASURES
 // #define __ENRG_FLUX
 // #define __ENRG_SPECT
+// #define __DISS_SPECT
 // Choose whether to save the time, collocation points and wavenumbers
 #define __TIME
 #define __WAVELIST
@@ -143,7 +144,8 @@
 #define DSET_FORCING_U 11
 #define DSET_FORCING_B 12
 #define DSET_ENRG_SPECT 13
-#define NUM_DSETS 14
+#define DSET_DISS_SPECT 14
+#define NUM_DSETS 15
 // ---------------------------------------------------------------------
 //  Global Variables
 // ---------------------------------------------------------------------
@@ -241,12 +243,19 @@ typedef struct runtime_data_struct {
 	double* tot_hel_u;		  			// Array to hold the total helicity in the velocity field
 	double* tot_hel_b;		  			// Array to hold the total helicity in the magnetic field
 	double* tot_cross_hel;	  			// Array to hold the total cross helicity
+	double* tot_diss;					// Array to hold the total dissipation 
 	double* energy_flux;				// Array to hold the energy flux
 	double* energy_diss_u;				// Array to hold the energy dissipation for the velocity field
 	double* energy_diss_b;				// Array to hold the energy dissipation for the magnetic field
 	double* energy_input_u;				// Array to hold the energy input for the velocity field in the flux balance computation
 	double* energy_input_b;				// Array to hold the energy input for the magnetic field in the flux balance computation
 	double* energy_spect;				// Array containing the energy spectrum for the current iteration 
+	double* diss_spect;					// Array containing the dissipation spectrum for the current iteration 
+	double* u_charact;					// Array containing the characteristic velocity
+	double* int_scale;					// Array containing the characteristic length scale
+	double* taylor_micro_scale;			// Array containing the Taylor microscale
+	double* reynolds_no;				// Array containing the Reynolds no.
+	double* kolmogorov_scale;			// Array containing the Kolmogorov length scale
 	fftw_complex* forcing_u;  			// Array to hold the forcing for the current timestep for the velocity field
 	fftw_complex* forcing_b;  			// Array to hold the forcing for the current timestep for the magnetic field
 	double* forcing_scaling;  			// Array to hold the initial scaling for the forced modes
@@ -294,11 +303,15 @@ typedef struct RK_data_struct {
 typedef struct HDF_file_info_struct {
 	char input_file_name[512];		 // Array holding input file name
 	char output_file_name[512];      // Output file name array
+	char stats_file_name[512];       // Output file name array
+	char system_msr_file_name[512];  // Output file name array
 	char input_dir[512];			 // Inputs directory
 	char output_dir[512];			 // Output directory
 	char output_tag[64]; 			 // Tag to be added to the output directory
 	hid_t input_file_handle;		 // File handle for the input file
 	hid_t output_file_handle;		 // Main file handle for the output file 
+	hid_t stats_file_handle;		 // Stats file handle for the output file 
+	hid_t sys_msr_file_handle;		 // System Measures file handle for the output file 
 	hid_t COMPLEX_DTYPE;			 // Complex datatype handle
 	int file_only;					 // Indicates if output should be file only with no output folder created
 	hid_t test_file_handle;          // File handle for testing

@@ -114,10 +114,14 @@ void CreateOutputFilesWriteICs(const long int N) {
 	}
 	#endif
 
-	///--------------------------------------- Energy Spectrum
+	///--------------------------------------- Spectra
 	#if defined(__ENRG_SPECT)
 	// Energy Spectrum
 	CreateSlabbedDSet(0.0, 0, "EnergySpectrum", &(file_info->file_space[DSET_ENRG_SPECT]), &(file_info->data_set[DSET_ENRG_SPECT]), &(file_info->mem_space[DSET_ENRG_SPECT]), H5T_NATIVE_DOUBLE, dims, maxdims, chunkdims, Dim);	
+	#endif
+	#if defined(__DISS_SPECT)
+	// Dissipation Spectrum
+	CreateSlabbedDSet(0.0, 0, "DissipationSpectrum", &(file_info->file_space[DSET_DISS_SPECT]), &(file_info->data_set[DSET_DISS_SPECT]), &(file_info->mem_space[DSET_DISS_SPECT]), H5T_NATIVE_DOUBLE, dims, maxdims, chunkdims, Dim);
 	#endif
 
 	///--------------------------------------- Energy Flux
@@ -185,7 +189,11 @@ void CreateOutputFilesWriteICs(const long int N) {
 		///--------------------------------------- Energy Spectrum
 		#if defined(__ENRG_SPECT)
 		// Energy Spectrum
-		WriteSlabbedDataFourier(0.0, 0, file_info->file_space[DSET_ENRG_SPECT], file_info->data_set[DSET_ENRG_SPECT], file_info->mem_space[DSET_ENRG_SPECT], H5T_NATIVE_DOUBLE, run_data->energy_spect, "EnergySpectrum", N, 0);
+		WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_ENRG_SPECT], file_info->data_set[DSET_ENRG_SPECT], file_info->mem_space[DSET_ENRG_SPECT], H5T_NATIVE_DOUBLE, run_data->energy_spect, "EnergySpectrum", N, 0);
+		#endif
+		#if defined(__DISS_SPECT)
+		// Dissipation Spectrum
+		WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_DISS_SPECT], file_info->data_set[DSET_DISS_SPECT], file_info->mem_space[DSET_DISS_SPECT], H5T_NATIVE_DOUBLE, run_data->diss_spect, "DissiaptionSpectrum", N, 0);
 		#endif
 
 		///--------------------------------------- Energy Flux
@@ -394,6 +402,16 @@ void GetOutputDirPath(void) {
 		strcpy(file_info->output_file_name, file_info->output_dir); 
 		strcat(file_info->output_file_name, "Main_HDF_Data.h5");
 		printf("\nMain Output File: "CYAN"%s"RESET"\n\n", file_info->output_file_name);
+		#if defined(__STATS)
+		strcpy(file_info->stats_file_name, file_info->output_dir); 
+		strcat(file_info->stats_file_name, "Stats_HDF_Data.h5");
+		printf("\nStats File: "CYAN"%s"RESET"\n\n", file_info->stats_file_name);
+		#endif
+		#if defined(__SYS_MEASURES)
+		strcpy(file_info->system_msr_file_name, file_info->output_dir); 
+		strcat(file_info->system_msr_file_name, "System_Measure_HDF_Data.h5");
+		printf("\nSytem Measures File: "CYAN"%s"RESET"\n\n", file_info->system_msr_file_name);
+		#endif
 	}
 
 }
@@ -474,7 +492,11 @@ void WriteDataToFile(double t, const long int iters, const long int save_indx) {
 	///--------------------------------------- Energy Spectrum
 	#if defined(__ENRG_SPECT)
 	// Energy Spectrum
-	WriteSlabbedDataFourier(t, iters, file_info->file_space[DSET_ENRG_SPECT], file_info->data_set[DSET_ENRG_SPECT], file_info->mem_space[DSET_ENRG_SPECT], H5T_NATIVE_DOUBLE, run_data->energy_spect, "EnergySpectrum", sys_vars->N, 0);
+	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_ENRG_SPECT], file_info->data_set[DSET_ENRG_SPECT], file_info->mem_space[DSET_ENRG_SPECT], H5T_NATIVE_DOUBLE, run_data->energy_spect, "EnergySpectrum", sys_vars->N, 0);
+	#endif
+	#if defined(__ENRG_SPECT)
+	// Dissipation Spectrum
+	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_DISS_SPECT], file_info->data_set[DSET_DISS_SPECT], file_info->mem_space[DSET_DISS_SPECT], H5T_NATIVE_DOUBLE, run_data->diss_spect, "EnergySpectrum", sys_vars->N, 0);
 	#endif
 
 	///--------------------------------------- Energy Flux
@@ -706,14 +728,22 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	sys_vars->tot_save_steps = (long int)save_data_indx - 1;
 
 	////////////////////////////////
-	/// Repon and Write Datasets
+	/// Open and Write Datasets
 	////////////////////////////////
-	// Repon Output file with read/write permissions
-	file_info->output_file_handle = H5Fopen(file_info->output_file_name, H5F_ACC_RDWR , H5P_DEFAULT);
-	if (file_info->output_file_handle < 0) {
-		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to reopen output file for writing non chunked/slabbed datasets! \n-->>Exiting....\n");
+	#if defined(__SYS_MEASURES)
+	file_info->sys_msr_file_handle = H5Fcreate(file_info->system_msr_file_name, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+	if (file_info->sys_msr_file_handle < 0) {
+		fprintf(stderr, "\n["RED"ERROR"RESET"]  --- Could not create main HDF5 system measure file at: "CYAN"%s"RESET" \n-->>Exiting....\n", file_info->system_msr_file_name);
 		exit(1);
 	}
+	#endif
+	#if defined(__STATS)
+	file_info->stats_file_handle = H5Fcreate(file_info->stats_file_name, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+	if (file_info->stats_file_handle < 0) {
+		fprintf(stderr, "\n["RED"ERROR"RESET"]  --- Could not create main HDF5 stats file at: "CYAN"%s"RESET" \n-->>Exiting....\n", file_info->stats_file_name);
+		exit(1);
+	}
+	#endif
 
 	// -------------------------------
 	// Write Wavenumbers
@@ -721,7 +751,7 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	#if defined(__WAVELIST)
 	// Allocate array to gather the wavenumbers from each of the local arrays - in the x direction
 	dims1D[0] = N;
-	if ( (H5LTmake_dataset(file_info->output_file_handle, "k", D1, dims1D, H5T_NATIVE_DOUBLE, &(run_data->k[2]))) < 0) {
+	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "k", D1, dims1D, H5T_NATIVE_DOUBLE, &(run_data->k[2]))) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "k");
 	}
 	#endif
@@ -733,30 +763,54 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	#if defined(__TIME)
 	// Time array only on rank 0
 	dims1D[0] = sys_vars->num_print_steps;
-	if ( (H5LTmake_dataset(file_info->output_file_handle, "Time", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->time)) < 0) {
+	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "Time", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->time)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "Time");
 	}
 	#endif
 
 	#if defined(__SYS_MEASURES)
 	// Energy
-	if ( (H5LTmake_dataset(file_info->output_file_handle, "TotalEnergy", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_energy)) < 0) {
+	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalEnergy", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_energy)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalEnergy");
 	}
 	// Velocity Helicity
-	if ( (H5LTmake_dataset(file_info->output_file_handle, "TotalVelocityHelicity", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_hel_u)) < 0) {
+	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalVelocityHelicity", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_hel_u)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalVelocityHelicity");
 	}
 	#if defined(__MAGNETO)
 	// Magnetic Helicity
-	if ( (H5LTmake_dataset(file_info->output_file_handle, "TotalMagneticHelicity", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_hel_b)) < 0) {
+	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalMagneticHelicity", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_hel_b)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalMagneticHelicity");
 	}
 	// Cross Helicity
-	if ( (H5LTmake_dataset(file_info->output_file_handle, "TotalCrossHelicity", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_cross_hel)) < 0) {
+	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalCrossHelicity", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_cross_hel)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalCrossHelicity");
 	}
 	#endif
+	// Total Dissipation
+	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalDissipation", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_diss)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalDissipation");
+	}
+	// Characteristic Velocity
+	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "CharacteristicVel", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->u_charact)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "CharacteristicVel");
+	}
+	// Integral Length Scale
+	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "IntegralLengthScale", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->int_scale)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "IntegralLengthScale");
+	}
+	// Reynolds no.
+	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "ReynoldsNo", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->reynolds_no)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "ReynoldsNo");
+	}
+	// Taylor Miscroscale
+	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TaylorMicroScale", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->taylor_micro_scale)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TaylorMicroScale");
+	}
+	// Kolmogorov Length Scale
+	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "KolmogorovLengthScale", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->kolmogorov_scale)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "KolmogorovLengthScale");
+	}
 	#endif
 
 	// -------------------------------
@@ -767,12 +821,12 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 		dims1D[0] = N;
 
 		// Velocity Forcing
-		if ( (H5LTmake_dataset(file_info->output_file_handle, "VelocityForcing", D1, dims1D, file_info->COMPLEX_DTYPE, &(run_data->forcing_u[1]))) < 0) {
+		if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "VelocityForcing", D1, dims1D, file_info->COMPLEX_DTYPE, &(run_data->forcing_u[1]))) < 0) {
 			printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelocityForcing");
 		}
 		#if defined(__MAGNETO)
 		// Magnetic Forcing
-		if ( (H5LTmake_dataset(file_info->output_file_handle, "MagneticForcing", D1, dims1D, file_info->COMPLEX_DTYPE, &(run_data->forcing_b[1]))) < 0) {
+		if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "MagneticForcing", D1, dims1D, file_info->COMPLEX_DTYPE, &(run_data->forcing_b[1]))) < 0) {
 			printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "MagneticForcing");
 		}
 		#endif
@@ -798,7 +852,7 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	// Write data 
 	dims2D[0] = N;
 	dims2D[1] = NUM_RUN_STATS;
-	if ( (H5LTmake_dataset(file_info->output_file_handle, "VelStats", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_vel_stats)) < 0) {
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "VelStats", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_vel_stats)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelStats");
 	}
 
@@ -821,13 +875,13 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	// Write Bin Count data 
 	dims2D[0] = N;
 	dims2D[1] = VEL_NUM_BINS;
-	if ( (H5LTmake_dataset(file_info->output_file_handle, "RealVelHist_Counts", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_vel_hist_bin)) < 0) {
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "RealVelHist_Counts", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_vel_hist_bin)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "RealVelHist_Counts");
 	}
 	// Write Bin Range data 
 	dims2D[0] = N;
 	dims2D[1] = VEL_NUM_BINS + 1;
-	if ( (H5LTmake_dataset(file_info->output_file_handle, "RealVelHist_Ranges", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_vel_hist_ranges)) < 0) {
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "RealVelHist_Ranges", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_vel_hist_ranges)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "RealVelHist_Ranges");
 	}
 
@@ -849,7 +903,7 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	// Write data 
 	dims2D[0] = N;
 	dims2D[1] = NUM_POW;
-	if ( (H5LTmake_dataset(file_info->output_file_handle, "StructureFunctionVel", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_vel_str)) < 0) {
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "StructureFunctionVel", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_vel_str)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "StructureFunctionVel");
 	}
 
@@ -872,7 +926,7 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	dims3D[0] = N;
 	dims3D[1] = NUM_POW;
 	dims3D[2] = 2;
-	if ( (H5LTmake_dataset(file_info->output_file_handle, "StructureFunctionVelFlux", D3, dims3D, H5T_NATIVE_DOUBLE, tmp_vel_str_flux)) < 0) {
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "StructureFunctionVelFlux", D3, dims3D, H5T_NATIVE_DOUBLE, tmp_vel_str_flux)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "StructureFunctionVelFlux");
 	}
 
@@ -898,7 +952,7 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	// Write data 
 	dims2D[0] = N;
 	dims2D[1] = NUM_RUN_STATS;
-	if ( (H5LTmake_dataset(file_info->output_file_handle, "MagStats", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_mag_stat)) < 0) {
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "MagStats", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_mag_stat)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "MagStats");
 	}
 
@@ -919,7 +973,7 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	// Write data 
 	dims2D[0] = N;
 	dims2D[1] = NUM_POW;
-	if ( (H5LTmake_dataset(file_info->output_file_handle, "StructureFunctionMag", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_mag_str)) < 0) {
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "StructureFunctionMag", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_mag_str)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "StructureFunctionMag");
 	}
 
@@ -942,7 +996,7 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	dims3D[0] = N;
 	dims3D[1] = NUM_POW;
 	dims3D[2] = 2;
-	if ( (H5LTmake_dataset(file_info->output_file_handle, "StructureFunctionMagFlux", D3, dims3D, H5T_NATIVE_DOUBLE, tmp_mag_str_flux)) < 0) {
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "StructureFunctionMagFlux", D3, dims3D, H5T_NATIVE_DOUBLE, tmp_mag_str_flux)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "StructureFunctionMagFlux");
 	}
 
@@ -955,11 +1009,18 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	// -----------------------------------
 	// Close Files for the final time
 	// -----------------------------------
-	status = H5Fclose(file_info->output_file_handle);
+	status = H5Fclose(file_info->sys_msr_file_handle);
 	if (status < 0) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to close main output file: "CYAN"%s"RESET" \n-->> Exiting....\n", file_info->output_file_name);
 		exit(1);
 	}
+	#if defined(__STATS)
+	status = H5Fclose(file_info->stats_file_handle);
+	if (status < 0) {
+		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to close main stats file: "CYAN"%s"RESET" \n-->> Exiting....\n", file_info->stats_file_name);
+		exit(1);
+	}
+	#endif
 
 	#if defined(__VEL) || defined(__MAG) || defined(__FORCING)
 	// Close the complex datatype identifier

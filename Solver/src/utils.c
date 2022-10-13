@@ -182,7 +182,6 @@ int GetCMLArgs(int argc, char** argv) {
 						fprintf(stderr, "\n["RED"ERROR"RESET"] Parsing of Command Line Arguements Failed: The provided CFL Constant: [%lf] must be strictly positive\n-->> Exiting!\n\n", sys_vars->CFL_CONST);		
 						exit(1);
 					}
-					// cfl_flag = 2;
 					break;
 				}
 				break;

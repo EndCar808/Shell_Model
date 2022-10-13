@@ -123,11 +123,13 @@ if __name__ == '__main__':
     # -----------------------------------------
     # # --------  Compute Post data
     # -----------------------------------------
+    u_sqr_av = np.mean(np.absolute(run_data.u)**2, axis = 0)
     for i in range(100):
         # print(run_data.tot_enrg[i], 0.5 * np.sum(np.absolute(run_data.u[i, :])**2), run_data.tot_enrg[i]/np.sum(np.absolute(run_data.u[i, :])**2))
-        print(np.sqrt(run_data.tot_enrg[i]), )
+        print(2 * run_data.tot_enrg[i], np.sum(np.absolute(run_data.u[i, :] * np.conjugate(run_data.u[i, :]))))
     print()
     
+    print()
     # -----------------------------------------
     # # --------  Plot Data
     # -----------------------------------------

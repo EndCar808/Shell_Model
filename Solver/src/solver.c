@@ -74,7 +74,6 @@ void Solve(void) {
 	// Initialize the forcing
 	InitializeForicing(N);
 
-
 	// Initialize stats objects if required
 	#if defined(STATS)
 	InitializeStats();
@@ -542,15 +541,15 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		#endif
 		#endif
 	}
-	for (int i = 0; i < N + 4; ++i) {
-		#if defined(__MAGNETO)
-		printf("u[%d]:\t%1.16lf\t%1.16lf i\tb[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]),  i - 1, creal(run_data->b[i]), cimag(run_data->b[i]));
-		#elif defined(PHASE_ONLY_DIRECT)
-		printf("a[%d]:\t%1.16lf\t--\tp[%d]:\t%1.16lf\t\n", i - 1, run_data->a_n[i], i - 1, RK_data->RK1_u[i]);
-		#else
-		printf("u[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]));		
-		#endif
-	}
+	// for (int i = 0; i < N + 4; ++i) {
+	// 	#if defined(__MAGNETO)
+	// 	printf("u[%d]:\t%1.16lf\t%1.16lf i\tb[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]),  i - 1, creal(run_data->b[i]), cimag(run_data->b[i]));
+	// 	#elif defined(PHASE_ONLY_DIRECT)
+	// 	printf("a[%d]:\t%1.16lf\t--\tp[%d]:\t%1.16lf\t\n", i - 1, run_data->a_n[i], i - 1, RK_data->RK1_u[i]);
+	// 	#else
+	// 	printf("u[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]));		
+	// 	#endif
+	// }
 	
 }
 #endif
@@ -976,9 +975,9 @@ void InitialConditions(const long int N) {
 		}
 		// printf("u[%d]:\t%1.16lf\t%1.16lf i\tb[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]),  i - 1, creal(run_data->b[i]), cimag(run_data->b[i]));		
 		// printf("a_n[%d]:\t%1.16lf\tphi[%d]:\t%1.16lf\tb_n[%d]:\t%1.16lf\tpsi[%d]:\t%1.16lf\n", i, run_data->a_n[i], i, run_data->phi_n[i], i, run_data->b_n[i], i, run_data->psi_n[i]);
-		printf("a_n[%d]:\t%1.16lf\tphi[%d]:\t%1.16lf\n", i - 1, run_data->a_n[i], i - 1, run_data->phi_n[i]);
+		// printf("a_n[%d]:\t%1.16lf\tphi[%d]:\t%1.16lf\n", i - 1, run_data->a_n[i], i - 1, run_data->phi_n[i]);
 	}
-	printf("\n");
+	// printf("\n");
 }
 /**
  * Function to initialize the shell wavenumber array
@@ -1496,8 +1495,9 @@ void FreeMemory(RK_data_struct* RK_data) {
 	fftw_free(run_data->tot_cross_hel);
 	#endif
 	#endif
-	#if defined(__ENRG_SPECT)
-	fftw_free(run_data->enrg_spect);
+	#if defined(__ENRG_SPECT) || defined(__DISS_SPECT)
+	fftw_free(run_data->energy_spect);
+	fftw_free(run_data->diss_spect);
 	#endif
 	#if defined(__TIME)
 	fftw_free(run_data->time);
@@ -1529,8 +1529,8 @@ void FreeMemory(RK_data_struct* RK_data) {
 		fftw_free(stats_data->mag_str_func[i]);
 		#endif
 		#if defined(__STR_FUNC_MAG_FLUX)
-		fftw_free(stats_data->mag_fluxstr_func[0][i]);
-		fftw_free(stats_data->mag_fluxstr_func[1][i]);
+		fftw_free(stats_data->mag_flux_str_func[0][i]);
+		fftw_free(stats_data->mag_flux_str_func[1][i]);
 		#endif
 		#endif
 	}
