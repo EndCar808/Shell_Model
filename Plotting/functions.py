@@ -53,12 +53,17 @@ def compute_pdf_from_hist(counts, ranges, normed = False):
                 - Indicates if the PDF is to be normalized by the variances or not
     """
 
+    ## Get only non_zero counts
+    non_zero_indx = np.argwhere(counts != 0)
+
     ## Compute the bin info for plotting the pdf
     bin_centres = (ranges[1:] + ranges[:-1]) * 0.5
     bin_width   = ranges[1] - ranges[0]
+    bin_centres = bin_centres[non_zero_indx]
 
     ## Compute the PDF
-    pdf = counts / (np.sum(counts) * bin_width)
+    bin_counts = counts[non_zero_indx]
+    pdf = bin_counts / (np.sum(bin_counts) * bin_width)
 
     if normed is True:
         ## Compute the variance from the PDF data
@@ -312,6 +317,11 @@ def import_data(input_file, sim_data, method = "default"):
                     self.time  = f["Time"][:]
                 if 'k' in list(f.keys()):
                     self.k     = f["k"][:]
+                ## Read in spectra
+                if 'EnergySpectrum' in list(f.keys()):
+                    self.enrg_spect = f["EnergySpectrum"][:]
+                if 'DissipationSpectrum' in list(f.keys()):
+                    self.diss_spect = f["DissipationSpectrum"][:]
                 ## Allocate system measure arrays
                 if 'TotalEnergy' in list(f.keys()):
                     self.tot_enrg      = f["TotalEnergy"][:]
@@ -339,6 +349,144 @@ def import_data(input_file, sim_data, method = "default"):
                 if 'StructureFunctionMagFlux' in list(f.keys()):
                     self.mag_flux_str_func = f["StructureFunctionMagFlux"][:, :]
 
+
+    ## Create instance of data class
+    data = SolverData()
+
+    return data
+
+
+
+def import_stats_data(input_file, sim_data, method = "default"):
+
+    """
+    Reads in stats data from stats HDF5 file.
+
+    input_dir : string
+                - If method == "defualt" is True then this will be the path to
+               the input folder. if not then this will be the input folder
+    method    : string
+                - Determines whether the data is to be read in from a file or
+               from an input folder
+    sim_data  : class
+                - object containing the simulation parameters
+    """
+    
+    ## Depending on the output mmode of the solver the input files will be named differently
+    if method == "default":
+        in_file = input_file + "Stats_HDF_Data.h5"
+    else:
+        in_file = input_file
+
+    ## Define a data class for the solver data
+    class SolverData:
+
+        """
+        Class for the run data.
+        """
+        def __init__(self):
+            ## Open file and read in the data
+            with h5py.File(in_file, 'r') as f:
+                ## Allocate stats arrays
+                if 'RealVelHist_Counts' in list(f.keys()):
+                    self.vel_hist_counts = f["RealVelHist_Counts"][:, :]
+                if 'RealVelHist_Ranges' in list(f.keys()):
+                    self.vel_hist_ranges = f["RealVelHist_Ranges"][:, :]
+                if 'VelStats' in list(f.keys()):
+                    self.vel_stats = f["VelStats"][:, :]
+                if 'MagStats' in list(f.keys()):
+                    self.mag_stats = f["MagStats"][:, :]
+                if 'StructureFunctionVel' in list(f.keys()):
+                    self.vel_str_func = f["StructureFunctionVel"][:, :]
+                if 'StructureFunctionVelFlux' in list(f.keys()):
+                    self.vel_flux_str_func = f["StructureFunctionVelFlux"][:, :]
+                if 'StructureFunctionVelFluxAbs' in list(f.keys()):
+                    self.vel_flux_str_func_abs = f["StructureFunctionVelFluxAbs"][:, :]
+                if 'StructureFunctionMag' in list(f.keys()):
+                    self.mag_str_func = f["StructureFunctionMag"][:, :]
+                if 'StructureFunctionMagFlux' in list(f.keys()):
+                    self.mag_flux_str_func = f["StructureFunctionMagFlux"][:, :]
+                if 'StructureFunctionMagFluxAbs' in list(f.keys()):
+                    self.mag_flux_str_func_abs = f["StructureFunctionMagFluxAbs"][:, :]
+                ## Read in final state of system
+                if 'VelModes' in list(f.keys()):
+                    self.u = f["VelModes"][:]
+                if 'VelAmps' in list(f.keys()):
+                    self.a_n = f["VelAmps"][:]
+                if 'VelPhases' in list(f.keys()):
+                    self.phi_n = f["VelPhases"][:]
+                if 'MagModes' in list(f.keys()):
+                    self.b = f["MagModes"][:]
+                if 'MagAmps' in list(f.keys()):
+                    self.b_n = f["MagAmps"][:]
+                if 'MagPhases' in list(f.keys()):
+                    self.psi_n = f["MagPhases"][:]
+
+
+
+    ## Create instance of data class
+    data = SolverData()
+
+    return data
+
+
+def import_sys_msr_data(input_file, sim_data, method = "default"):
+
+    """
+    Reads in system measures from system measures HDF5 file.
+
+    input_dir : string
+                - If method == "defualt" is True then this will be the path to
+               the input folder. if not then this will be the input folder
+    method    : string
+                - Determines whether the data is to be read in from a file or
+               from an input folder
+    sim_data  : class
+                - object containing the simulation parameters
+    """
+    
+    ## Depending on the output mmode of the solver the input files will be named differently
+    if method == "default":
+        in_file = input_file + "System_Measure_HDF_Data.h5"
+    else:
+        in_file = input_file
+
+    ## Define a data class for the solver data
+    class SolverData:
+
+        """
+        Class for the run data.
+        """
+        def __init__(self):
+            ## Open file and read in the data
+            with h5py.File(in_file, 'r') as f:
+                if 'Time' in list(f.keys()):
+                    self.time  = f["Time"][:]
+                if 'k' in list(f.keys()):
+                    self.k     = f["k"][:]
+                ## Allocate system measure arrays
+                if 'TotalEnergy' in list(f.keys()):
+                    self.tot_enrg      = f["TotalEnergy"][:]
+                if 'TotalDissipation' in list(f.keys()):
+                    self.tot_diss      = f["TotalDissipation"][:]
+                if 'TotalVelocityHelicity' in list(f.keys()):
+                    self.tot_hel_u       = f["TotalVelocityHelicity"][:]
+                if 'TotalMagneticHelicity' in list(f.keys()):
+                    self.tot_hel_b       = f["TotalMagneticHelicity"][:]
+                if 'TotalCrossHelicity' in list(f.keys()):
+                    self.tot_cross_hel = f["TotalCrossHelicity"][:]
+                if 'CharacteristicVel' in list(f.keys()):
+                    self.u_charact = f["CharacteristicVel"][:]
+                if 'IntegralLengthScale' in list(f.keys()):
+                    self.int_scale = f["IntegralLengthScale"][:]
+                if 'KolmogorovLengthScale' in list(f.keys()):
+                    self.kolm_scale = f["KolmogorovLengthScale"][:]
+                if 'ReynoldsNo' in list(f.keys()):
+                    self.reynolds_no = f["ReynoldsNo"][:]
+                if 'TaylorMicroScale' in list(f.keys()):
+                    self.taylor_micro_scale = f["TaylorMicroScale"][:]
+                if 'VelocityForcing' in list(f.keys()):
+                    self.forcing_u = f["VelocityForcing"][:]
 
     ## Create instance of data class
     data = SolverData()

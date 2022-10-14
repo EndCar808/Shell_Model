@@ -132,8 +132,6 @@ void Solve(void) {
 		AB4CNStep(dt, (long int)iters, N, RK_data);
 		#endif
 
-		// printf("Iter: %d\tnum_print_steps: %ld\tsave_indx: %d\tsave_every: %d\ttrans_steps: %ld\t\n", iters, sys_vars->num_print_steps, save_data_indx, sys_vars->SAVE_EVERY, trans_steps);
-
 		// -------------------------------
 		// Write To File
 		// -------------------------------
@@ -156,6 +154,7 @@ void Solve(void) {
 				save_data_indx++;
 			}
 		}
+
 		// -------------------------------
 		// Print Update To Screen
 		// -------------------------------
@@ -178,7 +177,6 @@ void Solve(void) {
 			}
 		}
 		#endif
-
 
 		// -------------------------------
 		// Update & System Check
@@ -203,9 +201,15 @@ void Solve(void) {
 	// End Integration
 	//////////////////////////////
 	
+
 	// ------------------------------- 
 	// Final Writes to Output File
 	// -------------------------------
+	// Write the final state to file if it hasn't been printed already
+	if (save_data_indx == sys_vars->num_print_steps) {
+		WriteDataToFile(t, iters, save_data_indx - 1);
+	}
+	// Write the stats and system measures to file
 	FinalWriteAndCloseOutputFile(N, iters, save_data_indx);
 
 	// -------------------------------
@@ -1121,7 +1125,6 @@ void InitializeIntegrationVariables(double* t0, double* t, double* dt, double* T
 		(* trans_steps)       = (long int)(sys_vars->TRANS_ITERS_FRAC * tmp_num_t_steps);
 		sys_vars->trans_iters = (* trans_steps);
 
-		// printf("\n\nT:%1.16lf,t0:%1.16lf,dt:%1.16lf--numt:%1.16lf\tround(numt):%1.16lf\ttrans_frac:%1.16lf\ttans:%1.16lf\ttrans%ld\n\n", (*T), (*t0), (*dt), ((*T) - (*t0)) / (*dt), round(((*T) - (*t0)) / (*dt)), sys_vars->TRANS_ITERS_FRAC, (sys_vars->TRANS_ITERS_FRAC * (double)tmp_num_t_steps), (*trans_steps));
 
 		// Get the number of steps to perform before printing to file -> allowing for a transient fraction of these to be ignored
 		sys_vars->num_print_steps = (sys_vars->num_t_steps >= sys_vars->SAVE_EVERY ) ? (sys_vars->num_t_steps - sys_vars->trans_iters) / sys_vars->SAVE_EVERY  + 1: sys_vars->num_t_steps - sys_vars->trans_iters + 1;	 
@@ -1132,9 +1135,11 @@ void InitializeIntegrationVariables(double* t0, double* t, double* dt, double* T
 		(* trans_steps)       = 0;
 		sys_vars->trans_iters = (* trans_steps);
 
+
 		// Get the number of steps to perform before printing to file
 		sys_vars->num_print_steps = (sys_vars->num_t_steps >= sys_vars->SAVE_EVERY ) ? sys_vars->num_t_steps / sys_vars->SAVE_EVERY + 1: sys_vars->num_t_steps + 1; // plus one to include initial condition
 		printf("Total Iters: %ld\t Saving Iters: %ld\n", sys_vars->num_t_steps, sys_vars->num_print_steps);
+		printf("\n\nT:%1.16lf,t0:%1.16lf,dt:%1.16lf--numt:%1.16lf\tround(numt):%1.16lf\ttrans_frac:%1.16lf\ttans:%1.16lf\ttrans:%ld NUm_print: %ld\n\n", (*T), (*t0), (*dt), ((*T) - (*t0)) / (*dt), round(((*T) - (*t0)) / (*dt)), sys_vars->TRANS_ITERS_FRAC, (sys_vars->TRANS_ITERS_FRAC * (double)tmp_num_t_steps), (*trans_steps), sys_vars->num_print_steps);
 	}
 
 	// Variable to control how ofter to print to screen -> set it to half the saving to file steps
@@ -1521,16 +1526,20 @@ void FreeMemory(RK_data_struct* RK_data) {
 		fftw_free(stats_data->vel_str_func[i]);
 		#endif
 		#if defined(__STR_FUNC_VEL_FLUX)
-		fftw_free(stats_data->vel_flux_str_func[0][i]);
-		fftw_free(stats_data->vel_flux_str_func[1][i]);
+		for (int j = 0; j < 2; ++j) {
+			fftw_free(stats_data->vel_flux_str_func[j][i]);
+			fftw_free(stats_data->vel_flux_str_func_abs[j][i]);
+		}		
 		#endif
 		#if defined(__MAGNETO)
 		#if defined(__STR_FUNC_MAG)
 		fftw_free(stats_data->mag_str_func[i]);
 		#endif
 		#if defined(__STR_FUNC_MAG_FLUX)
-		fftw_free(stats_data->mag_flux_str_func[0][i]);
-		fftw_free(stats_data->mag_flux_str_func[1][i]);
+		for (int j = 0; j < 2; ++j) {
+			fftw_free(stats_data->mag_flux_str_func[j][i]);
+			fftw_free(stats_data->mag_flux_str_func_abs[j][i]);
+		}
 		#endif
 		#endif
 	}

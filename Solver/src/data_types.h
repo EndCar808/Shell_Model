@@ -165,7 +165,7 @@
 #define NUM_POW 6 				// The highest moment to compute for the structure function
 #define NUM_RUN_STATS 7 		// The number of running stats moments to record
 #define VEL_BIN_LIM	10			// The bin limits (in units of standard deviations) for the velocity histogram
-#define VEL_NUM_BINS 500		// The number of bins to use for the velocity histograms
+#define VEL_NUM_BINS 50			// The number of bins to use for the velocity histograms
 // // Dormand Prince integrator parameters
 // #define DP_ABS_TOL 1e-7		    // The absolute error tolerance for the Dormand Prince Scheme
 // #define DP_REL_TOL 1e-7         // The relative error tolerance for the Dormand Prince Scheme
@@ -325,12 +325,15 @@ typedef struct HDF_file_info_struct {
 typedef struct stats_data_struct {
 	double* vel_str_func[NUM_POW];					// Array to hold the structure functions of the Velocity modes
 	double* mag_str_func[NUM_POW];			  		// Array to hold the structure functions of the magnetic modes
-	double* vel_flux_str_func[2][NUM_POW];			// Array to hold the structure functions of the flux Velocity modes
-	double* mag_flux_str_func[2][NUM_POW];			// Array to hold the structure functions of the flux magnetic modes
+	double* vel_flux_str_func_abs[2][NUM_POW];		// Array to hold the structure functions of the absolute value of flux Velocity modes
+	double* mag_flux_str_func_abs[2][NUM_POW];		// Array to hold the structure functions of the absolute value of flux magnetic modes
+	double* vel_flux_str_func[2][NUM_POW];			// Array to hold the structure functions of the value of flux Velocity modes
+	double* mag_flux_str_func[2][NUM_POW];			// Array to hold the structure functions of the value of flux magnetic modes
 	gsl_rstat_workspace** vel_moments;				// Struct to hold the running stats for the velocity field
 	gsl_rstat_workspace** mag_moments;				// Struct to hold the running stats for the magnetic field
 	gsl_histogram** real_vel_hist;					// Struct to hold the histogram info for the velocity field
 	long int num_stats_steps;						// Counter for the number of steps statistics have been computed
+	int set_stats_flag;								// Flag to indicate if the stats objects such as running stats and histogram limits need to be set
 } stats_data_struct;
 
 

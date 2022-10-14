@@ -28,7 +28,7 @@ import multiprocessing as mprocs
 import time as TIME
 from subprocess import Popen, PIPE, run
 from matplotlib.pyplot import cm
-from functions import tc, sim_data, import_data, compute_pdf
+from functions import tc, sim_data, import_data, compute_pdf, import_stats_data, import_sys_msr_data
 
 
 ###############################
@@ -119,14 +119,20 @@ if __name__ == '__main__':
     ## Read in solver data
     run_data = import_data(data_file_path, sys_vars, method)
 
+    ## Read in stats data
+    stats_data = import_stats_data(data_file_path, sys_vars, method)
+
+    ## Read in sys_msr data
+    sys_msr_data = import_sys_msr_data(data_file_path, sys_vars, method)
+
 
     # -----------------------------------------
     # # --------  Compute Post data
     # -----------------------------------------
     u_sqr_av = np.mean(np.absolute(run_data.u)**2, axis = 0)
-    for i in range(100):
+    for i in range(1, 100, 10):
         # print(run_data.tot_enrg[i], 0.5 * np.sum(np.absolute(run_data.u[i, :])**2), run_data.tot_enrg[i]/np.sum(np.absolute(run_data.u[i, :])**2))
-        print(2 * run_data.tot_enrg[i], np.sum(np.absolute(run_data.u[i, :] * np.conjugate(run_data.u[i, :]))))
+        print(2 * sys_msr_data.tot_enrg[i], np.sum(np.absolute(run_data.u[i, :] * np.conjugate(run_data.u[i, :]))))
     print()
     
     print()
@@ -134,6 +140,51 @@ if __name__ == '__main__':
     # # --------  Plot Data
     # -----------------------------------------
     if cmdargs.plotting is True:
+        ##-------------- Plot System Measures
+        fig = plt.figure(figsize = (32, 8))
+        gs  = GridSpec(2, 4)
+        ax1 = fig.add_subplot(gs[0, 0])
+        ax1.plot(sys_msr_data.time[:-1], sys_msr_data.tot_diss[:-1] / sys_msr_data.tot_diss[0] - 1)
+        ax1.set_xlabel(r"$t$")
+        ax1.set_yscale('log')
+        ax1.set_title(r"Relative Dissipation")
+        ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        ax2 = fig.add_subplot(gs[1, 0])
+        ax2.plot(sys_msr_data.time[:-1], sys_msr_data.tot_diss[:-1])
+        ax2.set_xlabel(r"$t$")
+        ax1.set_yscale('log')
+        ax2.set_title(r"Total Dissipation")
+        ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        ax3 = fig.add_subplot(gs[0, 1])
+        ax3.plot(sys_msr_data.time[:-1], sys_msr_data.u_charact[:-1])
+        ax3.set_xlabel(r"$t$")
+        ax3.set_title(r"Characterisitic Velocity")
+        ax3.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        ax4 = fig.add_subplot(gs[0, 2])
+        ax4.plot(sys_msr_data.time[:-1], sys_msr_data.int_scale[:-1])
+        ax4.set_xlabel(r"$t$")
+        ax4.set_title(r"Integral Length Scale")
+        ax4.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        ax4 = fig.add_subplot(gs[0, 3])
+        ax4.plot(sys_msr_data.time[:-1], sys_msr_data.taylor_micro_scale[:-1])
+        ax4.set_xlabel(r"$t$")
+        ax4.set_title(r"Taylor Micro Scale")
+        ax4.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        ax4 = fig.add_subplot(gs[1, 1])
+        ax4.plot(sys_msr_data.time[:-1], sys_msr_data.reynolds_no[:-1])
+        ax4.set_xlabel(r"$t$")
+        ax4.set_title(r"Taylor Micro Scale")
+        ax4.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        ax4 = fig.add_subplot(gs[1, 2])
+        ax4.plot(sys_msr_data.time[:-1], sys_msr_data.int_scale[:-1] / sys_msr_data.u_charact[:-1])
+        ax4.set_xlabel(r"$t$")
+        ax4.set_title(r"Taylor Micro Scale")
+        ax4.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+
+
+        plt.savefig(cmdargs.out_dir + "System_Measures.png")
+        plt.close()
+
         ##-------------- Plot Conserved quntities
         fig = plt.figure(figsize = (32, 8))
         if hasattr(run_data, 'b'):
@@ -142,26 +193,26 @@ if __name__ == '__main__':
             gs  = GridSpec(2, 2)
         ## Plot the relative energy
         ax1 = fig.add_subplot(gs[0, 0])
-        ax1.plot(run_data.time, run_data.tot_enrg / run_data.tot_enrg[0] - 1)
+        ax1.plot(sys_msr_data.time, sys_msr_data.tot_enrg / sys_msr_data.tot_enrg[0] - 1)
         ax1.set_xlabel(r"$t$")
         ax1.set_title(r"Relative Energy")
         ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
         ## Plot the relative helicity
         ax2 = fig.add_subplot(gs[0, 1])
-        ax2.plot(run_data.time, 1 - run_data.tot_hel_u / run_data.tot_hel_u[0])
+        ax2.plot(sys_msr_data.time, 1 - sys_msr_data.tot_hel_u / sys_msr_data.tot_hel_u[0])
         ax2.set_xlabel(r"$t$")
         ax2.set_title(r"Relative Velocity Helicity")
         ax2.set_yscale('symlog')
         ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
         ## Plot the relative energy
         ax1 = fig.add_subplot(gs[1, 0])
-        ax1.plot(run_data.time, run_data.tot_enrg)
+        ax1.plot(sys_msr_data.time, sys_msr_data.tot_enrg)
         ax1.set_xlabel(r"$t$")
         ax1.set_title(r"Total Energy")
         ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
         ## Plot the relative helicity
         ax2 = fig.add_subplot(gs[1, 1])
-        ax2.plot(run_data.time, run_data.tot_hel_u)
+        ax2.plot(sys_msr_data.time, sys_msr_data.tot_hel_u)
         ax2.set_xlabel(r"$t$")
         ax2.set_title(r"Total Velocity Helicity")
         ax2.set_yscale('symlog')
@@ -169,25 +220,25 @@ if __name__ == '__main__':
         if hasattr(run_data, 'b'):
             ## Plot the relative helicity
             ax2 = fig.add_subplot(gs[0, 2])
-            ax2.plot(run_data.time, 1 - run_data.tot_hel_b / run_data.tot_hel_b[0])
+            ax2.plot(sys_msr_data.time, 1 - sys_msr_data.tot_hel_b / sys_msr_data.tot_hel_b[0])
             ax2.set_xlabel(r"$t$")
             ax2.set_title(r"Relative Magnetic Helicity")
             ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
             ## Plot the relative cross helicity
             ax3 = fig.add_subplot(gs[0, 3])
-            ax3.plot(run_data.time, 1 - run_data.tot_cross_hel / run_data.tot_cross_hel[0])
+            ax3.plot(sys_msr_data.time, 1 - sys_msr_data.tot_cross_hel / sys_msr_data.tot_cross_hel[0])
             ax3.set_xlabel(r"$t$")
             ax3.set_title(r"Relative Cross Helicity")
             ax3.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
             ## Plot the relative helicity
             ax2 = fig.add_subplot(gs[1, 2])
-            ax2.plot(run_data.time, run_data.tot_hel_b)
+            ax2.plot(sys_msr_data.time, sys_msr_data.tot_hel_b)
             ax2.set_xlabel(r"$t$")
             ax2.set_title(r"Total Magnetic Helicity")
             ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
             ## Plot the relative cross helicity
             ax3 = fig.add_subplot(gs[1, 3])
-            ax3.plot(run_data.time, run_data.tot_cross_hel)
+            ax3.plot(sys_msr_data.time, sys_msr_data.tot_cross_hel)
             ax3.set_xlabel(r"$t$")
             ax3.set_title(r"Total Cross Helicity")
             ax3.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
@@ -195,19 +246,29 @@ if __name__ == '__main__':
         plt.savefig(cmdargs.out_dir + "Quadratic_Invariants.png")
         plt.close()
 
-        ##-------------- Plot the energy spectrum
+        ##-------------- Plot the Spectra
         fig = plt.figure(figsize = (16, 8))
-        gs  = GridSpec(1, 1)
+        gs  = GridSpec(1, 2)
         ax1 = fig.add_subplot(gs[0, 0])
         for i in [0, 100, -1]:
-            ax1.plot(run_data.k, np.absolute(run_data.u[i, :])**2, label = "Iter = {}".format(i))
+            ax1.plot(sys_msr_data.k, run_data.enrg_spect[i, :], label = "Iter = {}".format(i))
         ax1.set_xlabel("$k$")
         ax1.set_ylabel("$E$")
         ax1.set_yscale('log')
         ax1.set_xscale('log')
         ax1.legend()
-        plt.savefig(cmdargs.out_dir + "EnergySpectrum.png")
+        ax1 = fig.add_subplot(gs[0, 0])
+        for i in [0, 100, -1]:
+            ax1.plot(sys_msr_data.k, run_data.diss_spect[i, :], label = "Iter = {}".format(i))
+        ax1.set_xlabel("$k$")
+        ax1.set_ylabel("$\epsilon$")
+        ax1.set_yscale('log')
+        ax1.set_xscale('log')
+        ax1.legend()
+        plt.savefig(cmdargs.out_dir + "Spectra.png")
         plt.close()
+
+
 
         ##-------------- Plot Amplitudes over time
         fig = plt.figure(figsize = (16, 8))
@@ -218,13 +279,13 @@ if __name__ == '__main__':
         ## Plot the velocity amplitudes
         ax1 = fig.add_subplot(gs[0, 0])
         for i in range(sys_vars.N):
-            ax1.plot(run_data.time, np.absolute(run_data.u[:, i]))
+            ax1.plot(sys_msr_data.time, np.absolute(run_data.u[:, i]))
         ax1.set_xlabel("$t$")
         ax1.set_ylabel("$A_n$")
         ## Plot the velocity amplitudes on log scale
         ax1 = fig.add_subplot(gs[0, 1])
         for i in range(sys_vars.N):
-            ax1.plot(run_data.time, np.absolute(run_data.u[:, i]))
+            ax1.plot(sys_msr_data.time, np.absolute(run_data.u[:, i]))
         ax1.set_xlabel("$t$")
         ax1.set_ylabel("$A_n$")
         ax1.set_yscale('log')
@@ -232,13 +293,13 @@ if __name__ == '__main__':
             ## Plot the magnetic amplitudes
             ax2 = fig.add_subplot(gs[1, 0])
             for i in range(sys_vars.N):
-                ax2.plot(run_data.time, np.absolute(run_data.b[:, i]))
+                ax2.plot(sys_msr_data.time, np.absolute(run_data.b[:, i]))
             ax2.set_xlabel("$t$")
             ax2.set_ylabel("$B_n$")
             ## Plot the magnetic amplitudes on log scale
             ax2 = fig.add_subplot(gs[1, 0])
             for i in range(sys_vars.N):
-                ax2.plot(run_data.time, np.absolute(run_data.b[:, i]))
+                ax2.plot(sys_msr_data.time, np.absolute(run_data.b[:, i]))
             ax2.set_xlabel("$t$")
             ax2.set_ylabel("$B_n$")
             ax2.set_yscale('log')
@@ -256,7 +317,7 @@ if __name__ == '__main__':
         ## Plot the velocity amplitudes
         ax1 = fig.add_subplot(gs[0, 0])
         for i in range(sys_vars.N//2):
-            ax1.plot(run_data.time, np.angle(run_data.u[:, i]) % 2.0 * np.pi)
+            ax1.plot(sys_msr_data.time, np.angle(run_data.u[:, i]) % 2.0 * np.pi)
         ax1.set_xlabel("$t$")
         ax1.set_ylabel("$\phi_n$")
         ax1.set_title("Low N")
@@ -264,7 +325,7 @@ if __name__ == '__main__':
         ax2.set_title("Low N")
         ax1 = fig.add_subplot(gs[0, 1])
         for i in range(sys_vars.N//2, sys_vars.N):
-            ax1.plot(run_data.time, np.angle(run_data.u[:, i]) % 2.0 * np.pi)
+            ax1.plot(sys_msr_data.time, np.angle(run_data.u[:, i]) % 2.0 * np.pi)
         ax1.set_xlabel("$t$")
         ax1.set_ylabel("$\phi_n$")
         ax1.set_title("High N")
@@ -273,13 +334,13 @@ if __name__ == '__main__':
             ## Plot the magnetic phases
             ax2 = fig.add_subplot(gs[1, 0])
             for i in range(sys_vars.N//2):
-                ax2.plot(run_data.time, np.angle(run_data.b[:, i]) % 2.0 * np.pi)
+                ax2.plot(sys_msr_data.time, np.angle(run_data.b[:, i]) % 2.0 * np.pi)
             ax2.set_xlabel("$t$")
             ax2.set_ylabel("$\psi_n$")
             ## Plot the magnetic phases
             ax2 = fig.add_subplot(gs[1, 1])
             for i in range(sys_vars.N//2, sys_vars.N):
-                ax2.plot(run_data.time, np.angle(run_data.b[:, i]) % 2.0 * np.pi)
+                ax2.plot(sys_msr_data.time, np.angle(run_data.b[:, i]) % 2.0 * np.pi)
             ax2.set_xlabel("$t$")
             ax2.set_ylabel("$\psi_n$")
             ax2.set_title("High N")
@@ -297,7 +358,7 @@ if __name__ == '__main__':
         ## Plot the velocity amplitudes
         ax1 = fig.add_subplot(gs[0, 0])
         for i in range(sys_vars.N//2):
-            ax1.plot(run_data.time, np.angle(run_data.u[:, i]) - np.angle(run_data.u[:, i + 3]))
+            ax1.plot(sys_msr_data.time, np.angle(run_data.u[:, i]) - np.angle(run_data.u[:, i + 3]))
         ax1.set_xlabel("$t$")
         ax1.set_ylabel("$\phi_n$")
         ax1.set_title("Low N")
@@ -305,7 +366,7 @@ if __name__ == '__main__':
         ax2.set_title("Low N")
         ax1 = fig.add_subplot(gs[0, 1])
         for i in range(sys_vars.N//2, sys_vars.N - 3):
-            ax1.plot(run_data.time, np.angle(run_data.u[:, i]) - np.angle(run_data.u[:, i + 3]))
+            ax1.plot(sys_msr_data.time, np.angle(run_data.u[:, i]) - np.angle(run_data.u[:, i + 3]))
         ax1.set_xlabel("$t$")
         ax1.set_ylabel("$\phi_n$")
         ax1.set_title("High N")
@@ -313,13 +374,13 @@ if __name__ == '__main__':
             ## Plot the velocity amplitudes
             ax2 = fig.add_subplot(gs[1, 0])
             for i in range(sys_vars.N//2):
-                ax2.plot(run_data.time, np.angle(run_data.b[:, i]) - np.angle(run_data.b[:, i + 3]))
+                ax2.plot(sys_msr_data.time, np.angle(run_data.b[:, i]) - np.angle(run_data.b[:, i + 3]))
             ax2.set_xlabel("$t$")
             ax2.set_ylabel("$\psi_n$")
             ## Plot the velocity amplitudes
             ax2 = fig.add_subplot(gs[1, 1])
             for i in range(sys_vars.N//2, sys_vars.N - 3):
-                ax2.plot(run_data.time, np.angle(run_data.b[:, i]) - np.angle(run_data.b[:, i + 3]))
+                ax2.plot(sys_msr_data.time, np.angle(run_data.b[:, i]) - np.angle(run_data.b[:, i + 3]))
             ax2.set_xlabel("$t$")
             ax2.set_ylabel("$\psi_n$")
             ax2.set_title("High N")
@@ -354,7 +415,7 @@ if __name__ == '__main__':
         ## Plot the velocity amplitudes
         ax1 = fig.add_subplot(gs[0, 0])
         for i in range(sys_vars.N - 2):
-            ax1.plot(run_data.time, T_ppp[:, i])
+            ax1.plot(sys_msr_data.time, T_ppp[:, i])
         ax1.set_xlabel("$t$")
         ax1.set_title("$\phi_n + \phi_{n + 1} + \phi_{n + 2}$")
         # ax1.set_xlim(t_i, t_f)
@@ -363,21 +424,21 @@ if __name__ == '__main__':
             ## Plot the velocity amplitudes
             ax2 = fig.add_subplot(gs[0, 1])
             for i in range(sys_vars.N - 2):
-                ax2.plot(run_data.time, T_pss[:, i])
+                ax2.plot(sys_msr_data.time, T_pss[:, i])
             ax2.set_xlabel("$t$")
             ax2.set_title("$\phi_n + \psi_{n + 1} + \psi_{n + 2}$")
             # ax2.set_xlim(t_i, t_f)
             ## Plot the velocity amplitudes
             ax1 = fig.add_subplot(gs[1, 0])
             for i in range(sys_vars.N - 2):
-                ax1.plot(run_data.time, T_sps[:, i])
+                ax1.plot(sys_msr_data.time, T_sps[:, i])
             ax1.set_xlabel("$t$")
             ax1.set_title("$\psi_n + \phi_{n + 1} + \psi_{n + 2}$")
             # ax1.set_xlim(t_i, t_f)
             ## Plot the velocity amplitudes
             ax2 = fig.add_subplot(gs[1, 1])
             for i in range(sys_vars.N - 2):
-                ax2.plot(run_data.time, T_ssp[:, i])
+                ax2.plot(sys_msr_data.time, T_ssp[:, i])
             ax2.set_xlabel("$t$")
             ax2.set_title("$\psi_n + \psi_{n + 1} + \phi_{n + 2}$")
             # ax2.set_xlim(t_i, t_f)
@@ -469,19 +530,19 @@ if __name__ == '__main__':
         gs  = GridSpec(1, 3)
         ax1 = fig.add_subplot(gs[0, 0])
         for i in range(sys_vars.N):
-            ax1.plot(run_data.time, run_data.enrg_flux[:, i])
+            ax1.plot(sys_msr_data.time, run_data.enrg_flux[:, i])
         ax1.set_xlabel("$t$")
         ax1.set_title("Energ Flux")
         ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
         ax2 = fig.add_subplot(gs[0, 1])
         for i in range(sys_vars.N):
-            ax2.plot(run_data.time, run_data.enrg_diss_u[:, i])
+            ax2.plot(sys_msr_data.time, run_data.enrg_diss_u[:, i])
         ax2.set_xlabel("$t$")
         ax2.set_title("Velocity Energy Dissipation")
         ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
         ax1 = fig.add_subplot(gs[0, 2])
         for i in range(sys_vars.N):
-            ax1.plot(run_data.time, run_data.enrg_input_u[:, i])
+            ax1.plot(sys_msr_data.time, run_data.enrg_input_u[:, i])
         ax1.set_xlabel("$t$")
         ax1.set_title("Velocity Energ Input")
         ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
@@ -494,17 +555,17 @@ if __name__ == '__main__':
         fig = plt.figure(figsize = (16, 8))
         gs  = GridSpec(1, 3)
         ax1 = fig.add_subplot(gs[0, 0])
-        ax1.plot(run_data.time, np.sum(run_data.enrg_flux[:, :], axis = -1))
+        ax1.plot(sys_msr_data.time, np.sum(run_data.enrg_flux[:, :], axis = -1))
         ax1.set_xlabel("$t$")
         ax1.set_title("Energ Flux")
         ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
         ax2 = fig.add_subplot(gs[0, 1])
-        ax2.plot(run_data.time, np.sum(run_data.enrg_diss_u[:, :], axis = -1))
+        ax2.plot(sys_msr_data.time, np.sum(run_data.enrg_diss_u[:, :], axis = -1))
         ax2.set_xlabel("$t$")
         ax2.set_title("Velocity Energy Dissipation")
         ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
         ax1 = fig.add_subplot(gs[0, 2])
-        ax1.plot(run_data.time, np.sum(run_data.enrg_input_u[:, :], axis = -1))
+        ax1.plot(sys_msr_data.time, np.sum(run_data.enrg_input_u[:, :], axis = -1))
         ax1.set_xlabel("$t$")
         ax1.set_title("Velocity Energ Input")
         ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)

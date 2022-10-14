@@ -33,7 +33,7 @@ void CreateOutputFilesWriteICs(const long int N) {
 	// Initialize variables
 	herr_t status;
 
-	#if defined(__VEL) || defined(__MAG) || defined(__FORCING)
+	#if defined(__VEL) || defined(__MAG) || defined(__FORCING) || defined(__STATS)
 	// Create compound datatype for the complex datasets
 	file_info->COMPLEX_DTYPE = CreateComplexDatatype();
 	#endif
@@ -777,16 +777,6 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalVelocityHelicity", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_hel_u)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalVelocityHelicity");
 	}
-	#if defined(__MAGNETO)
-	// Magnetic Helicity
-	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalMagneticHelicity", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_hel_b)) < 0) {
-		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalMagneticHelicity");
-	}
-	// Cross Helicity
-	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalCrossHelicity", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_cross_hel)) < 0) {
-		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalCrossHelicity");
-	}
-	#endif
 	// Total Dissipation
 	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalDissipation", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_diss)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalDissipation");
@@ -811,6 +801,16 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "KolmogorovLengthScale", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->kolmogorov_scale)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "KolmogorovLengthScale");
 	}
+	#if defined(__MAGNETO)
+	// Magnetic Helicity
+	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalMagneticHelicity", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_hel_b)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalMagneticHelicity");
+	}
+	// Cross Helicity
+	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalCrossHelicity", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_cross_hel)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalCrossHelicity");
+	}
+	#endif
 	#endif
 
 	// -------------------------------
@@ -837,6 +837,20 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	// Write Stats
 	// -------------------------------
 	#if defined(STATS)
+	///-------------------------- Write velocity field 
+	#if defined(PHASE_ONLY_DIRECT)
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "VelAmps", D1, dims1D, H5T_NATIVE_DOUBLE, &(run_data->a_n[2]))) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelAmps");
+	}
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "VelPhases", D1, dims1D, H5T_NATIVE_DOUBLE, &(run_data->phi_n[2]))) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelPhases");
+	}
+	#else
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "VelModes", D1, dims1D, file_info->COMPLEX_DTYPE, &(run_data->u[2]))) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelModes");
+	}
+	#endif
+
 	///-------------------------- Velocity field stats
 	double* tmp_vel_stats = (double* )fftw_malloc(sizeof(double) * (NUM_RUN_STATS) * N);
 	for (int i = 0; i < N; ++i) {
@@ -858,6 +872,7 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 
 	// Free temp memory
 	fftw_free(tmp_vel_stats);
+
 
 	///-------------------------- Real Velocity Histogram
 	#if defined(__VEL_HIST)
@@ -930,13 +945,42 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "StructureFunctionVelFlux");
 	}
 
+	for (int i = 0; i < N; ++i) {
+		for (int p = 0; p < NUM_POW; ++p) {
+			tmp_vel_str_flux[2 * (i * NUM_POW + p) + 0] = stats_data->vel_flux_str_func_abs[0][p][i] / stats_data->num_stats_steps;
+			tmp_vel_str_flux[2 * (i * NUM_POW + p) + 1] = stats_data->vel_flux_str_func_abs[1][p][i] / stats_data->num_stats_steps;
+		}
+	}
+
+	// Write data 
+	dims3D[0] = N;
+	dims3D[1] = NUM_POW;
+	dims3D[2] = 2;
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "StructureFunctionVelFluxAbs", D3, dims3D, H5T_NATIVE_DOUBLE, tmp_vel_str_flux)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "StructureFunctionVelFluxAbs");
+	}
+
 	// Free temp memory
 	fftw_free(tmp_vel_str_flux);
 	#endif
 
 
-
 	#if defined(__MAGNETO)
+	///-------------------------- Write Magnetic field 
+	#if defined(PHASE_ONLY_DIRECT)
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "MagAmps", D1, dims1D, H5T_NATIVE_DOUBLE, &(run_data->b_n[2]))) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "MagAmps");
+	}
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "MagPhases", D1, dims1D, H5T_NATIVE_DOUBLE, &(run_data->psi_n[2]))) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "MagPhases");
+	}
+	#else
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "MagModes", D1, dims1D, file_info->COMPLEX_DTYPE, &(run_data->b[2]))) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "MagModes");
+	}
+	#endif
+
+
 	///-------------------------- Magnetic field stats
 	double* tmp_mag_stat = (double* )fftw_malloc(sizeof(double) * (NUM_RUN_STATS) * N);
 	for (int i = 0; i < N; ++i) {
@@ -1000,6 +1044,21 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "StructureFunctionMagFlux");
 	}
 
+	for (int i = 0; i < N; ++i) {
+		for (int p = 0; p < NUM_POW; ++p) {
+			tmp_mag_str_flux[2 * (i * NUM_POW + p) + 0] = stats_data->mag_flux_str_func_abs[0][p][i] / stats_data->num_stats_steps;
+			tmp_mag_str_flux[2 * (i * NUM_POW + p) + 1] = stats_data->mag_flux_str_func_abs[1][p][i] / stats_data->num_stats_steps;
+		}
+	}
+
+	// Write data 
+	dims3D[0] = N;
+	dims3D[1] = NUM_POW;
+	dims3D[2] = 2;
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "StructureFunctionMagFluxAbs", D3, dims3D, H5T_NATIVE_DOUBLE, tmp_mag_str_flux)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "StructureFunctionMagFluxAbs");
+	}
+
 	// Free temp memory
 	fftw_free(tmp_mag_str_flux);
 	#endif
@@ -1022,7 +1081,7 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	}
 	#endif
 
-	#if defined(__VEL) || defined(__MAG) || defined(__FORCING)
+	#if defined(__VEL) || defined(__MAG) || defined(__FORCING) || defined(__STATS)
 	// Close the complex datatype identifier
 	H5Tclose(file_info->COMPLEX_DTYPE);
 	#endif

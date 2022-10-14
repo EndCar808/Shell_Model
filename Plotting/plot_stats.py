@@ -28,7 +28,7 @@ import multiprocessing as mprocs
 import time as TIME
 from subprocess import Popen, PIPE, run
 from matplotlib.pyplot import cm
-from functions import tc, sim_data, import_data, compute_pdf, compute_pdf_from_hist
+from functions import tc, sim_data, import_data, compute_pdf, compute_pdf_from_hist, import_stats_data, import_sys_msr_data
 
 
 ###############################
@@ -119,6 +119,11 @@ if __name__ == '__main__':
     ## Read in solver data
     run_data = import_data(data_file_path, sys_vars, method)
 
+    ## Read in stats data
+    stats_data = import_stats_data(data_file_path, sys_vars, method)
+
+    ## Read in sys_msr data
+    sys_msr_data = import_sys_msr_data(data_file_path, sys_vars, method)
 
     # -----------------------------------------
     # # --------  Plot Data
@@ -159,7 +164,7 @@ if __name__ == '__main__':
         gs  = GridSpec(1, 1)
         ax1 = fig.add_subplot(gs[0, 0])
         for j, i in enumerate([5, 10, 15]):
-            pdf, centres = compute_pdf_from_hist(run_data.vel_hist_counts[i, :], run_data.vel_hist_ranges[i, :], normed = True)
+            pdf, centres = compute_pdf_from_hist(stats_data.vel_hist_counts[i, :], stats_data.vel_hist_ranges[i, :], normed = True)
             ax1.plot(centres, pdf, label = "$n = {}$".format(i))
             ax1.set_xlabel(r"$\Re u_n / \langle (\Re u_n)^2 \rangle^{1/2}$")
             ax1.set_ylabel(r"PDF")
@@ -196,22 +201,12 @@ if __name__ == '__main__':
 
         indx_shift = 1
 
-        k_n = run_data.k / sys_vars.k0 
-        print(k_n)
-        # print(np.log(run_data.k))
-        print(np.log2(k_n))
-        # print(run_data.k)
-        # print(run_data.vel_str_func.shape)
-        # print(run_data.vel_str_func[:, :])
-
         ax1 = fig.add_subplot(gs[0, 0])
         for i in [4 - indx_shift, 6 - indx_shift]:
-            ax1.plot(np.log2(k_n), np.log2(run_data.vel_str_func[:, i]), label = "$p = {}$".format(i + indx_shift))
+            ax1.plot(np.log2(sys_msr_data.k), np.log2(stats_data.vel_str_func[:, i]), label = "$p = {}$".format(i + indx_shift))
         ax1.set_xlabel(r"$log_2 (k_n)$")
         ax1.set_ylabel(r"$log_2 (S_p(k_n))$")
         ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
-        # ax1.set_xlim(0, np.log2(k_n)[-1])
-        # ax1.set_xscale('log')
         ax1.legend()
         plt.savefig(cmdargs.out_dir + "/VelStrFunc.png")
         plt.close()
@@ -222,13 +217,11 @@ if __name__ == '__main__':
         else:   
             gs  = GridSpec(1, 1)
         ax1 = fig.add_subplot(gs[0, 0])
-        for i in range(run_data.vel_str_func.shape[-1]):
-            ax1.plot(np.log2(k_n), np.log2(run_data.vel_str_func[:, i]), label = "$p = {}$".format(i + indx_shift))
+        for i in range(stats_data.vel_str_func.shape[-1]):
+            ax1.plot(np.log2(sys_msr_data.k), np.log2(stats_data.vel_str_func[:, i]), label = "$p = {}$".format(i + indx_shift))
         ax1.set_xlabel(r"$log_2 (k_n)$")
         ax1.set_ylabel(r"$log_2 (S_p(k_n))$")
         ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
-        # ax1.set_xlim(0, np.log2(k_n)[-1])
-        # ax1.set_xscale('log')
         ax1.legend()
         plt.savefig(cmdargs.out_dir + "/VelStrFunc_All.png")
         plt.close()
@@ -240,13 +233,12 @@ if __name__ == '__main__':
         else:   
             gs  = GridSpec(1, 1)
         ax1 = fig.add_subplot(gs[0, 0])
-        for i in range(run_data.vel_str_func.shape[-1]):
-            ax1.plot(np.log2(k_n), np.log2((k_n**(i + indx_shift) / 3.0) * run_data.vel_str_func[:, i]), label = "$p = {}$".format(i + indx_shift))
+        for i in range(stats_data.vel_str_func.shape[-1]):
+            ax1.plot(np.log2(sys_msr_data.k), np.log2((sys_msr_data.k**((i + indx_shift) / 3.0)) * stats_data.vel_str_func[:, i]) + i, label = "$p = {}$".format(i + indx_shift))
+            ax1.plot(np.log2(sys_msr_data.k), np.log2((sys_msr_data.k**(0))) + i, 'b--')
         ax1.set_xlabel(r"$log_2 (k_n)$")
         ax1.set_ylabel(r"$log_2 (k_n^{p/3} S_p(k_n))$")
         ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
-        # ax1.set_xlim(0, np.log2(k_n)[-1])
-        # ax1.set_xscale('log')
         ax1.legend()
         plt.savefig(cmdargs.out_dir + "/PreMult_VelStrFunc_All.png")
         plt.close()
@@ -260,96 +252,113 @@ if __name__ == '__main__':
             gs  = GridSpec(1, 2)
 
         indx_shift = 1
+
         ax1 = fig.add_subplot(gs[0, 0])
         for i in [4 - indx_shift, 6 - indx_shift]:
-            ax1.plot(np.log2(k_n), np.log2(run_data.vel_flux_str_func[:, i, 0]), label = "$p = {}$".format(i + indx_shift))
+            ax1.plot(np.log2(sys_msr_data.k), np.log2(stats_data.vel_flux_str_func[:, i, 0]), label = "$p = {}$".format(i + indx_shift))
         ax1.set_xlabel(r"$log_2 (k_n)$")
         ax1.set_ylabel(r"$log_2 (S_p^{E}(k_n))$")
         ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
         ax1.set_title("Energy Flux Structure Function")
-
-        # ax1.set_xlim(0, np.log2(k_n[-1]))
         ax1.legend()
-
         ax2 = fig.add_subplot(gs[0, 1])
-        indx_shift = 2
         for i in [4 - indx_shift, 6 - indx_shift]:
-            ax2.plot(np.log2(k_n), np.log2(run_data.vel_flux_str_func[:, i, 1]), label = "$p = {}$".format(i + indx_shift))
+            ax2.plot(np.log2(sys_msr_data.k), np.log2(np.absolute(stats_data.vel_flux_str_func[:, i, 1])), label = "$p = {}$".format(i + indx_shift))
         ax2.set_xlabel(r"$log_2 (k_n)$")
-        ax2.set_ylabel(r"$log_2 (S_p^{H}(k_n))$")
+        ax2.set_ylabel(r"$log_2 (|S_p^{H}(k_n)|)$")
         ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
         ax2.set_title("Helicity Flux Structure Function")
-
-        # ax2.set_xlim(0, np.log2(k_n[-1]))
         ax2.legend()
-
         plt.savefig(cmdargs.out_dir + "/VelFluxStrFunc.png")
         plt.close()
 
 
 
         fig = plt.figure(figsize = (16, 8))
-        if hasattr(run_data, "StructureFunctionMagFlux"):
-            gs  = GridSpec(2, 2)
-        else:
-            gs  = GridSpec(1, 2)
-        indx_shift = 1
+        gs  = GridSpec(2, 2)
         ax1 = fig.add_subplot(gs[0, 0])
-        for i in range(run_data.vel_flux_str_func.shape[1]):
-            ax1.plot(np.log2(k_n), np.log2(run_data.vel_flux_str_func[:, i, 0]), label = "$p = {}$".format(i + indx_shift))
+        for i in range(stats_data.vel_flux_str_func.shape[1]):
+            print(i + indx_shift, stats_data.vel_flux_str_func[:, i, 0])
+            ax1.plot(np.log2(sys_msr_data.k), np.log2(np.absolute(stats_data.vel_flux_str_func[:, i, 0])), label = "$p = {}$".format(i + indx_shift))
         ax1.set_xlabel(r"$log_2 (k_n)$")
-        ax1.set_ylabel(r"$log_2 (S_p^{E}(k_n))$")
+        ax1.set_ylabel(r"$log_2 (|S_p^{E}(k_n)|)$")
         ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
         ax1.set_title("Energy Flux Structure Function")
-        # ax1.set_xlim(0, np.log2(k_n[-1]))
         ax1.legend()
+        print()
+        print()
         ax2 = fig.add_subplot(gs[0, 1])
-        indx_shift = 2
-        for i in range(run_data.vel_flux_str_func.shape[1]):
-            ax2.plot(np.log2(k_n), np.log2(run_data.vel_flux_str_func[:, i, 1]), label = "$p = {}$".format(i + indx_shift))
+        for i in range(stats_data.vel_flux_str_func.shape[1]):
+            print(i + indx_shift, stats_data.vel_flux_str_func[:, i, 1])
+            ax2.plot(np.log2(sys_msr_data.k), np.log2(np.absolute(stats_data.vel_flux_str_func[:, i, 1])), label = "$p = {}$".format(i + indx_shift))
         ax2.set_xlabel(r"$log_2 (k_n)$")
-        ax2.set_ylabel(r"$log_2 (S_p^{H}(k_n))$")
+        ax2.set_ylabel(r"$log_2 (|S_p^{H}(k_n)|)$")
         ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
         ax2.set_title("Helicity Flux Structure Function")
-        # ax2.set_xlim(0, np.log2(k_n[-1]))
+        ax2.legend()
+
+        ax1 = fig.add_subplot(gs[1, 0])
+        for i in range(stats_data.vel_flux_str_func.shape[1]):
+            ax1.plot(np.log2(sys_msr_data.k), np.log2(stats_data.vel_flux_str_func_abs[:, i, 0]), label = "$p = {}$".format(i + indx_shift))
+        ax1.set_xlabel(r"$log_2 (k_n)$")
+        ax1.set_ylabel(r"$log_2 (S_p^{E, abs}(k_n))$")
+        ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        ax1.set_title("Absolute Energy Flux Structure Function")
+        ax1.legend()
+        ax2 = fig.add_subplot(gs[1, 1])
+        for i in range(stats_data.vel_flux_str_func.shape[1]):
+            ax2.plot(np.log2(sys_msr_data.k), np.log2(stats_data.vel_flux_str_func_abs[:, i, 1]), label = "$p = {}$".format(i + indx_shift))
+        ax2.set_xlabel(r"$log_2 (k_n)$")
+        ax2.set_ylabel(r"$log_2 (S_p^{H, abs}(k_n))$")
+        ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        ax2.set_title("Absolute Helicity Flux Structure Function")
         ax2.legend()
         plt.savefig(cmdargs.out_dir + "/VelFluxStrFunc_All.png")
         plt.close()
 
 
         fig = plt.figure(figsize = (16, 8))
-        if hasattr(run_data, "StructureFunctionMagFlux"):
-            gs  = GridSpec(2, 2)
-        else:
-            gs  = GridSpec(1, 2)
-        indx_shift = 1
+        gs  = GridSpec(2, 2)
         ax1 = fig.add_subplot(gs[0, 0])
-        for i in range(run_data.vel_flux_str_func.shape[1]):
-            ax1.plot(np.log2(k_n), np.log2((k_n**(i + indx_shift) / 3.0) * run_data.vel_flux_str_func[:, i, 0]), label = "$p = {}$".format(i + indx_shift))
+        for i in range(stats_data.vel_flux_str_func.shape[1]):
+            ax1.plot(np.log2(sys_msr_data.k), np.log2((sys_msr_data.k**((i + indx_shift) / 3.0)) * np.absolute(stats_data.vel_flux_str_func[:, i, 0])), label = "$p = {}$".format(i + indx_shift))
         ax1.set_xlabel(r"$log_2 (k_n)$")
-        ax1.set_ylabel(r"$log_2 (k_n^{p / 3}S_p^{E}(k_n))$")
+        ax1.set_ylabel(r"$log_2 (k_n^{p / 3}|S_p^{E}(k_n)|)$")
         ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
         ax1.set_title("Energy Flux Structure Function")
-        # ax1.set_xlim(0, np.log2(k_n[-1]))
         ax1.legend()
         ax2 = fig.add_subplot(gs[0, 1])
-        indx_shift = 2
-        for i in range(run_data.vel_flux_str_func.shape[1]):
-            ax2.plot(np.log2(k_n), np.log2((k_n**(i + indx_shift) / 3.0) * run_data.vel_flux_str_func[:, i, 1]), label = "$p = {}$".format(i + indx_shift))
+        for i in range(stats_data.vel_flux_str_func.shape[1]):
+            ax2.plot(np.log2(sys_msr_data.k), np.log2((sys_msr_data.k**((i + indx_shift) / 3.0)) * np.absolute(stats_data.vel_flux_str_func[:, i, 1])), label = "$p = {}$".format(i + indx_shift))
         ax2.set_xlabel(r"$log_2 (k_n)$")
-        ax2.set_ylabel(r"$log_2 (k_n^{p / 3}S_p^{H}(k_n))$")
+        ax2.set_ylabel(r"$log_2 (k_n^{p / 3}|S_p^{H}(k_n))|$")
         ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
         ax2.set_title("Helicity Flux Structure Function")
-        # ax2.set_xlim(0, np.log2(k_n[-1]))
+        ax2.legend()
+        ax1 = fig.add_subplot(gs[1, 0])
+        for i in range(stats_data.vel_flux_str_func.shape[1]):
+            ax1.plot(np.log2(sys_msr_data.k), np.log2((sys_msr_data.k**((i + indx_shift) / 3.0)) * stats_data.vel_flux_str_func_abs[:, i, 0]), label = "$p = {}$".format(i + indx_shift))
+        ax1.set_xlabel(r"$log_2 (k_n)$")
+        ax1.set_ylabel(r"$log_2 (k_n^{p / 3}S_p^{E, abs}(k_n))$")
+        ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        ax1.set_title("Absolute Energy Flux Structure Function")
+        ax1.legend()
+        ax2 = fig.add_subplot(gs[1, 1])
+        for i in range(stats_data.vel_flux_str_func.shape[1]):
+            ax2.plot(np.log2(sys_msr_data.k), np.log2((sys_msr_data.k**((i + indx_shift) / 3.0)) * stats_data.vel_flux_str_func_abs[:, i, 1]), label = "$p = {}$".format(i + indx_shift))
+        ax2.set_xlabel(r"$log_2 (k_n)$")
+        ax2.set_ylabel(r"$log_2 (k_n^{p / 3}S_p^{H, abs}(k_n))$")
+        ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        ax2.set_title("Absolute Helicity Flux Structure Function")
         ax2.legend()
         plt.savefig(cmdargs.out_dir + "/PreMult_VelFluxStrFunc_All.png")
         plt.close()
 
 
-        with h5py.File(cmdargs.out_dir + "/Stats_HDF_Data.hdf5", "w") as f:
-            f.create_dataset("RealVelHist_Counts", data = run_data.vel_hist_counts)
-            f.create_dataset("RealVelHist_Ranges", data = run_data.vel_hist_ranges)
-            f.create_dataset("VelStats", data = run_data.vel_stats)
-            f.create_dataset("StructureFunctionVel", data = run_data.vel_str_func)
-            f.create_dataset("StructureFunctionVelFlux", data = run_data.vel_flux_str_func)
-            
+        # with h5py.File(cmdargs.out_dir + "/Stats_HDF_Data.hdf5", "w") as f:
+        #     f.create_dataset("RealVelHist_Counts", data = stats_data.vel_hist_counts)
+        #     f.create_dataset("RealVelHist_Ranges", data = stats_data.vel_hist_ranges)
+        #     f.create_dataset("VelStats", data = stats_data.vel_stats)
+        #     f.create_dataset("StructureFunctionVel", data = stats_data.vel_str_func)
+        #     f.create_dataset("StructureFunctionVelFlux", data = stats_data.vel_flux_str_func)
+        #     
