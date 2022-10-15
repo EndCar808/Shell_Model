@@ -164,8 +164,11 @@
 // Stats parameters
 #define NUM_POW 6 				// The highest moment to compute for the structure function
 #define NUM_RUN_STATS 7 		// The number of running stats moments to record
-#define VEL_BIN_LIM	10			// The bin limits (in units of standard deviations) for the velocity histogram
-#define VEL_NUM_BINS 50			// The number of bins to use for the velocity histograms
+#define VEL_BIN_LIM	40			// The bin limits (in units of standard deviations) for the velocity histogram
+#define VEL_NUM_BINS 1000		// The number of bins to use for the velocity histograms
+// Initial Condtion parameters
+#define NO_INPUT_FILE 0 		// Indicates if system is to staart by generating initial conditions
+#define INPUT_FILE 1 			// Indicates if system is to staart from an input file
 // // Dormand Prince integrator parameters
 // #define DP_ABS_TOL 1e-7		    // The absolute error tolerance for the Dormand Prince Scheme
 // #define DP_REL_TOL 1e-7         // The relative error tolerance for the Dormand Prince Scheme
@@ -223,6 +226,9 @@ typedef struct system_vars_struct {
 	double EPS_M; 						// Defines the interaction coefficient for the MHD shell model equation
 	double k_0;							// Defines the wavenumber constant k_0
 	double Lambda;						// Defines the intershell ratio for radius of the shell wavenumber
+	int INPUT_FILE_FLAG;				// Flag to indicate if solver is to start by reading in initial condition from file
+	double eddy_turnover_time;			// Eddy turnover time is going to be defined as the max eddy turnover time during transient iterations
+	double trans_time;					// Integration time it takes to perform the transient iterations
 } system_vars_struct;
 
 // Runtime data struct

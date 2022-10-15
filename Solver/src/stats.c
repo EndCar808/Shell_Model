@@ -33,7 +33,9 @@ void ComputeStats(const long int iters, const long int save_data_indx) {
 	int n;
 	int gsl_status;
 	#if defined(__VEL_HIST)
-	double std, min, max;
+	double std = 10;
+	double min = -10;
+	double max = 10;
 	#endif
 	const long int N = sys_vars->N;
 	double vel_enrg_flux_term, vel_hel_flux_term;
@@ -61,6 +63,7 @@ void ComputeStats(const long int iters, const long int save_data_indx) {
 				// Exit programme
 				exit(1);
 			}
+			
 	    	#if defined(__MAGNETO)
 	    	gsl_status = gsl_rstat_add(creal(run_data->b[n]), stats_data->mag_moments[i]);
 		    if (gsl_status != 0) {
@@ -87,15 +90,26 @@ void ComputeStats(const long int iters, const long int save_data_indx) {
 		// Set histogram bin limits then reset running stats counters
 		if (stats_data->set_stats_flag) {
 			for (int i = 0; i < N; ++i) {
-				#if defined(__VEL_HIST)
-				// Get the standard deviation / rms
-				std = gsl_rstat_sd(stats_data->vel_moments[i]);
 
-				// Set bin ranges for the histograms -> Set (in units) of standard deviations
-				gsl_status = gsl_histogram_set_ranges_uniform(stats_data->real_vel_hist[i], -VEL_BIN_LIM * std, VEL_BIN_LIM * std);
-				if (gsl_status != 0) {
-					fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to set bin ranges for: ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Real Velocity Histogram");
-					exit(1);
+				#if defined(__VEL_HIST)
+				if (sys_vars->TRANS_ITERS_FLAG == TRANSIENT_ITERS) {
+					// Get the standard deviation / rms
+					std = gsl_rstat_sd(stats_data->vel_moments[i]);
+
+					// Set bin ranges for the histograms -> Set (in units) of standard deviations
+					gsl_status = gsl_histogram_set_ranges_uniform(stats_data->real_vel_hist[i], -VEL_BIN_LIM * std, VEL_BIN_LIM * std);
+					if (gsl_status != 0) {
+						fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to set bin ranges for: ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Real Velocity Histogram");
+						exit(1);
+					}
+				}
+				else {
+					// Set bin ranges for the histograms -> Set (in units) of standard deviations
+					gsl_status = gsl_histogram_set_ranges_uniform(stats_data->real_vel_hist[i], min - 0.05 * fabs(min), max + 0.05 * fabs(max));
+					if (gsl_status != 0) {
+						fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to set bin ranges for: ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Real Velocity Histogram");
+						exit(1);
+					}
 				}
 				#endif
 
@@ -122,7 +136,7 @@ void ComputeStats(const long int iters, const long int save_data_indx) {
 	    	gsl_status = gsl_histogram_increment(stats_data->real_vel_hist[i], creal(run_data->u[n]));
 	    	if (gsl_status != 0) {
 	    		// Print error message to error stream
-				fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to increment histogram ["CYAN"%s"RESET"] - Error Value: ["CYAN"%d"RESET"] Field Value: ["CYAN"%lf"RESET"] \n-->> Exiting!!!\n", "Real Velocity", gsl_status, creal(run_data->u[n]));
+				fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to increment histogram ["CYAN"%s"RESET"] - Error Value: ["CYAN"%d"RESET"] Field Value: ["CYAN"%lf"RESET"] Bin Limits: ["CYAN"%lf"RESET", "CYAN"%lf"RESET"]\n-->> Exiting!!!\n", "Real Velocity", gsl_status, creal(run_data->u[n]), gsl_histogram_min(stats_data->real_vel_hist[i]), gsl_histogram_max(stats_data->real_vel_hist[i]));
 
 				// Save current state of system to file before exiting
 				FinalWriteAndCloseOutputFile(N, iters, save_data_indx);
@@ -183,8 +197,8 @@ void ComputeStats(const long int iters, const long int save_data_indx) {
 
 				// Compute the moments of the fluxes
 				#if defined(__STR_FUNC_VEL_FLUX) || defined(__STR_FUNC_MAG_FLUX)
-				stats_data->vel_flux_str_func[0][p - 1][i] += pow(pow(sgn(vel_enrg_flux_term), p) * fabs(vel_enrg_flux_term), p / 3.0);
-				stats_data->vel_flux_str_func[1][p - 1][i] += pow(pow(sgn(vel_enrg_flux_term), p) * fabs(vel_hel_flux_term), p / 3.0);
+				stats_data->vel_flux_str_func[0][p - 1][i] += pow(sgn(vel_enrg_flux_term), p) * pow(fabs(vel_enrg_flux_term), p / 3.0);
+				stats_data->vel_flux_str_func[1][p - 1][i] += pow(sgn(vel_hel_flux_term), p) * pow(fabs(vel_hel_flux_term), p / 3.0);
 				stats_data->vel_flux_str_func_abs[0][p - 1][i] += pow(fabs(vel_enrg_flux_term), p / 3.0);
 				stats_data->vel_flux_str_func_abs[1][p - 1][i] += pow(fabs(vel_hel_flux_term), p / 3.0);
 	    		#if defined(__MAGNETO)

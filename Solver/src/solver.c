@@ -60,24 +60,20 @@ void Solve(void) {
 	// -------------------------------
 	// Initialize the System
 	// -------------------------------
-	// // If in testing / debug mode - create/ open test file
-	// #if defined(DEBUG)
-	// OpenTestingFile();
-	// #endif
-
 	// Initialize the collocation points and wavenumber space 
 	InitializeShellWavenumbers(run_data->k, N);
-
-	// Get initial conditions - seed for random number generator is set here
-	InitialConditions(N);
-
-	// Initialize the forcing
-	InitializeForicing(N);
 
 	// Initialize stats objects if required
 	#if defined(STATS)
 	InitializeStats();
 	#endif
+
+	// Initialize the forcing
+	InitializeForicing(N);
+	
+	// Get initial conditions - seed for random number generator is set here
+	// If input file is selected the function to read input file is called from here
+	InitialConditions(N);
 
 	// -------------------------------
 	// Integration Variables
@@ -130,6 +126,16 @@ void Solve(void) {
 		#endif
 		#if defined(AB4CN)
 		AB4CNStep(dt, (long int)iters, N, RK_data);
+		#endif
+
+		// -------------------------------
+		// Compute System Quantities
+		// -------------------------------
+		// Compute stats
+		#if defined(STATS)
+		if (iters < trans_steps) {
+			ComputeStats(iters, save_data_indx);
+		}
 		#endif
 
 		// -------------------------------
@@ -206,11 +212,15 @@ void Solve(void) {
 	// Final Writes to Output File
 	// -------------------------------
 	// Write the final state to file if it hasn't been printed already
-	if (save_data_indx == sys_vars->num_print_steps) {
-		WriteDataToFile(t, iters, save_data_indx - 1);
+	if (save_data_indx < sys_vars->num_print_steps) {
+		printf("\n\n...Writing Final State To File!\n\n");
+		WriteDataToFile(t, iters, sys_vars->num_print_steps - 1);
 	}
+	// Compute System Measures on final state
+	ComputeSystemMeasurables(t, sys_vars->num_print_steps - 1, RK_data);
+
 	// Write the stats and system measures to file
-	FinalWriteAndCloseOutputFile(N, iters, save_data_indx);
+	FinalWriteAndCloseOutputFile(N, iters, sys_vars->num_print_steps - 1);
 
 	// -------------------------------
 	// Clean Up 
@@ -801,187 +811,197 @@ void InitialConditions(const long int N) {
 	#if defined(__MAGNETO)
 	double r2, r4;
 	#endif
-	
+
 	// ------------------------------------------------
-    // Set Seed for RNG
+    // Check if Reading From Input File
     // ------------------------------------------------
-    srand(123456789);
+    if (sys_vars->INPUT_FILE_FLAG == INPUT_FILE) {
+		// ------------------------------------------------
+	    // Read in Initial Condition From File
+	    // ------------------------------------------------
+	    ReadInputFile(N);
+    }	
+    else {
+		// ------------------------------------------------
+	    // Set Seed for RNG
+	    // ------------------------------------------------
+	    srand(123456789);
 
+		for (int i = 0; i < N + 4; ++i) {
 
-	for (int i = 0; i < N + 4; ++i) {
-
-		// Initialize the edges shells
-		if (i < 2 || i > N + 1) {
-			run_data->u[i] = 0.0 + 0.0 * I;
-
-			#if defined(PHASE_ONLY)
-			// Record the phases and amplitudes
-			run_data->a_n[i]   = 0.0;
-			run_data->phi_n[i] = 0.0;
-			#endif
-			#if defined(PHASE_ONLY_DIRECT)
-			run_data->a_n[i]   = 0.0;
-			run_data->phi_n[i] = 0.0;
-			#endif
-			#if defined(__MAGNETO)
-			// Initialize the magnetic field
-			run_data->b[i] = 0.0 + 0.0 * I;
-			#if defined(PHASE_ONLY)
-			// Record the phases and amplitudes
-			run_data->b_n[i]   = 0.0;
-			run_data->psi_n[i] = 0.0;
-			#endif
-			#if defined(PHASE_ONLY_DIRECT)
-			run_data->b_n[i]   = 0.0;
-			run_data->psi_n[i] = 0.0;
-			#endif
-			#endif
-		}
-		// Initialize the interior shells
-		else {
-			if(!(strcmp(sys_vars->u0, "N_SCALING"))) {
-				// ------------------------------------------------
-				// Scaling in N Initial Condition
-				// ------------------------------------------------
-				// Initialize the velocity field
-				run_data->u[i] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) * cexp(I * pow(i - 1, 2.0)) / sqrt(75);
-				#if defined(PHASE_ONLY)
-				// Record the phases and amplitudes
-				run_data->a_n[i]   = cabs(run_data->u[i]);
-				run_data->phi_n[i] = carg(run_data->u[i]);
-				#endif
-				#if defined(PHASE_ONLY_DIRECT)
-				run_data->a_n[i]   = (1.0 / pow(run_data->k[i], sys_vars->ALPHA)) / sqrt(75);
-				run_data->phi_n[i] = pow(i - 1, 2.0);
-				#endif
-
-				#if defined(__MAGNETO)
-				// Initialize the magnetic field
-				run_data->b[i] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * cexp(I * pow(i - 1, 4.0)) * 1e-2;
-				#if defined(PHASE_ONLY)
-				// Record the phases and amplitudes
-				run_data->b_n[i]   = cabs(run_data->b[i]);
-				run_data->psi_n[i] = carg(run_data->b[i]);
-				#endif
-				#if defined(PHASE_ONLY_DIRECT)
-				run_data->b_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-2;
-				run_data->psi_n[i] = pow(i - 1, 4.0);
-				#endif
-				#endif
-			}
-			else if(!(strcmp(sys_vars->u0, "RANDOM"))) {
-				// ------------------------------------------------
-				// Default - Random Initial Conditions
-				// ------------------------------------------------	
-				// Get random uniform number
-				r1 = (double)rand() / (double)RAND_MAX;
-				#if defined(__MAGNETO)
-				r2 = (double)rand() / (double)RAND_MAX;
-				#endif
-
-				// Initialize the velocity field
-				run_data->u[i] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) * cexp(I * r1 * 2.0 * M_PI) / sqrt(100);
+			// Initialize the edges shells
+			if (i < 2 || i > N + 1) {
+				run_data->u[i] = 0.0 + 0.0 * I;
 
 				#if defined(PHASE_ONLY)
 				// Record the phases and amplitudes
-				run_data->a_n[i]   = cabs(run_data->u[i]);
-				run_data->phi_n[i] = carg(run_data->u[i]);
-				#endif
-				#if defined(PHASE_ONLY_DIRECT)
-				run_data->a_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->ALPHA);
-				run_data->phi_n[i] = r1 * 2.0 * M_PI;
-				#endif
-
-				#if defined(__MAGNETO)
-				// Initialize the magnetic field
-				run_data->b[i] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * cexp(I * r2 * 2.0 * M_PI) * 1e-2;
-				#if defined(PHASE_ONLY)
-				// Record the phases and amplitudes
-				run_data->b_n[i]   = cabs(run_data->b[i]);
-				run_data->psi_n[i] = carg(run_data->b[i]);
-				#endif
-				#if defined(PHASE_ONLY_DIRECT)
-				run_data->b_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-2;
-				run_data->psi_n[i] = r2 * 2.0 * M_PI;
-				#endif
-				#endif
-			}
-			else if(!(strcmp(sys_vars->u0, "ZERO"))) {
-				// ------------------------------------------------
-				// Zero Initial Conditions
-				// ------------------------------------------------	
-				// Initialize the velocity field
-				run_data->u[i] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA);
-
-				#if defined(PHASE_ONLY)
-				// Record the phases and amplitudes
-				run_data->a_n[i]   = cabs(run_data->u[i]);
-				run_data->phi_n[i] = carg(run_data->u[i]);
-				#endif
-				#if defined(PHASE_ONLY_DIRECT)
-				run_data->a_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->ALPHA);
+				run_data->a_n[i]   = 0.0;
 				run_data->phi_n[i] = 0.0;
 				#endif
-
+				#if defined(PHASE_ONLY_DIRECT)
+				run_data->a_n[i]   = 0.0;
+				run_data->phi_n[i] = 0.0;
+				#endif
 				#if defined(__MAGNETO)
 				// Initialize the magnetic field
-				run_data->b[i] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-2;
+				run_data->b[i] = 0.0 + 0.0 * I;
 				#if defined(PHASE_ONLY)
 				// Record the phases and amplitudes
-				run_data->b_n[i]   = cabs(run_data->b[i]);
-				run_data->psi_n[i] = carg(run_data->b[i]);
+				run_data->b_n[i]   = 0.0;
+				run_data->psi_n[i] = 0.0;
 				#endif
 				#if defined(PHASE_ONLY_DIRECT)
-				run_data->b_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-2;
+				run_data->b_n[i]   = 0.0;
 				run_data->psi_n[i] = 0.0;
 				#endif
 				#endif
 			}
+			// Initialize the interior shells
 			else {
-				// ------------------------------------------------
-				// Default - Pure Random Initial Conditions
-				// ------------------------------------------------
-				// Get random uniform number
-				r1 = (double)rand() / (double)RAND_MAX;
-				r3 = (double)rand() / (double)RAND_MAX;
-				#if defined(__MAGNETO)
-				r2 = (double)rand() / (double)RAND_MAX;
-				r4 = (double)rand() / (double)RAND_MAX;
-				#endif
+				if(!(strcmp(sys_vars->u0, "N_SCALING"))) {
+					// ------------------------------------------------
+					// Scaling in N Initial Condition
+					// ------------------------------------------------
+					// Initialize the velocity field
+					run_data->u[i] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) * cexp(I * pow(i - 1, 2.0)) / sqrt(75);
+					#if defined(PHASE_ONLY)
+					// Record the phases and amplitudes
+					run_data->a_n[i]   = cabs(run_data->u[i]);
+					run_data->phi_n[i] = carg(run_data->u[i]);
+					#endif
+					#if defined(PHASE_ONLY_DIRECT)
+					run_data->a_n[i]   = (1.0 / pow(run_data->k[i], sys_vars->ALPHA)) / sqrt(75);
+					run_data->phi_n[i] = pow(i - 1, 2.0);
+					#endif
 
-				// Initialize the velocity field
-				run_data->u[i] = r1 + r3 * I;
+					#if defined(__MAGNETO)
+					// Initialize the magnetic field
+					run_data->b[i] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * cexp(I * pow(i - 1, 4.0)) * 1e-2;
+					#if defined(PHASE_ONLY)
+					// Record the phases and amplitudes
+					run_data->b_n[i]   = cabs(run_data->b[i]);
+					run_data->psi_n[i] = carg(run_data->b[i]);
+					#endif
+					#if defined(PHASE_ONLY_DIRECT)
+					run_data->b_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-2;
+					run_data->psi_n[i] = pow(i - 1, 4.0);
+					#endif
+					#endif
+				}
+				else if(!(strcmp(sys_vars->u0, "RANDOM"))) {
+					// ------------------------------------------------
+					// Default - Random Initial Conditions
+					// ------------------------------------------------	
+					// Get random uniform number
+					r1 = (double)rand() / (double)RAND_MAX;
+					#if defined(__MAGNETO)
+					r2 = (double)rand() / (double)RAND_MAX;
+					#endif
 
-				#if defined(PHASE_ONLY)
-				// Record the phases and amplitudes
-				run_data->a_n[i]   = cabs(run_data->u[i]);
-				run_data->phi_n[i] = carg(run_data->u[i]);
-				#endif
-				#if defined(PHASE_ONLY_DIRECT)
-				run_data->a_n[i]   = r1;
-				run_data->phi_n[i] = r3;
-				#endif
+					// Initialize the velocity field
+					run_data->u[i] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) * cexp(I * r1 * 2.0 * M_PI) / sqrt(100);
 
-				#if defined(__MAGNETO)
-				// Initialize the magnetic field
-				run_data->b[i] = (r2 + r4) * 1e-2;
-				#if defined(PHASE_ONLY)
-				// Record the phases and amplitudes
-				run_data->b_n[i]   = cabs(run_data->b[i]);
-				run_data->psi_n[i] = carg(run_data->b[i]);
-				#endif
-				#if defined(PHASE_ONLY_DIRECT)
-				run_data->b_n[i]   = r2;
-				run_data->psi_n[i] = r4;
-				#endif
-				#endif
+					#if defined(PHASE_ONLY)
+					// Record the phases and amplitudes
+					run_data->a_n[i]   = cabs(run_data->u[i]);
+					run_data->phi_n[i] = carg(run_data->u[i]);
+					#endif
+					#if defined(PHASE_ONLY_DIRECT)
+					run_data->a_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->ALPHA);
+					run_data->phi_n[i] = r1 * 2.0 * M_PI;
+					#endif
+
+					#if defined(__MAGNETO)
+					// Initialize the magnetic field
+					run_data->b[i] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * cexp(I * r2 * 2.0 * M_PI) * 1e-2;
+					#if defined(PHASE_ONLY)
+					// Record the phases and amplitudes
+					run_data->b_n[i]   = cabs(run_data->b[i]);
+					run_data->psi_n[i] = carg(run_data->b[i]);
+					#endif
+					#if defined(PHASE_ONLY_DIRECT)
+					run_data->b_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-2;
+					run_data->psi_n[i] = r2 * 2.0 * M_PI;
+					#endif
+					#endif
+				}
+				else if(!(strcmp(sys_vars->u0, "ZERO"))) {
+					// ------------------------------------------------
+					// Zero Initial Conditions
+					// ------------------------------------------------	
+					// Initialize the velocity field
+					run_data->u[i] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA);
+
+					#if defined(PHASE_ONLY)
+					// Record the phases and amplitudes
+					run_data->a_n[i]   = cabs(run_data->u[i]);
+					run_data->phi_n[i] = carg(run_data->u[i]);
+					#endif
+					#if defined(PHASE_ONLY_DIRECT)
+					run_data->a_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->ALPHA);
+					run_data->phi_n[i] = 0.0;
+					#endif
+
+					#if defined(__MAGNETO)
+					// Initialize the magnetic field
+					run_data->b[i] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-2;
+					#if defined(PHASE_ONLY)
+					// Record the phases and amplitudes
+					run_data->b_n[i]   = cabs(run_data->b[i]);
+					run_data->psi_n[i] = carg(run_data->b[i]);
+					#endif
+					#if defined(PHASE_ONLY_DIRECT)
+					run_data->b_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-2;
+					run_data->psi_n[i] = 0.0;
+					#endif
+					#endif
+				}
+				else {
+					// ------------------------------------------------
+					// Default - Pure Random Initial Conditions
+					// ------------------------------------------------
+					// Get random uniform number
+					r1 = (double)rand() / (double)RAND_MAX;
+					r3 = (double)rand() / (double)RAND_MAX;
+					#if defined(__MAGNETO)
+					r2 = (double)rand() / (double)RAND_MAX;
+					r4 = (double)rand() / (double)RAND_MAX;
+					#endif
+
+					// Initialize the velocity field
+					run_data->u[i] = r1 + r3 * I;
+
+					#if defined(PHASE_ONLY)
+					// Record the phases and amplitudes
+					run_data->a_n[i]   = cabs(run_data->u[i]);
+					run_data->phi_n[i] = carg(run_data->u[i]);
+					#endif
+					#if defined(PHASE_ONLY_DIRECT)
+					run_data->a_n[i]   = r1;
+					run_data->phi_n[i] = r3;
+					#endif
+
+					#if defined(__MAGNETO)
+					// Initialize the magnetic field
+					run_data->b[i] = (r2 + r4) * 1e-2;
+					#if defined(PHASE_ONLY)
+					// Record the phases and amplitudes
+					run_data->b_n[i]   = cabs(run_data->b[i]);
+					run_data->psi_n[i] = carg(run_data->b[i]);
+					#endif
+					#if defined(PHASE_ONLY_DIRECT)
+					run_data->b_n[i]   = r2;
+					run_data->psi_n[i] = r4;
+					#endif
+					#endif
+				}
 			}
+			// printf("u[%d]:\t%1.16lf\t%1.16lf i\tb[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]),  i - 1, creal(run_data->b[i]), cimag(run_data->b[i]));		
+			// printf("a_n[%d]:\t%1.16lf\tphi[%d]:\t%1.16lf\tb_n[%d]:\t%1.16lf\tpsi[%d]:\t%1.16lf\n", i, run_data->a_n[i], i, run_data->phi_n[i], i, run_data->b_n[i], i, run_data->psi_n[i]);
+			// printf("a_n[%d]:\t%1.16lf\tphi[%d]:\t%1.16lf\n", i - 1, run_data->a_n[i], i - 1, run_data->phi_n[i]);
 		}
-		// printf("u[%d]:\t%1.16lf\t%1.16lf i\tb[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]),  i - 1, creal(run_data->b[i]), cimag(run_data->b[i]));		
-		// printf("a_n[%d]:\t%1.16lf\tphi[%d]:\t%1.16lf\tb_n[%d]:\t%1.16lf\tpsi[%d]:\t%1.16lf\n", i, run_data->a_n[i], i, run_data->phi_n[i], i, run_data->b_n[i], i, run_data->psi_n[i]);
-		// printf("a_n[%d]:\t%1.16lf\tphi[%d]:\t%1.16lf\n", i - 1, run_data->a_n[i], i - 1, run_data->phi_n[i]);
-	}
-	// printf("\n");
+		// printf("\n");
+    }
 }
 /**
  * Function to initialize the shell wavenumber array
@@ -1122,9 +1142,9 @@ void InitializeIntegrationVariables(double* t0, double* t, double* dt, double* T
 	sys_vars->num_t_steps = (long int)round(tmp_num_t_steps);
 	if (sys_vars->TRANS_ITERS_FLAG == TRANSIENT_ITERS) {
 		// Get the transient iterations
-		(* trans_steps)       = (long int)(sys_vars->TRANS_ITERS_FRAC * tmp_num_t_steps);
+		(* trans_steps)       = (long int)round(sys_vars->TRANS_ITERS_FRAC * tmp_num_t_steps);
 		sys_vars->trans_iters = (* trans_steps);
-
+		sys_vars->trans_time  = (* trans_steps) * (* dt);
 
 		// Get the number of steps to perform before printing to file -> allowing for a transient fraction of these to be ignored
 		sys_vars->num_print_steps = (sys_vars->num_t_steps >= sys_vars->SAVE_EVERY ) ? (sys_vars->num_t_steps - sys_vars->trans_iters) / sys_vars->SAVE_EVERY  + 1: sys_vars->num_t_steps - sys_vars->trans_iters + 1;	 
@@ -1134,12 +1154,13 @@ void InitializeIntegrationVariables(double* t0, double* t, double* dt, double* T
 		// Get the transient iterations 
 		(* trans_steps)       = 0;
 		sys_vars->trans_iters = (* trans_steps);
+		sys_vars->trans_time  = (* trans_steps) * (* dt);
 
 
 		// Get the number of steps to perform before printing to file
 		sys_vars->num_print_steps = (sys_vars->num_t_steps >= sys_vars->SAVE_EVERY ) ? sys_vars->num_t_steps / sys_vars->SAVE_EVERY + 1: sys_vars->num_t_steps + 1; // plus one to include initial condition
 		printf("Total Iters: %ld\t Saving Iters: %ld\n", sys_vars->num_t_steps, sys_vars->num_print_steps);
-		printf("\n\nT:%1.16lf,t0:%1.16lf,dt:%1.16lf--numt:%1.16lf\tround(numt):%1.16lf\ttrans_frac:%1.16lf\ttans:%1.16lf\ttrans:%ld NUm_print: %ld\n\n", (*T), (*t0), (*dt), ((*T) - (*t0)) / (*dt), round(((*T) - (*t0)) / (*dt)), sys_vars->TRANS_ITERS_FRAC, (sys_vars->TRANS_ITERS_FRAC * (double)tmp_num_t_steps), (*trans_steps), sys_vars->num_print_steps);
+		// printf("\n\nT:%1.16lf,t0:%1.16lf,dt:%1.16lf--numt:%1.16lf\tround(numt):%1.16lf\ttrans_frac:%1.16lf\ttans:%1.16lf\ttrans:%ld NUm_print: %ld\n\n", (*T), (*t0), (*dt), ((*T) - (*t0)) / (*dt), round(((*T) - (*t0)) / (*dt)), sys_vars->TRANS_ITERS_FRAC, (sys_vars->TRANS_ITERS_FRAC * (double)tmp_num_t_steps), (*trans_steps), sys_vars->num_print_steps);
 	}
 
 	// Variable to control how ofter to print to screen -> set it to half the saving to file steps
@@ -1157,11 +1178,20 @@ void PrintUpdateToTerminal(long int iters, double t, double dt, double T, long i
 
 	// Initialize variables
 	
-	#if defined(__MAGNETO)
-	printf("Iter: %ld/%ld\tt: %1.6lf/%1.3lf\tdt: %1.6g\tKE: %6.6g\tHEL_U: %6.6g\tHEL_B: %6.6g\tX-HEL: %6.6g\n", iters, sys_vars->num_t_steps, t, T, dt, run_data->tot_energy[save_data_indx], run_data->tot_hel_u[save_data_indx], run_data->tot_hel_b[save_data_indx], run_data->tot_cross_hel[save_data_indx]);
-	#else
-	printf("Iter: %ld/%ld\tt: %1.6lf/%1.3lf\tdt: %1.6g\tKE: %6.6g\tHEL: %6.6g\t\n", iters, sys_vars->num_t_steps, t, T, dt, run_data->tot_energy[save_data_indx], run_data->tot_hel_u[save_data_indx]);
-	#endif
+	if (iters < sys_vars->trans_iters) {
+		#if defined(__MAGNETO)
+		printf("Iter: %1.3g / %1.1g\tt: %1.6lf / %1.3lf\ttau_0: %1.2lf\tdt: %1.6g\tKE: %6.6g\tHEL_U: %6.6g\tHEL_B: %6.6g\tX-HEL: %6.6g\n", (double)iters, (double)sys_vars->num_t_steps, t, T, sys_vars->eddy_turnover_time, dt, run_data->tot_energy[save_data_indx], run_data->tot_hel_u[save_data_indx], run_data->tot_hel_b[save_data_indx], run_data->tot_cross_hel[save_data_indx]);
+		#else
+		printf("Iter: %1.3g / %1.1g\tt: %1.6lf / %1.3lf\ttau_0: %1.2lf\tdt: %1.6g\tKE: %6.6g\tHEL: %6.6g\t\n", (double)iters, (double)sys_vars->num_t_steps, t, T, sys_vars->eddy_turnover_time, dt, run_data->tot_energy[save_data_indx], run_data->tot_hel_u[save_data_indx]);
+		#endif
+	}
+	else {
+		#if defined(__MAGNETO)
+		printf("Iter: %1.3g / %1.1g\tt: %1.6lf / %1.3lf\ttau: %1.2lftau_0 / %1.2lftau_0\ttau_0: %1.2lf\tdt: %1.6g\tKE: %6.6g\tHEL_U: %6.6g\tHEL_B: %6.6g\tX-HEL: %6.6g\n", (double)iters, (double)sys_vars->num_t_steps, t, T, (t - sys_vars->trans_time)/sys_vars->eddy_turnover_time, (T - sys_vars->trans_time)/sys_vars->eddy_turnover_time, sys_vars->eddy_turnover_time, dt, run_data->tot_energy[save_data_indx], run_data->tot_hel_u[save_data_indx], run_data->tot_hel_b[save_data_indx], run_data->tot_cross_hel[save_data_indx]);
+		#else
+		printf("Iter: %1.3g / %1.1g\tt: %1.6lf / %1.3lf\ttau: %1.2lftau_0 / %1.2lftau_0\ttau_0: %1.2lf\tdt: %1.6g\tKE: %6.6g\tHEL: %6.6g\t\n", (double)iters, (double)sys_vars->num_t_steps, t, T, (t - sys_vars->trans_time)/sys_vars->eddy_turnover_time, (T - sys_vars->trans_time)/sys_vars->eddy_turnover_time, sys_vars->eddy_turnover_time, dt, run_data->tot_energy[save_data_indx], run_data->tot_hel_u[save_data_indx]);
+		#endif
+	}
 }
 /**
  * Function that checks the system to see if it is ok to continue integrations. Checks for blow up, timestep and iteration limits etc

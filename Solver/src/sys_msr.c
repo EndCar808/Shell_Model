@@ -269,6 +269,11 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
 
         // Compute the Kolmogorov Lenght Scale
         run_data->kolmogorov_scale[iter] = pow(pow(sys_vars->NU, 3.0) / run_data->tot_diss[iter], 1.0 / 4.0);
+
+        // Eddy turnover time -> max of l / U during the transient iterations
+        if (iter < sys_vars->trans_iters) {
+            sys_vars->eddy_turnover_time = fmax(sys_vars->eddy_turnover_time, run_data->int_scale[iter] / run_data->u_charact[iter]);
+        }
     }
     #endif
 

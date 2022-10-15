@@ -193,7 +193,7 @@ void CreateOutputFilesWriteICs(const long int N) {
 		#endif
 		#if defined(__DISS_SPECT)
 		// Dissipation Spectrum
-		WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_DISS_SPECT], file_info->data_set[DSET_DISS_SPECT], file_info->mem_space[DSET_DISS_SPECT], H5T_NATIVE_DOUBLE, run_data->diss_spect, "DissiaptionSpectrum", N, 0);
+		WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_DISS_SPECT], file_info->data_set[DSET_DISS_SPECT], file_info->mem_space[DSET_DISS_SPECT], H5T_NATIVE_DOUBLE, run_data->diss_spect, "DissipationSpectrum", N, 0);
 		#endif
 
 		///--------------------------------------- Energy Flux
@@ -438,7 +438,7 @@ void WriteDataToFile(double t, const long int iters, const long int save_indx) {
 		}
 	}
 	else {
-		// Open file with parallel I/O access properties
+		// Open file with serial I/O access properties
 		file_info->output_file_handle = H5Fopen(file_info->output_file_name, H5F_ACC_RDWR, H5P_DEFAULT);
 		if (file_info->output_file_handle < 0) {
 			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to open output file ["CYAN"%s"RESET"] at: Iter = ["CYAN"%ld"RESET"] t = ["CYAN"%lf"RESET"]\n-->> Exiting...\n", file_info->output_file_name, iters, t);
@@ -492,11 +492,11 @@ void WriteDataToFile(double t, const long int iters, const long int save_indx) {
 	///--------------------------------------- Energy Spectrum
 	#if defined(__ENRG_SPECT)
 	// Energy Spectrum
-	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_ENRG_SPECT], file_info->data_set[DSET_ENRG_SPECT], file_info->mem_space[DSET_ENRG_SPECT], H5T_NATIVE_DOUBLE, run_data->energy_spect, "EnergySpectrum", sys_vars->N, 0);
+	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_ENRG_SPECT], file_info->data_set[DSET_ENRG_SPECT], file_info->mem_space[DSET_ENRG_SPECT], H5T_NATIVE_DOUBLE, run_data->energy_spect, "EnergySpectrum", sys_vars->N, save_indx);
 	#endif
 	#if defined(__ENRG_SPECT)
 	// Dissipation Spectrum
-	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_DISS_SPECT], file_info->data_set[DSET_DISS_SPECT], file_info->mem_space[DSET_DISS_SPECT], H5T_NATIVE_DOUBLE, run_data->diss_spect, "EnergySpectrum", sys_vars->N, 0);
+	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_DISS_SPECT], file_info->data_set[DSET_DISS_SPECT], file_info->mem_space[DSET_DISS_SPECT], H5T_NATIVE_DOUBLE, run_data->diss_spect, "DissipationSpectrum", sys_vars->N, save_indx);
 	#endif
 
 	///--------------------------------------- Energy Flux
@@ -522,6 +522,125 @@ void WriteDataToFile(double t, const long int iters, const long int save_indx) {
 	status = H5Fclose(file_info->output_file_handle);
 	if (status < 0) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to close output file ["CYAN"%s"RESET"] at: Iter = ["CYAN"%ld"RESET"] t = ["CYAN"%lf"RESET"]\n-->> Exiting...\n", file_info->output_file_name, iters, t);
+		exit(1);
+	}
+}
+
+void ReadInputFile(const long int N) {
+
+	// Initialize variables
+	int n;
+	herr_t status;
+
+	// -------------------------------
+	// Open Input File
+	// -------------------------------
+	// Open file with serial I/O access properties
+	file_info->input_file_handle = H5Fopen(file_info->input_file_name, H5F_ACC_RDWR, H5P_DEFAULT);
+	if (file_info->input_file_handle < 0) {
+		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to open input file ["CYAN"%s"RESET"]\n-->> Exiting...\n", file_info->input_file_name);
+		exit(1);
+	}
+
+	// -------------------------------
+	// Read In Initial Condition
+	// -------------------------------
+	#if defined(PHASE_ONLY_DIRECT)
+	///----------------------------- Read in initial velocity amps and phases
+	// Create tmp array to read in data
+	double* tmp_u_amp = (double* )fftw_malloc(sizeof(double) * N);
+	if ( (H5LTread_dataset(file_info->stats_file_handle, "VelAmps", H5T_NATIVE_DOUBLE, tmp_u_amp)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelAmps");
+	}
+	double* tmp_u_phase = (double* )fftw_malloc(sizeof(double) * N);
+	if ( (H5LTread_dataset(file_info->stats_file_handle, "VelPhases", H5T_NATIVE_DOUBLE, tmp_u_phase)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelPhases");
+	}
+	
+	// Write tmp array to velocity modes / mode amplitudes and phases
+	for (int i = 0; i < N; ++i) {
+		n = i + 2;
+		run_data->a_n[n]   = tmp_u_amp[i];
+		run_data->phi_n[n] = tmp_u_phase[i];
+	}
+
+	// Free temp memory
+	fftw_free(tmp_u_amp);
+	fftw_free(tmp_u_phase);
+
+	#if defined(__MAGNETO)
+	///----------------------------- Read in initial magnetic amps and phases
+	// Create tmp array to read in data
+	double* tmp_b_amp = (double* )fftw_malloc(sizeof(double) * N);
+	if ( (H5LTread_dataset(file_info->stats_file_handle, "MagAmps", H5T_NATIVE_DOUBLE, tmp_b_amp)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "MagAmps");
+	}
+	double* tmp_b_phase = (double* )fftw_malloc(sizeof(double) * N);
+	if ( (H5LTread_dataset(file_info->stats_file_handle, "MagPhases", H5T_NATIVE_DOUBLE, tmp_b_phase)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "MagPhases");
+	}
+	
+	// Write tmp array to magnetic modes / mode amplitudes and phases
+	for (int i = 0; i < N; ++i) {
+		n = i + 2;
+		run_data->b_n[n]   = tmp_b_amp[i];
+		run_data->psi_n[n] = tmp_b_phase[i];
+	}
+
+	// Free temp memory
+	fftw_free(tmp_b_amp);
+	fftw_free(tmp_b_phase);
+	#endif
+	#else
+	///----------------------------- Read in initial velocity modes
+	// Create tmp array to read in data
+	fftw_complex* tmp_u = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * N);
+	if ( (H5LTread_dataset(file_info->stats_file_handle, "VelModes", H5T_NATIVE_DOUBLE, tmp_u)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelModes");
+	}
+	
+	// Write tmp_u array to velocity modes / mode amplitudes and phases
+	for (int i = 0; i < N; ++i) {
+		n = i + 2;
+		run_data->u[n] = tmp_u[i];
+		#if defined(PHASE_ONLY)
+		run_data->a_n[n]   = cabs(tmp_u[i]);
+		run_data->phi_n[n] = carg(tmp_u[i]);
+		#endif
+	}
+
+	// Free temp memory
+	fftw_free(tmp_u);
+
+	#if defined(__MAGNETO)
+	///----------------------------- Read in initial magnetic modes
+	// Create tmp array to read in data
+	fftw_complex* tmp_b = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * N);
+	if ( (H5LTread_dataset(file_info->stats_file_handle, "MagModes", H5T_NATIVE_DOUBLE, tmp_b)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "MagModes");
+	}
+	
+	// Write tmp_b array to magnetic modes / mode amplitudes and phases
+	for (int i = 0; i < N; ++i) {
+		n = i + 2;
+		run_data->b[n] = tmp_b[i];
+		#if defined(PHASE_ONLY)
+		run_data->b_n[n]   = cabs(tmp_b[i]);
+		run_data->psi_n[n] = carg(tmp_b[i]);
+		#endif
+	}
+
+	// Free temp memory
+	fftw_free(tmp_b);
+	#endif	
+	#endif
+
+	// -------------------------------
+	// Close identifiers and File
+	// -------------------------------
+	status = H5Fclose(file_info->input_file_handle);
+	if (status < 0) {
+		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to close input file ["CYAN"%s"RESET"]\n-->> Exiting...\n", file_info->input_file_name);
 		exit(1);
 	}
 }

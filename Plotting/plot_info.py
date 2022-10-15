@@ -47,10 +47,9 @@ def parse_cml(argv):
         Class for command line arguments
         """
 
-        def __init__(self, in_dir = None, out_dir = None, in_file = None, num_procs = 20, parallel = False, plotting = False, video = False, triads = False, phases = False, triad_type = None, full = False):
+        def __init__(self, in_dir = None, out_dir = None, info_dir = None, plotting = False):
             self.in_dir         = in_dir
-            self.out_dir_phases = out_dir
-            self.out_dir_triads = out_dir
+            self.out_dir_info   = out_dir
             self.in_file        = out_dir
             self.plotting       = plotting
             self.tag = "None"
@@ -125,7 +124,11 @@ if __name__ == '__main__':
     ## Read in sys_msr data
     sys_msr_data = import_sys_msr_data(data_file_path, sys_vars, method)
 
-
+    ## Make output folder for Run Info plots
+    cmdargs.out_dir_info = cmdargs.out_dir + "RUN_INFO_PLOTS/"
+    if os.path.isdir(cmdargs.out_dir_info) != True:
+        print("Making folder:" + tc.C + " RUN_INFO_PLOTS/" + tc.Rst)
+        os.mkdir(cmdargs.out_dir_info)
     # -----------------------------------------
     # # --------  Compute Post data
     # -----------------------------------------
@@ -142,47 +145,61 @@ if __name__ == '__main__':
     if cmdargs.plotting is True:
         ##-------------- Plot System Measures
         fig = plt.figure(figsize = (32, 8))
-        gs  = GridSpec(2, 4)
+        gs  = GridSpec(2, 4, hspace = 0.35)
         ax1 = fig.add_subplot(gs[0, 0])
-        ax1.plot(sys_msr_data.time[:-1], sys_msr_data.tot_diss[:-1] / sys_msr_data.tot_diss[0] - 1)
+        ax1.plot(sys_msr_data.time, sys_msr_data.tot_diss / sys_msr_data.tot_diss[0] - 1)
         ax1.set_xlabel(r"$t$")
         ax1.set_yscale('log')
         ax1.set_title(r"Relative Dissipation")
         ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
         ax2 = fig.add_subplot(gs[1, 0])
-        ax2.plot(sys_msr_data.time[:-1], sys_msr_data.tot_diss[:-1])
+        ax2.plot(sys_msr_data.time, sys_msr_data.tot_diss)
         ax2.set_xlabel(r"$t$")
         ax1.set_yscale('log')
         ax2.set_title(r"Total Dissipation")
         ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
         ax3 = fig.add_subplot(gs[0, 1])
-        ax3.plot(sys_msr_data.time[:-1], sys_msr_data.u_charact[:-1])
+        ax3.plot(sys_msr_data.time, sys_msr_data.u_charact)
         ax3.set_xlabel(r"$t$")
         ax3.set_title(r"Characterisitic Velocity")
         ax3.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
         ax4 = fig.add_subplot(gs[0, 2])
-        ax4.plot(sys_msr_data.time[:-1], sys_msr_data.int_scale[:-1])
+        ax4.plot(sys_msr_data.time, sys_msr_data.int_scale)
         ax4.set_xlabel(r"$t$")
         ax4.set_title(r"Integral Length Scale")
         ax4.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
         ax4 = fig.add_subplot(gs[0, 3])
-        ax4.plot(sys_msr_data.time[:-1], sys_msr_data.taylor_micro_scale[:-1])
+        ax4.plot(sys_msr_data.time, sys_msr_data.taylor_micro_scale)
         ax4.set_xlabel(r"$t$")
         ax4.set_title(r"Taylor Micro Scale")
         ax4.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
         ax4 = fig.add_subplot(gs[1, 1])
-        ax4.plot(sys_msr_data.time[:-1], sys_msr_data.reynolds_no[:-1])
+        ax4.plot(sys_msr_data.time, sys_msr_data.reynolds_no)
         ax4.set_xlabel(r"$t$")
-        ax4.set_title(r"Taylor Micro Scale")
+        ax4.set_title(r"Reynolds No.")
         ax4.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
         ax4 = fig.add_subplot(gs[1, 2])
-        ax4.plot(sys_msr_data.time[:-1], sys_msr_data.int_scale[:-1] / sys_msr_data.u_charact[:-1])
+        ax4.plot(sys_msr_data.time, sys_msr_data.int_scale / sys_msr_data.u_charact, label = "$\ell / U_{rms}$")
+        ax4.plot(sys_msr_data.time, 1 / sys_msr_data.tot_diss, label = "$k / \epsilon$")
+        ax4.plot(sys_msr_data.time, sys_msr_data.u_charact / sys_msr_data.tot_diss, label = "$U_{rms} / \epsilon$")
+        ax4.plot(sys_msr_data.time, 1 / sys_msr_data.u_charact, label = "$1 / U_{rms}$") ## shouled be 1 / (U k)
         ax4.set_xlabel(r"$t$")
-        ax4.set_title(r"Taylor Micro Scale")
+        ax4.set_title(r"Eddy Turn Over Time")
+        ax4.set_yscale('log')
+        ax4.legend()
+        ax4.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        ax4 = fig.add_subplot(gs[1, 3])
+        ax4.plot(sys_msr_data.time, sys_msr_data.int_scale / sys_msr_data.u_charact, label = "$\ell / U_{rms}$")
+        ax4.plot(sys_msr_data.time, 1 / sys_msr_data.tot_diss, label = "$k / \epsilon$")
+        ax4.plot(sys_msr_data.time, sys_msr_data.u_charact / sys_msr_data.tot_diss, label = "$U_{rms} / \epsilon$")
+        ax4.plot(sys_msr_data.time, 1 / sys_msr_data.u_charact, label = "$1 / U_{rms}$")  ## shouled be 1 / (U k)
+        ax4.set_xlabel(r"$t$")
+        ax4.set_title(r"Eddy Turn Over Time")
+        ax4.legend()
         ax4.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
 
 
-        plt.savefig(cmdargs.out_dir + "System_Measures.png")
+        plt.savefig(cmdargs.out_dir_info + "System_Measures.png", bbox_inches='tight')
         plt.close()
 
         ##-------------- Plot Conserved quntities
@@ -243,29 +260,31 @@ if __name__ == '__main__':
             ax3.set_title(r"Total Cross Helicity")
             ax3.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
 
-        plt.savefig(cmdargs.out_dir + "Quadratic_Invariants.png")
+        plt.savefig(cmdargs.out_dir_info + "Quadratic_Invariants.png", bbox_inches='tight')
         plt.close()
 
         ##-------------- Plot the Spectra
         fig = plt.figure(figsize = (16, 8))
         gs  = GridSpec(1, 2)
         ax1 = fig.add_subplot(gs[0, 0])
-        for i in [0, 100, -1]:
+        for i in [0, 100, 500, -2]:
             ax1.plot(sys_msr_data.k, run_data.enrg_spect[i, :], label = "Iter = {}".format(i))
-        ax1.set_xlabel("$k$")
+        ax1.set_xlabel("$k_n$")
         ax1.set_ylabel("$E$")
         ax1.set_yscale('log')
         ax1.set_xscale('log')
+        ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
         ax1.legend()
-        ax1 = fig.add_subplot(gs[0, 0])
-        for i in [0, 100, -1]:
-            ax1.plot(sys_msr_data.k, run_data.diss_spect[i, :], label = "Iter = {}".format(i))
-        ax1.set_xlabel("$k$")
-        ax1.set_ylabel("$\epsilon$")
-        ax1.set_yscale('log')
-        ax1.set_xscale('log')
-        ax1.legend()
-        plt.savefig(cmdargs.out_dir + "Spectra.png")
+        ax2 = fig.add_subplot(gs[0, 1])
+        for i in [0, 100, 500, -2]:
+            ax2.plot(sys_msr_data.k, run_data.diss_spect[i, :], label = "Iter = {}".format(i))
+        ax2.set_xlabel("$k_n$")
+        ax2.set_ylabel("$\epsilon$")
+        ax2.set_yscale('log')
+        ax2.set_xscale('log')
+        ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        ax2.legend()
+        plt.savefig(cmdargs.out_dir_info + "Spectra.png", bbox_inches='tight')
         plt.close()
 
 
@@ -304,7 +323,7 @@ if __name__ == '__main__':
             ax2.set_ylabel("$B_n$")
             ax2.set_yscale('log')
 
-        plt.savefig(cmdargs.out_dir + "Amplitudes_Tseries.png")
+        plt.savefig(cmdargs.out_dir_info + "Amplitudes_Tseries.png", bbox_inches='tight')
         plt.close()
 
 
@@ -345,7 +364,7 @@ if __name__ == '__main__':
             ax2.set_ylabel("$\psi_n$")
             ax2.set_title("High N")
 
-        plt.savefig(cmdargs.out_dir + "Phases_Tseries.png")
+        plt.savefig(cmdargs.out_dir_info + "Phases_Tseries.png", bbox_inches='tight')
         plt.close()
 
 
@@ -385,7 +404,7 @@ if __name__ == '__main__':
             ax2.set_ylabel("$\psi_n$")
             ax2.set_title("High N")
 
-        plt.savefig(cmdargs.out_dir + "PhaseDifference_Tseries.png")
+        plt.savefig(cmdargs.out_dir_info + "PhaseDifference_Tseries.png", bbox_inches='tight')
         plt.close()
 
 
@@ -443,7 +462,7 @@ if __name__ == '__main__':
             ax2.set_title("$\psi_n + \psi_{n + 1} + \phi_{n + 2}$")
             # ax2.set_xlim(t_i, t_f)
 
-        plt.savefig(cmdargs.out_dir + "Triads_Tseries.png")
+        plt.savefig(cmdargs.out_dir_info + "Triads_Tseries.png", bbox_inches='tight')
         plt.close()
 
         ##-------------- Plot Triad T_ppp over time
@@ -462,7 +481,7 @@ if __name__ == '__main__':
                     ax1.legend()
                     ax1.set_xlim(0, 2.0*np.pi)
 
-        plt.savefig(cmdargs.out_dir + "TriadPDF_T_ppp.png")
+        plt.savefig(cmdargs.out_dir_info + "TriadPDF_T_ppp.png", bbox_inches='tight')
         plt.close()
 
         if hasattr(run_data, 'b'):
@@ -482,7 +501,7 @@ if __name__ == '__main__':
                         ax1.legend()
                         ax1.set_xlim(0, 2.0*np.pi)
 
-            plt.savefig(cmdargs.out_dir + "TriadPDF_T_pss.png")
+            plt.savefig(cmdargs.out_dir_info + "TriadPDF_T_pss.png", bbox_inches='tight')
             plt.close()
 
             ##-------------- Plot Triad T_sps over time
@@ -501,7 +520,7 @@ if __name__ == '__main__':
                         ax1.legend()
                         ax1.set_xlim(0, 2.0*np.pi)
 
-            plt.savefig(cmdargs.out_dir + "TriadPDF_T_sps.png")
+            plt.savefig(cmdargs.out_dir_info + "TriadPDF_T_sps.png", bbox_inches='tight')
             plt.close()
 
             ##-------------- Plot Triad T_ssp over time
@@ -520,7 +539,7 @@ if __name__ == '__main__':
                         ax1.legend()
                         ax1.set_xlim(0, 2.0*np.pi)
 
-            plt.savefig(cmdargs.out_dir + "TriadPDF_T_ssp.png")
+            plt.savefig(cmdargs.out_dir_info + "TriadPDF_T_ssp.png", bbox_inches='tight')
             plt.close()
 
 
@@ -547,7 +566,7 @@ if __name__ == '__main__':
         ax1.set_title("Velocity Energ Input")
         ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
 
-        plt.savefig(cmdargs.out_dir + "EnergyFlux_EnergyDiss_EnergyInput_Tseries.png")
+        plt.savefig(cmdargs.out_dir_info + "EnergyFlux_EnergyDiss_EnergyInput_Tseries.png", bbox_inches='tight')
         plt.close()
 
 
@@ -574,5 +593,5 @@ if __name__ == '__main__':
         print(run_data.enrg_diss_u[:, 0])
         print(run_data.enrg_flux[:, 0])
 
-        plt.savefig(cmdargs.out_dir + "Totals_EnergyFlux_EnergyDiss_EnergyInput_Tseries.png")
+        plt.savefig(cmdargs.out_dir_info + "Totals_EnergyFlux_EnergyDiss_EnergyInput_Tseries.png", bbox_inches='tight')
         plt.close()

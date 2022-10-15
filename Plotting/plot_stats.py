@@ -29,6 +29,7 @@ import time as TIME
 from subprocess import Popen, PIPE, run
 from matplotlib.pyplot import cm
 from functions import tc, sim_data, import_data, compute_pdf, compute_pdf_from_hist, import_stats_data, import_sys_msr_data
+np.seterr(divide = 'ignore')
 
 
 ###############################
@@ -47,10 +48,9 @@ def parse_cml(argv):
         Class for command line arguments
         """
 
-        def __init__(self, in_dir = None, out_dir = None, in_file = None, num_procs = 20, parallel = False, plotting = False, video = False, triads = False, phases = False, triad_type = None, full = False):
+        def __init__(self, in_dir = None, out_dir = None, stats_file = None, plotting = False):
             self.in_dir         = in_dir
-            self.out_dir_phases = out_dir
-            self.out_dir_triads = out_dir
+            self.out_dir_stats  = stats_file
             self.in_file        = out_dir
             self.plotting       = plotting
             self.tag = "None"
@@ -91,9 +91,6 @@ def parse_cml(argv):
             ## Read in plotting indicator
             cargs.plotting = True
 
-        elif opt in ['-t']:
-            cargs.tag = str(arg)
-
     return cargs
 
 ######################
@@ -110,6 +107,13 @@ if __name__ == '__main__':
     else: 
         method = "file"
         data_file_path = cmdargs.in_dir + cmdargs.in_file
+
+
+    ## Make output folder for plots
+    cmdargs.out_dir_stats = cmdargs.out_dir + "STATS_PLOTS/"
+    if os.path.isdir(cmdargs.out_dir_stats) != True:
+        print("Making folder:" + tc.C + " STATS_PLOTS/" + tc.Rst)
+        os.mkdir(cmdargs.out_dir_stats)
     # -----------------------------------------
     # # --------  Read In data
     # -----------------------------------------
@@ -142,7 +146,7 @@ if __name__ == '__main__':
             ax1.set_yscale('log')
             ax1.legend()
 
-        plt.savefig(cmdargs.out_dir + "/RealVel_PDF.png")
+        plt.savefig(cmdargs.out_dir_stats + "RealVel_PDF.png")
         plt.close()
 
         fig = plt.figure(figsize = (16, 8))
@@ -157,7 +161,7 @@ if __name__ == '__main__':
             ax1.set_yscale('log')
             ax1.legend()
 
-        plt.savefig(cmdargs.out_dir + "/RealVel_PDF_InOne.png")
+        plt.savefig(cmdargs.out_dir_stats + "RealVel_PDF_InOne.png", bbox_inches='tight')
         plt.close()
 
         fig = plt.figure(figsize = (16, 8))
@@ -172,7 +176,7 @@ if __name__ == '__main__':
             ax1.set_yscale('log')
             ax1.legend()
 
-        plt.savefig(cmdargs.out_dir + "/RealVel_PDF_InOne_C_data.png")
+        plt.savefig(cmdargs.out_dir_stats + "RealVel_PDF_InOne_C_data.png")
         plt.close()
 
         if hasattr(run_data, "b"):
@@ -188,7 +192,7 @@ if __name__ == '__main__':
                 ax2.set_yscale('log')
                 ax2.legend()
 
-            plt.savefig(cmdargs.out_dir + "/RealMag_PDF.png")
+            plt.savefig(cmdargs.out_dir_stats + "RealMag_PDF.png", bbox_inches='tight')
             plt.close()
 
 
@@ -208,7 +212,7 @@ if __name__ == '__main__':
         ax1.set_ylabel(r"$log_2 (S_p(k_n))$")
         ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
         ax1.legend()
-        plt.savefig(cmdargs.out_dir + "/VelStrFunc.png")
+        plt.savefig(cmdargs.out_dir_stats + "VelStrFunc.png")
         plt.close()
 
         fig = plt.figure(figsize = (16, 8))
@@ -223,7 +227,7 @@ if __name__ == '__main__':
         ax1.set_ylabel(r"$log_2 (S_p(k_n))$")
         ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
         ax1.legend()
-        plt.savefig(cmdargs.out_dir + "/VelStrFunc_All.png")
+        plt.savefig(cmdargs.out_dir_stats + "VelStrFunc_All.png", bbox_inches='tight')
         plt.close()
 
 
@@ -234,13 +238,13 @@ if __name__ == '__main__':
             gs  = GridSpec(1, 1)
         ax1 = fig.add_subplot(gs[0, 0])
         for i in range(stats_data.vel_str_func.shape[-1]):
-            ax1.plot(np.log2(sys_msr_data.k), np.log2((sys_msr_data.k**((i + indx_shift) / 3.0)) * stats_data.vel_str_func[:, i]) + i, label = "$p = {}$".format(i + indx_shift))
-            ax1.plot(np.log2(sys_msr_data.k), np.log2((sys_msr_data.k**(0))) + i, 'b--')
+            p, = ax1.plot(np.log2(sys_msr_data.k), np.log2((sys_msr_data.k**((i + indx_shift) / 3.0)) * stats_data.vel_str_func[:, i]) + i * 10, label = "$p = {}$".format(i + indx_shift))
+            ax1.plot(np.log2(sys_msr_data.k), np.log2((sys_msr_data.k**(0))) + i * 10, '--', color = p.get_color())
         ax1.set_xlabel(r"$log_2 (k_n)$")
         ax1.set_ylabel(r"$log_2 (k_n^{p/3} S_p(k_n))$")
         ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
         ax1.legend()
-        plt.savefig(cmdargs.out_dir + "/PreMult_VelStrFunc_All.png")
+        plt.savefig(cmdargs.out_dir_stats + "PreMult_VelStrFunc_All.png", bbox_inches='tight')
         plt.close()
 
 
@@ -269,16 +273,15 @@ if __name__ == '__main__':
         ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
         ax2.set_title("Helicity Flux Structure Function")
         ax2.legend()
-        plt.savefig(cmdargs.out_dir + "/VelFluxStrFunc.png")
+        plt.savefig(cmdargs.out_dir_stats + "VelFluxStrFunc.png", bbox_inches='tight')
         plt.close()
 
 
 
         fig = plt.figure(figsize = (16, 8))
-        gs  = GridSpec(2, 2)
+        gs  = GridSpec(2, 2, hspace = 0.4)
         ax1 = fig.add_subplot(gs[0, 0])
         for i in range(stats_data.vel_flux_str_func.shape[1]):
-            print(i + indx_shift, stats_data.vel_flux_str_func[:, i, 0])
             ax1.plot(np.log2(sys_msr_data.k), np.log2(np.absolute(stats_data.vel_flux_str_func[:, i, 0])), label = "$p = {}$".format(i + indx_shift))
         ax1.set_xlabel(r"$log_2 (k_n)$")
         ax1.set_ylabel(r"$log_2 (|S_p^{E}(k_n)|)$")
@@ -289,7 +292,6 @@ if __name__ == '__main__':
         print()
         ax2 = fig.add_subplot(gs[0, 1])
         for i in range(stats_data.vel_flux_str_func.shape[1]):
-            print(i + indx_shift, stats_data.vel_flux_str_func[:, i, 1])
             ax2.plot(np.log2(sys_msr_data.k), np.log2(np.absolute(stats_data.vel_flux_str_func[:, i, 1])), label = "$p = {}$".format(i + indx_shift))
         ax2.set_xlabel(r"$log_2 (k_n)$")
         ax2.set_ylabel(r"$log_2 (|S_p^{H}(k_n)|)$")
@@ -313,15 +315,16 @@ if __name__ == '__main__':
         ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
         ax2.set_title("Absolute Helicity Flux Structure Function")
         ax2.legend()
-        plt.savefig(cmdargs.out_dir + "/VelFluxStrFunc_All.png")
+        plt.savefig(cmdargs.out_dir_stats + "VelFluxStrFunc_All.png", bbox_inches='tight')
         plt.close()
 
 
         fig = plt.figure(figsize = (16, 8))
-        gs  = GridSpec(2, 2)
+        gs  = GridSpec(2, 2, hspace = 0.4)
         ax1 = fig.add_subplot(gs[0, 0])
         for i in range(stats_data.vel_flux_str_func.shape[1]):
-            ax1.plot(np.log2(sys_msr_data.k), np.log2((sys_msr_data.k**((i + indx_shift) / 3.0)) * np.absolute(stats_data.vel_flux_str_func[:, i, 0])), label = "$p = {}$".format(i + indx_shift))
+            p, = ax1.plot(np.log2(sys_msr_data.k), np.log2((sys_msr_data.k**((i + indx_shift) / 3.0)) * np.absolute(stats_data.vel_flux_str_func[:, i, 0])) + i * 10, label = "$p = {}$".format(i + indx_shift))
+            ax1.plot(np.log2(sys_msr_data.k), np.log2(sys_msr_data.k**0) + i * 10, '--', color = p.get_color())
         ax1.set_xlabel(r"$log_2 (k_n)$")
         ax1.set_ylabel(r"$log_2 (k_n^{p / 3}|S_p^{E}(k_n)|)$")
         ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
@@ -329,7 +332,8 @@ if __name__ == '__main__':
         ax1.legend()
         ax2 = fig.add_subplot(gs[0, 1])
         for i in range(stats_data.vel_flux_str_func.shape[1]):
-            ax2.plot(np.log2(sys_msr_data.k), np.log2((sys_msr_data.k**((i + indx_shift) / 3.0)) * np.absolute(stats_data.vel_flux_str_func[:, i, 1])), label = "$p = {}$".format(i + indx_shift))
+            p, = ax2.plot(np.log2(sys_msr_data.k), np.log2((sys_msr_data.k**((i + indx_shift) / 3.0)) * np.absolute(stats_data.vel_flux_str_func[:, i, 1])) + i * 10, label = "$p = {}$".format(i + indx_shift))
+            ax2.plot(np.log2(sys_msr_data.k), np.log2(sys_msr_data.k**0) + i * 10, '--', color = p.get_color())
         ax2.set_xlabel(r"$log_2 (k_n)$")
         ax2.set_ylabel(r"$log_2 (k_n^{p / 3}|S_p^{H}(k_n))|$")
         ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
@@ -337,7 +341,8 @@ if __name__ == '__main__':
         ax2.legend()
         ax1 = fig.add_subplot(gs[1, 0])
         for i in range(stats_data.vel_flux_str_func.shape[1]):
-            ax1.plot(np.log2(sys_msr_data.k), np.log2((sys_msr_data.k**((i + indx_shift) / 3.0)) * stats_data.vel_flux_str_func_abs[:, i, 0]), label = "$p = {}$".format(i + indx_shift))
+            p, = ax1.plot(np.log2(sys_msr_data.k), np.log2((sys_msr_data.k**((i + indx_shift) / 3.0)) * stats_data.vel_flux_str_func_abs[:, i, 0]) + i * 10, label = "$p = {}$".format(i + indx_shift))
+            ax1.plot(np.log2(sys_msr_data.k), np.log2(sys_msr_data.k**0) + i * 10, '--', color = p.get_color())
         ax1.set_xlabel(r"$log_2 (k_n)$")
         ax1.set_ylabel(r"$log_2 (k_n^{p / 3}S_p^{E, abs}(k_n))$")
         ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
@@ -345,13 +350,14 @@ if __name__ == '__main__':
         ax1.legend()
         ax2 = fig.add_subplot(gs[1, 1])
         for i in range(stats_data.vel_flux_str_func.shape[1]):
-            ax2.plot(np.log2(sys_msr_data.k), np.log2((sys_msr_data.k**((i + indx_shift) / 3.0)) * stats_data.vel_flux_str_func_abs[:, i, 1]), label = "$p = {}$".format(i + indx_shift))
+            p, = ax2.plot(np.log2(sys_msr_data.k), np.log2((sys_msr_data.k**((i + indx_shift) / 3.0)) * stats_data.vel_flux_str_func_abs[:, i, 1]) + i * 10, label = "$p = {}$".format(i + indx_shift))
+            ax2.plot(np.log2(sys_msr_data.k), np.log2(sys_msr_data.k**0) + i * 10, '--', color = p.get_color())
         ax2.set_xlabel(r"$log_2 (k_n)$")
         ax2.set_ylabel(r"$log_2 (k_n^{p / 3}S_p^{H, abs}(k_n))$")
         ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
         ax2.set_title("Absolute Helicity Flux Structure Function")
         ax2.legend()
-        plt.savefig(cmdargs.out_dir + "/PreMult_VelFluxStrFunc_All.png")
+        plt.savefig(cmdargs.out_dir_stats + "PreMult_VelFluxStrFunc_All.png", bbox_inches='tight')
         plt.close()
 
 

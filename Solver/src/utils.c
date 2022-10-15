@@ -92,6 +92,8 @@ int GetCMLArgs(int argc, char** argv) {
 	sys_vars->HYPO_MAG_DIFF_POW  = HYPO_DIFF_POW;
 	// Write to file every 
 	sys_vars->SAVE_EVERY = (long int)100;
+	// Input file flag
+	sys_vars->INPUT_FILE_FLAG = NO_INPUT_FILE;
 
 	// -------------------------------
 	// Parse CML Arguments
@@ -400,11 +402,15 @@ int GetCMLArgs(int argc, char** argv) {
 				}
 				break;
 			case 'z':
+				// Read in input file name path
 				strncpy((file_info->input_file_name), optarg, 512);	// copy the input file name given as a command line argument
 				if ( access((file_info->input_file_name), F_OK) != 0) {
 					fprintf(stderr, "\n["RED"ERROR"RESET"] Parsing of Command Line Arguements Failed: The input file [%s] cannot be found, please ensure correct path to file is specified.\n", (file_info->input_file_name));		
 					exit(1);					
 				}
+
+				// Set input file flag
+				sys_vars->INPUT_FILE_FLAG = INPUT_FILE;
 				break;
 			default:
 				fprintf(stderr, "\n["RED"ERROR"RESET"] Incorrect command line flag encountered\n");		
