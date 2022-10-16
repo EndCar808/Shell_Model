@@ -360,11 +360,67 @@ if __name__ == '__main__':
         plt.savefig(cmdargs.out_dir_stats + "PreMult_VelFluxStrFunc_All.png", bbox_inches='tight')
         plt.close()
 
+        # # --------  Structure function with fit
+        k = sys_msr_data.k
 
-        # with h5py.File(cmdargs.out_dir + "/Stats_HDF_Data.hdf5", "w") as f:
-        #     f.create_dataset("RealVelHist_Counts", data = stats_data.vel_hist_counts)
-        #     f.create_dataset("RealVelHist_Ranges", data = stats_data.vel_hist_ranges)
-        #     f.create_dataset("VelStats", data = stats_data.vel_stats)
-        #     f.create_dataset("StructureFunctionVel", data = stats_data.vel_str_func)
-        #     f.create_dataset("StructureFunctionVelFlux", data = stats_data.vel_flux_str_func)
-        #     
+        indx_shift = 1
+
+        inert_lim_low  = 4
+        inert_lim_high = 18
+
+        mark_style = ['o','s','^','x','D','p']
+
+        zeta_p = []
+
+        fig   = plt.figure(figsize = (16, 8))
+        gs    = GridSpec(1, 1)
+        ax1   = fig.add_subplot(gs[0, 0])
+        x0     = 0.15 
+        y0     = 0.15
+        width  = 0.3
+        height = 0.2
+        ## Add insert
+        ax1in = fig.add_axes([x0, y0, width, height])
+        for i in range(stats_data.vel_str_func.shape[-1]):
+            ## Plot strucure function
+            p, = ax1.plot(np.log2(k), np.log2(stats_data.vel_str_func[:, i]) + i * 10, '.-', label = "$p = {}$".format(i + indx_shift), marker = mark_style[i], markerfacecolor = 'None', markersize = 5.0, markevery = 2)
+            ## Find polynomial fit and plot
+            pfit_info  = np.polyfit(np.log2(k[inert_lim_low:inert_lim_high]), np.log2(stats_data.vel_str_func[inert_lim_low:inert_lim_high, i]) + i * 10, 1)
+            pfit_slope = pfit_info[0]
+            pfit_c     = pfit_info[1]
+            zeta_p.append(np.absolute(pfit_slope))
+            print(i +indx_shift, -(i +indx_shift) / 3, pfit_slope, pfit_c)
+            ax1.plot(np.log2(k[inert_lim_low:inert_lim_high]), np.log2(k[inert_lim_low:inert_lim_high])*pfit_slope + pfit_c + 1.5, '--', color = p.get_color())
+            ## Compute the local derivative and plot in insert
+            d_str_func  = np.diff(np.log2(stats_data.vel_str_func[:, i]))
+            d_k         = np.diff(np.log2(k))
+            local_deriv = d_str_func / d_k
+            local_deriv = np.concatenate((local_deriv, [(np.log2(stats_data.vel_str_func[-1, i]) - np.log2(stats_data.vel_str_func[-2, i])) / (np.log2(k[-1] - np.log2(k[-2])))]))
+            ax1in.plot(np.log2(k), local_deriv, color = p.get_color(), marker = mark_style[i], markerfacecolor = 'None', markersize = 5.0, markevery = 2)
+            ax1in.set_ylabel(r"$\zeta_p$", labelpad = -40)
+            ax1in.set_xlabel(r"$log2(k_n)$", labelpad = -30)
+        ax1.set_xlabel(r"$log_2 (k_n)$")
+        ax1.set_ylabel(r"$log_2 (S_p(k_n))$")
+        ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        ax1in.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        ax1.legend()
+        plt.savefig(cmdargs.out_dir_stats + "VelStrFunc_Fit.png", bbox_inches='tight')
+        plt.close()
+
+
+
+        # # --------  Plot Anomalous Exponent
+        fig   = plt.figure(figsize = (16, 8))
+        gs    = GridSpec(1, 1)
+        ax1   = fig.add_subplot(gs[0, 0])
+        p = np.arange(2, stats_data.vel_str_func.shape[-1] + 1)
+        ns_zeta_p = [0.72, 1, 1.273, 1.534, 1.786]
+        ax1.plot(p, zeta_p[1:], '.-', marker = mark_style[0], markerfacecolor = 'None', markersize = 5.0, markevery = 1, label = "GOY Model")
+        ax1.plot(p, ns_zeta_p, '.-', marker = mark_style[0], markerfacecolor = 'None', markersize = 5.0, markevery = 1, label = "Navier Stokes")
+        ax1.plot(p, p / 3, 'b--', label = "K41")
+        ax1.set_xlabel(r"$p$")
+        ax1.set_ylabel(r"$\zeta_p$")
+        ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        ax1.legend()
+        plt.savefig(cmdargs.out_dir_stats + "Anonalous_Exponent_Zeta_p.png", bbox_inches='tight')
+        plt.close()

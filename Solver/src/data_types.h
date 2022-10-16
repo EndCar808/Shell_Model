@@ -99,15 +99,15 @@
 // Turning these on in this file means that they WILL be on at compilation time
 
 // Choose whether to save the Fourier Velocity
-#define __VEL
+// #define __VEL
 // Choose whether to save the Fourier Magnetic Field
-#define __MAG
+// #define __MAG
 // Choose whether to save the Fourier Velocity Phase and Amp
-#define __VEL_AMP
-#define __VEL_PHI
+// #define __VEL_AMP
+// #define __VEL_PHI
 // Choose whether to save the Fourier Magnetic Field Phase and Amp
-#define __MAG_AMP
-#define __MAG_PSI
+// #define __MAG_AMP
+// #define __MAG_PSI
 // Choose whether to save the Nonlinear term or RHS of equation of motion
 // #define __RHS
 // #define __NONLIN
