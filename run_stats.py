@@ -76,7 +76,6 @@ if __name__ == '__main__':
     ##########################
     cmdargs = parse_cml(sys.argv[1:])
 
-
     ##########################
     ##  DEFAULT PARAMETERS  ##
     ##########################
@@ -273,16 +272,16 @@ if __name__ == '__main__':
                 num_plotting_job_threads = int(parser[section]['num_plotting_job_threads'])
 
     ## Get the path to the runs output directory
-    par_runs_output_dir = os.path.split(output_dir)[0]
-    par_runs_output_dir += '/ParallelRunsDump/'
-    if os.path.isdir(par_runs_output_dir) != True:
-        print("Making folder:" + tc.C + " ParallelRunsDump/" + tc.Rst)
-        os.mkdir(par_runs_output_dir)
+    stats_runs_output_dir = os.path.split(output_dir)[0]
+    stats_runs_output_dir += '/StatsRunsDump/'
+    if os.path.isdir(stats_runs_output_dir) != True:
+        print("Making folder:" + tc.C + " StatsRunsDump/" + tc.Rst)
+        os.mkdir(stats_runs_output_dir)
 
     #########################
     ##      RUN SOLVER     ##
     #########################
-    if solver:
+    if stats:
 
         ## Get the number of processes to launch
         proc_limit = num_solver_job_threads
@@ -353,87 +352,12 @@ if __name__ == '__main__':
                 d_t = now.strftime("%d%b%Y_%H:%M:%S")
 
                 # Write output to file
-                with open(par_runs_output_dir + "par_run_solver_output_{}_{}.txt".format(cmdargs.init_file.lstrip('InitFiles/').rstrip(".ini"), d_t), "w") as file:
+                with open(stats_runs_output_dir + "stats_run_output_{}_{}.txt".format(cmdargs.init_file.lstrip('InitFiles/').rstrip(".ini"), d_t), "w") as file:
                     for item in solver_output:
                         file.write("%s\n" % item)
 
                 # Write error to file
-                with open(par_runs_output_dir + "par_run_solver_error_{}_{}.txt".format(cmdargs.init_file.lstrip('InitFiles/').rstrip(".ini"), d_t), "w") as file:
+                with open(stats_runs_output_dir + "stats_run_error_{}_{}.txt".format(cmdargs.init_file.lstrip('InitFiles/').rstrip(".ini"), d_t), "w") as file:
                     for i, item in enumerate(solver_error):
                         file.write("%s\n" % cmd_list[i])
                         file.write("%s\n" % item)
-
-    ###########################
-    ##      RUN PLOTTING     ##
-    ###########################
-    if plotting:
-    
-        ## Get the number of processes to launch
-        proc_limit = num_plotting_job_threads
-        print("Number of Post Processing Processes Created = [" + tc.C + "{}".format(proc_limit) + tc.Rst + "]")
-
-        # Create output objects to store process error and output
-        if collect_data:
-            plot_output = []
-            plot_error  = []
-            
-        
-        ## Generate command list
-        if "_mag_hydro" in executable:
-            cmd_list = [[]]
-        else:
-            cmd_list = [["python3 {} -i {} {}".format(
-                                                plot_script, 
-                                                post_input_dir + "_N[{}]_T[{:1.1f},{:g},{:1.3f}]_NU[{:1.8f}]_ALPHA[{:1.3f}]_K[{:1.3f},{:1.6f}]_EPS[{:1.2f}]_FORC[{},{},{:1.3f}]_u0[{}]_TAG[{}]/".format(n, t0, h, t, v, a, k0, lam, ep, forcing, force_k, force_scale, u0, s_tag), 
-                                                plot_options)] for n in N for h in dt for t in T for v in nu for a in alpha for ep in eps for u0 in ic for s_tag in solver_tag]
-
-        if cmdargs.cmd_only:
-            print(tc.C + "\nPlotting Commands:\n" + tc.Rst)
-            for c in cmd_list:
-                print(c)
-                print()
-        else:
-            ## Create grouped iterable of subprocess calls to Popen() - see grouper recipe in itertools
-            groups = [(Popen(cmd, shell = True, stdout = PIPE, stdin = PIPE, stderr = PIPE, universal_newlines = True) for cmd in cmd_list)] * proc_limit 
-
-            ## Loop through grouped iterable
-            for processes in zip_longest(*groups): 
-                for proc in filter(None, processes): # filters out 'None' fill values if proc_limit does not divide evenly into cmd_list
-                    ## Print command to screen
-                    print("Executing the following command:\n\t" + tc.C + "{}".format(proc.args[0]) + tc.Rst)
-
-                    ## Print output to terminal as it comes
-                    for line in proc.stdout:
-                        sys.stdout.write(line)
-                    
-                    # Communicate with process to retrive output and error
-                    [run_CodeOutput, run_CodeErr] = proc.communicate()
-
-                    # Append to output and error objects
-                    if collect_data:
-                        plot_output.append(run_CodeOutput)
-                        plot_error.append(run_CodeErr)
-                    
-                    ## Print both to screen
-                    print(run_CodeOutput)
-                    print(run_CodeErr)
-
-                    ## Wait until all finished
-                    proc.wait()
-
-            if collect_data:
-                # Get data and time
-                now = datetime.now()
-                d_t = now.strftime("%d%b%Y_%H:%M:%S")
-
-                # Write output to file
-                with open(par_runs_output_dir + "par_run_plot_output_{}_{}.txt".format(cmdargs.init_file.lstrip('InitFiles/').rstrip(".ini"), d_t), "w") as file:
-                    for item in plot_output:
-                        file.write("%s\n" % item)
-
-                # Write error to file
-                with open(par_runs_output_dir + "par_run_plot_error_{}_{}.txt".format(cmdargs.init_file.lstrip('InitFiles/').rstrip(".ini"), d_t), "w") as file:
-                    for i, item in enumerate(plot_error):
-                        file.write("%s\n" % cmd_list[i])
-                        file.write("%s\n" % item)
-                    

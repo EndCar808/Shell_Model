@@ -15,7 +15,7 @@ ifeq ($(OS), Ubuntu)
 	# CHIRP
 	GCC := gcc
 	CCFLAG := -O3 -W -Wall -g
-	LIBFLAG := -lfftw3 -lm -lhdf5 -lhdf5_hl #-fopenmp -lpthread -lfftw3_omp
+	LIBFLAG := -lm -lhdf5 -lhdf5_hl
 	GSLFLAG := -lgsl -lgslcblas
 	# LAPACKFLAG := -llapacke -llapack -lblas -lgfortran
 	INCDIR = -I/usr/include/hdf5/serial/  -I/usr/include/gsl/ 
@@ -24,14 +24,14 @@ else ifeq ($(OS), RedHatEnterpriseServer)
 	# SONIC
 	GCC := gcc
 	CCFLAG := -O3 -W -Wall -g
-	LIBFLAG := -lfftw3 -lfftw3 -lm -lhdf5 -lhdf5_hl #-fopenmp -lpthread -lfftw3_omp
+	LIBFLAG := -lm -lhdf5 -lhdf5_hl #-fopenmp -lpthread -lfftw3_omp
 	INCDIR = 
 	LIBDIR = 
 else ifeq ($(OS), CentOS)
 	# KAY
 	GCC := gcc
 	CCFLAG := -O3 -W -Wall -g
-	LIBFLAG := -lfftw3 -lfftw3 -lm -lhdf5 -lhdf5_hl #-fopenmp -lpthread -lfftw3_omp
+	LIBFLAG := -lm -lhdf5 -lhdf5_hl #-fopenmp -lpthread -lfftw3_omp
 	INCDIR = 
 	LIBDIR = 
 else
