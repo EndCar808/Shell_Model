@@ -234,7 +234,7 @@ void InitializeStats(void) {
 	// Allocate memory for the structure functions
 	for (int i = 0; i < NUM_POW; ++i) {
 		#if defined(__STR_FUNC_VEL)
-		stats_data->vel_str_func[i]      	= (double* )fftw_malloc(sizeof(double) * N);
+		stats_data->vel_str_func[i]      	= (double* )malloc(sizeof(double) * N);
 		if (stats_data->vel_str_func[i] == NULL) {
 			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Stats Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Velocity Structure Function");
 			exit(1);
@@ -242,12 +242,12 @@ void InitializeStats(void) {
 		#endif
 		#if defined(__STR_FUNC_VEL_FLUX)
 		for (int j = 0; j < 2; ++j) {
-			stats_data->vel_flux_str_func[j][i] = (double* )fftw_malloc(sizeof(double) * N);
+			stats_data->vel_flux_str_func[j][i] = (double* )malloc(sizeof(double) * N);
 			if (stats_data->vel_flux_str_func[j][i] == NULL) {
 				fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Stats Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Velocity Flux Structure Function");
 				exit(1);
 			}
-			stats_data->vel_flux_str_func_abs[j][i] = (double* )fftw_malloc(sizeof(double) * N);
+			stats_data->vel_flux_str_func_abs[j][i] = (double* )malloc(sizeof(double) * N);
 			if (stats_data->vel_flux_str_func_abs[j][i] == NULL) {
 				fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Stats Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Absolute Velocity Flux Structure Function");
 				exit(1);
@@ -256,7 +256,7 @@ void InitializeStats(void) {
 		#endif
 		#if defined(__MAGNETO)
 		#if defined(__STR_FUNC_MAG)
-		stats_data->mag_str_func[i]         = (double* )fftw_malloc(sizeof(double) * N);
+		stats_data->mag_str_func[i]         = (double* )malloc(sizeof(double) * N);
 		if (stats_data->mag_str_func[i] == NULL) {
 			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Stats Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Magnetic Structure Function");
 			exit(1);
@@ -264,12 +264,12 @@ void InitializeStats(void) {
 		#endif
 		#if defined(__STR_FUNC_MAG_FLUX)
 		for (int j = 0; j < 2; ++j) {
-			stats_data->mag_flux_str_func[j][i] = (double* )fftw_malloc(sizeof(double) * N);
+			stats_data->mag_flux_str_func[j][i] = (double* )malloc(sizeof(double) * N);
 			if (stats_data->mag_flux_str_func[j][i] == NULL) {
 				fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Stats Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Magnetic Flux Sturcure Function");
 				exit(1);
 			}
-			stats_data->mag_flux_str_func_abs[j][i] = (double* )fftw_malloc(sizeof(double) * N);
+			stats_data->mag_flux_str_func_abs[j][i] = (double* )malloc(sizeof(double) * N);
 			if (stats_data->mag_flux_str_func_abs[j][i] == NULL) {
 				fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Stats Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Absolute Magnetic Flux Sturcure Function");
 				exit(1);
@@ -282,13 +282,13 @@ void InitializeStats(void) {
 
 	///--------------------------------- Running Stats Objects
 	// Allocate memory for the running stats objects
-	stats_data->vel_moments = (double** )fftw_malloc(sizeof(double* ) * N);
+	stats_data->vel_moments = (double** )malloc(sizeof(double* ) * N);
 	if (stats_data->vel_moments == NULL) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Stats Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Velocity Stats");
 		exit(1);
 	}
 	#if defined(__MAGNETO)
-	stats_data->mag_moments = (double** )fftw_malloc(sizeof(double* ) * N);
+	stats_data->mag_moments = (double** )malloc(sizeof(double* ) * N);
 	if (stats_data->mag_moments == NULL) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Stats Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Magnetic Stats");
 		exit(1);
@@ -316,7 +316,7 @@ void InitializeStats(void) {
 	///--------------------------------- Histograms
 	#if defined(__VEL_HIST)
 	// Allocate memory for the array of histogram structs
-	stats_data->real_vel_hist = (double** )fftw_malloc(sizeof(double* ) * N);
+	stats_data->real_vel_hist = (double** )malloc(sizeof(double* ) * N);
 	for (int i = 0; i < N; ++i) {
 		// Allocate	the histogram structs
 		stats_data->real_vel_hist[i] = gsl_histogram_alloc(VEL_NUM_BINS);

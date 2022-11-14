@@ -548,11 +548,11 @@ void ReadInputFile(const long int N) {
 	#if defined(PHASE_ONLY_DIRECT)
 	///----------------------------- Read in initial velocity amps and phases
 	// Create tmp array to read in data
-	double* tmp_u_amp = (double* )fftw_malloc(sizeof(double) * N);
+	double* tmp_u_amp = (double* )malloc(sizeof(double) * N);
 	if ( (H5LTread_dataset(file_info->stats_file_handle, "VelAmps", H5T_NATIVE_DOUBLE, tmp_u_amp)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelAmps");
 	}
-	double* tmp_u_phase = (double* )fftw_malloc(sizeof(double) * N);
+	double* tmp_u_phase = (double* )malloc(sizeof(double) * N);
 	if ( (H5LTread_dataset(file_info->stats_file_handle, "VelPhases", H5T_NATIVE_DOUBLE, tmp_u_phase)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelPhases");
 	}
@@ -565,17 +565,17 @@ void ReadInputFile(const long int N) {
 	}
 
 	// Free temp memory
-	fftw_free(tmp_u_amp);
-	fftw_free(tmp_u_phase);
+	free(tmp_u_amp);
+	free(tmp_u_phase);
 
 	#if defined(__MAGNETO)
 	///----------------------------- Read in initial magnetic amps and phases
 	// Create tmp array to read in data
-	double* tmp_b_amp = (double* )fftw_malloc(sizeof(double) * N);
+	double* tmp_b_amp = (double* )malloc(sizeof(double) * N);
 	if ( (H5LTread_dataset(file_info->stats_file_handle, "MagAmps", H5T_NATIVE_DOUBLE, tmp_b_amp)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "MagAmps");
 	}
-	double* tmp_b_phase = (double* )fftw_malloc(sizeof(double) * N);
+	double* tmp_b_phase = (double* )malloc(sizeof(double) * N);
 	if ( (H5LTread_dataset(file_info->stats_file_handle, "MagPhases", H5T_NATIVE_DOUBLE, tmp_b_phase)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "MagPhases");
 	}
@@ -588,13 +588,13 @@ void ReadInputFile(const long int N) {
 	}
 
 	// Free temp memory
-	fftw_free(tmp_b_amp);
-	fftw_free(tmp_b_phase);
+	free(tmp_b_amp);
+	free(tmp_b_phase);
 	#endif
 	#else
 	///----------------------------- Read in initial velocity modes
 	// Create tmp array to read in data
-	fftw_complex* tmp_u = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * N);
+	double complex* tmp_u = (double complex* )malloc(sizeof(double complex) * N);
 	if ( (H5LTread_dataset(file_info->stats_file_handle, "VelModes", H5T_NATIVE_DOUBLE, tmp_u)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelModes");
 	}
@@ -610,12 +610,12 @@ void ReadInputFile(const long int N) {
 	}
 
 	// Free temp memory
-	fftw_free(tmp_u);
+	free(tmp_u);
 
 	#if defined(__MAGNETO)
 	///----------------------------- Read in initial magnetic modes
 	// Create tmp array to read in data
-	fftw_complex* tmp_b = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * N);
+	double complex* tmp_b = (double complex* )malloc(sizeof(double complex) * N);
 	if ( (H5LTread_dataset(file_info->stats_file_handle, "MagModes", H5T_NATIVE_DOUBLE, tmp_b)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "MagModes");
 	}
@@ -631,7 +631,7 @@ void ReadInputFile(const long int N) {
 	}
 
 	// Free temp memory
-	fftw_free(tmp_b);
+	free(tmp_b);
 	#endif	
 	#endif
 
@@ -779,7 +779,7 @@ void WriteSlabbedDataReal(double t, int iters, hid_t file_space, hid_t data_set,
  * @param n          The size of the chunk to write
  * @param index      The index in the dataset to write chunk to
  */
-void WriteSlabbedDataFourier(double t, int iters, hid_t file_space, hid_t data_set, hid_t mem_space, hid_t dtype, fftw_complex* data, char* dset_name, int n, int index) {
+void WriteSlabbedDataFourier(double t, int iters, hid_t file_space, hid_t data_set, hid_t mem_space, hid_t dtype, double complex* data, char* dset_name, int n, int index) {
 
 	// Initialize variables
 	hsize_t start_index[2]; // stores the index in the hyperslabbed dataset to start writing to
@@ -971,7 +971,7 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	#endif
 
 	///-------------------------- Velocity field stats
-	double* tmp_vel_stats = (double* )fftw_malloc(sizeof(double) * (NUM_RUN_STATS) * N);
+	double* tmp_vel_stats = (double* )malloc(sizeof(double) * (NUM_RUN_STATS) * N);
 	for (int i = 0; i < N; ++i) {
 		tmp_vel_stats[i * (NUM_RUN_STATS) + 0] = gsl_rstat_mean(stats_data->vel_moments[i]);
 		tmp_vel_stats[i * (NUM_RUN_STATS) + 1] = gsl_rstat_variance(stats_data->vel_moments[i]);
@@ -990,13 +990,13 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	}
 
 	// Free temp memory
-	fftw_free(tmp_vel_stats);
+	free(tmp_vel_stats);
 
 
 	///-------------------------- Real Velocity Histogram
 	#if defined(__VEL_HIST)
-	double* tmp_vel_hist_bin    = (double* )fftw_malloc(sizeof(double) * (VEL_NUM_BINS) * N);
-	double* tmp_vel_hist_ranges = (double* )fftw_malloc(sizeof(double) * (VEL_NUM_BINS + 1) * N);
+	double* tmp_vel_hist_bin    = (double* )malloc(sizeof(double) * (VEL_NUM_BINS) * N);
+	double* tmp_vel_hist_ranges = (double* )malloc(sizeof(double) * (VEL_NUM_BINS + 1) * N);
 	for (int i = 0; i < N; ++i) {
 		for (int j = 0; j < VEL_NUM_BINS + 1; ++j) {
 			if (j < VEL_NUM_BINS) {
@@ -1020,14 +1020,14 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	}
 
 	// Free temporary memory
-	fftw_free(tmp_vel_hist_bin);
-	fftw_free(tmp_vel_hist_ranges);
+	free(tmp_vel_hist_bin);
+	free(tmp_vel_hist_ranges);
 	#endif
 
 	///-------------------------- Velocity structure function
 	#if defined(__STR_FUNC_VEL)
 	// Allocate temporary contiguous array
-	double* tmp_vel_str = (double* )fftw_malloc(sizeof(double) * NUM_POW * N);
+	double* tmp_vel_str = (double* )malloc(sizeof(double) * NUM_POW * N);
 	for (int i = 0; i < N; ++i) {
 		for (int p = 0; p < NUM_POW; ++p) {
 			tmp_vel_str[i * NUM_POW + p] = stats_data->vel_str_func[p][i] / stats_data->num_stats_steps;
@@ -1042,13 +1042,13 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	}
 
 	// Free temp memory
-	fftw_free(tmp_vel_str);
+	free(tmp_vel_str);
 	#endif
 
 	///-------------------------- Velocity Flux structure function
 	#if defined(__STR_FUNC_VEL_FLUX)
 	// Allocate temporary contiguous array
-	double* tmp_vel_str_flux = (double* )fftw_malloc(sizeof(double) * 2 * NUM_POW * N);
+	double* tmp_vel_str_flux = (double* )malloc(sizeof(double) * 2 * NUM_POW * N);
 	for (int i = 0; i < N; ++i) {
 		for (int p = 0; p < NUM_POW; ++p) {
 			tmp_vel_str_flux[2 * (i * NUM_POW + p) + 0] = stats_data->vel_flux_str_func[0][p][i] / stats_data->num_stats_steps;
@@ -1080,7 +1080,7 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	}
 
 	// Free temp memory
-	fftw_free(tmp_vel_str_flux);
+	free(tmp_vel_str_flux);
 	#endif
 
 
@@ -1101,7 +1101,7 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 
 
 	///-------------------------- Magnetic field stats
-	double* tmp_mag_stat = (double* )fftw_malloc(sizeof(double) * (NUM_RUN_STATS) * N);
+	double* tmp_mag_stat = (double* )malloc(sizeof(double) * (NUM_RUN_STATS) * N);
 	for (int i = 0; i < N; ++i) {
 		tmp_mag_stat[i * (NUM_RUN_STATS) + 0] = gsl_rstat_mean(stats_data->mag_moments[i]);
 		tmp_mag_stat[i * (NUM_RUN_STATS) + 1] = gsl_rstat_variance(stats_data->mag_moments[i]);
@@ -1120,13 +1120,13 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	}
 
 	// Free temp memory
-	fftw_free(tmp_mag_stat);
+	free(tmp_mag_stat);
 
 
 	///-------------------------- Magnetic structure function
 	#if defined(__STR_FUNC_MAG) 
 	// Allocate temporary contiguous array
-	double* tmp_mag_str = (double* )fftw_malloc(sizeof(double) * NUM_POW * N);
+	double* tmp_mag_str = (double* )malloc(sizeof(double) * NUM_POW * N);
 	for (int i = 0; i < N; ++i) {
 		for (int p = 0; p < NUM_POW; ++p) {
 			tmp_mag_str[i * NUM_POW + p] = stats_data->mag_str_func[p][i] / stats_data->num_stats_steps;
@@ -1141,13 +1141,13 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	}
 
 	// Free temp memory
-	fftw_free(tmp_mag_str);
+	free(tmp_mag_str);
 	#endif
 
 	///-------------------------- Magnetic flux structure function
 	#if defined(__STR_FUNC_MAG_FLUX)
 	// Allocate temporary contiguous array
-	double* tmp_mag_str_flux = (double* )fftw_malloc(sizeof(double) * 2 * NUM_POW * N);
+	double* tmp_mag_str_flux = (double* )malloc(sizeof(double) * 2 * NUM_POW * N);
 	for (int i = 0; i < N; ++i) {
 		for (int p = 0; p < NUM_POW; ++p) {
 			tmp_mag_str_flux[2 * (i * NUM_POW + p) + 0] = stats_data->mag_flux_str_func[0][p][i] / stats_data->num_stats_steps;
@@ -1179,7 +1179,7 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	}
 
 	// Free temp memory
-	fftw_free(tmp_mag_str_flux);
+	free(tmp_mag_str_flux);
 	#endif
 	#endif
 	#endif

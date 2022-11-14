@@ -246,11 +246,11 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 	double int_fac_b_1;
 	#endif
 	#else
-	fftw_complex int_fac_u;
-	fftw_complex int_fac_u_1;
+	double complex int_fac_u;
+	double complex int_fac_u_1;
 	#if defined(__MAGNETO)
-	fftw_complex int_fac_b;
-	fftw_complex int_fac_b_1;
+	double complex int_fac_b;
+	double complex int_fac_b_1;
 	#endif
 	#endif
 	#if defined(PHASE_ONLY)
@@ -278,13 +278,13 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		n = i + 2;
 
 		// Get the integrating factor
-		int_fac_u = exp(-sys_vars->NU * dt * run_data->k[n] * run_data->k[n] / 2.0);
+		int_fac_u = cexp(-sys_vars->NU * dt * run_data->k[n] * run_data->k[n] / 2.0);
 
 		// Update temorary velocity term
 		RK_data->RK_u_tmp[n] = run_data->u[n] * int_fac_u + dt * RK4_A21 * RK_data->RK1_u[n] * int_fac_u;
 		#if defined(__MAGNETO)
 		// Get the integrating factor
-		int_fac_b = exp(-sys_vars->ETA * dt * run_data->k[n] * run_data->k[n] / 2.0);
+		int_fac_b = cexp(-sys_vars->ETA * dt * run_data->k[n] * run_data->k[n] / 2.0);
 		
 		// Update temporary magnetic term
 		RK_data->RK_b_tmp[n] = run_data->b[n] * int_fac_b + dt * RK4_A21 * RK_data->RK1_b[n] * int_fac_b;
@@ -595,9 +595,9 @@ void AB4CNStep(const double dt, const long iters, const long int N, RK_data_stru
 		RK4Step(dt, N, RK_data);
 
 		// Save the nonlinear term for each pre step for use in the update step of the AB4CN scheme
-		memcpy(&(RK_data->AB_tmp_nonlin_u[iters - 1][0]), RK_data->RK1_u, sizeof(fftw_complex) * (N + 4));
+		memcpy(&(RK_data->AB_tmp_nonlin_u[iters - 1][0]), RK_data->RK1_u, sizeof(double complex) * (N + 4));
 		#if defined(__MAGNETO)
-		memcpy(&(RK_data->AB_tmp_nonlin_b[iters - 1][0]), RK_data->RK1_b, sizeof(fftw_complex) * (N + 4));		
+		memcpy(&(RK_data->AB_tmp_nonlin_b[iters - 1][0]), RK_data->RK1_b, sizeof(double complex) * (N + 4));		
 		#endif
 	}
 	else {
@@ -639,13 +639,13 @@ void AB4CNStep(const double dt, const long iters, const long int N, RK_data_stru
 		// Update Previous Nonlinear Terms
 		// -----------------------------------
 		// Update the previous Nonlinear term arrays for next iteration
-		memcpy(&(RK_data->AB_tmp_nonlin_u[0][0]), &(RK_data->AB_tmp_nonlin_u[1][0]), sizeof(fftw_complex) * (N + 4));
-		memcpy(&(RK_data->AB_tmp_nonlin_u[1][0]), &(RK_data->AB_tmp_nonlin_u[2][0]), sizeof(fftw_complex) * (N + 4));
-		memcpy(&(RK_data->AB_tmp_nonlin_u[2][0]), RK_data->AB_tmp_u, sizeof(fftw_complex) * (N + 4));
+		memcpy(&(RK_data->AB_tmp_nonlin_u[0][0]), &(RK_data->AB_tmp_nonlin_u[1][0]), sizeof(double complex) * (N + 4));
+		memcpy(&(RK_data->AB_tmp_nonlin_u[1][0]), &(RK_data->AB_tmp_nonlin_u[2][0]), sizeof(double complex) * (N + 4));
+		memcpy(&(RK_data->AB_tmp_nonlin_u[2][0]), RK_data->AB_tmp_u, sizeof(double complex) * (N + 4));
 		#if defined(__MAGNETO)
-		memcpy(&(RK_data->AB_tmp_nonlin_b[0][0]), &(RK_data->AB_tmp_nonlin_b[1][0]), sizeof(fftw_complex) * (N + 4));
-		memcpy(&(RK_data->AB_tmp_nonlin_b[1][0]), &(RK_data->AB_tmp_nonlin_b[2][0]), sizeof(fftw_complex) * (N + 4));
-		memcpy(&(RK_data->AB_tmp_nonlin_b[2][0]), RK_data->AB_tmp_b, sizeof(fftw_complex) * (N + 4));
+		memcpy(&(RK_data->AB_tmp_nonlin_b[0][0]), &(RK_data->AB_tmp_nonlin_b[1][0]), sizeof(double complex) * (N + 4));
+		memcpy(&(RK_data->AB_tmp_nonlin_b[1][0]), &(RK_data->AB_tmp_nonlin_b[2][0]), sizeof(double complex) * (N + 4));
+		memcpy(&(RK_data->AB_tmp_nonlin_b[2][0]), RK_data->AB_tmp_b, sizeof(double complex) * (N + 4));
 		#endif
 	}
 }
@@ -715,14 +715,23 @@ void NonlinearTerm(double* u, double* b, double* u_nonlin, double* b_nonlin, con
 		// -----------------------------------
 		// Add Forcing
 		// -----------------------------------
-		// Add forcing here for the velocity field
-		u_nonlin[n] += cabs(run_data->forcing_u[n]) * sin(carg(run_data->forcing_u[n]) - u[n]) / run_data->a_n[n] ;
-		#if defined(__MAGNETO)
-		// Add forcing here for the magnetic field
-		b_nonlin[n] += cabs(run_data->forcing_b[n]) * sin(carg(run_data->forcing_b[n]) - b[n]) / run_data->b_n[n]; 
-		#endif
+		if(!(strcmp(sys_vars->forcing, "FXD_AMP"))) {
+			run_data->a_n[n] = cabs(run_data->forcing_u[n]);
+			#if defined(__MAGNETO)
+			// Add forcing here for the magnetic field
+			run_data->b_n[n] = cabs(run_data->forcing_b[n]); 
+			#endif
+		}
+		// If not fixed amplitude then add the forcing to the forced modes
+		else {
+			// Add forcing here for the velocity field
+			u_nonlin[n] += cabs(run_data->forcing_u[n]) * sin(carg(run_data->forcing_u[n]) - u[n]) / run_data->a_n[n] ;
+			#if defined(__MAGNETO)
+			// Add forcing here for the magnetic field
+			b_nonlin[n] += cabs(run_data->forcing_b[n]) * sin(carg(run_data->forcing_b[n]) - b[n]) / run_data->b_n[n]; 
+			#endif
+		}
 		// printf("u[%d]:\t%lf\t-\tf[%d]:\t%lf\t%lfi\t----\t%lf\n", i + 1, u_nonlin[n], i + i, creal(run_data->forcing_u[n]), cimag(run_data->forcing_u[n]), u_nonlin[n] / creal(run_data->forcing_u[n]));
-
 	}
 }
 #else
@@ -734,7 +743,7 @@ void NonlinearTerm(double* u, double* b, double* u_nonlin, double* b_nonlin, con
  * @param b_nonlin array to hold the result of computing the nonlinear term for the magnetic field
  * @param N        int defining the number of shells
  */
-void NonlinearTerm(fftw_complex* u, fftw_complex* b, fftw_complex* u_nonlin, fftw_complex* b_nonlin, const long int N) {
+void NonlinearTerm(double complex* u, double complex* b, double complex* u_nonlin, double complex* b_nonlin, const long int N) {
 
 	// Initialize variables
 	int n;
@@ -746,9 +755,9 @@ void NonlinearTerm(fftw_complex* u, fftw_complex* b, fftw_complex* u_nonlin, fft
 	const double interact_coeff_b_2 = sys_vars->EPS_M / sys_vars->Lambda;
 	const double interact_coeff_b_3 = (1.0 - sys_vars->EPS_M) / lambda_pow;
 	#endif
-	fftw_complex u_tmp_1, u_tmp_2, u_tmp_3;
+	double complex u_tmp_1, u_tmp_2, u_tmp_3;
 	#if defined(__MAGNETO)
-	fftw_complex b_tmp_1, b_tmp_2, b_tmp_3;
+	double complex b_tmp_1, b_tmp_2, b_tmp_3;
 	#endif 
 
 	// -----------------------------------
@@ -791,12 +800,24 @@ void NonlinearTerm(fftw_complex* u, fftw_complex* b, fftw_complex* u_nonlin, fft
 		// Add Forcing
 		// -----------------------------------
 		// Add forcing here for the velocity field
-		u_nonlin[n] += run_data->forcing_u[n];
-		#if defined(__MAGNETO)
-		// Add forcing here for the magnetic field
-		b_nonlin[n] += run_data->forcing_b[n]; 
-		#endif
-
+		if(!(strcmp(sys_vars->forcing, "FXD_AMP"))) {
+			// If fixed amplitude forcing reset the amplitudes to the forced modes
+			if (n >= 1 && n <= sys_vars->force_k) {
+				u_nonlin[n] *= cabs(run_data->forcing_u[n]) / cabs(u_nonlin[n]);
+				#if defined(__MAGNETO)
+				// Add forcing here for the magnetic field
+				b_nonlin[n] *= cabs(run_data->forcing_b[n]) / cabs(b_nonlin[n]); 
+				#endif
+			}
+		}
+		// Else if normal forcing is selected just add the forcing to the forced modes
+		else {
+			u_nonlin[n] += run_data->forcing_u[n];
+			#if defined(__MAGNETO)
+			// Add forcing here for the magnetic field
+			b_nonlin[n] += run_data->forcing_b[n]; 
+			#endif
+		}
 		// printf("u[%d]:\t%lf\t%lfi\t-\tf[%d]:\t%lf\t%lfi\t----\t%lf\t%lf\n", i + 1, creal(u_nonlin[n]), cimag(u_nonlin[n]), i + i, creal(run_data->forcing_u[n]), cimag(run_data->forcing_u[n]), creal(u_nonlin[n]) / creal(run_data->forcing_u[n]), cimag(u_nonlin[n]) / cimag(run_data->forcing_u[n]));
 	}
 }
@@ -1035,8 +1056,8 @@ void InitializeForicing(const long int N) {
 	// ------------------------------------------------
 	// Allocate Memory for Forcing Data
 	// ------------------------------------------------
-	run_data->forcing_u = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
-	run_data->forcing_b = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
+	run_data->forcing_u = (double complex* )malloc(sizeof(double complex) * (N + 4));
+	run_data->forcing_b = (double complex* )malloc(sizeof(double complex) * (N + 4));
 
 	// ------------------------------------------------
 	// Initialize Forcing Data
@@ -1061,6 +1082,53 @@ void InitializeForicing(const long int N) {
 				#endif			
 			}
 			
+		}
+		else if(!(strcmp(sys_vars->forcing, "FXD_AMP"))) {
+			// -----------------------------------------------
+			// Fixed Amplitude Forcing
+			// -----------------------------------------------
+			// Initialize variables
+			double amp_u_1;
+			#if defined(__MAGNETO)
+			double amp_b_1;			
+			#endif
+
+			// Record the amplitude of the first mode
+			if (i == 1) {
+				#if defined(PHASE_ONLY_DIRECT)
+				amp_u_1                = run_data->a_n[i];
+				run_data->forcing_u[i] = run_data->a_n[i] * cexp(I * run_data->phi_n[i]);
+				#if defined(__MAGNETO)
+				amp_b_1                = run_data->b_n[i];
+				run_data->forcing_b[i] = run_data->b_n[i] * cexp(I * run_data->psi_n[i]);
+				#endif				
+				#else
+				amp_u_1                = cabs(run_data->u[i]);
+				run_data->forcing_u[i] = run_data->u[i];
+				#if defined(__MAGNETO)
+				amp_b_1                = cabs(run_data->b[i]);
+				run_data->forcing_b[i] = run_data->b[i];
+				#endif				
+				#endif
+			}
+			else if (i > 1 && i <= sys_vars->force_k){
+				// Set the amplitudes of the fixed modes
+				#if defined(PHASE_ONLY_DIRECT)
+				run_data->a_n          = amp_u_1;
+				run_data->forcing_u[i] = run_data->a_n[i] * cexp(I * run_data->phi_n[i]);
+				#if defined(__MAGNETO)
+				run_data->b_n[i]       = amp_b_1;
+				run_data->forcing_b[i] = run_data->b_n[i] * cexp(I * run_data->psi_n[i]);
+				#endif				
+				#else
+				run_data->u[i]         = amp_u_1;
+				run_data->forcing_u[i] = run_data->u[i];
+				#if defined(__MAGNETO)
+				run_data->b[i]         = amp_b_1;
+				run_data->forcing_b[i] = run_data->b[i];
+				#endif		
+				#endif	
+			}
 		}
 		else if(!(strcmp(sys_vars->forcing, "STOC"))) {
 			// ------------------------------------------------
@@ -1094,14 +1162,14 @@ void InitializeForicing(const long int N) {
 void ComputeForicing(const long int N) {
 
 	// Initialize variables
-	int n;
+	// int n;
 
 	// ------------------------------------------------
 	// Initialize Forcing Data
 	// ------------------------------------------------
 	for (int i = 0; i < N + 4; ++i) {
 		// Get temporary index
-		n = i;
+		// n = i;
 
 		// Compute the forcing and intialize
 		 if(!(strcmp(sys_vars->forcing, "STOC"))) {
@@ -1276,7 +1344,7 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 	// Allocate Shell Wavenumbers
 	// -------------------------------
 	// Allocate the shell wavenumbers
-	run_data->k = (double* )fftw_malloc(sizeof(double) * (N + 4));  // k
+	run_data->k = (double* )malloc(sizeof(double) * (N + 4));  // k
 	if (run_data->k == NULL) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Shell Wavenumber List");
 		exit(1);
@@ -1286,20 +1354,20 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 	// Allocate Velocity Field Variables
 	// ----------------------------------
 	// Full velocity field
-	run_data->u = (fftw_complex* ) fftw_malloc(sizeof(fftw_complex) * (N + 4));
+	run_data->u = (double complex* ) malloc(sizeof(double complex) * (N + 4));
 	if (run_data->u == NULL) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Velocity Field");
 		exit(1);
 	}
 	#if defined(PHASE_ONLY)	|| defined(PHASE_ONLY_DIRECT)
 	// The Fourier amplitudes
-	run_data->a_n = (double* ) fftw_malloc(sizeof(double) * (N + 4));
+	run_data->a_n = (double* ) malloc(sizeof(double) * (N + 4));
 	if (run_data->a_n == NULL) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Velocity Field Amplitude");
 		exit(1);
 	}
 	// The Fourier phases
-	run_data->phi_n = (double* ) fftw_malloc(sizeof(double) * (N + 4));
+	run_data->phi_n = (double* ) malloc(sizeof(double) * (N + 4));
 	if (run_data->phi_n == NULL) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Velocity Field Phase");
 		exit(1);
@@ -1311,20 +1379,20 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 	// ---------------------------------
 	#if defined(__MAGNETO)
 	// Full velocity field
-	run_data->b = (fftw_complex* ) fftw_malloc(sizeof(fftw_complex) * (N + 4));
+	run_data->b = (double complex* ) malloc(sizeof(double complex) * (N + 4));
 	if (run_data->b == NULL) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Magnetic Field");
 		exit(1);
 	}	
 	#if defined(PHASE_ONLY)	|| defined(PHASE_ONLY_DIRECT)
 	// The Fourier amplitudes
-	run_data->b_n = (double* ) fftw_malloc(sizeof(double) * (N + 4));
+	run_data->b_n = (double* ) malloc(sizeof(double) * (N + 4));
 	if (run_data->b_n == NULL) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Magnetic Field Amplitude");
 		exit(1);
 	}
 	// The Fourier phases
-	run_data->psi_n = (double* ) fftw_malloc(sizeof(double) * (N + 4));
+	run_data->psi_n = (double* ) malloc(sizeof(double) * (N + 4));
 	if (run_data->psi_n == NULL) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Magnetic Field Phase");
 		exit(1);
@@ -1337,52 +1405,52 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 	// -------------------------------
 	// Runge-Kutta Integration arrays
 	#if defined(PHASE_ONLY_DIRECT)
-	RK_data->RK1_u       = (double* )fftw_malloc(sizeof(double) * (N + 4));
-	RK_data->RK2_u       = (double* )fftw_malloc(sizeof(double) * (N + 4));
-	RK_data->RK3_u       = (double* )fftw_malloc(sizeof(double) * (N + 4));
-	RK_data->RK4_u       = (double* )fftw_malloc(sizeof(double) * (N + 4));
-	RK_data->RK_u_tmp    = (double* )fftw_malloc(sizeof(double) * (N + 4));
+	RK_data->RK1_u       = (double* )malloc(sizeof(double) * (N + 4));
+	RK_data->RK2_u       = (double* )malloc(sizeof(double) * (N + 4));
+	RK_data->RK3_u       = (double* )malloc(sizeof(double) * (N + 4));
+	RK_data->RK4_u       = (double* )malloc(sizeof(double) * (N + 4));
+	RK_data->RK_u_tmp    = (double* )malloc(sizeof(double) * (N + 4));
 	#if defined(AB4CN)
-	RK_data->AB_tmp_u	 = (double* )fftw_malloc(sizeof(double) * (N + 4));
+	RK_data->AB_tmp_u	 = (double* )malloc(sizeof(double) * (N + 4));
 	for (int i = 0; i < 3; ++i) {
-		RK_data->AB_tmp_nonlin_u[i] = (double* )fftw_malloc(sizeof(double) * (N + 4));
+		RK_data->AB_tmp_nonlin_u[i] = (double* )malloc(sizeof(double) * (N + 4));
 	}
 	#endif
 	#if defined(__MAGNETO)
-	RK_data->RK1_b       = (double* )fftw_malloc(sizeof(double) * (N + 4));
-	RK_data->RK2_b       = (double* )fftw_malloc(sizeof(double) * (N + 4));
-	RK_data->RK3_b       = (double* )fftw_malloc(sizeof(double) * (N + 4));
-	RK_data->RK4_b       = (double* )fftw_malloc(sizeof(double) * (N + 4));
-	RK_data->RK_b_tmp    = (double* )fftw_malloc(sizeof(double) * (N + 4));
+	RK_data->RK1_b       = (double* )malloc(sizeof(double) * (N + 4));
+	RK_data->RK2_b       = (double* )malloc(sizeof(double) * (N + 4));
+	RK_data->RK3_b       = (double* )malloc(sizeof(double) * (N + 4));
+	RK_data->RK4_b       = (double* )malloc(sizeof(double) * (N + 4));
+	RK_data->RK_b_tmp    = (double* )malloc(sizeof(double) * (N + 4));
 	#if defined(AB4CN)
-	RK_data->AB_tmp_b	 = (double* )fftw_malloc(sizeof(double) * (N + 4));
+	RK_data->AB_tmp_b	 = (double* )malloc(sizeof(double) * (N + 4));
 	for (int i = 0; i < 3; ++i) {
-		RK_data->AB_tmp_nonlin_b[i] = (double* )fftw_malloc(sizeof(double) * (N + 4));
+		RK_data->AB_tmp_nonlin_b[i] = (double* )malloc(sizeof(double) * (N + 4));
 	}
 	#endif
 	#endif
 	#else
-	RK_data->RK1_u       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
-	RK_data->RK2_u       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
-	RK_data->RK3_u       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
-	RK_data->RK4_u       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
-	RK_data->RK_u_tmp    = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
+	RK_data->RK1_u       = (double complex* )malloc(sizeof(double complex) * (N + 4));
+	RK_data->RK2_u       = (double complex* )malloc(sizeof(double complex) * (N + 4));
+	RK_data->RK3_u       = (double complex* )malloc(sizeof(double complex) * (N + 4));
+	RK_data->RK4_u       = (double complex* )malloc(sizeof(double complex) * (N + 4));
+	RK_data->RK_u_tmp    = (double complex* )malloc(sizeof(double complex) * (N + 4));
 	#if defined(AB4CN)
-	RK_data->AB_tmp_u	 = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
+	RK_data->AB_tmp_u	 = (double complex* )malloc(sizeof(double complex) * (N + 4));
 	for (int i = 0; i < 3; ++i) {
-		RK_data->AB_tmp_nonlin_u[i] = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
+		RK_data->AB_tmp_nonlin_u[i] = (double complex* )malloc(sizeof(double complex) * (N + 4));
 	}
 	#endif
 	#if defined(__MAGNETO)
-	RK_data->RK1_b       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
-	RK_data->RK2_b       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
-	RK_data->RK3_b       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
-	RK_data->RK4_b       = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
-	RK_data->RK_b_tmp    = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
+	RK_data->RK1_b       = (double complex* )malloc(sizeof(double complex) * (N + 4));
+	RK_data->RK2_b       = (double complex* )malloc(sizeof(double complex) * (N + 4));
+	RK_data->RK3_b       = (double complex* )malloc(sizeof(double complex) * (N + 4));
+	RK_data->RK4_b       = (double complex* )malloc(sizeof(double complex) * (N + 4));
+	RK_data->RK_b_tmp    = (double complex* )malloc(sizeof(double complex) * (N + 4));
 	#if defined(AB4CN)
-	RK_data->AB_tmp_b	 = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
+	RK_data->AB_tmp_b	 = (double complex* )malloc(sizeof(double complex) * (N + 4));
 	for (int i = 0; i < 3; ++i) {
-		RK_data->AB_tmp_nonlin_b[i] = (fftw_complex* )fftw_malloc(sizeof(fftw_complex) * (N + 4));
+		RK_data->AB_tmp_nonlin_b[i] = (double complex* )malloc(sizeof(double complex) * (N + 4));
 	}
 	#endif
 	#endif
@@ -1507,68 +1575,68 @@ void FreeMemory(RK_data_struct* RK_data) {
 	// Free memory 
 	// ------------------------
 	// Free shell variables
-	fftw_free(run_data->k);
+	free(run_data->k);
 
 	// Free system variables
-	fftw_free(run_data->u);
+	free(run_data->u);
 	#if defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT)
-	fftw_free(run_data->a_n);
-	fftw_free(run_data->phi_n);
+	free(run_data->a_n);
+	free(run_data->phi_n);
 	#endif
 	#if defined(__MAGNETO)
-	fftw_free(run_data->b);
+	free(run_data->b);
 	#if defined(PHASE_ONLY)
-	fftw_free(run_data->b_n);
-	fftw_free(run_data->psi_n);
+	free(run_data->b_n);
+	free(run_data->psi_n);
 	#endif
 	#endif
 	#if defined(__SYS_MEASURES)
-	fftw_free(run_data->tot_energy);
-	fftw_free(run_data->tot_hel_u);
+	free(run_data->tot_energy);
+	free(run_data->tot_hel_u);
 	#if defined(__MAGNETO)
-	fftw_free(run_data->tot_hel_b);
-	fftw_free(run_data->tot_cross_hel);
+	free(run_data->tot_hel_b);
+	free(run_data->tot_cross_hel);
 	#endif
 	#endif
 	#if defined(__ENRG_SPECT) || defined(__DISS_SPECT)
-	fftw_free(run_data->energy_spect);
-	fftw_free(run_data->diss_spect);
+	free(run_data->energy_spect);
+	free(run_data->diss_spect);
 	#endif
 	#if defined(__TIME)
-	fftw_free(run_data->time);
+	free(run_data->time);
 	#endif
 	#if defined(__ENRG_FLUX)
-	fftw_free(run_data->energy_flux);
-	fftw_free(run_data->energy_diss_u);
-	fftw_free(run_data->energy_input_u);
+	free(run_data->energy_flux);
+	free(run_data->energy_diss_u);
+	free(run_data->energy_input_u);
 	#if defined(__MAGNETO)
-	fftw_free(run_data->energy_diss_b);
-	fftw_free(run_data->energy_input_b);
+	free(run_data->energy_diss_b);
+	free(run_data->energy_input_b);
 	#endif
 	#endif
-	fftw_free(run_data->forcing_u);
-	fftw_free(run_data->forcing_b);
+	free(run_data->forcing_u);
+	free(run_data->forcing_b);
 
 	// Free stats objects
 	#if defined(STATS)
 	for (int i = 0; i < NUM_POW; ++i) {
 		#if defined(__STR_FUNC_VEL)
-		fftw_free(stats_data->vel_str_func[i]);
+		free(stats_data->vel_str_func[i]);
 		#endif
 		#if defined(__STR_FUNC_VEL_FLUX)
 		for (int j = 0; j < 2; ++j) {
-			fftw_free(stats_data->vel_flux_str_func[j][i]);
-			fftw_free(stats_data->vel_flux_str_func_abs[j][i]);
+			free(stats_data->vel_flux_str_func[j][i]);
+			free(stats_data->vel_flux_str_func_abs[j][i]);
 		}		
 		#endif
 		#if defined(__MAGNETO)
 		#if defined(__STR_FUNC_MAG)
-		fftw_free(stats_data->mag_str_func[i]);
+		free(stats_data->mag_str_func[i]);
 		#endif
 		#if defined(__STR_FUNC_MAG_FLUX)
 		for (int j = 0; j < 2; ++j) {
-			fftw_free(stats_data->mag_flux_str_func[j][i]);
-			fftw_free(stats_data->mag_flux_str_func_abs[j][i]);
+			free(stats_data->mag_flux_str_func[j][i]);
+			free(stats_data->mag_flux_str_func_abs[j][i]);
 		}
 		#endif
 		#endif
@@ -1586,27 +1654,27 @@ void FreeMemory(RK_data_struct* RK_data) {
 
 
 	// Free integration variables
-	fftw_free(RK_data->RK1_u);
-	fftw_free(RK_data->RK2_u);
-	fftw_free(RK_data->RK3_u);
-	fftw_free(RK_data->RK4_u);
-	fftw_free(RK_data->RK_u_tmp);
+	free(RK_data->RK1_u);
+	free(RK_data->RK2_u);
+	free(RK_data->RK3_u);
+	free(RK_data->RK4_u);
+	free(RK_data->RK_u_tmp);
 	#if defined(AB4CN)
-	fftw_free(RK_data->AB_tmp_u);
+	free(RK_data->AB_tmp_u);
 	for (int i = 0; i < 3; ++i)	{
-		fftw_free(RK_data->AB_tmp_nonlin_u[i]);
+		free(RK_data->AB_tmp_nonlin_u[i]);
 	}
 	#endif
 	#if defined(__MAGNETO)
-	fftw_free(RK_data->RK1_b);
-	fftw_free(RK_data->RK2_b);
-	fftw_free(RK_data->RK3_b);
-	fftw_free(RK_data->RK4_b);
-	fftw_free(RK_data->RK_b_tmp);
+	free(RK_data->RK1_b);
+	free(RK_data->RK2_b);
+	free(RK_data->RK3_b);
+	free(RK_data->RK4_b);
+	free(RK_data->RK_b_tmp);
 	#if defined(AB4CN)
-	fftw_free(RK_data->AB_tmp_b);
+	free(RK_data->AB_tmp_b);
 	for (int i = 0; i < 3; ++i)	{
-		fftw_free(RK_data->AB_tmp_nonlin_b[i]);
+		free(RK_data->AB_tmp_nonlin_b[i]);
 	}
 	#endif
 	#endif

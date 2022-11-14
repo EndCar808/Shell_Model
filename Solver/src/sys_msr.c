@@ -93,19 +93,6 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
         run_data->diss_spect[i] = 0.0;
         #endif
     }
-
-    // ------------------------------------
-    // Remove Forcing
-    // ------------------------------------
-    // Remove forcing to compute the energy flux balance terms
-    if (iter > 0) {
-        for (int i = 2; i < N; ++i) {
-            run_data->u[i] -= run_data->forcing_u[i];
-            #if defined(__MAGNETO)
-            run_data->b[i] -= run_data->forcing_b[i];
-            #endif
-        }
-    }
     
     // -------------------------------------
     // Compute Measurables
@@ -276,19 +263,6 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
         }
     }
     #endif
-
-    // ------------------------------------
-    // Add Back Forcing
-    // ------------------------------------
-    // Add back forcing after computing the energy flux balance terms
-    if (iter > 0) {
-        for (int i = 2; i < N; ++i) {
-            run_data->u[i] += run_data->forcing_u[i];
-            #if defined(__MAGNETO)
-            run_data->b[i] += run_data->forcing_b[i];
-            #endif
-        }
-    }
 }
 /**
  * Function to initialize and compute the system measurables and spectra of the initial conditions
@@ -310,20 +284,20 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
     // --------------------------------
     #if defined(__SYS_MEASURES)
     // Total Energy in the system
-    run_data->tot_energy = (double* )fftw_malloc(sizeof(double) * print_steps);
+    run_data->tot_energy = (double* )malloc(sizeof(double) * print_steps);
     if (run_data->tot_energy == NULL) {
         fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Total Energy");
         exit(1);
     }
     // Total Velocity Helicity
-    run_data->tot_hel_u = (double* )fftw_malloc(sizeof(double) * print_steps);
+    run_data->tot_hel_u = (double* )malloc(sizeof(double) * print_steps);
     if (run_data->tot_hel_u == NULL) {
         fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Total Velocity Helicity");
         exit(1);
     }  
      
     // Total Dissipation
-    run_data->tot_diss = (double* )fftw_malloc(sizeof(double) * print_steps);
+    run_data->tot_diss = (double* )malloc(sizeof(double) * print_steps);
     if (run_data->tot_diss == NULL) {
         fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Total Dissipation");
         exit(1);
@@ -331,14 +305,14 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
      
     #if defined(__MAGNETO)
     // Total Magnetic Helicity
-    run_data->tot_hel_b = (double* )fftw_malloc(sizeof(double) * print_steps);
+    run_data->tot_hel_b = (double* )malloc(sizeof(double) * print_steps);
     if (run_data->tot_hel_b == NULL) {
         fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Total Magnetic Helicity");
         exit(1);
     }   
 
     // Total Cross Helicity
-    run_data->tot_cross_hel = (double* )fftw_malloc(sizeof(double) * print_steps);
+    run_data->tot_cross_hel = (double* )malloc(sizeof(double) * print_steps);
     if (run_data->tot_cross_hel == NULL) {
         fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Total Cross Helicity");
         exit(1);
@@ -346,35 +320,35 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
     #endif
 
     // Characterisitic Velocity rms(u)
-    run_data->u_charact = (double* )fftw_malloc(sizeof(double) * print_steps);
+    run_data->u_charact = (double* )malloc(sizeof(double) * print_steps);
     if (run_data->u_charact == NULL) {
         fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Characteristic Velocity");
         exit(1);
     }   
 
     // Integral Length scale rms(u)
-    run_data->int_scale = (double* )fftw_malloc(sizeof(double) * print_steps);
+    run_data->int_scale = (double* )malloc(sizeof(double) * print_steps);
     if (run_data->int_scale == NULL) {
         fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Integral Length Scale");
         exit(1);
     }   
 
     // Kolmogorov Length Scale
-    run_data->kolmogorov_scale = (double* )fftw_malloc(sizeof(double) * print_steps);
+    run_data->kolmogorov_scale = (double* )malloc(sizeof(double) * print_steps);
     if (run_data->kolmogorov_scale == NULL) {
         fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Kolmogorov Length Scale");
         exit(1);
     }   
 
     // Taylor Micro Length Scale
-    run_data->taylor_micro_scale = (double* )fftw_malloc(sizeof(double) * print_steps);
+    run_data->taylor_micro_scale = (double* )malloc(sizeof(double) * print_steps);
     if (run_data->taylor_micro_scale == NULL) {
         fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Taylor Micro Length Scale");
         exit(1);
     }   
 
     // Reynold No.
-    run_data->reynolds_no = (double* )fftw_malloc(sizeof(double) * print_steps);
+    run_data->reynolds_no = (double* )malloc(sizeof(double) * print_steps);
     if (run_data->reynolds_no == NULL) {
         fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Reynold No.");
         exit(1);
@@ -383,7 +357,7 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
 
     // Time
     #if defined(__TIME)
-    run_data->time = (double* )fftw_malloc(sizeof(double) * print_steps);
+    run_data->time = (double* )malloc(sizeof(double) * print_steps);
     if (run_data->time == NULL) {
         fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Time");
         exit(1);
@@ -392,13 +366,13 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
 
     #if defined(__ENRG_SPECT) || defined(__DISS_SPECT)
     // Allocate energy spectrum
-    run_data->energy_spect = (double* )fftw_malloc(sizeof(double) * sys_vars->N);
+    run_data->energy_spect = (double* )malloc(sizeof(double) * sys_vars->N);
     if (run_data->energy_spect == NULL) {
         fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Energy Spectrum");
         exit(1);
     }
     // Allocate dissipation spectrum
-    run_data->diss_spect = (double* )fftw_malloc(sizeof(double) * sys_vars->N);
+    run_data->diss_spect = (double* )malloc(sizeof(double) * sys_vars->N);
     if (run_data->diss_spect == NULL) {
         fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Dissipation Spectrum");
         exit(1);
@@ -407,32 +381,32 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
 
     #if defined(__ENRG_FLUX)
     // Allocate energy flux
-    run_data->energy_flux = (double* )fftw_malloc(sizeof(double) * sys_vars->N);
+    run_data->energy_flux = (double* )malloc(sizeof(double) * sys_vars->N);
     if (run_data->energy_flux == NULL) {
         fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Energy Flux");
         exit(1);
     }
     // Allocate energy dissipation for the velocity field
-    run_data->energy_diss_u = (double* )fftw_malloc(sizeof(double) * sys_vars->N);
+    run_data->energy_diss_u = (double* )malloc(sizeof(double) * sys_vars->N);
     if (run_data->energy_diss_u == NULL) {
         fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Velocity Energy Dissipation");
         exit(1);
     }
     // Allocate energy input for the velocity field
-    run_data->energy_input_u = (double* )fftw_malloc(sizeof(double) * sys_vars->N);
+    run_data->energy_input_u = (double* )malloc(sizeof(double) * sys_vars->N);
     if (run_data->energy_input_u == NULL) {
         fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Velocity Energy Input");
         exit(1);
     }
     #if defined(__MAGNETO)
     // Allocate energy dissipation for the magnetic field
-    run_data->energy_diss_b = (double* )fftw_malloc(sizeof(double) * sys_vars->N);
+    run_data->energy_diss_b = (double* )malloc(sizeof(double) * sys_vars->N);
     if (run_data->energy_diss_b == NULL) {
         fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Magnetic Energy Dissipation");
         exit(1);
     }
     // Allocate energy input for the magnetic field
-    run_data->energy_input_b = (double* )fftw_malloc(sizeof(double) * sys_vars->N);
+    run_data->energy_input_b = (double* )malloc(sizeof(double) * sys_vars->N);
     if (run_data->energy_input_b == NULL) {
         fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Magnetic Energy Input");
         exit(1);

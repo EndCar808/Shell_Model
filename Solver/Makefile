@@ -8,18 +8,39 @@
 # ---------------------------------------------------------------------
 # Get the operating system:
 # Need to strip leading and/or trailing whitespaces otherwise if statement wont work
-OS = $(strip $(shell lsb_release -si))
+OS        = $(strip $(shell lsb_release -si))
+MACH_NAME = $(strip $(shell hostname))
 
 # Set the operating system dependent compiler variables
 ifeq ($(OS), Ubuntu)
-	# CHIRP
-	GCC := gcc
-	CCFLAG := -O3 -W -Wall -g
-	LIBFLAG := -lm -lhdf5 -lhdf5_hl
-	GSLFLAG := -lgsl -lgslcblas
-	# LAPACKFLAG := -llapacke -llapack -lblas -lgfortran
-	INCDIR = -I/usr/include/hdf5/serial/  -I/usr/include/gsl/ 
-	LIBDIR = -L/usr/lib/x86_64-linux-gnu/hdf5/serial/ 
+	ifeq ($(MACH_NAME), DESKTOP-SS58OJO)
+		# LAPTOPL: WSL 2
+		GCC := gcc
+		CCFLAG := -O3 -W -Wall -g
+		LIBFLAG := -lm -lhdf5 -lhdf5_hl
+		GSLFLAG := -lgsl -lgslcblas
+		# LAPACKFLAG := -llapacke -llapack -lblas -lgfortran
+		INCDIR = -I/home/endacarroll/Downloads/hdf5-1.12.2/hdf5/include -I/usr/include/gsl/
+		LIBDIR = -L/home/endacarroll/Downloads/hdf5-1.12.2/hdf5/lib
+	else ifeq ($(MACH_NAME), turbo)
+		# TURBO
+		GCC := gcc
+		CCFLAG := -O3 -W -Wall -g
+		LIBFLAG := -lm -lhdf5 -lhdf5_hl
+		GSLFLAG := -lgsl -lgslcblas
+		# LAPACKFLAG := -llapacke -llapack -lblas -lgfortran
+		INCDIR = -I/opt/software/hdf5-1.12.2-serial/include/ -I/usr/include/gsl/
+		LIBDIR = -L/opt/software/hdf5-1.12.2-serial/lib/
+	else
+		# CHIRP
+		GCC := gcc
+		CCFLAG := -O3 -W -Wall -g
+		LIBFLAG := -lm -lhdf5 -lhdf5_hl
+		GSLFLAG := -lgsl -lgslcblas
+		# LAPACKFLAG := -llapacke -llapack -lblas -lgfortran
+		INCDIR = -I/usr/include/hdf5/serial/  -I/usr/include/gsl/ 
+		LIBDIR = -L/usr/lib/x86_64-linux-gnu/hdf5/serial/ 
+	endif
 else ifeq ($(OS), RedHatEnterpriseServer)
 	# SONIC
 	GCC := gcc

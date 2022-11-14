@@ -8,15 +8,11 @@
 //  Standard Libraries and Headers
 // ---------------------------------------------------------------------
 #ifndef __DATA_TYPES
-
+#include <complex.h>
 #ifndef __HDF5_HDR
 #include <hdf5.h>
 #include <hdf5_hl.h>
 #define __HDF5_HDR
-#endif
-#ifndef __FFTW3
-#include <fftw3.h>
-#define __FFTW3
 #endif
 	
 #include <gsl/gsl_histogram.h> 
@@ -188,10 +184,6 @@ typedef struct system_vars_struct {
 	char u0[64];						// String to indicate the initial condition to use
 	char forcing[64];					// String to indicate what type of forcing is selected
 	long int N;							// Array holding the no. of collocation shells
-	fftw_plan fftw_1d_dft_r2c;			// FFTW plan to perform transform from Real to Fourier
-	fftw_plan fftw_1d_dft_c2r;			// FFTW plan to perform transform from Fourier to Real
-	fftw_plan fftw_1d_dft_batch_r2c;	// FFTW plan to perform a batch transform from Real to Fourier
-	fftw_plan fftw_1d_dft_batch_c2r;	// FFTW plan to perform a batch transform from Fourier to Real
 	long int num_t_steps;				// Number of iteration steps to perform
 	long int num_print_steps;           // Number of times system was saved to file
 	long int tot_iters;					// Records the total executed iterations
@@ -234,10 +226,10 @@ typedef struct system_vars_struct {
 // Runtime data struct
 typedef struct runtime_data_struct {
 	double* k;			  				// Array to hold wavenumbers
-	fftw_complex* u;	      			// Fourier space velocity
-	fftw_complex* b;	      			// Fourier space vorticity
-	fftw_complex* rhs; 		  			// Array to hold the RHS of the equation of motion
-	fftw_complex* nonlinterm; 			// Array to hold the nonlinear term
+	double complex* u;	      			// Fourier space velocity
+	double complex* b;	      			// Fourier space vorticity
+	double complex* rhs; 		  			// Array to hold the RHS of the equation of motion
+	double complex* nonlinterm; 			// Array to hold the nonlinear term
 	double* a_n;			  			// Fourier vorticity amplitudes
 	double* tmp_a_n;		  			// Array to hold the amplitudes of the fourier vorticity before marching forward in time
 	double* phi_n;			  			// Fourier velocity phases
@@ -262,8 +254,8 @@ typedef struct runtime_data_struct {
 	double* taylor_micro_scale;			// Array containing the Taylor microscale
 	double* reynolds_no;				// Array containing the Reynolds no.
 	double* kolmogorov_scale;			// Array containing the Kolmogorov length scale
-	fftw_complex* forcing_u;  			// Array to hold the forcing for the current timestep for the velocity field
-	fftw_complex* forcing_b;  			// Array to hold the forcing for the current timestep for the magnetic field
+	double complex* forcing_u;  			// Array to hold the forcing for the current timestep for the velocity field
+	double complex* forcing_b;  			// Array to hold the forcing for the current timestep for the magnetic field
 	double* forcing_scaling;  			// Array to hold the initial scaling for the forced modes
 	int* forcing_indx;		  			// Array to hold the indices of the forced modes
 	int* forcing_k;			  			// Array containg the wavenumbers for the forced modes
@@ -287,20 +279,20 @@ typedef struct RK_data_struct {
 	double* AB_tmp_b;	  			// Array to hold the result of the RHS/Nonlinear term for the Adams Bashforth scheme
 	double* AB_tmp_nonlin_b[3];	 	// Array to hold the previous 3 RHS/Nonlinear terms to update the Adams Bashforth scheme
 	#else
-	fftw_complex* RK1_u;		  		// Array to hold the result of the first stage for the velocity field
-	fftw_complex* RK2_u;		  		// Array to hold the result of the second stage for the velocity field
-	fftw_complex* RK3_u;		  		// Array to hold the result of the third stage for the velocity field
-	fftw_complex* RK4_u;		  		// Array to hold the result of the fourth stage for the velocity field
-	fftw_complex* RK1_b;		  		// Array to hold the result of the first stage for the magnetic field
-	fftw_complex* RK2_b;		  		// Array to hold the result of the second stage for the magnetic field
-	fftw_complex* RK3_b;		  		// Array to hold the result of the third stage for the magnetic field
-	fftw_complex* RK4_b;		  		// Array to hold the result of the fourth stage for the magnetic field
-	fftw_complex* RK_u_tmp;		  		// Array to hold the tempory updates to u - input to Nonlinear term function
-	fftw_complex* RK_b_tmp;		  		// Array to hold the tempory updates to b - input to Nonlinear term function
-	fftw_complex* AB_tmp_u;	  			// Array to hold the result of the RHS/Nonlinear term for the Adams Bashforth scheme
-	fftw_complex* AB_tmp_nonlin_u[3];	// Array to hold the previous 3 RHS/Nonlinear terms to update the Adams Bashforth scheme
-	fftw_complex* AB_tmp_b;	  			// Array to hold the result of the RHS/Nonlinear term for the Adams Bashforth scheme
-	fftw_complex* AB_tmp_nonlin_b[3];	// Array to hold the previous 3 RHS/Nonlinear terms to update the Adams Bashforth scheme
+	double complex* RK1_u;		  		// Array to hold the result of the first stage for the velocity field
+	double complex* RK2_u;		  		// Array to hold the result of the second stage for the velocity field
+	double complex* RK3_u;		  		// Array to hold the result of the third stage for the velocity field
+	double complex* RK4_u;		  		// Array to hold the result of the fourth stage for the velocity field
+	double complex* RK1_b;		  		// Array to hold the result of the first stage for the magnetic field
+	double complex* RK2_b;		  		// Array to hold the result of the second stage for the magnetic field
+	double complex* RK3_b;		  		// Array to hold the result of the third stage for the magnetic field
+	double complex* RK4_b;		  		// Array to hold the result of the fourth stage for the magnetic field
+	double complex* RK_u_tmp;		  		// Array to hold the tempory updates to u - input to Nonlinear term function
+	double complex* RK_b_tmp;		  		// Array to hold the tempory updates to b - input to Nonlinear term function
+	double complex* AB_tmp_u;	  			// Array to hold the result of the RHS/Nonlinear term for the Adams Bashforth scheme
+	double complex* AB_tmp_nonlin_u[3];	// Array to hold the previous 3 RHS/Nonlinear terms to update the Adams Bashforth scheme
+	double complex* AB_tmp_b;	  			// Array to hold the result of the RHS/Nonlinear term for the Adams Bashforth scheme
+	double complex* AB_tmp_nonlin_b[3];	// Array to hold the previous 3 RHS/Nonlinear terms to update the Adams Bashforth scheme
 	#endif
 	int AB_pre_steps;				// The number of derivatives to perform for the AB4 scheme
 } RK_data_struct;

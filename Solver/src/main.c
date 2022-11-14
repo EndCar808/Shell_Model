@@ -15,7 +15,7 @@
 //  User Libraries and Headers
 // ---------------------------------------------------------------------
 #include "data_types.h"
-// #include "hdf5_funcs.h"
+#include "hdf5_funcs.h"
 #include "solver.h"
 #include "utils.h"
 // ---------------------------------------------------------------------

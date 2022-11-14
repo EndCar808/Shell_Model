@@ -383,6 +383,12 @@ int GetCMLArgs(int argc, char** argv) {
 					force_flag = 1;
 					break;
 				}
+				else if (!(strcmp(optarg,"FXD_AMP"))  && (force_flag == 0)) {
+					// No forcing
+					strncpy(sys_vars->forcing, "FXD_AMP", 64);
+					force_flag = 1;
+					break;
+				}
 				else if (!(strcmp(optarg,"STOC"))  && (force_flag == 0)) {
 					// Stochastic forcing
 					strncpy(sys_vars->forcing, "STOC", 64);
