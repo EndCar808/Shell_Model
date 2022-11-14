@@ -60,26 +60,42 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
         printf("\n["MAGENTA"WARNING"RESET"] --- Unable to write system measures at Indx: [%ld] t: [%lf] ---- Number of intergration steps is now greater then memory allocated\n", iter, t);
     }
 
+    // Updated system measures counter for averaging over time
+    if (iter >= sys_vars->trans_iters) {
+        run_data->num_sys_msr_steps++;
+    }
+
     // ------------------------------------
     // Initialize Measurables
     // ------------------------------------
-    #if defined(__SYS_MEASURES)
     if (iter < sys_vars->num_print_steps) {
         // Initialize totals
+        #if defined(__SYS_MEASURES)
         run_data->tot_energy[iter]    = 0.0;
         run_data->tot_hel_u[iter]     = 0.0;
-        run_data->tot_diss[iter]      = 0.0;
+        run_data->tot_diss_u[iter]    = 0.0;
         #if defined(__MAGNETO)
         run_data->tot_hel_b[iter]     = 0.0;
         run_data->tot_cross_hel[iter] = 0.0;
+        run_data->tot_diss_b[iter]    = 0.0;
         #endif
         run_data->u_charact[iter] = 0.0;
         run_data->int_scale[iter] = 0.0;
+        #endif
+        // Initialize the Total energy variation terms
+        #if defined(__TOT_ENRG_FLUX)
+        run_data->tot_energy_flux[iter]    = 0.0;
+        run_data->tot_energy_diss_u[iter]  = 0.0;
+        run_data->tot_energy_input_u[iter] = 0.0;
+        #if defined(__MAGNETO)
+        run_data->tot_energy_diss_b[iter]  = 0.0;
+        run_data->tot_energy_input_b[iter] = 0.0;
+        #endif
+        #endif
     }
-    #endif
     for (int i = 0; i < N; ++i) {
-        #if defined(__ENRG_FLUX)
-        // Initialize the energy dissipation
+        #if defined(__ENRG_FLUX) || defined(__TOT_ENRG_FLUX) || defined(__ENRG_FLUX_AVG)
+        // Initialize the energy variation terms by mode
         run_data->energy_flux[i]    = 0.0;
         run_data->energy_diss_u[i]  = 0.0;
         run_data->energy_input_u[i] = 0.0;
@@ -88,8 +104,10 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
         run_data->energy_input_b[i] = 0.0;
         #endif
         #endif
-        #if defined(__ENRG_SPECT) || defined(__DISS_SPECT)
+        #if defined(__ENRG_SPECT) 
         run_data->energy_spect[i] = 0.0;
+        #endif
+        #if defined(__DISS_SPECT)
         run_data->diss_spect[i] = 0.0;
         #endif
     }
@@ -116,30 +134,30 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
             run_data->tot_energy[iter]    += run_data->a_n[n] * run_data->a_n[n];
             run_data->tot_hel_u[iter]     += pow(sgn(sys_vars->EPS - 1.0), i) * (run_data->a_n[n] * run_data->a_n[n]) * k_fac;
             run_data->int_scale[iter]     += (run_data->a_n[n] * run_data->a_n[n]) / (i + 1);
-            run_data->tot_diss[iter]      += run_data->k[n] * run_data->k[n] * run_data->a_n[n] * run_data->a_n[n];
+            run_data->tot_diss_u[iter]    += run_data->k[n] * run_data->k[n] * run_data->a_n[n] * run_data->a_n[n];
             #else
             run_data->tot_energy[iter]    += cabs(run_data->u[n] * conj(run_data->u[n]));
             run_data->tot_hel_u[iter]     += pow(sgn(sys_vars->EPS - 1.0), i) * cabs(run_data->u[n] * conj(run_data->u[n])) * k_fac;
             run_data->int_scale[iter]     +=  cabs(run_data->u[n] * conj(run_data->u[n])) / (i + 1);
-            run_data->tot_diss[iter]      += run_data->k[n] * run_data->k[n] * cabs(run_data->u[n] * run_data->u[n]);
+            run_data->tot_diss_u[iter]    += run_data->k[n] * run_data->k[n] * cabs(run_data->u[n] * run_data->u[n]);
             #endif
             #if defined(__MAGNETO)
             #if defined(PHASE_ONLY_DIRECT)
             run_data->tot_energy[iter]    += run_data->b_n[n] * run_data->b_n[n];
             run_data->tot_hel_b[iter]     += pow(sgn(sys_vars->EPS - 1.0), i) * (run_data->b_n[n] * run_data->b_n[n]) / run_data->k[n];
             run_data->tot_cross_hel[iter] += creal(run_data->a_n[n] * run_data->b_n[n]);
-            run_data->tot_diss[iter]      += run_data->k[n] * run_data->k[n] * run_data->b_n[n] * run_data->b_n[n];
+            run_data->tot_diss_b[iter]    += run_data->k[n] * run_data->k[n] * run_data->b_n[n] * run_data->b_n[n];
             #else
             run_data->tot_energy[iter]    += cabs(run_data->b[n] * conj(run_data->b[n]));
             run_data->tot_hel_b[iter]     += pow(sgn(sys_vars->EPS - 1.0), i) * cabs(run_data->b[n] * conj(run_data->b[n])) / run_data->k[n];
             run_data->tot_cross_hel[iter] += creal(run_data->u[n] * conj(run_data->b[n]));
-            run_data->tot_diss[iter]      += run_data->k[n] * run_data->k[n] * cabs(run_data->b[n] * run_data->b[n]);
+            run_data->tot_diss_b[iter]    += run_data->k[n] * run_data->k[n] * cabs(run_data->b[n] * conj(run_data->b[n]));
             #endif
             #endif
             #endif
 
             //-------------- Energy Spectrum
-            #if defined(__ENRG_SPECT) || defined(__DISS_SPECT)
+            #if defined(__ENRG_SPECT) 
             // Compute the energy spectrum
             #if defined(PHASE_ONLY_DIRECT)
             run_data->energy_spect[i] = run_data->a_n[n] * run_data->a_n[n];  
@@ -152,12 +170,34 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
             run_data->energy_spect[i] += cabs(run_data->b[n] * conj(run_data->b[n]));  
             #endif
             #endif
+            #endif
+            #if defined(__DISS_SPECT)
             // Compute the dissipation spectrum
             run_data->diss_spect[i] = sys_vars->NU * run_data->k[n] * run_data->k[n] * run_data->energy_spect[i];
             #endif
 
+            //-------------- Time Averaged Energy Spectrum
+            #if defined(__ENRG_SPECT_AVG) 
+            // Compute the energy spectrum
+            #if defined(PHASE_ONLY_DIRECT)
+            run_data->energy_spect[i] += run_data->a_n[n] * run_data->a_n[n];  
+            #if defined(__MAGNETO)        
+            run_data->energy_spect[i] += run_data->b_n[n] * run_data->b_n[n];  
+            #endif
+            #else
+            run_data->energy_spect[i] += cabs(run_data->u[n] * conj(run_data->u[n]));  
+            #if defined(__MAGNETO)        
+            run_data->energy_spect[i] += cabs(run_data->b[n] * conj(run_data->b[n]));  
+            #endif
+            #endif
+            #endif
+            #if defined(__DISS_SPECT_AVG)
+            // Compute the dissipation spectrum
+            run_data->diss_spect_t_avg[i] += sys_vars->NU * run_data->k[n] * run_data->k[n] * run_data->energy_spect[i];
+            #endif
+
             //-------------- Energy Flux and Dissipation
-            #if defined(__ENRG_FLUX)
+            #if defined(__ENRG_FLUX) || defined(__TOT_ENRG_FLUX) || defined(__ENRG_FLUX_AVG)
             // Compute the energy dissipation
             for (int j = 0; j < i + 1; ++j) {
                 // Get temp indx
@@ -227,8 +267,25 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
             #endif
             #endif
             #endif
+
+            //-------------- Time Averaged Energy
+            #if defined(__ENRG_FLUX_AVG)
+            run_data->energy_flux_t_avg[i] += run_data->energy_flux[i];
+            #endif
+
+            //-------------- Total Energy Flux and Dissipation
+            #if defined(__TOT_ENRG_FLUX)
+            run_data->tot_energy_flux[iter]    += run_data->energy_flux[i];
+            run_data->tot_energy_diss_u[iter]  += run_data->energy_diss_u[i];
+            run_data->tot_energy_input_u[iter] += run_data->energy_input_u[i];
+            #if defined(__MAGNETO) 
+            run_data->tot_energy_diss_b[iter]  += run_data->energy_diss_b[i];
+            run_data->tot_energy_input_b[iter] += run_data->energy_input_b[i];
+            #endif
+            #endif
         }
     }    
+
 
     // ------------------------------------
     // Normalize Measureables 
@@ -248,14 +305,24 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
         // Compute the integral length scale
         run_data->int_scale[iter] *= 3.0 / (4.0 * run_data->tot_energy[iter] / 2.0);
 
+        #if defined(__MAGNETO)
         // Compute the Taylor Micro Scale
-        run_data->taylor_micro_scale[iter] = sqrt(10.0 * sys_vars->NU * run_data->tot_energy[iter] / run_data->tot_diss[iter]);
-
+        run_data->taylor_micro_scale[iter] = sqrt(10.0 * sys_vars->NU * run_data->tot_energy[iter] / (run_data->tot_diss_u[iter] + run_data->tot_diss_b[iter]));
+        #else 
+        // Compute the Taylor Micro Scale
+        run_data->taylor_micro_scale[iter] = sqrt(10.0 * sys_vars->NU * run_data->tot_energy[iter] / run_data->tot_diss_u[iter]);
+        #endif
+        
         // Compute the Reynolds No.
         run_data->reynolds_no[iter] = run_data->u_charact[iter] / sys_vars->NU;
 
+        #if defined(__MAGNETO)
         // Compute the Kolmogorov Lenght Scale
-        run_data->kolmogorov_scale[iter] = pow(pow(sys_vars->NU, 3.0) / run_data->tot_diss[iter], 1.0 / 4.0);
+        run_data->kolmogorov_scale[iter] = pow(pow(sys_vars->NU, 3.0) / (run_data->tot_diss_u[iter] + run_data->tot_diss_b[iter]), 1.0 / 4.0);
+        #else
+        // Compute the Kolmogorov Lenght Scale
+        run_data->kolmogorov_scale[iter] = pow(pow(sys_vars->NU, 3.0) / run_data->tot_diss_u[iter], 1.0 / 4.0);
+        #endif
 
         // Eddy turnover time -> max of l / U during the transient iterations
         if (iter < sys_vars->trans_iters) {
@@ -294,15 +361,13 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
     if (run_data->tot_hel_u == NULL) {
         fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Total Velocity Helicity");
         exit(1);
-    }  
-     
+    }       
     // Total Dissipation
-    run_data->tot_diss = (double* )malloc(sizeof(double) * print_steps);
-    if (run_data->tot_diss == NULL) {
-        fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Total Dissipation");
+    run_data->tot_diss_u = (double* )malloc(sizeof(double) * print_steps);
+    if (run_data->tot_diss_u == NULL) {
+        fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Total Velocity Dissipation");
         exit(1);
     }  
-     
     #if defined(__MAGNETO)
     // Total Magnetic Helicity
     run_data->tot_hel_b = (double* )malloc(sizeof(double) * print_steps);
@@ -310,13 +375,18 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
         fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Total Magnetic Helicity");
         exit(1);
     }   
-
     // Total Cross Helicity
     run_data->tot_cross_hel = (double* )malloc(sizeof(double) * print_steps);
     if (run_data->tot_cross_hel == NULL) {
         fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Total Cross Helicity");
         exit(1);
     }
+    // Total Dissipation
+    run_data->tot_diss_b = (double* )malloc(sizeof(double) * print_steps);
+    if (run_data->tot_diss_b == NULL) {
+        fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Total Magnetic Dissipation");
+        exit(1);
+    } 
     #endif
 
     // Characterisitic Velocity rms(u)
@@ -355,7 +425,7 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
     }   
     #endif
 
-    // Time
+    ///----------------------------- Time
     #if defined(__TIME)
     run_data->time = (double* )malloc(sizeof(double) * print_steps);
     if (run_data->time == NULL) {
@@ -364,13 +434,8 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
     }
     #endif
 
-    #if defined(__ENRG_SPECT) || defined(__DISS_SPECT)
-    // Allocate energy spectrum
-    run_data->energy_spect = (double* )malloc(sizeof(double) * sys_vars->N);
-    if (run_data->energy_spect == NULL) {
-        fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Energy Spectrum");
-        exit(1);
-    }
+    ///----------------------------- Dissipation Spectrum
+    #if defined(__DISS_SPECT)
     // Allocate dissipation spectrum
     run_data->diss_spect = (double* )malloc(sizeof(double) * sys_vars->N);
     if (run_data->diss_spect == NULL) {
@@ -379,7 +444,38 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
     }
     #endif
 
-    #if defined(__ENRG_FLUX)
+    ///----------------------------- Energy Spectrum
+    #if defined(__ENRG_SPECT) 
+    // Allocate energy spectrum
+    run_data->energy_spect = (double* )malloc(sizeof(double) * sys_vars->N);
+    if (run_data->energy_spect == NULL) {
+        fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Energy Spectrum");
+        exit(1);
+    }
+    #endif
+
+    ///----------------------------- Time Averaged Dissipation Spectrum
+    #if defined(__DISS_SPECT_AVG)
+    // Allocate dissipation spectrum
+    run_data->diss_spect_t_avg = (double* )malloc(sizeof(double) * sys_vars->N);
+    if (run_data->diss_spect_t_avg == NULL) {
+        fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Time Averaged Dissipation Spectrum");
+        exit(1);
+    }
+    #endif
+
+    ///----------------------------- Time Averaged Energy Spectrum
+    #if defined(__ENRG_SPECT_AVG) 
+    // Allocate energy spectrum
+    run_data->energy_spect_t_avg = (double* )malloc(sizeof(double) * sys_vars->N);
+    if (run_data->energy_spect_t_avg == NULL) {
+        fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Time Averaged Energy Spectrum");
+        exit(1);
+    }
+    #endif
+
+    ///----------------------------- Energy Variation by Mode
+    #if defined(__ENRG_FLUX) || defined(__TOT_ENRG_FLUX) || defined(__ENRG_FLUX_AVG)
     // Allocate energy flux
     run_data->energy_flux = (double* )malloc(sizeof(double) * sys_vars->N);
     if (run_data->energy_flux == NULL) {
@@ -413,6 +509,66 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
     }
     #endif
     #endif
+
+
+    ///----------------------------- Energy Variation Totals
+    #if defined(__TOT_ENRG_FLUX)
+    // Allocate energy flux
+    run_data->tot_energy_flux = (double* )malloc(sizeof(double) * print_steps);
+    if (run_data->tot_energy_flux == NULL) {
+        fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Energy Flux");
+        exit(1);
+    }
+    // Allocate energy dissipation for the velocity field
+    run_data->tot_energy_diss_u = (double* )malloc(sizeof(double) * print_steps);
+    if (run_data->tot_energy_diss_u == NULL) {
+        fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Velocity Energy Dissipation");
+        exit(1);
+    }
+    // Allocate energy input for the velocity field
+    run_data->tot_energy_input_u = (double* )malloc(sizeof(double) * print_steps);
+    if (run_data->tot_energy_input_u == NULL) {
+        fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Velocity Energy Input");
+        exit(1);
+    }
+    #if defined(__MAGNETO)
+    // Allocate energy dissipation for the magnetic field
+    run_data->tot_energy_diss_b = (double* )malloc(sizeof(double) * print_steps);
+    if (run_data->tot_energy_diss_b == NULL) {
+        fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Magnetic Energy Dissipation");
+        exit(1);
+    }
+    // Allocate energy input for the magnetic field
+    run_data->tot_energy_input_b = (double* )malloc(sizeof(double) * print_steps);
+    if (run_data->tot_energy_input_b == NULL) {
+        fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Magnetic Energy Input");
+        exit(1);
+    }
+    #endif     
+    #endif
+
+    ///----------------------------- Energy Variation Totals
+    #if defined(__ENRG_FLUX_AVG)
+    // Allocate energy flux
+    run_data->energy_flux_t_avg = (double* )malloc(sizeof(double) * sys_vars->N);
+    if (run_data->energy_flux_t_avg == NULL) {
+        fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Time Average Energy Flux");
+        exit(1);
+    }
+    #endif
+
+    // Initialize Totals
+    for (int i = 0; i < sys_vars->N; ++i) {
+        #if defined(__ENRG_SPECT_AVG) 
+        run_data->energy_spect_t_avg[i] = 0.0;
+        #endif
+        #if defined(__DISS_SPECT_AVG)
+        run_data->diss_spect_t_avg[i] = 0.0;
+        #endif
+        #if defined(__ENRG_FLUX_AVG)
+        run_data->energy_flux_t_avg[i] = 0.0;
+        #endif
+    }
 
     // ----------------------------
     // Get Measurables of the ICs

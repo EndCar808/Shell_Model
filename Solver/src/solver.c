@@ -22,6 +22,7 @@
 #include "utils.h"
 #include "solver.h"
 #include "sys_msr.h"
+#include "phase_sync.h"
 // ---------------------------------------------------------------------
 //  Global Variables
 // ---------------------------------------------------------------------
@@ -92,7 +93,12 @@ void Solve(void) {
 	// Create & Open Output File
 	// -------------------------------
 	// Inialize system measurables
-	InitializeSystemMeasurables(RK_data);	
+	InitializeSystemMeasurables(RK_data);
+
+	// Initialize the phase sync objects
+	#if defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC_STATS)
+	InitializePhaseSyncObjects();
+	#endif
 
 	// Create and open the output file - also write initial conditions to file
 	CreateOutputFilesWriteICs(N);
@@ -145,6 +151,11 @@ void Solve(void) {
 
 			// Record System Measurables
 			ComputeSystemMeasurables(t, save_data_indx, RK_data);
+
+			// Compute the conserved phases and phase order parameters
+			#if defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC_STATS)
+			ComputePhaseSyncData(iters);
+			#endif
 
 			// Compute stats
 			#if defined(STATS)
@@ -1114,7 +1125,7 @@ void InitializeForicing(const long int N) {
 			else if (i > 1 && i <= sys_vars->force_k){
 				// Set the amplitudes of the fixed modes
 				#if defined(PHASE_ONLY_DIRECT)
-				run_data->a_n          = amp_u_1;
+				run_data->a_n[i]       = amp_u_1;
 				run_data->forcing_u[i] = run_data->a_n[i] * cexp(I * run_data->phi_n[i]);
 				#if defined(__MAGNETO)
 				run_data->b_n[i]       = amp_b_1;
@@ -1590,17 +1601,36 @@ void FreeMemory(RK_data_struct* RK_data) {
 	free(run_data->psi_n);
 	#endif
 	#endif
+
+	// ------------------------
+	// Free System Msr Memory 
+	// ------------------------
 	#if defined(__SYS_MEASURES)
 	free(run_data->tot_energy);
 	free(run_data->tot_hel_u);
+	free(run_data->tot_diss_u);
 	#if defined(__MAGNETO)
 	free(run_data->tot_hel_b);
 	free(run_data->tot_cross_hel);
+	free(run_data->tot_diss_b);
 	#endif
+	free(run_data->u_charact);
+	free(run_data->int_scale);
+	free(run_data->taylor_micro_scale);
+	free(run_data->reynolds_no);
+	free(run_data->kolmogorov_scale);
 	#endif
-	#if defined(__ENRG_SPECT) || defined(__DISS_SPECT)
+	#if defined(__ENRG_SPECT) 
 	free(run_data->energy_spect);
+	#endif
+	#if defined(__DISS_SPECT)
 	free(run_data->diss_spect);
+	#endif
+	#if defined(__ENRG_SPECT_AVG) 
+	free(run_data->energy_spect_t_avg);
+	#endif
+	#if defined(__DISS_SPECT_AVG)
+	free(run_data->diss_spect_t_avg);
 	#endif
 	#if defined(__TIME)
 	free(run_data->time);
@@ -1614,9 +1644,24 @@ void FreeMemory(RK_data_struct* RK_data) {
 	free(run_data->energy_input_b);
 	#endif
 	#endif
+	#if defined(__TOT_ENRG_FLUX)
+	free(run_data->tot_energy_flux);
+	free(run_data->tot_energy_diss_u);
+	free(run_data->tot_energy_input_u);
+	#if defined(__MAGNETO)
+	free(run_data->tot_energy_diss_b);
+	free(run_data->tot_energy_input_b);
+	#endif
+	#endif
+	#if defined(__ENRG_FLUX_AVG)
+	free(run_data->energy_flux_t_avg);
+	#endif
 	free(run_data->forcing_u);
 	free(run_data->forcing_b);
 
+	// ------------------------
+	// Free Stats Objects
+	// ------------------------
 	// Free stats objects
 	#if defined(STATS)
 	for (int i = 0; i < NUM_POW; ++i) {
@@ -1650,9 +1695,25 @@ void FreeMemory(RK_data_struct* RK_data) {
 		gsl_histogram_free(stats_data->real_vel_hist[i]);
 		#endif
 	}
+	free(stats_data->vel_moments);
+	#if defined(__MAGNETO)
+	free(stats_data->mag_moments);
+	#endif
+	#if defined(__VEL_HIST)
+	free(stats_data->real_vel_hist);
+	#endif
 	#endif
 
+	// ------------------------
+	// Free Phase Sync Memory 
+	// ------------------------
+	#if defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC_STATS)
+	FreePhaseSyncObjects();
+	#endif
 
+	// ----------------------------
+	// Free Integration Variables
+	// ----------------------------
 	// Free integration variables
 	free(RK_data->RK1_u);
 	free(RK_data->RK2_u);

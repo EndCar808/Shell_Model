@@ -234,7 +234,7 @@ void InitializeStats(void) {
 	// Allocate memory for the structure functions
 	for (int i = 0; i < NUM_POW; ++i) {
 		#if defined(__STR_FUNC_VEL)
-		stats_data->vel_str_func[i]      	= (double* )malloc(sizeof(double) * N);
+		stats_data->vel_str_func[i] = (double* )malloc(sizeof(double) * N);
 		if (stats_data->vel_str_func[i] == NULL) {
 			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Stats Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Velocity Structure Function");
 			exit(1);
@@ -256,7 +256,7 @@ void InitializeStats(void) {
 		#endif
 		#if defined(__MAGNETO)
 		#if defined(__STR_FUNC_MAG)
-		stats_data->mag_str_func[i]         = (double* )malloc(sizeof(double) * N);
+		stats_data->mag_str_func[i] = (double* )malloc(sizeof(double) * N);
 		if (stats_data->mag_str_func[i] == NULL) {
 			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Stats Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Magnetic Structure Function");
 			exit(1);
@@ -310,8 +310,6 @@ void InitializeStats(void) {
 		}
 		#endif
 	}
-
-
 
 	///--------------------------------- Histograms
 	#if defined(__VEL_HIST)

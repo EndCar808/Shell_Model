@@ -112,8 +112,17 @@
 // Choose whether to compute system measures
 // #define __SYS_MEASURES
 // #define __ENRG_FLUX
+// #define __TOT_ENRG_FLUX
+// #define __ENRG_FLUX_AVG
+// Choose whether to compute the spectra
 // #define __ENRG_SPECT
 // #define __DISS_SPECT
+// #define __ENRG_SPECT_AVG
+// #define __DISS_SPECT_AVG
+// Choose whether to compute phase sync data
+// #define __CONSERVED_PHASES
+// #define __PHASE_SYNC
+// #define __PHASE_SYNC_STATS
 // Choose whether to save the time, collocation points and wavenumbers
 #define __TIME
 #define __WAVELIST
@@ -141,30 +150,41 @@
 #define DSET_FORCING_B 12
 #define DSET_ENRG_SPECT 13
 #define DSET_DISS_SPECT 14
-#define NUM_DSETS 15
+#define DSET_VEL_TRIADS 15
+#define DSET_MAG_TRIADS 16
+#define DSET_VEL_PHASE_DIFF 17
+#define DSET_MAG_PHASE_DIFF 18
+#define DSET_VEL_TRIAD_ORDER 19
+#define DSET_MAG_TRIAD_ORDER 20
+#define DSET_VEL_PHASE_DIFF_ORDER 21
+#define DSET_MAG_PHASE_DIFF_ORDER 22
+#define NUM_DSETS 23
 // ---------------------------------------------------------------------
 //  Global Variables
 // ---------------------------------------------------------------------
 // These definitions define some of the solver parameters.
-#define TRANS_FRAC 0.2          // Fraction of time to ignore before saving to file
+#define TRANS_FRAC 0.2          		// Fraction of time to ignore before saving to file
 // Define the shell wavenumber parameters
-#define K_0 1.0 				// The shell wavenumber prefactor
-#define LAMBDA 2.0              // The intershell ratio for the shell wavenumber 
+#define K_0 1.0 						// The shell wavenumber prefactor
+#define LAMBDA 2.0              		// The intershell ratio for the shell wavenumber 
 // Define the equations of motion parameters
-#define EPSILON 0.5 			// Interaction coefficient for the HD shell model
-#define EPSILON_M 1.0/3.0 		// Interaction coefficient for the MHD shell model
+#define EPSILON 0.5 					// Interaction coefficient for the HD shell model
+#define EPSILON_M 1.0/3.0 				// Interaction coefficient for the MHD shell model
 // System checking parameters
-#define MIN_STEP_SIZE 1e-10 	// The minimum allowed stepsize for the solver 
-#define MAX_ITERS 1e+20			// The maximum iterations to perform
-#define MAX_FIELD_LIM 1e+100     // The maximum allowed velocity &/or magnetic
+#define MIN_STEP_SIZE 1e-10 			// The minimum allowed stepsize for the solver 
+#define MAX_ITERS 1e+20					// The maximum iterations to perform
+#define MAX_FIELD_LIM 1e+100    		// The maximum allowed velocity &/or magnetic
 // Stats parameters
-#define NUM_POW 6 				// The highest moment to compute for the structure function
-#define NUM_RUN_STATS 7 		// The number of running stats moments to record
-#define VEL_BIN_LIM	40			// The bin limits (in units of standard deviations) for the velocity histogram
-#define VEL_NUM_BINS 1000		// The number of bins to use for the velocity histograms
+#define NUM_POW 6 						// The highest moment to compute for the structure function
+#define NUM_RUN_STATS 7 				// The number of running stats moments to record
+#define VEL_BIN_LIM	40					// The bin limits (in units of standard deviations) for the velocity histogram
+#define VEL_NUM_BINS 1000				// The number of bins to use for the velocity histograms
 // Initial Condtion parameters
-#define NO_INPUT_FILE 0 		// Indicates if system is to staart by generating initial conditions
-#define INPUT_FILE 1 			// Indicates if system is to staart from an input file
+#define NO_INPUT_FILE 0 				// Indicates if system is to staart by generating initial conditions
+#define INPUT_FILE 1 					// Indicates if system is to staart from an input file
+// Phase sync parameters
+#define NUM_MAG_TRIAD_TYPES 3 			// The number of extra triad types under the magnetic field
+#define NUM_PHASE_SYNC_HIST_BINS 1000	// The number of histogram bins for the phase sync stats data
 // // Dormand Prince integrator parameters
 // #define DP_ABS_TOL 1e-7		    // The absolute error tolerance for the Dormand Prince Scheme
 // #define DP_REL_TOL 1e-7         // The relative error tolerance for the Dormand Prince Scheme
@@ -228,8 +248,8 @@ typedef struct runtime_data_struct {
 	double* k;			  				// Array to hold wavenumbers
 	double complex* u;	      			// Fourier space velocity
 	double complex* b;	      			// Fourier space vorticity
-	double complex* rhs; 		  			// Array to hold the RHS of the equation of motion
-	double complex* nonlinterm; 			// Array to hold the nonlinear term
+	double complex* rhs; 		  		// Array to hold the RHS of the equation of motion
+	double complex* nonlinterm; 		// Array to hold the nonlinear term
 	double* a_n;			  			// Fourier vorticity amplitudes
 	double* tmp_a_n;		  			// Array to hold the amplitudes of the fourier vorticity before marching forward in time
 	double* phi_n;			  			// Fourier velocity phases
@@ -241,24 +261,34 @@ typedef struct runtime_data_struct {
 	double* tot_hel_u;		  			// Array to hold the total helicity in the velocity field
 	double* tot_hel_b;		  			// Array to hold the total helicity in the magnetic field
 	double* tot_cross_hel;	  			// Array to hold the total cross helicity
-	double* tot_diss;					// Array to hold the total dissipation 
+	double* tot_diss_u;					// Array to hold the total velocity dissipation 
+	double* tot_diss_b;					// Array to hold the total magnetic dissipation 
 	double* energy_flux;				// Array to hold the energy flux
 	double* energy_diss_u;				// Array to hold the energy dissipation for the velocity field
 	double* energy_diss_b;				// Array to hold the energy dissipation for the magnetic field
 	double* energy_input_u;				// Array to hold the energy input for the velocity field in the flux balance computation
 	double* energy_input_b;				// Array to hold the energy input for the magnetic field in the flux balance computation
+	double* tot_energy_flux;			// Array to hold the total energy flux for the current iteration
+	double* tot_energy_diss_u;			// Array to hold the total energy dissipation for the velocity field for the current iteration
+	double* tot_energy_diss_b;			// Array to hold the total energy dissipation for the magnetic field for the current iteration
+	double* tot_energy_input_u;			// Array to hold the total energy input for the velocity field in the flux balance computation for the current iteration
+	double* tot_energy_input_b;			// Array to hold the total energy input for the magnetic field in the flux balance computation for the current iteration
 	double* energy_spect;				// Array containing the energy spectrum for the current iteration 
 	double* diss_spect;					// Array containing the dissipation spectrum for the current iteration 
+	double* energy_flux_t_avg;			// Array containing the energy flux time average over simulation
+	double* energy_spect_t_avg;			// Array containing the energy spectrum time average over simulation
+	double* diss_spect_t_avg;			// Array containing the dissipation spectrum time average over simulation
 	double* u_charact;					// Array containing the characteristic velocity
 	double* int_scale;					// Array containing the characteristic length scale
 	double* taylor_micro_scale;			// Array containing the Taylor microscale
 	double* reynolds_no;				// Array containing the Reynolds no.
 	double* kolmogorov_scale;			// Array containing the Kolmogorov length scale
-	double complex* forcing_u;  			// Array to hold the forcing for the current timestep for the velocity field
-	double complex* forcing_b;  			// Array to hold the forcing for the current timestep for the magnetic field
+	double complex* forcing_u;  		// Array to hold the forcing for the current timestep for the velocity field
+	double complex* forcing_b;  		// Array to hold the forcing for the current timestep for the magnetic field
 	double* forcing_scaling;  			// Array to hold the initial scaling for the forced modes
 	int* forcing_indx;		  			// Array to hold the indices of the forced modes
 	int* forcing_k;			  			// Array containg the wavenumbers for the forced modes
+	long int num_sys_msr_steps;			// Counts the number of times system measures have been computed, for time averaging.
 } runtime_data_struct;
 
 // Runge-Kutta Integration struct
@@ -301,7 +331,8 @@ typedef struct RK_data_struct {
 typedef struct HDF_file_info_struct {
 	char input_file_name[512];		 // Array holding input file name
 	char output_file_name[512];      // Output file name array
-	char stats_file_name[512];       // Output file name array
+	char stats_file_name[512];       // Stats Output file name array
+	char phase_sync_file_name[512];  // Phase Sync Output file name array
 	char system_msr_file_name[512];  // Output file name array
 	char input_dir[512];			 // Inputs directory
 	char output_dir[512];			 // Output directory
@@ -309,6 +340,7 @@ typedef struct HDF_file_info_struct {
 	hid_t input_file_handle;		 // File handle for the input file
 	hid_t output_file_handle;		 // Main file handle for the output file 
 	hid_t stats_file_handle;		 // Stats file handle for the output file 
+	hid_t phase_sync_file_handle;	 // Phase Sync file handle for the output file 
 	hid_t sys_msr_file_handle;		 // System Measures file handle for the output file 
 	hid_t COMPLEX_DTYPE;			 // Complex datatype handle
 	int file_only;					 // Indicates if output should be file only with no output folder created
@@ -318,6 +350,27 @@ typedef struct HDF_file_info_struct {
 	hid_t data_set[NUM_DSETS];  	 // Identifier for Size of the data memory space for the slabbed datasets
 	hid_t mem_space[NUM_DSETS]; 	 // Identifier for Size of memory for the slabbed datasets
 } HDF_file_info_struct;
+
+// Phase Sync Data struct
+typedef struct phase_sync_data_struct {
+	double* triads_u;						// Array to hold the time series of each triad for the velocity field
+	double* triads_b;						// Array to hold the time series of each triad for the magnetic field
+	double* phase_diff_u;					// Array to hold the time series of each phase difference for the velocity field
+	double* phase_diff_b;					// Array to hold the time series of each phase difference for the magnetic field
+	double complex* phase_diff_u_order;		// Array to hold the time series of the Kuramoto order parameter of the phase difference for the velocity field
+	double complex* triad_u_order;			// Array to hold the time series of the Kuramoto order parameter of the triads for the velocity field
+	double complex* phase_diff_b_order;     // Array to hold the time series of the Kuramoto order parameter of the phase difference for the magnetic field
+	double complex* triad_b_order;			// Array to hold the time series of the Kuramoto order parameter of the triads for the magnetic field
+	long int num_phase_sync_steps;	 		// Counter to record the number of time phase sync has been measures, for time averaging
+	int num_triads; 						// Records the number of triads in the system
+	int num_phase_diff; 					// Records the number of phase difference phases in the system
+	gsl_histogram** triad_u_hist;			// Struct to hold the histogram info for the velocity field triads over time
+	gsl_histogram** triad_b_hist;			// Struct to hold the histogram info for the magnetic field triads over time
+	gsl_histogram** phase_diff_u_hist;		// Struct to hold the histogram info for the velocity field phase differences over time
+	gsl_histogram** phase_diff_b_hist;		// Struct to hold the histogram info for the magnetic field phase differences over time
+	gsl_histogram** phase_order_Phi_u_hist;	// Struct to hold the histogram info for the velocity field phase orders Phi over time
+	gsl_histogram** phase_order_Phi_b_hist;	// Struct to hold the histogram info for the magnetic field phase orders Phi over time
+} phase_sync_data_struct;
 
 // Stats data struct
 typedef struct stats_data_struct {
@@ -347,6 +400,7 @@ extern system_vars_struct *sys_vars; 		    // Global pointer to system parameter
 extern runtime_data_struct *run_data; 			// Global pointer to system runtime variables struct 
 extern HDF_file_info_struct *file_info; 		// Global pointer to system forcing variables struct 
 extern stats_data_struct *stats_data;           // Globale pointer to the statistics struct
+extern phase_sync_data_struct *phase_sync;      // Globale pointer to the phase sync data struct
 
 #define __DATA_TYPES
 #endif
