@@ -48,18 +48,18 @@ void ComputePhaseSyncData(const long int iter) {
 		if (i < num_triads) {
 			// Get the triad phase
 			#if defined(PHASE_ONLY_DURECT)
-			phase_u = fmod(run_data->phi_n[n] + run_data->phi_n[n + 1] + run_data->phi_n[n + 2] + 2.0 * M_PI, 2.0 * M_PI);
+			phase_u = fmod(run_data->phi_n[n] + run_data->phi_n[n + 1] + run_data->phi_n[n + 2] + 6.0 * M_PI, 2.0 * M_PI);
 			#if defined(__MAGNETO)
-			phase_b_1 = fmod(run_data->phi_n[n] + run_data->psi_n[n + 1] + run_data->psi_n[n + 2] + 2.0 * M_PI, 2.0 * M_PI);
-			phase_b_2 = fmod(run_data->psi_n[n] + run_data->phi_n[n + 1] + run_data->psi_n[n + 2] + 2.0 * M_PI, 2.0 * M_PI);
-			phase_b_3 = fmod(run_data->psi_n[n] + run_data->psi_n[n + 1] + run_data->phi_n[n + 2] + 2.0 * M_PI, 2.0 * M_PI);
+			phase_b_1 = fmod(run_data->phi_n[n] + run_data->psi_n[n + 1] + run_data->psi_n[n + 2] + 6.0 * M_PI, 2.0 * M_PI);
+			phase_b_2 = fmod(run_data->psi_n[n] + run_data->phi_n[n + 1] + run_data->psi_n[n + 2] + 6.0 * M_PI, 2.0 * M_PI);
+			phase_b_3 = fmod(run_data->psi_n[n] + run_data->psi_n[n + 1] + run_data->phi_n[n + 2] + 6.0 * M_PI, 2.0 * M_PI);
 			#endif
 			#else 
-			phase_u = fmod(carg(run_data->u[n]) + carg(run_data->u[n + 1]) + carg(run_data->u[n + 2]) + 2.0 * M_PI, 2.0 * M_PI);
+			phase_u = fmod(carg(run_data->u[n]) + carg(run_data->u[n + 1]) + carg(run_data->u[n + 2]) + 6.0 * M_PI, 2.0 * M_PI);
 			#if defined(__MAGNETO)
-			phase_b_1 = fmod(carg(run_data->u[n]) + carg(run_data->b[n + 1]) + carg(run_data->b[n + 2]) + 2.0 * M_PI, 2.0 * M_PI);
-			phase_b_2 = fmod(carg(run_data->b[n]) + carg(run_data->u[n + 1]) + carg(run_data->b[n + 2]) + 2.0 * M_PI, 2.0 * M_PI);
-			phase_b_3 = fmod(carg(run_data->b[n]) + carg(run_data->b[n + 1]) + carg(run_data->u[n + 2]) + 2.0 * M_PI, 2.0 * M_PI);
+			phase_b_1 = fmod(carg(run_data->u[n]) + carg(run_data->b[n + 1]) + carg(run_data->b[n + 2]) + 6.0 * M_PI, 2.0 * M_PI);
+			phase_b_2 = fmod(carg(run_data->b[n]) + carg(run_data->u[n + 1]) + carg(run_data->b[n + 2]) + 6.0 * M_PI, 2.0 * M_PI);
+			phase_b_3 = fmod(carg(run_data->b[n]) + carg(run_data->b[n + 1]) + carg(run_data->u[n + 2]) + 6.0 * M_PI, 2.0 * M_PI);
 			#endif
 			#endif
 			
@@ -112,14 +112,14 @@ void ComputePhaseSyncData(const long int iter) {
 		if (i < num_phase_diff) {
 			// Get the phase differences
 			#if defined(PHASE_ONLY_DURECT)
-			phase_u = fmod(run_data->phi_n[n] - run_data->phi_n[n + 3] + 2.0 * M_PI, 2.0 * M_PI);
+			phase_u = fmod(run_data->phi_n[n] - run_data->phi_n[n + 3] + 4.0 * M_PI, 2.0 * M_PI);
 			#if defined(__MAGNETO)
-			phase_b_1 = fmod(run_data->psi_n[n] - run_data->psi_n[n + 3] + 2.0 * M_PI, 2.0 * M_PI);
+			phase_b_1 = fmod(run_data->psi_n[n] - run_data->psi_n[n + 3] + 4.0 * M_PI, 2.0 * M_PI);
 			#endif
 			#else 
-			phase_u = fmod(carg(run_data->u[n]) - carg(run_data->u[n + 3]) + 2.0 * M_PI, 2.0 * M_PI);
+			phase_u = fmod(carg(run_data->u[n]) - carg(run_data->u[n + 3]) + 4.0 * M_PI, 2.0 * M_PI);
 			#if defined(__MAGNETO)
-			phase_b_1 = fmod(carg(run_data->b[n]) - carg(run_data->b[n + 3]) + 2.0 * M_PI, 2.0 * M_PI);
+			phase_b_1 = fmod(carg(run_data->b[n]) - carg(run_data->b[n + 3]) + 4.0 * M_PI, 2.0 * M_PI);
 			#endif
 			#endif
 			
@@ -251,12 +251,12 @@ void InitializePhaseSyncObjects(void) {
 	int gsl_status; 
 
 	///---------------- Allocate Velocity Histogram memory
-	phase_sync->triad_u_hist = (double** )malloc(sizeof(double*) * num_triads);
+	phase_sync->triad_u_hist = (gsl_histogram** )malloc(sizeof(gsl_histogram*) * num_triads);
 	if (phase_sync->triad_u_hist == NULL) {
 	    fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Velocity Triads Histograms");
 	    exit(1);
 	}
-	phase_sync->phase_diff_u_hist = (double** )malloc(sizeof(double*) * num_phase_diff);
+	phase_sync->phase_diff_u_hist = (gsl_histogram** )malloc(sizeof(gsl_histogram*) * num_phase_diff);
 	if (phase_sync->phase_diff_u_hist == NULL) {
 	    fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Velocity Phase Difference Histograms");
 	    exit(1);
@@ -289,12 +289,12 @@ void InitializePhaseSyncObjects(void) {
 
 	///---------------- Allocate Magentic Field Phase Histogram memory
 	#if defined(__MAGNETO)
-	phase_sync->triad_b_hist = (double** )malloc(sizeof(double*) * num_triads * NUM_MAG_TRIAD_TYPES);
+	phase_sync->triad_b_hist = (gsl_histogram** )malloc(sizeof(gsl_histogram*) * num_triads * NUM_MAG_TRIAD_TYPES);
 	if (phase_sync->triad_b_hist == NULL) {
 	    fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Magnetic Triads Histograms");
 	    exit(1);
 	}
-	phase_sync->phase_diff_b_hist = (double** )malloc(sizeof(double*) * num_phase_diff);
+	phase_sync->phase_diff_b_hist = (gsl_histogram** )malloc(sizeof(gsl_histogram*) * num_phase_diff);
 	if (phase_sync->phase_diff_b_hist == NULL) {
 	    fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Magnetic Phase Difference Histograms");
 	    exit(1);
@@ -362,6 +362,7 @@ void FreePhaseSyncObjects(void) {
 	free(phase_sync->phase_diff_b_order);
 	#endif
 
+	printf("HERE\n");
 	// -------------------------------
 	// Free Order Stats objects
 	// -------------------------------
@@ -376,12 +377,6 @@ void FreePhaseSyncObjects(void) {
 			gsl_histogram_free(phase_sync->phase_diff_b_hist[i]);
 		}
 	}
-	free(phase_sync->triad_u_hist);
-	free(phase_sync->triad_b_hist);
-	free(phase_sync->triad_b_hist);
-	free(phase_sync->triad_b_hist);
-	free(phase_sync->phase_diff_u_hist);
-	free(phase_sync->phase_diff_b_hist);
 	#endif
 }
 // ---------------------------------------------------------------------

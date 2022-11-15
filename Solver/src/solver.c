@@ -106,7 +106,6 @@ void Solve(void) {
 	// Print update of the initial conditions to the terminal
 	PrintUpdateToTerminal(0, t0, dt, T, 0);
 
-
 	//////////////////////////////
 	// Begin Integration
 	//////////////////////////////
@@ -218,7 +217,6 @@ void Solve(void) {
 	// End Integration
 	//////////////////////////////
 	
-
 	// ------------------------------- 
 	// Final Writes to Output File
 	// -------------------------------
@@ -1695,22 +1693,24 @@ void FreeMemory(RK_data_struct* RK_data) {
 		gsl_histogram_free(stats_data->real_vel_hist[i]);
 		#endif
 	}
-	free(stats_data->vel_moments);
-	#if defined(__MAGNETO)
-	free(stats_data->mag_moments);
-	#endif
-	#if defined(__VEL_HIST)
-	free(stats_data->real_vel_hist);
-	#endif
-	#endif
-
-	// ------------------------
-	// Free Phase Sync Memory 
-	// ------------------------
-	#if defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC_STATS)
-	FreePhaseSyncObjects();
+	// free(stats_data->vel_moments);
+	// #if defined(__MAGNETO)
+	// free(stats_data->mag_moments);
+	// #endif
+	// #if defined(__VEL_HIST)
+	// free(stats_data->real_vel_hist);
+	// #endif
 	#endif
 
+	// printf("Before Phase Sync\n");
+	// // ------------------------
+	// // Free Phase Sync Memory 
+	// // ------------------------
+	// #if defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC_STATS)
+	// FreePhaseSyncObjects();
+	// #endif
+
+	// printf("After Phase Sync\n");
 	// ----------------------------
 	// Free Integration Variables
 	// ----------------------------

@@ -128,7 +128,7 @@
 #define __WAVELIST
 // Choose which stats data to record
 #if defined(__STATS)
-#define __VEL_HIST
+// #define __VEL_HIST
 #define __STR_FUNC_VEL
 #define __STR_FUNC_MAG
 #define __STR_FUNC_VEL_FLUX

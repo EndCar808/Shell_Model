@@ -129,6 +129,14 @@ if __name__ == '__main__':
     if os.path.isdir(cmdargs.out_dir_info) != True:
         print("Making folder:" + tc.C + " RUN_INFO_PLOTS/" + tc.Rst)
         os.mkdir(cmdargs.out_dir_info)
+    cmdargs.out_dir_stats = cmdargs.out_dir + "STATS/"
+    if os.path.isdir(cmdargs.out_dir_stats) != True:
+        print("Making folder:" + tc.C + " STATS/" + tc.Rst)
+        os.mkdir(cmdargs.out_dir_stats)
+    cmdargs.out_dir_sync = cmdargs.out_dir + "PHASE_SYNC/"
+    if os.path.isdir(cmdargs.out_dir_sync) != True:
+        print("Making folder:" + tc.C + " PHASE_SYNC/" + tc.Rst)
+        os.mkdir(cmdargs.out_dir_sync)
     # -----------------------------------------
     # # --------  Compute Post data
     # -----------------------------------------
