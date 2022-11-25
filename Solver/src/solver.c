@@ -247,7 +247,7 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 
 	// Initialize vairables
 	int n;
-	#if defined(PHASE_ONLY_DIRECT)
+	#if defined(PHASE_ONLY)
 	double int_fac_u;
 	double int_fac_u_1;
 	#if defined(__MAGNETO)
@@ -262,7 +262,7 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 	double complex int_fac_b_1;
 	#endif
 	#endif
-	#if defined(PHASE_ONLY)
+	#if defined(PHASE_ONLY_FXD_AMP)
 	double po_norm_fac_u;
 	#if defined(__MAGNETO)
 	double po_norm_fac_b;
@@ -277,7 +277,7 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 	/// RK STAGES
 	/////////////////////
 	// ----------------------- Stage 1
-	#if defined(PHASE_ONLY_DIRECT)
+	#if defined(PHASE_ONLY)
 	NonlinearTerm(run_data->phi_n, run_data->psi_n, RK_data->RK1_u, RK_data->RK1_b, N);
 	#else
 	NonlinearTerm(run_data->u, run_data->b, RK_data->RK1_u, RK_data->RK1_b, N);
@@ -353,7 +353,7 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		// Get temporary index
 		n = i + 2;
 
-		#if defined(PHASE_ONLY)
+		#if defined(PHASE_ONLY_FXD_AMP)
 		// Pre-record the amplitudes for resetting after update step
 		po_norm_fac_u = cabs(run_data->u[n]);
 		#if defined(__MAGNETO)
@@ -379,7 +379,7 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 
 
 		///-------------------- Phase Only resetting
-		#if defined(PHASE_ONLY)
+		#if defined(PHASE_ONLY_FXD_AMP)
 		// Reset the amplitudes 
 		run_data->u[n] *= (po_norm_fac_u / cabs(run_data->u[n]));
 		
@@ -415,7 +415,7 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 
 	// Initialize vairables
 	int n;
-	#if defined(PHASE_ONLY)
+	#if defined(PHASE_ONLY_FXD_AMP)
 	double po_norm_fac_u;
 	#if defined(__MAGNETO)
 	double po_norm_fac_b;
@@ -430,7 +430,7 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 	/// RK STAGES
 	/////////////////////
 	// ----------------------- Stage 1
-	#if defined(PHASE_ONLY_DIRECT)
+	#if defined(PHASE_ONLY)
 	NonlinearTerm(run_data->phi_n, run_data->psi_n, RK_data->RK1_u, RK_data->RK1_b, N);
 	#else
 	NonlinearTerm(run_data->u, run_data->b, RK_data->RK1_u, RK_data->RK1_b, N);
@@ -439,7 +439,7 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		// Get proper index
 		n = i + 2;
 
-		#if defined(PHASE_ONLY_DIRECT)
+		#if defined(PHASE_ONLY)
 		RK_data->RK_u_tmp[n] = run_data->phi_n[n] + dt * RK4_A21 * RK_data->RK1_u[n];
 		#if defined(__MAGNETO)
 		RK_data->RK_b_tmp[n] = run_data->psi_n[n] + dt * RK4_A21 * RK_data->RK1_b[n];		
@@ -462,7 +462,7 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		// Get proper index
 		n = i + 2;
 
-		#if defined(PHASE_ONLY_DIRECT)
+		#if defined(PHASE_ONLY)
 		RK_data->RK_u_tmp[n] = run_data->phi_n[n] + dt * RK4_A32 * RK_data->RK2_u[n];
 		#if defined(__MAGNETO)
 		RK_data->RK_b_tmp[n] = run_data->psi_n[n] + dt * RK4_A32 * RK_data->RK2_b[n];		
@@ -485,7 +485,7 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		// Get proper index
 		n = i + 2;
 
-		#if defined(PHASE_ONLY_DIRECT)
+		#if defined(PHASE_ONLY)
 		RK_data->RK_u_tmp[n] = run_data->phi_n[n] + dt * RK4_A43 * RK_data->RK3_u[n];
 		#if defined(__MAGNETO)
 		RK_data->RK_b_tmp[n] = run_data->psi_n[n] + dt * RK4_A43 * RK_data->RK3_b[n];		
@@ -509,7 +509,7 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		// Get proper index
 		n = i + 2;
 
-		#if !defined(PHASE_ONLY_DIRECT)
+		#if !defined(PHASE_ONLY)
 		RK_data->RK4_u[n] -= sys_vars->NU * run_data->k[n] * run_data->k[n] * run_data->u[n];
 		#if defined(__MAGNETO)
 		RK_data->RK4_b[n] -= sys_vars->ETA * run_data->k[n] * run_data->k[n] * run_data->b[n];
@@ -524,7 +524,7 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		// Get tmp index
 		n = i + 2;
 
-		#if defined(PHASE_ONLY)
+		#if defined(PHASE_ONLY_FXD_AMP)
 		// Pre-record the amplitudes for resetting after update step
 		po_norm_fac_u = cabs(run_data->u[n]);
 		#if defined(__MAGNETO)
@@ -533,7 +533,7 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		#endif
 
 		///-------------------- Update Step
-		#if defined(PHASE_ONLY_DIRECT)
+		#if defined(PHASE_ONLY)
 		// Update the new velocity field
 		run_data->phi_n[n] = run_data->phi_n[n] + dt * RK4_B1 * RK_data->RK1_u[n] + dt * RK4_B2 * RK_data->RK2_u[n] + dt * RK4_B3 * RK_data->RK3_u[n] + dt * RK4_B4 * RK_data->RK4_u[n];
 		#if defined(__MAGNETO)
@@ -549,15 +549,16 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		#endif
 		#endif
 
-		#if defined(PHASE_ONLY)
+		#if defined(PHASE_ONLY_FXD_AMP)
 		// Reset the amplitudes 
 		run_data->u[n] *= (po_norm_fac_u / cabs(run_data->u[n]));
+
 		// Record the phases and amplitudes
 		run_data->a_n[n]   = cabs(run_data->u[n]);
 		run_data->phi_n[n] = carg(run_data->u[n]);
-
 		#if defined(__MAGNETO)
 		run_data->b[n] *= (po_norm_fac_b / cabs(run_data->b[n]));
+
 		// Record the phases and amplitudes
 		run_data->b_n[n]   = cabs(run_data->b[n]);
 		run_data->psi_n[n] = carg(run_data->b[n]);
@@ -567,7 +568,7 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 	// for (int i = 0; i < N + 4; ++i) {
 	// 	#if defined(__MAGNETO)
 	// 	printf("u[%d]:\t%1.16lf\t%1.16lf i\tb[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]),  i - 1, creal(run_data->b[i]), cimag(run_data->b[i]));
-	// 	#elif defined(PHASE_ONLY_DIRECT)
+	// 	#elif defined(PHASE_ONLY)
 	// 	printf("a[%d]:\t%1.16lf\t--\tp[%d]:\t%1.16lf\t\n", i - 1, run_data->a_n[i], i - 1, RK_data->RK1_u[i]);
 	// 	#else
 	// 	printf("u[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]));		
@@ -659,7 +660,7 @@ void AB4CNStep(const double dt, const long iters, const long int N, RK_data_stru
 	}
 }
 #endif
-#if defined(PHASE_ONLY_DIRECT) && !defined(PHASE_ONLY)
+#if defined(PHASE_ONLY) && !defined(PHASE_ONLY_FXD_AMP)
 /**
  * Function that performs the evluation of the nonlinear term
  * @param u        array containing the input velocity phases
@@ -744,6 +745,64 @@ void NonlinearTerm(double* u, double* b, double* u_nonlin, double* b_nonlin, con
 	}
 }
 #else
+/**
+ * Wrapper function to get the approriate nonlinear term for the system being solver -> either phase only or full model
+ * @param input_u  Input array for the velocity field, either velocity or the phases
+ * @param input_b  Input array for the magnetic field, the magnetic field or the phases
+ * @param output_u Output array for the velocity field
+ * @param output_b Output array for the magnetic field
+ */
+void NonlinearTermWithForcing(double complex* input_u, double complex* input_b, double complex* output_u, double complex* output_b) {
+
+	// Initialize variables
+	int n;
+	double complex tmp_output_u;
+	#if defined(__MAGNETO)
+	double complex tmp_output_b;
+	#endif
+
+	// ----------------------------------------
+	// Compute the Nonlinear Term with Forcing
+	// ----------------------------------------
+	NonlinearTerm(input_u, input_b, output_u, output_b);
+
+	// ----------------------------------------
+    // Get the Output Array
+    // ----------------------------------------
+    for (int i = 0; i < N; ++i) {
+		// Get tmp array index
+		n = i + 2;
+
+		// Store tmp output value
+		tmp_output_u = output_u[n];
+		#if defined(__MAGNETO)
+		tmp_output_b = output_b[n];
+		#endif
+
+		// Get the appropriate output value depending on the system being solved
+		#if defined(PHASE_ONLY)
+		// Get the Phase only RHS
+		if (run_data->a_n[n] != 0.0) {
+			output_u[n] = cimag(tmp_output_u * cexp(-I * run_data->phi_n[n])) / run_data->a_n[n];
+			#if defined(__MAGNETO)
+			output_b[n] = cimag(tmp_output_b * cexp(-I * run_data->psi_n[n])) / run_data->b_n[n];
+			#endif
+		}
+		else {
+			output_u[n] = 0.0;
+			#if defined(__MAGNETO)
+			output_b[n] = 0.0;
+			#endif
+		}
+		#else
+		// Get the full systems Nonlinear term and forcing
+		output_u[n] = tmp_output_u;
+		#if defined(__MAGNETO)
+		output_b[n] = tmp_output_b;
+		#endif
+		#endif
+	}
+}
 /**
  * Function that performs the evluation of the nonlinear term
  * @param u        array containing the input velocity modes
@@ -861,26 +920,19 @@ void InitialConditions(const long int N) {
 
 			// Initialize the edges shells
 			if (i < 2 || i > N + 1) {
+				// Initialize the velocity field
 				run_data->u[i] = 0.0 + 0.0 * I;
+				// Initialize the phases and amplitudes
+				#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) 
+				run_data->a_n[i]   = 0.0;
+				run_data->phi_n[i] = 0.0;
+				#endif
 
-				#if defined(PHASE_ONLY)
-				// Record the phases and amplitudes
-				run_data->a_n[i]   = 0.0;
-				run_data->phi_n[i] = 0.0;
-				#endif
-				#if defined(PHASE_ONLY_DIRECT)
-				run_data->a_n[i]   = 0.0;
-				run_data->phi_n[i] = 0.0;
-				#endif
-				#if defined(__MAGNETO)
 				// Initialize the magnetic field
+				#if defined(__MAGNETO)
 				run_data->b[i] = 0.0 + 0.0 * I;
-				#if defined(PHASE_ONLY)
-				// Record the phases and amplitudes
-				run_data->b_n[i]   = 0.0;
-				run_data->psi_n[i] = 0.0;
-				#endif
-				#if defined(PHASE_ONLY_DIRECT)
+				// Initialize the phases and amplitudes
+				#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) 
 				run_data->b_n[i]   = 0.0;
 				run_data->psi_n[i] = 0.0;
 				#endif
@@ -894,27 +946,20 @@ void InitialConditions(const long int N) {
 					// ------------------------------------------------
 					// Initialize the velocity field
 					run_data->u[i] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) * cexp(I * pow(i - 1, 2.0)) / sqrt(75);
-					#if defined(PHASE_ONLY)
 					// Record the phases and amplitudes
-					run_data->a_n[i]   = cabs(run_data->u[i]);
-					run_data->phi_n[i] = carg(run_data->u[i]);
-					#endif
-					#if defined(PHASE_ONLY_DIRECT)
+					#if defined(PHASE_ONLY) || defined(PHASE_ONLY_FXD_AMP)
 					run_data->a_n[i]   = (1.0 / pow(run_data->k[i], sys_vars->ALPHA)) / sqrt(75);
 					run_data->phi_n[i] = pow(i - 1, 2.0);
 					#endif
 
-					#if defined(__MAGNETO)
 					// Initialize the magnetic field
+					#if defined(__MAGNETO)
 					run_data->b[i] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * cexp(I * pow(i - 1, 4.0)) * 1e-2;
-					#if defined(PHASE_ONLY)
+
 					// Record the phases and amplitudes
+					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
 					run_data->b_n[i]   = cabs(run_data->b[i]);
 					run_data->psi_n[i] = carg(run_data->b[i]);
-					#endif
-					#if defined(PHASE_ONLY_DIRECT)
-					run_data->b_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-2;
-					run_data->psi_n[i] = pow(i - 1, 4.0);
 					#endif
 					#endif
 				}
@@ -930,26 +975,18 @@ void InitialConditions(const long int N) {
 
 					// Initialize the velocity field
 					run_data->u[i] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) * cexp(I * r1 * 2.0 * M_PI) / sqrt(100);
-
-					#if defined(PHASE_ONLY)
 					// Record the phases and amplitudes
-					run_data->a_n[i]   = cabs(run_data->u[i]);
-					run_data->phi_n[i] = carg(run_data->u[i]);
-					#endif
-					#if defined(PHASE_ONLY_DIRECT)
+					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
 					run_data->a_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->ALPHA);
 					run_data->phi_n[i] = r1 * 2.0 * M_PI;
 					#endif
 
-					#if defined(__MAGNETO)
 					// Initialize the magnetic field
+					#if defined(__MAGNETO)
 					run_data->b[i] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * cexp(I * r2 * 2.0 * M_PI) * 1e-2;
-					#if defined(PHASE_ONLY)
+
 					// Record the phases and amplitudes
-					run_data->b_n[i]   = cabs(run_data->b[i]);
-					run_data->psi_n[i] = carg(run_data->b[i]);
-					#endif
-					#if defined(PHASE_ONLY_DIRECT)
+					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
 					run_data->b_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-2;
 					run_data->psi_n[i] = r2 * 2.0 * M_PI;
 					#endif
@@ -962,25 +999,18 @@ void InitialConditions(const long int N) {
 					// Initialize the velocity field
 					run_data->u[i] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA);
 
-					#if defined(PHASE_ONLY)
 					// Record the phases and amplitudes
-					run_data->a_n[i]   = cabs(run_data->u[i]);
-					run_data->phi_n[i] = carg(run_data->u[i]);
-					#endif
-					#if defined(PHASE_ONLY_DIRECT)
+					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
 					run_data->a_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->ALPHA);
 					run_data->phi_n[i] = 0.0;
 					#endif
 
-					#if defined(__MAGNETO)
 					// Initialize the magnetic field
+					#if defined(__MAGNETO)
 					run_data->b[i] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-2;
-					#if defined(PHASE_ONLY)
+
 					// Record the phases and amplitudes
-					run_data->b_n[i]   = cabs(run_data->b[i]);
-					run_data->psi_n[i] = carg(run_data->b[i]);
-					#endif
-					#if defined(PHASE_ONLY_DIRECT)
+					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
 					run_data->b_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-2;
 					run_data->psi_n[i] = 0.0;
 					#endif
@@ -1001,25 +1031,17 @@ void InitialConditions(const long int N) {
 					// Initialize the velocity field
 					run_data->u[i] = r1 + r3 * I;
 
-					#if defined(PHASE_ONLY)
 					// Record the phases and amplitudes
-					run_data->a_n[i]   = cabs(run_data->u[i]);
-					run_data->phi_n[i] = carg(run_data->u[i]);
-					#endif
-					#if defined(PHASE_ONLY_DIRECT)
+					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
 					run_data->a_n[i]   = r1;
 					run_data->phi_n[i] = r3;
 					#endif
 
-					#if defined(__MAGNETO)
 					// Initialize the magnetic field
+					#if defined(__MAGNETO)
 					run_data->b[i] = (r2 + r4) * 1e-2;
-					#if defined(PHASE_ONLY)
 					// Record the phases and amplitudes
-					run_data->b_n[i]   = cabs(run_data->b[i]);
-					run_data->psi_n[i] = carg(run_data->b[i]);
-					#endif
-					#if defined(PHASE_ONLY_DIRECT)
+					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
 					run_data->b_n[i]   = r2;
 					run_data->psi_n[i] = r4;
 					#endif
@@ -1104,7 +1126,7 @@ void InitializeForicing(const long int N) {
 
 			// Record the amplitude of the first mode
 			if (i == 1) {
-				#if defined(PHASE_ONLY_DIRECT)
+				#if defined(PHASE_ONLY)
 				amp_u_1                = run_data->a_n[i];
 				run_data->forcing_u[i] = run_data->a_n[i] * cexp(I * run_data->phi_n[i]);
 				#if defined(__MAGNETO)
@@ -1122,7 +1144,7 @@ void InitializeForicing(const long int N) {
 			}
 			else if (i > 1 && i <= sys_vars->force_k){
 				// Set the amplitudes of the fixed modes
-				#if defined(PHASE_ONLY_DIRECT)
+				#if defined(PHASE_ONLY)
 				run_data->a_n[i]       = amp_u_1;
 				run_data->forcing_u[i] = run_data->a_n[i] * cexp(I * run_data->phi_n[i]);
 				#if defined(__MAGNETO)
@@ -1292,7 +1314,7 @@ void SystemCheck(double dt, long int iters, long int save_data_indx) {
 		n = i + 2;
 
 		// Check for max
-		#if defined(PHASE_ONLY_DIRECT)
+		#if defined(PHASE_ONLY)
 		max_vel = fmax(max_vel, cabs(run_data->a_n[n]));
 		#if defined(__MAGNETO)
 		max_mag = fmax(max_vel, cabs(run_data->b_n[n]));
@@ -1368,7 +1390,7 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Velocity Field");
 		exit(1);
 	}
-	#if defined(PHASE_ONLY)	|| defined(PHASE_ONLY_DIRECT)
+	#if defined(PHASE_ONLY_FXD_AMP)	|| defined(PHASE_ONLY)
 	// The Fourier amplitudes
 	run_data->a_n = (double* ) malloc(sizeof(double) * (N + 4));
 	if (run_data->a_n == NULL) {
@@ -1393,7 +1415,7 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Magnetic Field");
 		exit(1);
 	}	
-	#if defined(PHASE_ONLY)	|| defined(PHASE_ONLY_DIRECT)
+	#if defined(PHASE_ONLY_FXD_AMP)	|| defined(PHASE_ONLY)
 	// The Fourier amplitudes
 	run_data->b_n = (double* ) malloc(sizeof(double) * (N + 4));
 	if (run_data->b_n == NULL) {
@@ -1413,7 +1435,7 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 	// Allocate Integration Variables 
 	// -------------------------------
 	// Runge-Kutta Integration arrays
-	#if defined(PHASE_ONLY_DIRECT)
+	#if defined(PHASE_ONLY)
 	RK_data->RK1_u       = (double* )malloc(sizeof(double) * (N + 4));
 	RK_data->RK2_u       = (double* )malloc(sizeof(double) * (N + 4));
 	RK_data->RK3_u       = (double* )malloc(sizeof(double) * (N + 4));
@@ -1550,7 +1572,7 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 			RK_data->AB_tmp_nonlin_u[j][i] = 0.0 + 0.0 * I;
 		}
 		#endif
-		#if defined(PHASE_ONLY)
+		#if defined(PHASE_ONLY_FXD_AMP)
 		run_data->a_n[i]   = 0.0;
 		run_data->phi_n[i] = 0.0;
 		#endif
@@ -1567,7 +1589,7 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 			RK_data->AB_tmp_nonlin_b[j][i] = 0.0 + 0.0 * I;
 		}
 		#endif
-		#if defined(PHASE_ONLY)
+		#if defined(PHASE_ONLY_FXD_AMP)
 		run_data->b_n[i]   = 0.0;
 		run_data->psi_n[i] = 0.0;
 		#endif
@@ -1588,13 +1610,13 @@ void FreeMemory(RK_data_struct* RK_data) {
 
 	// Free system variables
 	free(run_data->u);
-	#if defined(PHASE_ONLY) || defined(PHASE_ONLY_DIRECT)
+	#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
 	free(run_data->a_n);
 	free(run_data->phi_n);
 	#endif
 	#if defined(__MAGNETO)
 	free(run_data->b);
-	#if defined(PHASE_ONLY)
+	#if defined(PHASE_ONLY_FXD_AMP)
 	free(run_data->b_n);
 	free(run_data->psi_n);
 	#endif

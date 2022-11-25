@@ -63,20 +63,25 @@ endif
 #  Executable flags
 # ---------------------------------------------------------------------
 # Flags to be passed to the solver for normal runs
-HYDRO_SOLVER_IFRK4_FLAGS := -D__INT_FAC_RK4 -D__STATS #-D__HYPER -D__ADAPTIVE_STEP -D__CFL_STEP #-D__TRANSIENTS  -D__EKMN_DRAG
-HYDRO_SOLVER_RK4_FLAGS := -D__RK4 -D__STATS #-D__HYPER -D__ADAPTIVE_STEP -D__CFL_STEP #-D__TRANSIENTS  -D__EKMN_DRAG
-HYDRO_SOLVER_AB4CN_FLAGS := -D__AB4CN -D__STATS #-D__HYPER -D__ADAPTIVE_STEP -D__CFL_STEP #-D__TRANSIENTS  -D__EKMN_DRAG
+HYDRO_SOLVER_IFRK4_FLAGS := -D__INT_FAC_RK4 # -D__ADAPTIVE_STEP -D__CFL_STEP
+HYDRO_SOLVER_RK4_FLAGS := -D__RK4 # -D__ADAPTIVE_STEP -D__CFL_STEP
+HYDRO_SOLVER_AB4CN_FLAGS := -D__AB4CN # -D__ADAPTIVE_STEP -D__CFL_STEP
 
-MAG_HYDRO_SOLVER_FLAGS := -D__INT_FAC_RK4 -D__MAGNETO #-D__STATS -D__HYPER -D__ADAPTIVE_STEP -D__CFL_STEP #-D__TRANSIENTS  -D__EKMN_DRAG
+MAG_HYDRO_SOLVER_FLAGS := -D__INT_FAC_RK4 -D__MAGNETO # -D__ADAPTIVE_STEP -D__CFL_STEP
 
 # Phase only flags to be passed to solver
 PHASE_ONLY_FLAGS := -D__PHASE_ONLY -D__RK4 #-D__MAGNETO -D__HYPER -D__TRANSIENTS
 
 # Phase only flags to be passed to solver
-PHASE_ONLY_DIRECT_FLAGS := -D__PHASE_ONLY_DIRECT -D__RK4 #-D__MAGNETO -D__HYPER -D__TRANSIENTS
+PHASE_ONLY_FXD_AMP_FLAGS := -D__PHASE_ONLY_FXD_AMP -D__RK4 #-D__MAGNETO -D__HYPER -D__TRANSIENTS
 
 # Dataset Flags to be passed to the solver
-DSET_FLAGS := -D__SYS_MEASURES -D__CONSERVED_PHASES -D__PHASE_SYNC -D__PHASE_SYNC_STATS -D__STATS #-D__ENRG_SPECT_AVG -D__DISS_SPECT_AVG -D__TOT_ENRG_FLUX -D__ENRG_FLUX_AVG -D__ENRG_SPECT -D__DISS_SPECT -D__ENRG_FLUX -D__FORCING 
+DSET_FLAGS = -D__SYS_MEASURES 
+# DSET_FLAGS += -D__CONSERVED_PHASES -D__PHASE_SYNC -D__PHASE_SYNC_STATS 
+# DSET_FLAGS += -D__STATS 
+# DSET_FLAGS += -D__ENRG_SPECT_AVG -D__DISS_SPECT_AVG -D__TOT_ENRG_FLUX -D__ENRG_FLUX_AVG 
+# DSET_FLAGS += -D__ENRG_SPECT -D__DISS_SPECT -D__ENRG_FLUX 
+# DSET_FLAGS += -D__FORCING 
  
 # Flags to be passed to the solver for testing
 TEST_FLAGS    := -D__MAGNETO -D__TESTING -D__DEBUG #-D__ADAPTIVE_STEP -D__CFL_STEP -D__TRANSIENTS
@@ -99,7 +104,7 @@ SRCOBJ_H_RK    	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_hydro_RK.o, $(SRCFILE))
 SRCOBJ_H_AB    	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_hydro_AB.o, $(SRCFILE))
 SRCOBJ_MHD  	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_mag_hydro.o, $(SRCFILE))
 SRCOBJ_PO  		:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_phase_only.o, $(SRCFILE))
-SRCOBJ_PO_D 	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_phase_only_direct.o, $(SRCFILE))
+SRCOBJ_PO_D 	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_phase_only_fxd_amp.o, $(SRCFILE))
 SRCOBJ_Test 	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_test.o, $(SRCFILE))
 
 DEPS = $(wildcard *.h) 
@@ -112,7 +117,7 @@ DEPS = $(wildcard *.h)
 ############
 
 
-all: $(BIN)/solver_hydro_IF $(BIN)/solver_hydro_RK $(BIN)/solver_hydro_AB $(BIN)/solver_mag_hydro $(BIN)/solver_phase_only $(BIN)/solver_phase_only_direct $(BIN)/solver_test
+all: $(BIN)/solver_hydro_IF $(BIN)/solver_hydro_RK $(BIN)/solver_hydro_AB $(BIN)/solver_mag_hydro $(BIN)/solver_phase_only $(BIN)/solver_phase_only_fxd_amp $(BIN)/solver_test
 
 
 ####--------
@@ -161,13 +166,13 @@ $(BIN)/solver_phase_only: $(SRCOBJ_PO) $(DEPS)
 $(OBJBIN)/%_phase_only.o: $(SRCDIR)/%.c $(DEPS) 
 	$(GCC) $(CCFLAG) $(PHASE_ONLY_FLAGS) $(DSET_FLAGS) -c $^ -o $@ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
 
-solver_phase_only_direct: $(BIN)/solver_phase_only_direct 
+solver_phase_only_fxd_amp: $(BIN)/solver_phase_only_fxd_amp 
 
-$(BIN)/solver_phase_only_direct: $(SRCOBJ_PO_D) $(DEPS) 
-	$(GCC) $(CCFLAG) $(PHASE_ONLY_DIRECT_FLAGS) $(DSET_FLAGS) -o $@ $^ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+$(BIN)/solver_phase_only_fxd_amp: $(SRCOBJ_PO_D) $(DEPS) 
+	$(GCC) $(CCFLAG) $(PHASE_ONLY_FXD_AMP_FLAGS) $(DSET_FLAGS) -o $@ $^ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
 
-$(OBJBIN)/%_phase_only_direct.o: $(SRCDIR)/%.c $(DEPS) 
-	$(GCC) $(CCFLAG) $(PHASE_ONLY_DIRECT_FLAGS) $(DSET_FLAGS) -c $^ -o $@ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+$(OBJBIN)/%_phase_only_fxd_amp.o: $(SRCDIR)/%.c $(DEPS) 
+	$(GCC) $(CCFLAG) $(PHASE_ONLY_FXD_AMP_FLAGS) $(DSET_FLAGS) -c $^ -o $@ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
 
 ####--------
 #  Testing

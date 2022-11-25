@@ -47,7 +47,7 @@ void ComputePhaseSyncData(const long int iter) {
 		///--------------------------------- Compute the triad phases and triad order parameters
 		if (i < num_triads) {
 			// Get the triad phase
-			#if defined(PHASE_ONLY_DURECT)
+			#if defined(PHASE_ONLY)
 			phase_u = fmod(run_data->phi_n[n] + run_data->phi_n[n + 1] + run_data->phi_n[n + 2] + 6.0 * M_PI, 2.0 * M_PI);
 			#if defined(__MAGNETO)
 			phase_b_1 = fmod(run_data->phi_n[n] + run_data->psi_n[n + 1] + run_data->psi_n[n + 2] + 6.0 * M_PI, 2.0 * M_PI);
@@ -111,7 +111,7 @@ void ComputePhaseSyncData(const long int iter) {
 		///--------------------------------- Compute the phase differences and phase difference order parameters
 		if (i < num_phase_diff) {
 			// Get the phase differences
-			#if defined(PHASE_ONLY_DURECT)
+			#if defined(PHASE_ONLY)
 			phase_u = fmod(run_data->phi_n[n] - run_data->phi_n[n + 3] + 4.0 * M_PI, 2.0 * M_PI);
 			#if defined(__MAGNETO)
 			phase_b_1 = fmod(run_data->psi_n[n] - run_data->psi_n[n + 3] + 4.0 * M_PI, 2.0 * M_PI);
@@ -362,7 +362,6 @@ void FreePhaseSyncObjects(void) {
 	free(phase_sync->phase_diff_b_order);
 	#endif
 
-	printf("HERE\n");
 	// -------------------------------
 	// Free Order Stats objects
 	// -------------------------------

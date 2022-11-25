@@ -130,7 +130,7 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
               k_fac = pow(run_data->k[n], -log_lambda(fabs(sys_vars->EPS - 1.0) / 2.0));  
             }
             // Update sum for totals
-            #if defined(PHASE_ONLY_DIRECT)
+            #if defined(PHASE_ONLY)
             run_data->tot_energy[iter]    += run_data->a_n[n] * run_data->a_n[n];
             run_data->tot_hel_u[iter]     += pow(sgn(sys_vars->EPS - 1.0), i) * (run_data->a_n[n] * run_data->a_n[n]) * k_fac;
             run_data->int_scale[iter]     += (run_data->a_n[n] * run_data->a_n[n]) / (i + 1);
@@ -142,7 +142,7 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
             run_data->tot_diss_u[iter]    += run_data->k[n] * run_data->k[n] * cabs(run_data->u[n] * run_data->u[n]);
             #endif
             #if defined(__MAGNETO)
-            #if defined(PHASE_ONLY_DIRECT)
+            #if defined(PHASE_ONLY)
             run_data->tot_energy[iter]    += run_data->b_n[n] * run_data->b_n[n];
             run_data->tot_hel_b[iter]     += pow(sgn(sys_vars->EPS - 1.0), i) * (run_data->b_n[n] * run_data->b_n[n]) / run_data->k[n];
             run_data->tot_cross_hel[iter] += creal(run_data->a_n[n] * run_data->b_n[n]);
@@ -159,7 +159,7 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
             //-------------- Energy Spectrum
             #if defined(__ENRG_SPECT) 
             // Compute the energy spectrum
-            #if defined(PHASE_ONLY_DIRECT)
+            #if defined(PHASE_ONLY)
             run_data->energy_spect[i] = run_data->a_n[n] * run_data->a_n[n];  
             #if defined(__MAGNETO)        
             run_data->energy_spect[i] += run_data->b_n[n] * run_data->b_n[n];  
@@ -179,7 +179,7 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
             //-------------- Time Averaged Energy Spectrum
             #if defined(__ENRG_SPECT_AVG) 
             // Compute the energy spectrum
-            #if defined(PHASE_ONLY_DIRECT)
+            #if defined(PHASE_ONLY)
             run_data->energy_spect[i] += run_data->a_n[n] * run_data->a_n[n];  
             #if defined(__MAGNETO)        
             run_data->energy_spect[i] += run_data->b_n[n] * run_data->b_n[n];  
@@ -203,7 +203,7 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
                 // Get temp indx
                 l = j + 2;
 
-                #if defined(PHASE_ONLY_DIRECT)
+                #if defined(PHASE_ONLY)
                 run_data->energy_diss_u[i]  += run_data->k[j] * run_data->k[j] * run_data->a_n[n] * run_data->a_n[n];
                 run_data->energy_input_u[i] += run_data->a_n[l] * cabs(run_data->forcing_u[l]) * cos(run_data->phi_n[l] - carg(run_data->forcing_u[l]));
                 #if defined(__MAGNETO) 
@@ -239,7 +239,7 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
             }
 
             // Compute the energy flux
-            #if defined(PHASE_ONLY_DIRECT)
+            #if defined(PHASE_ONLY)
             // First term
             run_data->energy_flux[i] = k_pre_fac_1 * run_data->a_n[n - 1] * run_data->a_n[n] * run_data->a_n[n + 1] * sin(run_data->phi_n[n - 1] + run_data->phi_n[n] + run_data->phi_n[n + 1]);
             run_data->energy_flux[i] += run_data->k[n] * run_data->a_n[n] * run_data->a_n[n + 1] * run_data->a_n[n + 2] * sin(run_data->phi_n[n] + run_data->phi_n[n + 1] + run_data->phi_n[n + 2]);

@@ -493,8 +493,8 @@ void PrintSimulationDetails(int argc, char** argv, double sim_time) {
 	#else 
 	sprintf(solv_type, "%s", "SOLV_UKN");
 	#endif
-	#if defined(PHASE_ONLY)
-	sprintf(model_type, "%s", "PHAEONLY");
+	#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
+	sprintf(model_type, "%s", "PHASEONLY");
 	#else
 	sprintf(model_type, "%s", "FULL");
 	#endif

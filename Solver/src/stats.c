@@ -44,11 +44,28 @@ void ComputeStats(const long int iters, const long int save_data_indx) {
 	#endif
 
 	// ------------------------------------
+    // If Phase Only Get Fourier Fields
+    // ------------------------------------	
+	#if defined(PHASE_ONLY) || defined(PHASE_ONLY_FXD_AMP)
+	for (int i = 0; i < N; ++i) {
+		// Get temp indx
+		n = i + 2;
+
+		// Get the Fourier fields
+		run_data->u[n] = run_data->a_n[n] * cexp(I * run_data->phi_n[n]);
+		#if defined(__MAGNETO)
+		run_data->b[n] = run_data->b_n[n] * cexp(I * run_data->psi_n[n]);
+		#endif
+	}
+	#endif
+
+	// ------------------------------------
     // Check System for Stationarity
     // ------------------------------------
     ///---------------------------------- System is not stationary yet -> Compute histogram limits
 	if (iters < sys_vars->trans_iters) {
     	for (int i = 0; i < N; ++i) {
+			// Get temp indx
 			n = i + 2;
 
 			// Update the running sums for the field stats

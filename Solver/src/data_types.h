@@ -70,11 +70,11 @@
 #define TRANSIENT_ITERS 1        // Indicator for transient iterations
 #define TRANSIENT_FRAC 0.2       // Fraction of total iteration = transient iterations
 // Allow for Phase Only mode
-#if defined(__PHASE_ONLY)		 // Turn on phase only mode if called for at compilation
-#define PHASE_ONLY
+#if defined(__PHASE_ONLY_FXD_AMP) // Turn on phase only mode if called for at compilation
+#define PHASE_ONLY_FXD_AMP
 #endif
-#if defined(__PHASE_ONLY_DIRECT) // Turn on phase only direct mode if called for at compilation
-#define PHASE_ONLY_DIRECT
+#if defined(__PHASE_ONLY) // Turn on phase only direct mode if called for at compilation
+#define PHASE_ONLY
 #endif
 // Computing stats will be decided at compilation time
 #if defined(__STATS)
@@ -294,7 +294,7 @@ typedef struct runtime_data_struct {
 
 // Runge-Kutta Integration struct
 typedef struct RK_data_struct {
-	#if defined(PHASE_ONLY_DIRECT)
+	#if defined(PHASE_ONLY)
 	double* RK1_u;		  		 	// Array to hold the result of the first stage for the velocity field
 	double* RK2_u;		  		 	// Array to hold the result of the second stage for the velocity field
 	double* RK3_u;		  		 	// Array to hold the result of the third stage for the velocity field
@@ -381,8 +381,8 @@ typedef struct stats_data_struct {
 	double* mag_flux_str_func[2][NUM_POW];			// Array to hold the structure functions of the value of flux magnetic modes
 	double* vel_flux_str_func_abs[2][NUM_POW];		// Array to hold the structure functions of the absolute value of flux Velocity modes
 	double* mag_flux_str_func_abs[2][NUM_POW];		// Array to hold the structure functions of the absolute value of flux magnetic modes
-	gsl_rstat_workspace** real_vel_moments;				// Struct to hold the running stats for the velocity field
-	gsl_rstat_workspace** real_mag_moments;				// Struct to hold the running stats for the magnetic field
+	gsl_rstat_workspace** real_vel_moments;			// Struct to hold the running stats for the velocity field
+	gsl_rstat_workspace** real_mag_moments;			// Struct to hold the running stats for the magnetic field
 	gsl_histogram** real_vel_hist;					// Struct to hold the histogram info for the velocity field
 	gsl_histogram** real_mag_hist;					// Struct to hold the histogram info for the magnetic field
 	long int num_stats_steps;						// Counter for the number of steps statistics have been computed
