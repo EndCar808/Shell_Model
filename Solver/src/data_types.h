@@ -129,6 +129,7 @@
 // Choose which stats data to record
 #if defined(__STATS)
 // #define __VEL_HIST
+// #define __MAG_HIST
 #define __STR_FUNC_VEL
 #define __STR_FUNC_MAG
 #define __STR_FUNC_VEL_FLUX
@@ -376,13 +377,14 @@ typedef struct phase_sync_data_struct {
 typedef struct stats_data_struct {
 	double* vel_str_func[NUM_POW];					// Array to hold the structure functions of the Velocity modes
 	double* mag_str_func[NUM_POW];			  		// Array to hold the structure functions of the magnetic modes
-	double* vel_flux_str_func_abs[2][NUM_POW];		// Array to hold the structure functions of the absolute value of flux Velocity modes
-	double* mag_flux_str_func_abs[2][NUM_POW];		// Array to hold the structure functions of the absolute value of flux magnetic modes
 	double* vel_flux_str_func[2][NUM_POW];			// Array to hold the structure functions of the value of flux Velocity modes
 	double* mag_flux_str_func[2][NUM_POW];			// Array to hold the structure functions of the value of flux magnetic modes
-	gsl_rstat_workspace** vel_moments;				// Struct to hold the running stats for the velocity field
-	gsl_rstat_workspace** mag_moments;				// Struct to hold the running stats for the magnetic field
+	double* vel_flux_str_func_abs[2][NUM_POW];		// Array to hold the structure functions of the absolute value of flux Velocity modes
+	double* mag_flux_str_func_abs[2][NUM_POW];		// Array to hold the structure functions of the absolute value of flux magnetic modes
+	gsl_rstat_workspace** real_vel_moments;				// Struct to hold the running stats for the velocity field
+	gsl_rstat_workspace** real_mag_moments;				// Struct to hold the running stats for the magnetic field
 	gsl_histogram** real_vel_hist;					// Struct to hold the histogram info for the velocity field
+	gsl_histogram** real_mag_hist;					// Struct to hold the histogram info for the magnetic field
 	long int num_stats_steps;						// Counter for the number of steps statistics have been computed
 	int set_stats_flag;								// Flag to indicate if the stats objects such as running stats and histogram limits need to be set
 } stats_data_struct;

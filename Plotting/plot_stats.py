@@ -383,7 +383,7 @@ if __name__ == '__main__':
         ax1in = fig.add_axes([x0, y0, width, height])
         for i in range(stats_data.vel_str_func.shape[-1]):
             ## Plot strucure function
-            p, = ax1.plot(np.log2(k), np.log2(stats_data.vel_str_func[:, i]) + i * 10, '.-', label = "$p = {}$".format(i + indx_shift), marker = mark_style[i], markerfacecolor = 'None', markersize = 5.0, markevery = 2)
+            p, = ax1.plot(np.log2(k), np.log2(stats_data.vel_str_func[:, i]) + i * 10, label = "$p = {}$".format(i + indx_shift), marker = mark_style[i], markerfacecolor = 'None', markersize = 5.0, markevery = 2)
             ## Find polynomial fit and plot
             pfit_info  = np.polyfit(np.log2(k[inert_lim_low:inert_lim_high]), np.log2(stats_data.vel_str_func[inert_lim_low:inert_lim_high, i]) + i * 10, 1)
             pfit_slope = pfit_info[0]
@@ -415,8 +415,8 @@ if __name__ == '__main__':
         ax1   = fig.add_subplot(gs[0, 0])
         p = np.arange(2, stats_data.vel_str_func.shape[-1] + 1)
         ns_zeta_p = [0.72, 1, 1.273, 1.534, 1.786]
-        ax1.plot(p, zeta_p[1:], '.-', marker = mark_style[0], markerfacecolor = 'None', markersize = 5.0, markevery = 1, label = "GOY Model")
-        ax1.plot(p, ns_zeta_p, '.-', marker = mark_style[0], markerfacecolor = 'None', markersize = 5.0, markevery = 1, label = "Navier Stokes")
+        ax1.plot(p, zeta_p[1:], marker = mark_style[0], markerfacecolor = 'None', markersize = 5.0, markevery = 1, label = "GOY Model")
+        ax1.plot(p, ns_zeta_p, marker = mark_style[0], markerfacecolor = 'None', markersize = 5.0, markevery = 1, label = "Navier Stokes")
         ax1.plot(p, p / 3, 'b--', label = "K41")
         ax1.set_xlabel(r"$p$")
         ax1.set_ylabel(r"$\zeta_p$")

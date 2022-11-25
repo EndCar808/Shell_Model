@@ -44,7 +44,7 @@ void ComputeStats(const long int iters, const long int save_data_indx) {
 	#endif
 
 	// ------------------------------------
-    // Check System for Stationary
+    // Check System for Stationarity
     // ------------------------------------
     ///---------------------------------- System is not stationary yet -> Compute histogram limits
 	if (iters < sys_vars->trans_iters) {
@@ -52,7 +52,7 @@ void ComputeStats(const long int iters, const long int save_data_indx) {
 			n = i + 2;
 
 			// Update the running sums for the field stats
-	    	gsl_status = gsl_rstat_add(creal(run_data->u[n]), stats_data->vel_moments[i]);
+	    	gsl_status = gsl_rstat_add(creal(run_data->u[n]), stats_data->real_vel_moments[i]);
 	    	if (gsl_status != 0) {
 	    		// Print error message to error stream
 				fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to update running stats counter ["CYAN"%s"RESET"] - Error Value: ["CYAN"%d"RESET"] Field Value: ["CYAN"%lf"RESET"] \n-->> Exiting!!!\n", "Velocity Stats", gsl_status, creal(run_data->u[n]));
@@ -65,7 +65,7 @@ void ComputeStats(const long int iters, const long int save_data_indx) {
 			}
 			
 	    	#if defined(__MAGNETO)
-	    	gsl_status = gsl_rstat_add(creal(run_data->b[n]), stats_data->mag_moments[i]);
+	    	gsl_status = gsl_rstat_add(creal(run_data->b[n]), stats_data->real_mag_moments[i]);
 		    if (gsl_status != 0) {
 		    	// Print error message to error stream
 				fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to update running stats counter ["CYAN"%s"RESET"] - Error Value: ["CYAN"%d"RESET"] Field Value: ["CYAN"%lf"RESET"] \n-->> Exiting!!!\n", "Magnetic Stats", gsl_status, creal(run_data->b[n]));
@@ -91,10 +91,11 @@ void ComputeStats(const long int iters, const long int save_data_indx) {
 		if (stats_data->set_stats_flag) {
 			for (int i = 0; i < N; ++i) {
 
+				///-------------------------------------------- Set Velocity Histogram Bin ranges
 				#if defined(__VEL_HIST)
 				if (sys_vars->TRANS_ITERS_FLAG == TRANSIENT_ITERS) {
 					// Get the standard deviation / rms
-					std = gsl_rstat_sd(stats_data->vel_moments[i]);
+					std = gsl_rstat_sd(stats_data->real_vel_moments[i]);
 
 					// Set bin ranges for the histograms -> Set (in units) of standard deviations
 					gsl_status = gsl_histogram_set_ranges_uniform(stats_data->real_vel_hist[i], -VEL_BIN_LIM * std, VEL_BIN_LIM * std);
@@ -113,10 +114,33 @@ void ComputeStats(const long int iters, const long int save_data_indx) {
 				}
 				#endif
 
+				///-------------------------------------------- Set Magnetic Histogram Bin ranges				
+				#if defined(__MAG_HIST) && defined(__MAGNETO)
+				if (sys_vars->TRANS_ITERS_FLAG == TRANSIENT_ITERS) {
+					// Get the standard deviation / rms
+					std = gsl_rstat_sd(stats_data->real_mag_moments[i]);
+
+					// Set bin ranges for the histograms -> Set (in units) of standard deviations
+					gsl_status = gsl_histogram_set_ranges_uniform(stats_data->real_mag_hist[i], -VEL_BIN_LIM * std, VEL_BIN_LIM * std);
+					if (gsl_status != 0) {
+						fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to set bin ranges for: ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Real Magnetic Histogram");
+						exit(1);
+					}
+				}
+				else {
+					// Set bin ranges for the histograms -> Set (in units) of standard deviations
+					gsl_status = gsl_histogram_set_ranges_uniform(stats_data->real_mag_hist[i], min - 0.05 * fabs(min), max + 0.05 * fabs(max));
+					if (gsl_status != 0) {
+						fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to set bin ranges for: ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Real Magnetic Histogram");
+						exit(1);
+					}
+				}
+				#endif
+
 				// Reset stats counters
-				gsl_status = gsl_rstat_reset(stats_data->vel_moments[i]);
+				gsl_status = gsl_rstat_reset(stats_data->real_vel_moments[i]);
 				#if defined(__MAGNETO)
-				gsl_status = gsl_rstat_reset(stats_data->mag_moments[i]);
+				gsl_status = gsl_rstat_reset(stats_data->real_mag_moments[i]);
 				#endif
 			}
 
@@ -130,7 +154,7 @@ void ComputeStats(const long int iters, const long int save_data_indx) {
 	    for (int i = 0; i < N; ++i) {
 	    	n = i + 2;
 
-	    	///---------------------------------- Histograms
+	    	///---------------------------------- Velocity Histogram
 	    	#if defined(__VEL_HIST)
 	    	// Update Real velocity histogram
 	    	gsl_status = gsl_histogram_increment(stats_data->real_vel_hist[i], creal(run_data->u[n]));
@@ -146,9 +170,25 @@ void ComputeStats(const long int iters, const long int save_data_indx) {
 			}
 			#endif
 
+			///---------------------------------- Magnetic Histogram
+	    	#if defined(__MAG_HIST) && defined(__MAGNETO)
+	    	// Update Real velocity histogram
+	    	gsl_status = gsl_histogram_increment(stats_data->real_mag_hist[i], creal(run_data->b[n]));
+	    	if (gsl_status != 0) {
+	    		// Print error message to error stream
+				fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to increment histogram ["CYAN"%s"RESET"] - Error Value: ["CYAN"%d"RESET"] Field Value: ["CYAN"%lf"RESET"] Bin Limits: ["CYAN"%lf"RESET", "CYAN"%lf"RESET"]\n-->> Exiting!!!\n", "Real Velocity", gsl_status, creal(run_data->u[n]), gsl_histogram_min(stats_data->real_mag_hist[i]), gsl_histogram_max(stats_data->real_mag_hist[i]));
+
+				// Save current state of system to file before exiting
+				FinalWriteAndCloseOutputFile(N, iters, save_data_indx);
+				
+				// Exit programme
+				exit(1);
+			}
+			#endif
+
 	    	///---------------------------------- Running Stats
 	    	// Update the running sums for the field stats
-	    	gsl_status = gsl_rstat_add(creal(run_data->u[n]), stats_data->vel_moments[i]);
+	    	gsl_status = gsl_rstat_add(creal(run_data->u[n]), stats_data->real_vel_moments[i]);
 	    	if (gsl_status != 0) {
 	    		// Print error message to error stream
 				fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to update running stats counter ["CYAN"%s"RESET"] - Error Value: ["CYAN"%d"RESET"] Field Value: ["CYAN"%lf"RESET"] \n-->> Exiting!!!\n", "Velocity Stats", gsl_status, creal(run_data->u[n]));
@@ -160,7 +200,7 @@ void ComputeStats(const long int iters, const long int save_data_indx) {
 				exit(1);
 			}
 	    	#if defined(__MAGNETO)
-	    	gsl_status = gsl_rstat_add(creal(run_data->b[n]), stats_data->mag_moments[i]);
+	    	gsl_status = gsl_rstat_add(creal(run_data->b[n]), stats_data->real_mag_moments[i]);
 		    if (gsl_status != 0) {
 		    	// Print error message to error stream
 				fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to update running stats counter ["CYAN"%s"RESET"] - Error Value: ["CYAN"%d"RESET"] Field Value: ["CYAN"%lf"RESET"] \n-->> Exiting!!!\n", "Magnetic Stats", gsl_status, creal(run_data->b[n]));
@@ -179,8 +219,8 @@ void ComputeStats(const long int iters, const long int save_data_indx) {
 			vel_enrg_flux_term = cimag(run_data->u[n + 2] * run_data->u[n + 1] * run_data->u[n] + (1.0 - sys_vars->EPS) / sys_vars->Lambda * run_data->u[n + 1] * run_data->u[n] * run_data->u[n - 1]);
 			vel_hel_flux_term  = cimag(run_data->u[n + 2] * run_data->u[n + 1] * run_data->u[n] - (sys_vars->EPS * sys_vars->Lambda + 1.0) / pow(sys_vars->Lambda, 2.0) * run_data->u[n + 1] * run_data->u[n] * run_data->u[n - 1]);
 			#if defined(__MAGNETO) 
-			// mag_enrg_flux_term = cimag(run_data->u[n + 2] * run_data->u[n + 2] * run_data->u[n + 2])
-			// mag_hel_flux_term  = cimag(run_data->u[n + 2] * run_data->u[n + 2] * run_data->u[n + 2])
+			mag_enrg_flux_term = cimag(run_data->u[n + 2] * run_data->u[n + 2] * run_data->u[n + 2])
+			mag_hel_flux_term  = cimag(run_data->u[n + 2] * run_data->u[n + 2] * run_data->u[n + 2])
 			#endif    	
 			#endif
 
@@ -202,8 +242,10 @@ void ComputeStats(const long int iters, const long int save_data_indx) {
 				stats_data->vel_flux_str_func_abs[0][p - 1][i] += pow(fabs(vel_enrg_flux_term), p / 3.0);
 				stats_data->vel_flux_str_func_abs[1][p - 1][i] += pow(fabs(vel_hel_flux_term), p / 3.0);
 	    		#if defined(__MAGNETO)
-				// stats_data->mag_flux_str_func[0][p - 1][i] += pow(mag_enrg_flux_term, p);
-				// stats_data->mag_flux_str_func[1][p - 1][i] += pow(mag_hel_flux_term, p);
+				stats_data->mag_flux_str_func[0][p - 1][i] += pow(sgn(mag_enrg_flux_term), p) * pow(fabs(mag_enrg_flux_term), p);
+				stats_data->mag_flux_str_func[1][p - 1][i] += pow(sgn(mag_hel_flux_term), p) * pow(fabs(mag_hel_flux_term), p);
+				stats_data->mag_flux_str_func_abs[0][p - 1][i] += pow(fabs(mag_enrg_flux_term), p);
+				stats_data->mag_flux_str_func_abs[1][p - 1][i] += pow(fabs(mag_hel_flux_term), p);
 	    		#endif
 	    		#endif
 	    	}
@@ -282,14 +324,14 @@ void InitializeStats(void) {
 
 	///--------------------------------- Running Stats Objects
 	// Allocate memory for the running stats objects
-	stats_data->vel_moments = (double** )malloc(sizeof(double* ) * N);
-	if (stats_data->vel_moments == NULL) {
+	stats_data->real_vel_moments = (double** )malloc(sizeof(double* ) * N);
+	if (stats_data->real_vel_moments == NULL) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Stats Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Velocity Stats");
 		exit(1);
 	}
 	#if defined(__MAGNETO)
-	stats_data->mag_moments = (double** )malloc(sizeof(double* ) * N);
-	if (stats_data->mag_moments == NULL) {
+	stats_data->real_mag_moments = (double** )malloc(sizeof(double* ) * N);
+	if (stats_data->real_mag_moments == NULL) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Stats Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Magnetic Stats");
 		exit(1);
 	}
@@ -297,14 +339,14 @@ void InitializeStats(void) {
 
 	// Initialize the running stats objects
 	for (int i = 0; i < N; ++i) {
-		stats_data->vel_moments[i] = gsl_rstat_alloc();
-		if (stats_data->vel_moments[i] == NULL) {
+		stats_data->real_vel_moments[i] = gsl_rstat_alloc();
+		if (stats_data->real_vel_moments[i] == NULL) {
 			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Running stats object: ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Velocity Stats");
 			exit(1);
 		}
 		#if defined(__MAGNETO)
-		stats_data->mag_moments[i] = gsl_rstat_alloc();
-		if (stats_data->mag_moments[i] == NULL) {
+		stats_data->real_mag_moments[i] = gsl_rstat_alloc();
+		if (stats_data->real_mag_moments[i] == NULL) {
 			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Running stats object: ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Magnetic Stats");
 			exit(1);
 		}
@@ -320,6 +362,19 @@ void InitializeStats(void) {
 		stats_data->real_vel_hist[i] = gsl_histogram_alloc(VEL_NUM_BINS);
 		if (stats_data->real_vel_hist[i] == NULL) {
 			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for histogram struct for: ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Real Velocity Histogram");
+			exit(1);
+		}
+	}
+	#endif
+
+	#if defined(__MAG_HIST)
+	// Allocate memory for the array of histogram structs
+	stats_data->real_mag_hist = (double** )malloc(sizeof(double* ) * N);
+	for (int i = 0; i < N; ++i) {
+		// Allocate	the histogram structs
+		stats_data->real_mag_hist[i] = gsl_histogram_alloc(VEL_NUM_BINS);
+		if (stats_data->real_vel_hist[i] == NULL) {
+			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for histogram struct for: ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Real Magnetic Histogram");
 			exit(1);
 		}
 	}
