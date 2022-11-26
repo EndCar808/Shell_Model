@@ -56,13 +56,13 @@ void CreateOutputFilesWriteICs(const long int N) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"]  --- Could not create main HDF5 output file at: "CYAN"%s"RESET" \n-->>Exiting....\n", file_info->output_file_name);
 		exit(1);
 	}
-	// #if defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC)
-	// file_info->phase_sync_file_handle = H5Fcreate(file_info->phase_sync_file_name, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-	// if (file_info->phase_sync_file_handle < 0) {
-	// 	fprintf(stderr, "\n["RED"ERROR"RESET"]  --- Could not create main Phase Sync output file at: "CYAN"%s"RESET" \n-->>Exiting....\n", file_info->phase_sync_file_name);
-	// 	exit(1);
-	// }
-	// #endif
+	#if defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC)
+	file_info->phase_sync_file_handle = H5Fcreate(file_info->phase_sync_file_name, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+	if (file_info->phase_sync_file_handle < 0) {
+		fprintf(stderr, "\n["RED"ERROR"RESET"]  --- Could not create main Phase Sync output file at: "CYAN"%s"RESET" \n-->>Exiting....\n", file_info->phase_sync_file_name);
+		exit(1);
+	}
+	#endif
 
 	////////////////////////////////
 	/// Create Slabbed Datasets
@@ -161,71 +161,71 @@ void CreateOutputFilesWriteICs(const long int N) {
 	#endif
 	#endif
 
-	// ///--------------------------------------- Triads and Phase Differences
-	// #if defined(__CONSERVED_PHASES)
-	// // Create slabbed dataset for the velocity triads
-	// dims2D[1]      = phase_sync->num_triads;
-	// maxdims2D[1]   = phase_sync->num_triads;
-	// chunkdims2D[1] = phase_sync->num_triads;
-	// CreateSlabbedDSet(0.0, 0, file_info->phase_sync_file_handle, "VelTriads", &(file_info->file_space[DSET_VEL_TRIADS]), &(file_info->data_set[DSET_VEL_TRIADS]), &(file_info->mem_space[DSET_VEL_TRIADS]), H5T_NATIVE_DOUBLE, dims2D, maxdims2D, chunkdims2D, Dim2D);
+	///--------------------------------------- Triads and Phase Differences
+	#if defined(__CONSERVED_PHASES)
+	// Create slabbed dataset for the velocity triads
+	dims2D[1]      = phase_sync->num_triads;
+	maxdims2D[1]   = phase_sync->num_triads;
+	chunkdims2D[1] = phase_sync->num_triads;
+	CreateSlabbedDSet(0.0, 0, file_info->phase_sync_file_handle, "VelTriads", &(file_info->file_space[DSET_VEL_TRIADS]), &(file_info->data_set[DSET_VEL_TRIADS]), &(file_info->mem_space[DSET_VEL_TRIADS]), H5T_NATIVE_DOUBLE, dims2D, maxdims2D, chunkdims2D, Dim2D);
 	
-	// // Create slabbed dataset for the velocity phase differences
-	// dims2D[1]      = phase_sync->num_phase_diff;
-	// maxdims2D[1]   = phase_sync->num_phase_diff;
-	// chunkdims2D[1] = phase_sync->num_phase_diff;
-	// CreateSlabbedDSet(0.0, 0, file_info->phase_sync_file_handle, "VelPhaseDifferences", &(file_info->file_space[DSET_VEL_PHASE_DIFF]), &(file_info->data_set[DSET_VEL_PHASE_DIFF]), &(file_info->mem_space[DSET_VEL_PHASE_DIFF]), H5T_NATIVE_DOUBLE, dims2D, maxdims2D, chunkdims2D, Dim2D);
-	// #if defined(__MAGNETO)
-	// // Create slabbed dataset for the magnetic triads
-	// dims3D[0]      = sys_vars->num_print_steps;
-	// dims3D[1]      = NUM_MAG_TRIAD_TYPES;
-	// dims3D[2]      = phase_sync->num_triads;
-	// maxdims3D[0]   = H5S_UNLIMITED;
-	// maxdims3D[1]   = NUM_MAG_TRIAD_TYPES;
-	// maxdims3D[2]   = phase_sync->num_triads;
-	// chunkdims3D[0] = 1;                          
-	// chunkdims3D[1] = NUM_MAG_TRIAD_TYPES;
-	// chunkdims3D[2] = phase_sync->num_triads;
-	// CreateSlabbedDSet(0.0, 0, file_info->phase_sync_file_handle, "MagTriads", &(file_info->file_space[DSET_MAG_TRIADS]), &(file_info->data_set[DSET_MAG_TRIADS]), &(file_info->mem_space[DSET_MAG_TRIADS]), H5T_NATIVE_DOUBLE, dims3D, maxdims3D, chunkdims3D, Dim3D);
+	// Create slabbed dataset for the velocity phase differences
+	dims2D[1]      = phase_sync->num_phase_diff;
+	maxdims2D[1]   = phase_sync->num_phase_diff;
+	chunkdims2D[1] = phase_sync->num_phase_diff;
+	CreateSlabbedDSet(0.0, 0, file_info->phase_sync_file_handle, "VelPhaseDifferences", &(file_info->file_space[DSET_VEL_PHASE_DIFF]), &(file_info->data_set[DSET_VEL_PHASE_DIFF]), &(file_info->mem_space[DSET_VEL_PHASE_DIFF]), H5T_NATIVE_DOUBLE, dims2D, maxdims2D, chunkdims2D, Dim2D);
+	#if defined(__MAGNETO)
+	// Create slabbed dataset for the magnetic triads
+	dims3D[0]      = sys_vars->num_print_steps;
+	dims3D[1]      = NUM_MAG_TRIAD_TYPES;
+	dims3D[2]      = phase_sync->num_triads;
+	maxdims3D[0]   = H5S_UNLIMITED;
+	maxdims3D[1]   = NUM_MAG_TRIAD_TYPES;
+	maxdims3D[2]   = phase_sync->num_triads;
+	chunkdims3D[0] = 1;                          
+	chunkdims3D[1] = NUM_MAG_TRIAD_TYPES;
+	chunkdims3D[2] = phase_sync->num_triads;
+	CreateSlabbedDSet(0.0, 0, file_info->phase_sync_file_handle, "MagTriads", &(file_info->file_space[DSET_MAG_TRIADS]), &(file_info->data_set[DSET_MAG_TRIADS]), &(file_info->mem_space[DSET_MAG_TRIADS]), H5T_NATIVE_DOUBLE, dims3D, maxdims3D, chunkdims3D, Dim3D);
 
-	// // Create slabbed dataset for the magnetic phase differences
-	// dims3D[2]      = phase_sync->num_phase_diff;
-	// maxdims3D[2]   = phase_sync->num_phase_diff;
-	// chunkdims3D[2] = phase_sync->num_phase_diff;
-	// CreateSlabbedDSet(0.0, 0, file_info->phase_sync_file_handle, "MagPhaseDifferences", &(file_info->file_space[DSET_MAG_PHASE_DIFF]), &(file_info->data_set[DSET_MAG_PHASE_DIFF]), &(file_info->mem_space[DSET_MAG_PHASE_DIFF]), H5T_NATIVE_DOUBLE, dims3D, maxdims3D, chunkdims3D, Dim3D);
-	// #endif
-	// #endif
+	// Create slabbed dataset for the magnetic phase differences
+	dims3D[2]      = phase_sync->num_phase_diff;
+	maxdims3D[2]   = phase_sync->num_phase_diff;
+	chunkdims3D[2] = phase_sync->num_phase_diff;
+	CreateSlabbedDSet(0.0, 0, file_info->phase_sync_file_handle, "MagPhaseDifferences", &(file_info->file_space[DSET_MAG_PHASE_DIFF]), &(file_info->data_set[DSET_MAG_PHASE_DIFF]), &(file_info->mem_space[DSET_MAG_PHASE_DIFF]), H5T_NATIVE_DOUBLE, dims3D, maxdims3D, chunkdims3D, Dim3D);
+	#endif
+	#endif
 
-	// ///--------------------------------------- Phase Order Parameters
-	// #if defined(__PHASE_SYNC)
-	// // Create slabbed dataset for the velocity triad order parameter
-	// dims2D[1]      = phase_sync->num_triads;
-	// maxdims2D[1]   = phase_sync->num_triads;
-	// chunkdims2D[1] = phase_sync->num_triads;
-	// CreateSlabbedDSet(0.0, 0, file_info->phase_sync_file_handle, "VelTriadOrderParameter", &(file_info->file_space[DSET_VEL_TRIAD_ORDER]), &(file_info->data_set[DSET_VEL_TRIAD_ORDER]), &(file_info->mem_space[DSET_VEL_TRIAD_ORDER]), file_info->COMPLEX_DTYPE, dims2D, maxdims2D, chunkdims2D, Dim2D);
-	// // Create slabbed dataset for the velocity phase difference order parameter
-	// dims2D[1]      = phase_sync->num_phase_diff;
-	// maxdims2D[1]   = phase_sync->num_phase_diff;
-	// chunkdims2D[1] = phase_sync->num_phase_diff;
-	// CreateSlabbedDSet(0.0, 0, file_info->phase_sync_file_handle, "VelPhaseDifferenceOrderParameter", &(file_info->file_space[DSET_VEL_PHASE_DIFF_ORDER]), &(file_info->data_set[DSET_VEL_PHASE_DIFF_ORDER]), &(file_info->mem_space[DSET_VEL_PHASE_DIFF_ORDER]), file_info->COMPLEX_DTYPE, dims2D, maxdims2D, chunkdims2D, Dim2D);
-	// #if defined(__MAGNETO)
-	// // Initialize the hyperslab arrays for the magnetic triad order parameter
-	// dims3D[0]      = sys_vars->num_print_steps;
-	// dims3D[1]      = NUM_MAG_TRIAD_TYPES;
-	// dims3D[2]      = phase_sync->num_triads;
-	// maxdims3D[0]   = H5S_UNLIMITED;
-	// maxdims3D[1]   = NUM_MAG_TRIAD_TYPES;
-	// maxdims3D[2]   = phase_sync->num_triads;
-	// chunkdims3D[0] = 1;                          
-	// chunkdims3D[1] = NUM_MAG_TRIAD_TYPES;
-	// chunkdims3D[2] = phase_sync->num_triads;
-	// CreateSlabbedDSet(0.0, 0, file_info->phase_sync_file_handle, "MagTriadOrderParameter", &(file_info->file_space[DSET_MAG_TRIAD_ORDER]), &(file_info->data_set[DSET_MAG_TRIAD_ORDER]), &(file_info->mem_space[DSET_MAG_TRIAD_ORDER]), file_info->COMPLEX_DTYPE, dims3D, maxdims3D, chunkdims3D, Dim3D);
-	// dims3D[2]      = phase_sync->num_phase_diff;
-	// maxdims3D[2]   = phase_sync->num_phase_diff;
-	// chunkdims3D[2] = phase_sync->num_phase_diff;
-	// // Create slabbed dataset for the magnetic phase difference order parameter
-	// CreateSlabbedDSet(0.0, 0, file_info->phase_sync_file_handle, "MagPhaseDifferenceOrderParameter", &(file_info->file_space[DSET_MAG_PHASE_DIFF_ORDER]), &(file_info->data_set[DSET_MAG_PHASE_DIFF_ORDER]), &(file_info->mem_space[DSET_MAG_PHASE_DIFF_ORDER]), file_info->COMPLEX_DTYPE, dims3D, maxdims3D, chunkdims3D, Dim3D);
-	// #endif
-	// #endif
+	///--------------------------------------- Phase Order Parameters
+	#if defined(__PHASE_SYNC)
+	// Create slabbed dataset for the velocity triad order parameter
+	dims2D[1]      = phase_sync->num_triads;
+	maxdims2D[1]   = phase_sync->num_triads;
+	chunkdims2D[1] = phase_sync->num_triads;
+	CreateSlabbedDSet(0.0, 0, file_info->phase_sync_file_handle, "VelTriadOrderParameter", &(file_info->file_space[DSET_VEL_TRIAD_ORDER]), &(file_info->data_set[DSET_VEL_TRIAD_ORDER]), &(file_info->mem_space[DSET_VEL_TRIAD_ORDER]), file_info->COMPLEX_DTYPE, dims2D, maxdims2D, chunkdims2D, Dim2D);
+	// Create slabbed dataset for the velocity phase difference order parameter
+	dims2D[1]      = phase_sync->num_phase_diff;
+	maxdims2D[1]   = phase_sync->num_phase_diff;
+	chunkdims2D[1] = phase_sync->num_phase_diff;
+	CreateSlabbedDSet(0.0, 0, file_info->phase_sync_file_handle, "VelPhaseDifferenceOrderParameter", &(file_info->file_space[DSET_VEL_PHASE_DIFF_ORDER]), &(file_info->data_set[DSET_VEL_PHASE_DIFF_ORDER]), &(file_info->mem_space[DSET_VEL_PHASE_DIFF_ORDER]), file_info->COMPLEX_DTYPE, dims2D, maxdims2D, chunkdims2D, Dim2D);
+	#if defined(__MAGNETO)
+	// Initialize the hyperslab arrays for the magnetic triad order parameter
+	dims3D[0]      = sys_vars->num_print_steps;
+	dims3D[1]      = NUM_MAG_TRIAD_TYPES;
+	dims3D[2]      = phase_sync->num_triads;
+	maxdims3D[0]   = H5S_UNLIMITED;
+	maxdims3D[1]   = NUM_MAG_TRIAD_TYPES;
+	maxdims3D[2]   = phase_sync->num_triads;
+	chunkdims3D[0] = 1;                          
+	chunkdims3D[1] = NUM_MAG_TRIAD_TYPES;
+	chunkdims3D[2] = phase_sync->num_triads;
+	CreateSlabbedDSet(0.0, 0, file_info->phase_sync_file_handle, "MagTriadOrderParameter", &(file_info->file_space[DSET_MAG_TRIAD_ORDER]), &(file_info->data_set[DSET_MAG_TRIAD_ORDER]), &(file_info->mem_space[DSET_MAG_TRIAD_ORDER]), file_info->COMPLEX_DTYPE, dims3D, maxdims3D, chunkdims3D, Dim3D);
+	dims3D[2]      = phase_sync->num_phase_diff;
+	maxdims3D[2]   = phase_sync->num_phase_diff;
+	chunkdims3D[2] = phase_sync->num_phase_diff;
+	// Create slabbed dataset for the magnetic phase difference order parameter
+	CreateSlabbedDSet(0.0, 0, file_info->phase_sync_file_handle, "MagPhaseDifferenceOrderParameter", &(file_info->file_space[DSET_MAG_PHASE_DIFF_ORDER]), &(file_info->data_set[DSET_MAG_PHASE_DIFF_ORDER]), &(file_info->mem_space[DSET_MAG_PHASE_DIFF_ORDER]), file_info->COMPLEX_DTYPE, dims3D, maxdims3D, chunkdims3D, Dim3D);
+	#endif
+	#endif
 
 
 
@@ -299,51 +299,51 @@ void CreateOutputFilesWriteICs(const long int N) {
 		#endif
 		#endif
 
-		// //--------------------------------------- Triads & Phase Differences
-		// #if defined(__CONSERVED_PHASES)
-		// // Write slabbed dataset for the velocity triads
-		// count2D[1] = phase_sync->num_triads;
-		// WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_VEL_TRIADS], file_info->data_set[DSET_VEL_TRIADS], file_info->mem_space[DSET_VEL_TRIADS], H5T_NATIVE_DOUBLE, phase_sync->triads_u, "VelTriads", count2D, index2D);
-		// // Write slabbed dataset for the velocity phase differrences
-		// count2D[1] = phase_sync->num_phase_diff;
-		// WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_VEL_PHASE_DIFF], file_info->data_set[DSET_VEL_PHASE_DIFF], file_info->mem_space[DSET_VEL_PHASE_DIFF], H5T_NATIVE_DOUBLE, phase_sync->phase_diff_u, "VelPhaseDifferences", count2D, index2D);
-		// #if defined(__MAGNETO)
-		// // Write slabbed dataset for the magnetic triads
-		// count3D[0] = 1;
-		// count3D[1] = NUM_MAG_TRIAD_TYPES;
-		// count3D[2] = phase_sync->num_triads;
-		// index3D[0] = 0;
-		// index3D[1] = 0;
-		// index3D[2] = 0;
-		// WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_MAG_TRIADS], file_info->data_set[DSET_MAG_TRIADS], file_info->mem_space[DSET_MAG_TRIADS], H5T_NATIVE_DOUBLE, phase_sync->triads_b, "MagTriads", count3D, index3D);
-		// // Write slabbed dataset for the magnetic phase differences
-		// count3D[2] = phase_sync->num_phase_diff;
-		// WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_MAG_PHASE_DIFF], file_info->data_set[DSET_MAG_PHASE_DIFF], file_info->mem_space[DSET_MAG_PHASE_DIFF], H5T_NATIVE_DOUBLE, phase_sync->phase_diff_b, "MagPhaseDifferences", count3D, index3D);
-		// #endif
-		// #endif
+		//--------------------------------------- Triads & Phase Differences
+		#if defined(__CONSERVED_PHASES)
+		// Write slabbed dataset for the velocity triads
+		count2D[1] = phase_sync->num_triads;
+		WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_VEL_TRIADS], file_info->data_set[DSET_VEL_TRIADS], file_info->mem_space[DSET_VEL_TRIADS], H5T_NATIVE_DOUBLE, phase_sync->triads_u, "VelTriads", count2D, index2D);
+		// Write slabbed dataset for the velocity phase differrences
+		count2D[1] = phase_sync->num_phase_diff;
+		WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_VEL_PHASE_DIFF], file_info->data_set[DSET_VEL_PHASE_DIFF], file_info->mem_space[DSET_VEL_PHASE_DIFF], H5T_NATIVE_DOUBLE, phase_sync->phase_diff_u, "VelPhaseDifferences", count2D, index2D);
+		#if defined(__MAGNETO)
+		// Write slabbed dataset for the magnetic triads
+		count3D[0] = 1;
+		count3D[1] = NUM_MAG_TRIAD_TYPES;
+		count3D[2] = phase_sync->num_triads;
+		index3D[0] = 0;
+		index3D[1] = 0;
+		index3D[2] = 0;
+		WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_MAG_TRIADS], file_info->data_set[DSET_MAG_TRIADS], file_info->mem_space[DSET_MAG_TRIADS], H5T_NATIVE_DOUBLE, phase_sync->triads_b, "MagTriads", count3D, index3D);
+		// Write slabbed dataset for the magnetic phase differences
+		count3D[2] = phase_sync->num_phase_diff;
+		WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_MAG_PHASE_DIFF], file_info->data_set[DSET_MAG_PHASE_DIFF], file_info->mem_space[DSET_MAG_PHASE_DIFF], H5T_NATIVE_DOUBLE, phase_sync->phase_diff_b, "MagPhaseDifferences", count3D, index3D);
+		#endif
+		#endif
 
-		// //--------------------------------------- Phase Sync
-		// #if defined(__PHASE_SYNC)
-		// // Write slabbed dataset for the velocity triad order parameter
-		// count2D[1] = phase_sync->num_triads;
-		// WriteSlabbedDataFourier(0.0, 0, file_info->file_space[DSET_VEL_TRIAD_ORDER], file_info->data_set[DSET_VEL_TRIAD_ORDER], file_info->mem_space[DSET_VEL_TRIAD_ORDER], file_info->COMPLEX_DTYPE, phase_sync->triad_u_order, "VelTriadOrderParameter", count2D, index2D);
-		// // Write slabbed dataset for the velocity phase differrence order parameter
-		// count2D[1] = phase_sync->num_phase_diff;
-		// WriteSlabbedDataFourier(0.0, 0, file_info->file_space[DSET_VEL_PHASE_DIFF_ORDER], file_info->data_set[DSET_VEL_PHASE_DIFF_ORDER], file_info->mem_space[DSET_VEL_PHASE_DIFF_ORDER], file_info->COMPLEX_DTYPE, phase_sync->phase_diff_u_order, "VelPhaseDifferenceOrderParameter", count2D, index2D);
-		// #if defined(__MAGNETO)
-		// // Write slabbed dataset for the magnetic triad order parameter
-		// count3D[0] = 1;
-		// count3D[1] = NUM_MAG_TRIAD_TYPES;
-		// count3D[2] = phase_sync->num_triads;
-		// index3D[0] = 0;
-		// index3D[1] = 0;
-		// index3D[2] = 0;
-		// WriteSlabbedDataFourier(0.0, 0, file_info->file_space[DSET_MAG_TRIAD_ORDER], file_info->data_set[DSET_MAG_TRIAD_ORDER], file_info->mem_space[DSET_MAG_TRIAD_ORDER], file_info->COMPLEX_DTYPE, phase_sync->triad_b_order, "MagTriadOrderParameter", count3D, index3D);
-		// // Write slabbed dataset for the magnetic phase difference order parameter
-		// count3D[2] = phase_sync->num_phase_diff;
-		// WriteSlabbedDataFourier(0.0, 0, file_info->file_space[DSET_MAG_PHASE_DIFF_ORDER], file_info->data_set[DSET_MAG_PHASE_DIFF_ORDER], file_info->mem_space[DSET_MAG_PHASE_DIFF_ORDER], file_info->COMPLEX_DTYPE, phase_sync->phase_diff_b_order, "MagPhaseDifferenceOrderParameter", count3D, index3D);
-		// #endif
-		// #endif
+		//--------------------------------------- Phase Sync
+		#if defined(__PHASE_SYNC)
+		// Write slabbed dataset for the velocity triad order parameter
+		count2D[1] = phase_sync->num_triads;
+		WriteSlabbedDataFourier(0.0, 0, file_info->file_space[DSET_VEL_TRIAD_ORDER], file_info->data_set[DSET_VEL_TRIAD_ORDER], file_info->mem_space[DSET_VEL_TRIAD_ORDER], file_info->COMPLEX_DTYPE, phase_sync->triad_u_order, "VelTriadOrderParameter", count2D, index2D);
+		// Write slabbed dataset for the velocity phase differrence order parameter
+		count2D[1] = phase_sync->num_phase_diff;
+		WriteSlabbedDataFourier(0.0, 0, file_info->file_space[DSET_VEL_PHASE_DIFF_ORDER], file_info->data_set[DSET_VEL_PHASE_DIFF_ORDER], file_info->mem_space[DSET_VEL_PHASE_DIFF_ORDER], file_info->COMPLEX_DTYPE, phase_sync->phase_diff_u_order, "VelPhaseDifferenceOrderParameter", count2D, index2D);
+		#if defined(__MAGNETO)
+		// Write slabbed dataset for the magnetic triad order parameter
+		count3D[0] = 1;
+		count3D[1] = NUM_MAG_TRIAD_TYPES;
+		count3D[2] = phase_sync->num_triads;
+		index3D[0] = 0;
+		index3D[1] = 0;
+		index3D[2] = 0;
+		WriteSlabbedDataFourier(0.0, 0, file_info->file_space[DSET_MAG_TRIAD_ORDER], file_info->data_set[DSET_MAG_TRIAD_ORDER], file_info->mem_space[DSET_MAG_TRIAD_ORDER], file_info->COMPLEX_DTYPE, phase_sync->triad_b_order, "MagTriadOrderParameter", count3D, index3D);
+		// Write slabbed dataset for the magnetic phase difference order parameter
+		count3D[2] = phase_sync->num_phase_diff;
+		WriteSlabbedDataFourier(0.0, 0, file_info->file_space[DSET_MAG_PHASE_DIFF_ORDER], file_info->data_set[DSET_MAG_PHASE_DIFF_ORDER], file_info->mem_space[DSET_MAG_PHASE_DIFF_ORDER], file_info->COMPLEX_DTYPE, phase_sync->phase_diff_b_order, "MagPhaseDifferenceOrderParameter", count3D, index3D);
+		#endif
+		#endif
 	}
 
 	// ------------------------------------
@@ -354,13 +354,13 @@ void CreateOutputFilesWriteICs(const long int N) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to close output file ["CYAN"%s"RESET"] at: Iter = ["CYAN"%d"RESET"] t = ["CYAN"%lf"RESET"]\n-->> Exiting...\n", file_info->output_file_name, 0, 0.0);
 		exit(1);		
 	}
-	// #if defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC)
-	// status = H5Fclose(file_info->phase_sync_file_handle);
-	// if (status < 0) {
-	// 	fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to close phase sync file ["CYAN"%s"RESET"] at: Iter = ["CYAN"%d"RESET"] t = ["CYAN"%lf"RESET"]\n-->> Exiting...\n", file_info->phase_sync_file_name, 0, 0.0);
-	// 	exit(1);		
-	// }
-	// #endif
+	#if defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC)
+	status = H5Fclose(file_info->phase_sync_file_handle);
+	if (status < 0) {
+		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to close phase sync file ["CYAN"%s"RESET"] at: Iter = ["CYAN"%d"RESET"] t = ["CYAN"%lf"RESET"]\n-->> Exiting...\n", file_info->phase_sync_file_name, 0, 0.0);
+		exit(1);		
+	}
+	#endif
 }
 /**
  * Function that creates the output file paths and directories
@@ -551,11 +551,11 @@ void GetOutputDirPath(void) {
 		strcat(file_info->system_msr_file_name, "System_Measure_HDF_Data.h5");
 		printf("\nSytem Measures File: "CYAN"%s"RESET"\n\n", file_info->system_msr_file_name);
 		#endif
-		// #if defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC)
-		// strcpy(file_info->phase_sync_file_name, file_info->output_dir); 
-		// strcat(file_info->phase_sync_file_name, "Phase_Sync_HDF_Data.h5");
-		// printf("\nPhase Sync File: "CYAN"%s"RESET"\n\n", file_info->phase_sync_file_name);
-		// #endif
+		#if defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC)
+		strcpy(file_info->phase_sync_file_name, file_info->output_dir); 
+		strcat(file_info->phase_sync_file_name, "Phase_Sync_HDF_Data.h5");
+		printf("\nPhase Sync File: "CYAN"%s"RESET"\n\n", file_info->phase_sync_file_name);
+		#endif
 	}
 
 }
@@ -589,23 +589,23 @@ void WriteDataToFile(double t, const long int iters, const long int save_indx) {
 			exit(1);
 		}
 	}
-	// #if defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC)
-	// if (access(file_info->phase_sync_file_name, F_OK) != 0) {
-	// 	file_info->phase_sync_file_handle = H5Fcreate(file_info->phase_sync_file_name, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-	// 	if (file_info->phase_sync_file_handle < 0) {
-	// 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to create phase_sync file ["CYAN"%s"RESET"] at: Iter = ["CYAN"%ld"RESET"] t = ["CYAN"%lf"RESET"]\n-->> Exiting...\n", file_info->phase_sync_file_name, iters, t);
-	// 		exit(1);
-	// 	}
-	// }
-	// else {
-	// 	// Open file with serial I/O access properties
-	// 	file_info->phase_sync_file_handle = H5Fopen(file_info->phase_sync_file_name, H5F_ACC_RDWR, H5P_DEFAULT);
-	// 	if (file_info->phase_sync_file_handle < 0) {
-	// 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to open phase_sync file ["CYAN"%s"RESET"] at: Iter = ["CYAN"%ld"RESET"] t = ["CYAN"%lf"RESET"]\n-->> Exiting...\n", file_info->phase_sync_file_name, iters, t);
-	// 		exit(1);
-	// 	}
-	// }
-	// #endif
+	#if defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC)
+	if (access(file_info->phase_sync_file_name, F_OK) != 0) {
+		file_info->phase_sync_file_handle = H5Fcreate(file_info->phase_sync_file_name, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+		if (file_info->phase_sync_file_handle < 0) {
+			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to create phase_sync file ["CYAN"%s"RESET"] at: Iter = ["CYAN"%ld"RESET"] t = ["CYAN"%lf"RESET"]\n-->> Exiting...\n", file_info->phase_sync_file_name, iters, t);
+			exit(1);
+		}
+	}
+	else {
+		// Open file with serial I/O access properties
+		file_info->phase_sync_file_handle = H5Fopen(file_info->phase_sync_file_name, H5F_ACC_RDWR, H5P_DEFAULT);
+		if (file_info->phase_sync_file_handle < 0) {
+			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to open phase_sync file ["CYAN"%s"RESET"] at: Iter = ["CYAN"%ld"RESET"] t = ["CYAN"%lf"RESET"]\n-->> Exiting...\n", file_info->phase_sync_file_name, iters, t);
+			exit(1);
+		}
+	}
+	#endif
 
 	// -------------------------------
 	// Write Data to File
@@ -693,55 +693,55 @@ void WriteDataToFile(double t, const long int iters, const long int save_indx) {
 	#endif
 
 
-	// //--------------------------------------- Triads & Phase Differences
-	// #if defined(__CONSERVED_PHASES)
-	// // Write slabbed dataset for the velocity triads
-	// count2D[0] = 1;
-	// count2D[1] = phase_sync->num_triads;
-	// index2D[0] = save_indx;
-	// index2D[1] = 0;
-	// WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_VEL_TRIADS], file_info->data_set[DSET_VEL_TRIADS], file_info->mem_space[DSET_VEL_TRIADS], H5T_NATIVE_DOUBLE, phase_sync->triads_u, "VelTriads", count2D, index2D);
-	// // Write slabbed dataset for the velocity phase differrences
-	// count2D[1] = phase_sync->num_phase_diff;
-	// WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_VEL_PHASE_DIFF], file_info->data_set[DSET_VEL_PHASE_DIFF], file_info->mem_space[DSET_VEL_PHASE_DIFF], H5T_NATIVE_DOUBLE, phase_sync->phase_diff_u, "VelPhaseDifferences", count2D, index2D);
-	// #if defined(__MAGNETO)
-	// // Write slabbed dataset for the magnetic triads
-	// count3D[0] = 1;
-	// count3D[1] = NUM_MAG_TRIAD_TYPES;
-	// count3D[1] = phase_sync->num_triads;
-	// index3D[0] = save_indx;
-	// index3D[1] = 0;
-	// index3D[1] = 0;
-	// WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_MAG_TRIADS], file_info->data_set[DSET_MAG_TRIADS], file_info->mem_space[DSET_MAG_TRIADS], H5T_NATIVE_DOUBLE, phase_sync->triads_b, "MagTriads", count3D, index3D);
-	// // Write slabbed dataset for the magnetic phase differences
-	// count3D[1] = phase_sync->num_phase_diff;
-	// WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_MAG_PHASE_DIFF], file_info->data_set[DSET_MAG_PHASE_DIFF], file_info->mem_space[DSET_MAG_PHASE_DIFF], H5T_NATIVE_DOUBLE, phase_sync->phase_diff_b, "MagPhaseDifferences", count3D, index3D);
-	// #endif
-	// #endif
+	//--------------------------------------- Triads & Phase Differences
+	#if defined(__CONSERVED_PHASES)
+	// Write slabbed dataset for the velocity triads
+	count2D[0] = 1;
+	count2D[1] = phase_sync->num_triads;
+	index2D[0] = save_indx;
+	index2D[1] = 0;
+	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_VEL_TRIADS], file_info->data_set[DSET_VEL_TRIADS], file_info->mem_space[DSET_VEL_TRIADS], H5T_NATIVE_DOUBLE, phase_sync->triads_u, "VelTriads", count2D, index2D);
+	// Write slabbed dataset for the velocity phase differrences
+	count2D[1] = phase_sync->num_phase_diff;
+	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_VEL_PHASE_DIFF], file_info->data_set[DSET_VEL_PHASE_DIFF], file_info->mem_space[DSET_VEL_PHASE_DIFF], H5T_NATIVE_DOUBLE, phase_sync->phase_diff_u, "VelPhaseDifferences", count2D, index2D);
+	#if defined(__MAGNETO)
+	// Write slabbed dataset for the magnetic triads
+	count3D[0] = 1;
+	count3D[1] = NUM_MAG_TRIAD_TYPES;
+	count3D[1] = phase_sync->num_triads;
+	index3D[0] = save_indx;
+	index3D[1] = 0;
+	index3D[1] = 0;
+	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_MAG_TRIADS], file_info->data_set[DSET_MAG_TRIADS], file_info->mem_space[DSET_MAG_TRIADS], H5T_NATIVE_DOUBLE, phase_sync->triads_b, "MagTriads", count3D, index3D);
+	// Write slabbed dataset for the magnetic phase differences
+	count3D[1] = phase_sync->num_phase_diff;
+	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_MAG_PHASE_DIFF], file_info->data_set[DSET_MAG_PHASE_DIFF], file_info->mem_space[DSET_MAG_PHASE_DIFF], H5T_NATIVE_DOUBLE, phase_sync->phase_diff_b, "MagPhaseDifferences", count3D, index3D);
+	#endif
+	#endif
 	
 
-	// //--------------------------------------- Phase Sync
-	// #if defined(__PHASE_SYNC)
-	// // Write slabbed dataset for the velocity triad order parameter
-	// count2D[1]       = phase_sync->num_triads;
-	// WriteSlabbedDataFourier(t, iters, file_info->file_space[DSET_VEL_TRIAD_ORDER], file_info->data_set[DSET_VEL_TRIAD_ORDER], file_info->mem_space[DSET_VEL_TRIAD_ORDER], file_info->COMPLEX_DTYPE, phase_sync->triad_u_order, "VelTriadOrderParameter", count2D, index2D);
-	// // Write slabbed dataset for the velocity phase differrence order parameter
-	// count2D[1]       = phase_sync->num_phase_diff;
-	// WriteSlabbedDataFourier(t, iters, file_info->file_space[DSET_VEL_PHASE_DIFF_ORDER], file_info->data_set[DSET_VEL_PHASE_DIFF_ORDER], file_info->mem_space[DSET_VEL_PHASE_DIFF_ORDER], file_info->COMPLEX_DTYPE, phase_sync->phase_diff_u_order, "VelPhaseDifferenceOrderParameter", count2D, index2D);
-	// #if defined(__MAGNETO)
-	// // Write slabbed dataset for the magnetic triad order parameter
-	// count3D[0] = 1;
-	// count3D[1] = NUM_MAG_TRIAD_TYPES;
-	// count3D[2] = phase_sync->num_triads;
-	// index3D[0] = save_indx;
-	// index3D[1] = 0;
-	// index3D[2] = 0;
-	// WriteSlabbedDataFourier(t, iters, file_info->file_space[DSET_MAG_TRIAD_ORDER], file_info->data_set[DSET_MAG_TRIAD_ORDER], file_info->mem_space[DSET_MAG_TRIAD_ORDER], file_info->COMPLEX_DTYPE, phase_sync->triad_b_order, "MagTriadOrderParameter", count3D, index3D);
-	// // Write slabbed dataset for the magnetic phase difference order parameter
-	// count3D[2]       = phase_sync->num_phase_diff;
-	// WriteSlabbedDataFourier(t, iters, file_info->file_space[DSET_MAG_PHASE_DIFF_ORDER], file_info->data_set[DSET_MAG_PHASE_DIFF_ORDER], file_info->mem_space[DSET_MAG_PHASE_DIFF_ORDER], file_info->COMPLEX_DTYPE, phase_sync->phase_diff_b_order, "MagPhaseDifferenceOrderParameter", count3D, index3D);
-	// #endif
-	// #endif
+	//--------------------------------------- Phase Sync
+	#if defined(__PHASE_SYNC)
+	// Write slabbed dataset for the velocity triad order parameter
+	count2D[1]       = phase_sync->num_triads;
+	WriteSlabbedDataFourier(t, iters, file_info->file_space[DSET_VEL_TRIAD_ORDER], file_info->data_set[DSET_VEL_TRIAD_ORDER], file_info->mem_space[DSET_VEL_TRIAD_ORDER], file_info->COMPLEX_DTYPE, phase_sync->triad_u_order, "VelTriadOrderParameter", count2D, index2D);
+	// Write slabbed dataset for the velocity phase differrence order parameter
+	count2D[1]       = phase_sync->num_phase_diff;
+	WriteSlabbedDataFourier(t, iters, file_info->file_space[DSET_VEL_PHASE_DIFF_ORDER], file_info->data_set[DSET_VEL_PHASE_DIFF_ORDER], file_info->mem_space[DSET_VEL_PHASE_DIFF_ORDER], file_info->COMPLEX_DTYPE, phase_sync->phase_diff_u_order, "VelPhaseDifferenceOrderParameter", count2D, index2D);
+	#if defined(__MAGNETO)
+	// Write slabbed dataset for the magnetic triad order parameter
+	count3D[0] = 1;
+	count3D[1] = NUM_MAG_TRIAD_TYPES;
+	count3D[2] = phase_sync->num_triads;
+	index3D[0] = save_indx;
+	index3D[1] = 0;
+	index3D[2] = 0;
+	WriteSlabbedDataFourier(t, iters, file_info->file_space[DSET_MAG_TRIAD_ORDER], file_info->data_set[DSET_MAG_TRIAD_ORDER], file_info->mem_space[DSET_MAG_TRIAD_ORDER], file_info->COMPLEX_DTYPE, phase_sync->triad_b_order, "MagTriadOrderParameter", count3D, index3D);
+	// Write slabbed dataset for the magnetic phase difference order parameter
+	count3D[2]       = phase_sync->num_phase_diff;
+	WriteSlabbedDataFourier(t, iters, file_info->file_space[DSET_MAG_PHASE_DIFF_ORDER], file_info->data_set[DSET_MAG_PHASE_DIFF_ORDER], file_info->mem_space[DSET_MAG_PHASE_DIFF_ORDER], file_info->COMPLEX_DTYPE, phase_sync->phase_diff_b_order, "MagPhaseDifferenceOrderParameter", count3D, index3D);
+	#endif
+	#endif
 
 
 	// -------------------------------
@@ -752,13 +752,13 @@ void WriteDataToFile(double t, const long int iters, const long int save_indx) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to close output file ["CYAN"%s"RESET"] at: Iter = ["CYAN"%ld"RESET"] t = ["CYAN"%lf"RESET"]\n-->> Exiting...\n", file_info->output_file_name, iters, t);
 		exit(1);
 	}
-	// #if defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC)
-	// status = H5Fclose(file_info->phase_sync_file_handle);
-	// if (status < 0) {
-	// 	fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to close phase sync file ["CYAN"%s"RESET"] at: Iter = ["CYAN"%d"RESET"] t = ["CYAN"%lf"RESET"]\n-->> Exiting...\n", file_info->phase_sync_file_name, iters, t);
-	// 	exit(1);		
-	// }
-	// #endif
+	#if defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC)
+	status = H5Fclose(file_info->phase_sync_file_handle);
+	if (status < 0) {
+		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to close phase sync file ["CYAN"%s"RESET"] at: Iter = ["CYAN"%ld"RESET"] t = ["CYAN"%lf"RESET"]\n-->> Exiting...\n", file_info->phase_sync_file_name, iters, t);
+		exit(1);		
+	}
+	#endif
 }
 
 void ReadInputFile(const long int N) {
@@ -1074,23 +1074,23 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 		exit(1);
 	}
 	#endif
-	// #if defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC)
-	// if (access(file_info->phase_sync_file_name, F_OK) != 0) {
-	// 	file_info->phase_sync_file_handle = H5Fcreate(file_info->phase_sync_file_name, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-	// 	if (file_info->phase_sync_file_handle < 0) {
-	// 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to create phase_sync file ["CYAN"%s"RESET"] at final write\n-->> Exiting...\n", file_info->phase_sync_file_name);
-	// 		exit(1);
-	// 	}
-	// }
-	// else {
-	// 	// Open file with serial I/O access properties
-	// 	file_info->phase_sync_file_handle = H5Fopen(file_info->phase_sync_file_name, H5F_ACC_RDWR, H5P_DEFAULT);
-	// 	if (file_info->phase_sync_file_handle < 0) {
-	// 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to open phase_sync file ["CYAN"%s"RESET"] at final write\n-->> Exiting...\n", file_info->phase_sync_file_name);
-	// 		exit(1);
-	// 	}
-	// }
-	// #endif
+	#if defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC)
+	if (access(file_info->phase_sync_file_name, F_OK) != 0) {
+		file_info->phase_sync_file_handle = H5Fcreate(file_info->phase_sync_file_name, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+		if (file_info->phase_sync_file_handle < 0) {
+			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to create phase_sync file ["CYAN"%s"RESET"] at final write\n-->> Exiting...\n", file_info->phase_sync_file_name);
+			exit(1);
+		}
+	}
+	else {
+		// Open file with serial I/O access properties
+		file_info->phase_sync_file_handle = H5Fopen(file_info->phase_sync_file_name, H5F_ACC_RDWR, H5P_DEFAULT);
+		if (file_info->phase_sync_file_handle < 0) {
+			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to open phase_sync file ["CYAN"%s"RESET"] at final write\n-->> Exiting...\n", file_info->phase_sync_file_name);
+			exit(1);
+		}
+	}
+	#endif
 
 	// -------------------------------
 	// Write Wavenumbers
@@ -1164,6 +1164,30 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	#endif
 	#endif
 
+
+    ///----------------- Time Averaged 
+	#if defined(__VEL_AMP_AVG)
+	// Time average the data
+	for (int i = 0; i < sys_vars->N; ++i) {
+		run_data->a_n_t_avg[i] /= run_data->num_sys_msr_steps;
+	}
+
+	dims1D[0] = sys_vars->N;
+	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TimeAveragedVelocityAmplitudes", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->a_n_t_avg)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TimeAveragedVelocityAmplitudes");
+	}
+	#endif
+	#if defined(__MAG_AMP_AVG) && defined(__MAGNETO)
+	// Time average the data
+	for (int i = 0; i < sys_vars->N; ++i) {
+		run_data->b_n_t_avg[i] /= run_data->num_sys_msr_steps;
+	}
+
+	dims1D[0] = sys_vars->N;
+	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TimeAveragedMagneticAmplitudes", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->b_n_t_avg)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TimeAveragedMagneticAmplitudes");
+	}
+	#endif
 
 	///----------------- Time Averaged Energy Spectrum
 	#if defined(__ENRG_SPECT_AVG)
@@ -1253,124 +1277,124 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	// -------------------------------
 	// Write Phase Sync Stats
 	// -------------------------------
-	// #if defined(__PHASE_SYNC_STATS)
-	// ///--------------------- Write Velocity triads histogram
-	// double* vel_triads_counts = (double* )malloc(sizeof(double) * phase_sync->num_triads * NUM_PHASE_SYNC_HIST_BINS);
-	// double* vel_triads_ranges = (double* )malloc(sizeof(double) * (NUM_PHASE_SYNC_HIST_BINS + 1));
-	// for (int i = 0; i < NUM_PHASE_SYNC_HIST_BINS + 1; ++i) {
-	// 	vel_triads_ranges[i] = phase_sync->triad_u_hist[0]->range[i];
-	// 	if (i < NUM_PHASE_SYNC_HIST_BINS) {
-	// 		for (int n = 0; n < phase_sync->num_triads; ++n) {
-	// 			vel_triads_counts[n * NUM_PHASE_SYNC_HIST_BINS + i] = phase_sync->triad_u_hist[n]->bin[i];
-	// 		}
-	// 	}
-	// }
+	#if defined(__PHASE_SYNC_STATS)
+	///--------------------- Write Velocity triads histogram
+	double* vel_triads_counts = (double* )malloc(sizeof(double) * phase_sync->num_triads * NUM_PHASE_SYNC_HIST_BINS);
+	double* vel_triads_ranges = (double* )malloc(sizeof(double) * (NUM_PHASE_SYNC_HIST_BINS + 1));
+	for (int i = 0; i < NUM_PHASE_SYNC_HIST_BINS + 1; ++i) {
+		vel_triads_ranges[i] = phase_sync->triad_u_hist[0]->range[i];
+		if (i < NUM_PHASE_SYNC_HIST_BINS) {
+			for (int n = 0; n < phase_sync->num_triads; ++n) {
+				vel_triads_counts[n * NUM_PHASE_SYNC_HIST_BINS + i] = phase_sync->triad_u_hist[n]->bin[i];
+			}
+		}
+	}
 
-	// // Write Bin Count data 
-	// dims2D[0] = phase_sync->num_triads;
-	// dims2D[1] = NUM_PHASE_SYNC_HIST_BINS;
-	// if ( (H5LTmake_dataset(file_info->phase_sync_file_handle, "VelTriads_Counts", D2, dims2D, H5T_NATIVE_DOUBLE, vel_triads_counts)) < 0) {
-	// 	printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelTriads_Counts");
-	// }
-	// // Write Bin Range data 
-	// dims1D[0] = VEL_NUM_BINS + 1;
-	// if ( (H5LTmake_dataset(file_info->stats_file_handle, "VelTriads_Ranges", D1, dims1D, H5T_NATIVE_DOUBLE, vel_triads_ranges)) < 0) {
-	// 	printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelTriads_Ranges");
-	// }
+	// Write Bin Count data 
+	dims2D[0] = phase_sync->num_triads;
+	dims2D[1] = NUM_PHASE_SYNC_HIST_BINS;
+	if ( (H5LTmake_dataset(file_info->phase_sync_file_handle, "VelTriads_Counts", D2, dims2D, H5T_NATIVE_DOUBLE, vel_triads_counts)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelTriads_Counts");
+	}
+	// Write Bin Range data 
+	dims1D[0] = VEL_NUM_BINS + 1;
+	if ( (H5LTmake_dataset(file_info->phase_sync_file_handle, "VelTriads_Ranges", D1, dims1D, H5T_NATIVE_DOUBLE, vel_triads_ranges)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelTriads_Ranges");
+	}
 
-	// // Free temporary memory
-	// free(vel_triads_counts);
-	// free(vel_triads_ranges);
+	// Free temporary memory
+	free(vel_triads_counts);
+	free(vel_triads_ranges);
 
-	// ///--------------------- Write Velocity phase difference histogram
-	// double* vel_phase_diff_counts = (double* )malloc(sizeof(double) * phase_sync->num_phase_diff * NUM_PHASE_SYNC_HIST_BINS);
-	// double* vel_phase_diff_ranges = (double* )malloc(sizeof(double) * (NUM_PHASE_SYNC_HIST_BINS + 1));
-	// for (int i = 0; i < NUM_PHASE_SYNC_HIST_BINS + 1; ++i) {
-	// 	vel_triads_ranges[i] = phase_sync->phase_diff_u_hist[0]->range[i];
-	// 	if (i < NUM_PHASE_SYNC_HIST_BINS) {
-	// 		for (int n = 0; n < phase_sync->num_phase_diff; ++n) {
-	// 			vel_phase_diff_counts[n * NUM_PHASE_SYNC_HIST_BINS + i] = phase_sync->phase_diff_u_hist[n]->bin[i];
-	// 		}
-	// 	}
-	// }
+	///--------------------- Write Velocity phase difference histogram
+	double* vel_phase_diff_counts = (double* )malloc(sizeof(double) * phase_sync->num_phase_diff * NUM_PHASE_SYNC_HIST_BINS);
+	double* vel_phase_diff_ranges = (double* )malloc(sizeof(double) * (NUM_PHASE_SYNC_HIST_BINS + 1));
+	for (int i = 0; i < NUM_PHASE_SYNC_HIST_BINS + 1; ++i) {
+		vel_triads_ranges[i] = phase_sync->phase_diff_u_hist[0]->range[i];
+		if (i < NUM_PHASE_SYNC_HIST_BINS) {
+			for (int n = 0; n < phase_sync->num_phase_diff; ++n) {
+				vel_phase_diff_counts[n * NUM_PHASE_SYNC_HIST_BINS + i] = phase_sync->phase_diff_u_hist[n]->bin[i];
+			}
+		}
+	}
 
-	// // Write Bin Count data 
-	// dims2D[0] = phase_sync->num_phase_diff;
-	// dims2D[1] = NUM_PHASE_SYNC_HIST_BINS;
-	// if ( (H5LTmake_dataset(file_info->phase_sync_file_handle, "VelPhaseDifference_Counts", D2, dims2D, H5T_NATIVE_DOUBLE, vel_phase_diff_counts)) < 0) {
-	// 	printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelPhaseDifference_Counts");
-	// }
-	// // Write Bin Range data 
-	// dims1D[0] = NUM_PHASE_SYNC_HIST_BINS + 1;
-	// if ( (H5LTmake_dataset(file_info->stats_file_handle, "VelPhaseDifference_Ranges", D1, dims1D, H5T_NATIVE_DOUBLE, vel_phase_diff_ranges)) < 0) {
-	// 	printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelPhaseDifference_Ranges");
-	// }
+	// Write Bin Count data 
+	dims2D[0] = phase_sync->num_phase_diff;
+	dims2D[1] = NUM_PHASE_SYNC_HIST_BINS;
+	if ( (H5LTmake_dataset(file_info->phase_sync_file_handle, "VelPhaseDifference_Counts", D2, dims2D, H5T_NATIVE_DOUBLE, vel_phase_diff_counts)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelPhaseDifference_Counts");
+	}
+	// Write Bin Range data 
+	dims1D[0] = NUM_PHASE_SYNC_HIST_BINS + 1;
+	if ( (H5LTmake_dataset(file_info->phase_sync_file_handle, "VelPhaseDifference_Ranges", D1, dims1D, H5T_NATIVE_DOUBLE, vel_phase_diff_ranges)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelPhaseDifference_Ranges");
+	}
 
-	// // Free temporary memory
-	// free(vel_phase_diff_counts);
-	// free(vel_phase_diff_ranges);
+	// Free temporary memory
+	free(vel_phase_diff_counts);
+	free(vel_phase_diff_ranges);
 
-	// #if defined(__MAGNETO)
-	// ///--------------------- Write Mag triads histogram
-	// double* mag_triads_counts = (double* )malloc(sizeof(double) * phase_sync->num_triads * NUM_PHASE_SYNC_HIST_BINS * NUM_MAG_TRIAD_TYPES);
-	// double* mag_triads_ranges = (double* )malloc(sizeof(double) * (NUM_PHASE_SYNC_HIST_BINS + 1));
-	// for (int i = 0; i < NUM_PHASE_SYNC_HIST_BINS + 1; ++i) {
-	// 	mag_triads_ranges[i] = phase_sync->triad_b_hist[0]->range[i];
-	// 	if (i < NUM_PHASE_SYNC_HIST_BINS) {
-	// 		for (int n = 0; n < phase_sync->num_triads; ++n) {
-	// 			for (int type = 0; type < NUM_MAG_TRIAD_TYPES; ++type)	{
-	// 				mag_triads_counts[NUM_MAG_TRIAD_TYPES * (n * NUM_PHASE_SYNC_HIST_BINS + i) + type] = phase_sync->triad_b_hist[type * phase_sync->num_triads + n]->bin[i];
-	// 			}
-	// 		}
-	// 	}
-	// }
+	#if defined(__MAGNETO)
+	///--------------------- Write Mag triads histogram
+	double* mag_triads_counts = (double* )malloc(sizeof(double) * phase_sync->num_triads * NUM_PHASE_SYNC_HIST_BINS * NUM_MAG_TRIAD_TYPES);
+	double* mag_triads_ranges = (double* )malloc(sizeof(double) * (NUM_PHASE_SYNC_HIST_BINS + 1));
+	for (int i = 0; i < NUM_PHASE_SYNC_HIST_BINS + 1; ++i) {
+		mag_triads_ranges[i] = phase_sync->triad_b_hist[0]->range[i];
+		if (i < NUM_PHASE_SYNC_HIST_BINS) {
+			for (int n = 0; n < phase_sync->num_triads; ++n) {
+				for (int type = 0; type < NUM_MAG_TRIAD_TYPES; ++type)	{
+					mag_triads_counts[NUM_MAG_TRIAD_TYPES * (n * NUM_PHASE_SYNC_HIST_BINS + i) + type] = phase_sync->triad_b_hist[type * phase_sync->num_triads + n]->bin[i];
+				}
+			}
+		}
+	}
 
-	// // Write Bin Count data 
-	// dims3D[0] = phase_sync->num_triads;
-	// dims3D[1] = NUM_PHASE_SYNC_HIST_BINS;
-	// dims3D[2] = NUM_MAG_TRIAD_TYPES;
-	// if ( (H5LTmake_dataset(file_info->phase_sync_file_handle, "MagTriads_Counts", D3, dims3D, H5T_NATIVE_DOUBLE, mag_triads_counts)) < 0) {
-	// 	printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "MagTriads_Counts");
-	// }
-	// // Write Bin Range data 
-	// dims1D[0] = NUM_PHASE_SYNC_HIST_BINS + 1;
-	// if ( (H5LTmake_dataset(file_info->stats_file_handle, "MagTriads_Ranges", D1, dims1D, H5T_NATIVE_DOUBLE, mag_triads_ranges)) < 0) {
-	// 	printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "MagTriads_Ranges");
-	// }
+	// Write Bin Count data 
+	dims3D[0] = phase_sync->num_triads;
+	dims3D[1] = NUM_PHASE_SYNC_HIST_BINS;
+	dims3D[2] = NUM_MAG_TRIAD_TYPES;
+	if ( (H5LTmake_dataset(file_info->phase_sync_file_handle, "MagTriads_Counts", D3, dims3D, H5T_NATIVE_DOUBLE, mag_triads_counts)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "MagTriads_Counts");
+	}
+	// Write Bin Range data 
+	dims1D[0] = NUM_PHASE_SYNC_HIST_BINS + 1;
+	if ( (H5LTmake_dataset(file_info->phase_sync_file_handle, "MagTriads_Ranges", D1, dims1D, H5T_NATIVE_DOUBLE, mag_triads_ranges)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "MagTriads_Ranges");
+	}
 
-	// // Free temporary memory
-	// free(mag_triads_counts);
-	// free(mag_triads_ranges);
+	// Free temporary memory
+	free(mag_triads_counts);
+	free(mag_triads_ranges);
 
-	// ///--------------------- Write Mag phase difference histogram
-	// double* mag_phase_diff_counts = (double* )malloc(sizeof(double) * phase_sync->num_phase_diff * NUM_PHASE_SYNC_HIST_BINS);
-	// double* mag_phase_diff_ranges = (double* )malloc(sizeof(double) * (NUM_PHASE_SYNC_HIST_BINS + 1));
-	// for (int i = 0; i < NUM_PHASE_SYNC_HIST_BINS + 1; ++i) {
-	// 	mag_triads_ranges[i] = phase_sync->phase_diff_b_hist[0]->range[i];
-	// 	if (i < NUM_PHASE_SYNC_HIST_BINS) {
-	// 		for (int n = 0; n < phase_sync->num_phase_diff; ++n) {
-	// 			mag_phase_diff_counts[n * NUM_PHASE_SYNC_HIST_BINS + i] = phase_sync->phase_diff_b_hist[n]->bin[i];
-	// 		}
-	// 	}
-	// }
+	///--------------------- Write Mag phase difference histogram
+	double* mag_phase_diff_counts = (double* )malloc(sizeof(double) * phase_sync->num_phase_diff * NUM_PHASE_SYNC_HIST_BINS);
+	double* mag_phase_diff_ranges = (double* )malloc(sizeof(double) * (NUM_PHASE_SYNC_HIST_BINS + 1));
+	for (int i = 0; i < NUM_PHASE_SYNC_HIST_BINS + 1; ++i) {
+		mag_triads_ranges[i] = phase_sync->phase_diff_b_hist[0]->range[i];
+		if (i < NUM_PHASE_SYNC_HIST_BINS) {
+			for (int n = 0; n < phase_sync->num_phase_diff; ++n) {
+				mag_phase_diff_counts[n * NUM_PHASE_SYNC_HIST_BINS + i] = phase_sync->phase_diff_b_hist[n]->bin[i];
+			}
+		}
+	}
 
-	// // Write Bin Count data 
-	// dims2D[0] = phase_sync->num_phase_diff;
-	// dims2D[1] = NUM_PHASE_SYNC_HIST_BINS;
-	// if ( (H5LTmake_dataset(file_info->phase_sync_file_handle, "MagPhaseDifference_Counts", D2, dims2D, H5T_NATIVE_DOUBLE, mag_phase_diff_counts)) < 0) {
-	// 	printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "MagPhaseDifference_Counts");
-	// }
-	// // Write Bin Range data 
-	// dims1D[0] = NUM_PHASE_SYNC_HIST_BINS + 1;
-	// if ( (H5LTmake_dataset(file_info->stats_file_handle, "MagPhaseDifference_Ranges", D1, dims1D, H5T_NATIVE_DOUBLE, mag_phase_diff_ranges)) < 0) {
-	// 	printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "MagPhaseDifference_Ranges");
-	// }
+	// Write Bin Count data 
+	dims2D[0] = phase_sync->num_phase_diff;
+	dims2D[1] = NUM_PHASE_SYNC_HIST_BINS;
+	if ( (H5LTmake_dataset(file_info->phase_sync_file_handle, "MagPhaseDifference_Counts", D2, dims2D, H5T_NATIVE_DOUBLE, mag_phase_diff_counts)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "MagPhaseDifference_Counts");
+	}
+	// Write Bin Range data 
+	dims1D[0] = NUM_PHASE_SYNC_HIST_BINS + 1;
+	if ( (H5LTmake_dataset(file_info->phase_sync_file_handle, "MagPhaseDifference_Ranges", D1, dims1D, H5T_NATIVE_DOUBLE, mag_phase_diff_ranges)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "MagPhaseDifference_Ranges");
+	}
 
-	// // Free temporary memory
-	// free(mag_phase_diff_counts);
-	// free(mag_phase_diff_ranges);
-	// #endif
-	// #endif
+	// Free temporary memory
+	free(mag_phase_diff_counts);
+	free(mag_phase_diff_ranges);
+	#endif
+	#endif
 	
 	// -------------------------------
 	// Write Stats
@@ -1393,13 +1417,13 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	///-------------------------- Velocity field stats
 	double* tmp_vel_stats = (double* )malloc(sizeof(double) * (NUM_RUN_STATS) * N);
 	for (int i = 0; i < N; ++i) {
-		tmp_vel_stats[i * (NUM_RUN_STATS) + 0] = gsl_rstat_mean(stats_data->vel_moments[i]);
-		tmp_vel_stats[i * (NUM_RUN_STATS) + 1] = gsl_rstat_variance(stats_data->vel_moments[i]);
-		tmp_vel_stats[i * (NUM_RUN_STATS) + 2] = gsl_rstat_skew(stats_data->vel_moments[i]);
-		tmp_vel_stats[i * (NUM_RUN_STATS) + 3] = gsl_rstat_kurtosis(stats_data->vel_moments[i]);		
-		tmp_vel_stats[i * (NUM_RUN_STATS) + 4] = gsl_rstat_rms(stats_data->vel_moments[i]);
-		tmp_vel_stats[i * (NUM_RUN_STATS) + 5] = gsl_rstat_min(stats_data->vel_moments[i]);
-		tmp_vel_stats[i * (NUM_RUN_STATS) + 6] = gsl_rstat_max(stats_data->vel_moments[i]);
+		tmp_vel_stats[i * (NUM_RUN_STATS) + 0] = gsl_rstat_mean(stats_data->real_vel_moments[i]);
+		tmp_vel_stats[i * (NUM_RUN_STATS) + 1] = gsl_rstat_variance(stats_data->real_vel_moments[i]);
+		tmp_vel_stats[i * (NUM_RUN_STATS) + 2] = gsl_rstat_skew(stats_data->real_vel_moments[i]);
+		tmp_vel_stats[i * (NUM_RUN_STATS) + 3] = gsl_rstat_kurtosis(stats_data->real_vel_moments[i]);		
+		tmp_vel_stats[i * (NUM_RUN_STATS) + 4] = gsl_rstat_rms(stats_data->real_vel_moments[i]);
+		tmp_vel_stats[i * (NUM_RUN_STATS) + 5] = gsl_rstat_min(stats_data->real_vel_moments[i]);
+		tmp_vel_stats[i * (NUM_RUN_STATS) + 6] = gsl_rstat_max(stats_data->real_vel_moments[i]);
 	}
 
 	// Write data 
@@ -1519,17 +1543,47 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	}
 	#endif
 
+	///-------------------------- Real Velocity Histogram
+	#if defined(__MAG_HIST)
+	double* tmp_mag_hist_bin    = (double* )malloc(sizeof(double) * (VEL_NUM_BINS) * N);
+	double* tmp_mag_hist_ranges = (double* )malloc(sizeof(double) * (VEL_NUM_BINS + 1) * N);
+	for (int i = 0; i < N; ++i) {
+		for (int j = 0; j < VEL_NUM_BINS + 1; ++j) {
+			if (j < VEL_NUM_BINS) {
+				tmp_mag_hist_bin[i * VEL_NUM_BINS + j] = stats_data->real_mag_hist[i]->bin[j];
+			}
+			tmp_mag_hist_ranges[i * (VEL_NUM_BINS + 1) + j] = stats_data->real_mag_hist[i]->range[j];
+		}
+	}
+
+	// Write Bin Count data 
+	dims2D[0] = N;
+	dims2D[1] = VEL_NUM_BINS;
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "RealVelHist_Counts", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_mag_hist_bin)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "RealVelHist_Counts");
+	}
+	// Write Bin Range data 
+	dims2D[0] = N;
+	dims2D[1] = VEL_NUM_BINS + 1;
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "RealVelHist_Ranges", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_mag_hist_ranges)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "RealVelHist_Ranges");
+	}
+
+	// Free temporary memory
+	free(tmp_mag_hist_bin);
+	free(tmp_mag_hist_ranges);
+	#endif
 
 	///-------------------------- Magnetic field stats
 	double* tmp_mag_stat = (double* )malloc(sizeof(double) * (NUM_RUN_STATS) * N);
 	for (int i = 0; i < N; ++i) {
-		tmp_mag_stat[i * (NUM_RUN_STATS) + 0] = gsl_rstat_mean(stats_data->mag_moments[i]);
-		tmp_mag_stat[i * (NUM_RUN_STATS) + 1] = gsl_rstat_variance(stats_data->mag_moments[i]);
-		tmp_mag_stat[i * (NUM_RUN_STATS) + 2] = gsl_rstat_skew(stats_data->mag_moments[i]);
-		tmp_mag_stat[i * (NUM_RUN_STATS) + 3] = gsl_rstat_kurtosis(stats_data->mag_moments[i]);		
-		tmp_mag_stat[i * (NUM_RUN_STATS) + 4] = gsl_rstat_rms(stats_data->mag_moments[i]);
-		tmp_mag_stat[i * (NUM_RUN_STATS) + 5] = gsl_rstat_min(stats_data->mag_moments[i]);
-		tmp_mag_stat[i * (NUM_RUN_STATS) + 6] = gsl_rstat_max(stats_data->mag_moments[i]);
+		tmp_mag_stat[i * (NUM_RUN_STATS) + 0] = gsl_rstat_mean(stats_data->real_mag_moments[i]);
+		tmp_mag_stat[i * (NUM_RUN_STATS) + 1] = gsl_rstat_variance(stats_data->real_mag_moments[i]);
+		tmp_mag_stat[i * (NUM_RUN_STATS) + 2] = gsl_rstat_skew(stats_data->real_mag_moments[i]);
+		tmp_mag_stat[i * (NUM_RUN_STATS) + 3] = gsl_rstat_kurtosis(stats_data->real_mag_moments[i]);		
+		tmp_mag_stat[i * (NUM_RUN_STATS) + 4] = gsl_rstat_rms(stats_data->real_mag_moments[i]);
+		tmp_mag_stat[i * (NUM_RUN_STATS) + 5] = gsl_rstat_min(stats_data->real_mag_moments[i]);
+		tmp_mag_stat[i * (NUM_RUN_STATS) + 6] = gsl_rstat_max(stats_data->real_mag_moments[i]);
 	}
 
 	// Write data 
@@ -1619,13 +1673,13 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 		exit(1);
 	}
 	#endif
-	// #if defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC)
-	// status = H5Fclose(file_info->phase_sync_file_handle);
-	// if (status < 0) {
-	// 	fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to close main phase_sync file: "CYAN"%s"RESET" \n-->> Exiting....\n", file_info->phase_sync_file_name);
-	// 	exit(1);
-	// }
-	// #endif
+	#if defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC)
+	status = H5Fclose(file_info->phase_sync_file_handle);
+	if (status < 0) {
+		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to close main phase_sync file: "CYAN"%s"RESET" \n-->> Exiting....\n", file_info->phase_sync_file_name);
+		exit(1);
+	}
+	#endif
 
 	#if defined(__VEL) || defined(__MAG) || defined(__FORCING) || defined(__STATS) || defined(__PHASE_SYNC)
 	// Close the complex datatype identifier

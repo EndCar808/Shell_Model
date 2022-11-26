@@ -61,7 +61,7 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
     }
 
     // Updated system measures counter for averaging over time
-    if (iter >= sys_vars->trans_iters) {
+    if (iter >= (long int)round(sys_vars->TRANS_ITERS_FRAC * sys_vars->num_print_steps)) {
         run_data->num_sys_msr_steps++;
     }
 
@@ -130,70 +130,59 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
               k_fac = pow(run_data->k[n], -log_lambda(fabs(sys_vars->EPS - 1.0) / 2.0));  
             }
             // Update sum for totals
-            #if defined(PHASE_ONLY)
-            run_data->tot_energy[iter]    += run_data->a_n[n] * run_data->a_n[n];
-            run_data->tot_hel_u[iter]     += pow(sgn(sys_vars->EPS - 1.0), i) * (run_data->a_n[n] * run_data->a_n[n]) * k_fac;
-            run_data->int_scale[iter]     += (run_data->a_n[n] * run_data->a_n[n]) / (i + 1);
-            run_data->tot_diss_u[iter]    += run_data->k[n] * run_data->k[n] * run_data->a_n[n] * run_data->a_n[n];
-            #else
             run_data->tot_energy[iter]    += cabs(run_data->u[n] * conj(run_data->u[n]));
             run_data->tot_hel_u[iter]     += pow(sgn(sys_vars->EPS - 1.0), i) * cabs(run_data->u[n] * conj(run_data->u[n])) * k_fac;
             run_data->int_scale[iter]     +=  cabs(run_data->u[n] * conj(run_data->u[n])) / (i + 1);
             run_data->tot_diss_u[iter]    += run_data->k[n] * run_data->k[n] * cabs(run_data->u[n] * run_data->u[n]);
-            #endif
             #if defined(__MAGNETO)
-            #if defined(PHASE_ONLY)
-            run_data->tot_energy[iter]    += run_data->b_n[n] * run_data->b_n[n];
-            run_data->tot_hel_b[iter]     += pow(sgn(sys_vars->EPS - 1.0), i) * (run_data->b_n[n] * run_data->b_n[n]) / run_data->k[n];
-            run_data->tot_cross_hel[iter] += creal(run_data->a_n[n] * run_data->b_n[n]);
-            run_data->tot_diss_b[iter]    += run_data->k[n] * run_data->k[n] * run_data->b_n[n] * run_data->b_n[n];
-            #else
             run_data->tot_energy[iter]    += cabs(run_data->b[n] * conj(run_data->b[n]));
             run_data->tot_hel_b[iter]     += pow(sgn(sys_vars->EPS - 1.0), i) * cabs(run_data->b[n] * conj(run_data->b[n])) / run_data->k[n];
             run_data->tot_cross_hel[iter] += creal(run_data->u[n] * conj(run_data->b[n]));
             run_data->tot_diss_b[iter]    += run_data->k[n] * run_data->k[n] * cabs(run_data->b[n] * conj(run_data->b[n]));
             #endif
             #endif
-            #endif
+
 
             //-------------- Energy Spectrum
             #if defined(__ENRG_SPECT) 
             // Compute the energy spectrum
-            #if defined(PHASE_ONLY)
-            run_data->energy_spect[i] = run_data->a_n[n] * run_data->a_n[n];  
-            #if defined(__MAGNETO)        
-            run_data->energy_spect[i] += run_data->b_n[n] * run_data->b_n[n];  
-            #endif
-            #else
             run_data->energy_spect[i] = cabs(run_data->u[n] * conj(run_data->u[n]));  
             #if defined(__MAGNETO)        
             run_data->energy_spect[i] += cabs(run_data->b[n] * conj(run_data->b[n]));  
             #endif
             #endif
-            #endif
+
             #if defined(__DISS_SPECT)
             // Compute the dissipation spectrum
-            run_data->diss_spect[i] = sys_vars->NU * run_data->k[n] * run_data->k[n] * run_data->energy_spect[i];
+            run_data->diss_spect[i] = sys_vars->NU * run_data->k[n] * run_data->k[n] * cabs(run_data->u[n] * conj(run_data->u[n]));
+            #if defined(__MAGNETO)        
+            run_data->diss_spect[i] += sys_vars->ETA * run_data->k[n] * run_data->k[n] * cabs(run_data->b[n] * conj(run_data->b[n]));  
+            #endif
             #endif
 
             //-------------- Time Averaged Energy Spectrum
             #if defined(__ENRG_SPECT_AVG) 
             // Compute the energy spectrum
-            #if defined(PHASE_ONLY)
-            run_data->energy_spect[i] += run_data->a_n[n] * run_data->a_n[n];  
+            run_data->energy_spect_t_avg[i] += cabs(run_data->u[n] * conj(run_data->u[n]));  
             #if defined(__MAGNETO)        
-            run_data->energy_spect[i] += run_data->b_n[n] * run_data->b_n[n];  
-            #endif
-            #else
-            run_data->energy_spect[i] += cabs(run_data->u[n] * conj(run_data->u[n]));  
-            #if defined(__MAGNETO)        
-            run_data->energy_spect[i] += cabs(run_data->b[n] * conj(run_data->b[n]));  
+            run_data->energy_spect_t_avg[i] += cabs(run_data->b[n] * conj(run_data->b[n]));  
             #endif
             #endif
-            #endif
+
             #if defined(__DISS_SPECT_AVG)
             // Compute the dissipation spectrum
-            run_data->diss_spect_t_avg[i] += sys_vars->NU * run_data->k[n] * run_data->k[n] * run_data->energy_spect[i];
+            run_data->diss_spect_t_avg[i] += sys_vars->NU * run_data->k[n] * run_data->k[n] * cabs(run_data->u[n] * conj(run_data->u[n]));
+            #if defined(__MAGNETO)        
+            run_data->diss_spect_t_avg[i] += sys_vars->ETA * run_data->k[n] * run_data->k[n] * cabs(run_data->b[n] * conj(run_data->b[n]));  
+            #endif
+            #endif
+
+            //-------------- Time Averaged Amplitudes
+            #if defined(__VEL_AMP_AVG)
+            run_data->a_n_t_avg[i] += cabs(run_data->u[n] * conj(run_data->u[n]));
+            #endif
+            #if defined(__MAG_AMP_AVG) && defined(__MAGNETO)
+            run_data->b_n_t_avg[i] += cabs(run_data->b[n] * conj(run_data->b[n]));
             #endif
 
             //-------------- Energy Flux and Dissipation
@@ -203,21 +192,12 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
                 // Get temp indx
                 l = j + 2;
 
-                #if defined(PHASE_ONLY)
-                run_data->energy_diss_u[i]  += run_data->k[j] * run_data->k[j] * run_data->a_n[n] * run_data->a_n[n];
-                run_data->energy_input_u[i] += run_data->a_n[l] * cabs(run_data->forcing_u[l]) * cos(run_data->phi_n[l] - carg(run_data->forcing_u[l]));
-                #if defined(__MAGNETO) 
-                run_data->energy_diss_b[i]  += run_data->k[j] * run_data->k[j] * run_data->b_n[n] * run_data->b_n[n];
-                run_data->energy_input_b[i] += run_data->b_n[l] * cabs(run_data->forcing_b[l]) * cos(run_data->psi_n[l] - carg(run_data->forcing_b[l]));
-                #endif
-                #else
                 run_data->energy_diss_u[i]  += run_data->k[j] * run_data->k[j] * cabs(run_data->u[l] * conj(run_data->u[l]));
                 run_data->energy_input_u[i] += creal(run_data->u[l] * conj(run_data->forcing_u[l]));
                 #if defined(__MAGNETO) 
                 run_data->energy_diss_b[i]  += run_data->k[j] * run_data->k[j] * cabs(run_data->b[l] * conj(run_data->b[l])); 
                 run_data->energy_input_b[i] += creal(run_data->b[l] * conj(run_data->forcing_b[l]));
                 #endif
-                #endif                  
             }
 
             // Get the correct k prefactor terms for the nonlinear flux term 
@@ -239,22 +219,6 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
             }
 
             // Compute the energy flux
-            #if defined(PHASE_ONLY)
-            // First term
-            run_data->energy_flux[i] = k_pre_fac_1 * run_data->a_n[n - 1] * run_data->a_n[n] * run_data->a_n[n + 1] * sin(run_data->phi_n[n - 1] + run_data->phi_n[n] + run_data->phi_n[n + 1]);
-            run_data->energy_flux[i] += run_data->k[n] * run_data->a_n[n] * run_data->a_n[n + 1] * run_data->a_n[n + 2] * sin(run_data->phi_n[n] + run_data->phi_n[n + 1] + run_data->phi_n[n + 2]);
-            #if defined(__MAGNETO)
-            // Second term
-            run_data->energy_flux[i] += k_pre_fac_2 * run_data->a_n[n - 1] * run_data->b_n[n] * run_data->b_n[n + 1] * sin(run_data->phi_n[n - 1] + run_data->psi_n[n] + run_data->psi_n[n + 1]);
-            run_data->energy_flux[i] += -run_data->k[n] * run_data->a_n[n] * run_data->b_n[n + 1] * run_data->b_n[n + 2] * sin(run_data->phi_n[n] + run_data->psi_n[n + 1] + run_data->psi_n[n + 2]);
-            // Third term
-            run_data->energy_flux[i] += k_pre_fac_3 * run_data->b_n[n - 1] * run_data->a_n[n] * run_data->b_n[n + 1] * sin(run_data->psi_n[n - 1] + run_data->phi_n[n] + run_data->psi_n[n + 1]);
-            run_data->energy_flux[i] += interact_coeff_b_1 * run_data->k[n] * run_data->b_n[n] * run_data->a_n[n + 1] * run_data->b_n[n + 2] * sin(run_data->psi_n[n] + run_data->phi_n[n + 1] + run_data->psi_n[n + 2]);
-            // Fourth term
-            run_data->energy_flux[i] += -k_pre_fac_4 * run_data->b_n[n - 1] * run_data->a_n[n] * run_data->b_n[n + 1] * sin(run_data->psi_n[n - 1] + run_data->psi_n[n] + run_data->psi_n[n + 1]);
-            run_data->energy_flux[i] += - interact_coeff_b_1 * run_data->k[n] * run_data->b_n[n] * run_data->a_n[n + 1] * run_data->b_n[n + 2] * sin(run_data->psi_n[n] + run_data->psi_n[n + 1] + run_data->psi_n[n + 2]);
-            #endif
-            #else
             // First term
             run_data->energy_flux[i] = cimag(k_pre_fac_1 * run_data->u[n - 1] * run_data->u[n] * run_data->u[n + 1] + run_data->k[n] * run_data->u[n] * run_data->u[n + 1] * run_data->u[n + 2]);
             #if defined(__MAGNETO)
@@ -264,7 +228,6 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
             run_data->energy_flux[i] += cimag(k_pre_fac_3 * run_data->b[n - 1] * run_data->u[n] * run_data->b[n + 1] + interact_coeff_b_1 * run_data->k[n] * run_data->b[n] * run_data->u[n + 1] * run_data->b[n + 2]);
             // Fourth term
             run_data->energy_flux[i] += cimag(-k_pre_fac_4 * run_data->b[n - 1] * run_data->b[n] * run_data->u[n + 1] - interact_coeff_b_1 * run_data->k[n] * run_data->b[n] * run_data->b[n + 1] * run_data->u[n + 2]);
-            #endif
             #endif
             #endif
 
@@ -300,25 +263,25 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
         #endif
 
         // Get the characteristic velocity
-        run_data->u_charact[iter] = sqrt(2.0 * run_data->tot_energy[iter]);
+        run_data->u_charact[iter] = sqrt(2.0 * run_data->tot_energy[iter] / 3.0);
         
         // Compute the integral length scale
-        run_data->int_scale[iter] *= 3.0 / (4.0 * run_data->tot_energy[iter] / 2.0);
+        run_data->int_scale[iter] *= 3.0 * M_PI / (4.0 * run_data->tot_energy[iter] / (2.0 * M_PI));
 
         #if defined(__MAGNETO)
         // Compute the Taylor Micro Scale
-        run_data->taylor_micro_scale[iter] = sqrt(10.0 * sys_vars->NU * run_data->tot_energy[iter] / (run_data->tot_diss_u[iter] + run_data->tot_diss_b[iter]));
+        run_data->taylor_micro_scale[iter] = sqrt(10.0 * (sys_vars->NU + sys_vars->ETA) * run_data->tot_energy[iter] / (run_data->tot_diss_u[iter] + run_data->tot_diss_b[iter]));
         #else 
         // Compute the Taylor Micro Scale
         run_data->taylor_micro_scale[iter] = sqrt(10.0 * sys_vars->NU * run_data->tot_energy[iter] / run_data->tot_diss_u[iter]);
         #endif
         
         // Compute the Reynolds No.
-        run_data->reynolds_no[iter] = run_data->u_charact[iter] / sys_vars->NU;
+        run_data->reynolds_no[iter] = run_data->u_charact[iter] * run_data->int_scale[iter] / sys_vars->NU;
 
         #if defined(__MAGNETO)
         // Compute the Kolmogorov Lenght Scale
-        run_data->kolmogorov_scale[iter] = pow(pow(sys_vars->NU, 3.0) / (run_data->tot_diss_u[iter] + run_data->tot_diss_b[iter]), 1.0 / 4.0);
+        run_data->kolmogorov_scale[iter] = pow((pow(sys_vars->NU, 3.0) + pow(sys_vars->NU, 3.0)) / (run_data->tot_diss_u[iter] + run_data->tot_diss_b[iter]), 1.0 / 4.0);
         #else
         // Compute the Kolmogorov Lenght Scale
         run_data->kolmogorov_scale[iter] = pow(pow(sys_vars->NU, 3.0) / run_data->tot_diss_u[iter], 1.0 / 4.0);
@@ -424,6 +387,23 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
         exit(1);
     }   
     #endif
+
+    ///----------------------------- Time Averaged Amplitudes
+    #if defined(__VEL_AMP_AVG)
+    run_data->a_n_t_avg = (double* )malloc(sizeof(double) * sys_vars->N);
+    if (run_data->a_n_t_avg == NULL) {
+        fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Time Averaged Velocity Amplitudes");
+        exit(1);
+    }
+    #endif
+    #if defined(__MAG_AMP_AVG) && defined(__MAGNETO)
+    run_data->b_n_t_avg = (double* )malloc(sizeof(double) * sys_vars->N);
+    if (run_data->b_n_t_avg == NULL) {
+        fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Time Averaged Magnetic Amplitudes");
+        exit(1);
+    }
+    #endif
+
 
     ///----------------------------- Time
     #if defined(__TIME)
@@ -567,6 +547,12 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
         #endif
         #if defined(__ENRG_FLUX_AVG)
         run_data->energy_flux_t_avg[i] = 0.0;
+        #endif
+        #if defined(__VEL_AMP_AVG)
+        run_data->a_n_t_avg[i] = 0.0;
+        #endif
+        #if defined(__MAG_AMP_AVG) && defined(__MAGNETO)
+        run_data->b_n_t_avg[i] = 0.0;
         #endif
     }
 

@@ -32,11 +32,13 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data);
 void RK4Step(const double dt, const long int N, RK_data_struct* RK_data);
 void AB4CNStep(const double dt, const long int iters, const long int N, RK_data_struct* RK_data);
 #endif
-#if defined(PHASE_ONLY_DIRECT) && !defined(PHASE_ONLY)
-void NonlinearTerm(double* u, double* b, double* u_nonlin, double* b_nonlin, const long int N);
-#else
+// #if defined(PHASE_ONLY_DIRECT) && !defined(PHASE_ONLY)
+// void NonlinearTerm(double* u, double* b, double* u_nonlin, double* b_nonlin, const long int N);
+// #else
 void NonlinearTerm(double complex* u, double complex* b, double complex* u_nonlin, double complex* b_nonlin, const long int N);
-#endif
+// #endif
+void NonlinearTermWithForcing(double complex* input_u, double complex* input_b, double complex* output_u, double complex* output_b);
+void AddForcing(double complex* u_nonlin, double complex* b_nonlin);
 // Initialize the system functions
 void InitializeShellWavenumbers(double* k, const long int N);
 void InitialConditions(const long int N);

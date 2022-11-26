@@ -28,7 +28,7 @@ import multiprocessing as mprocs
 import time as TIME
 from subprocess import Popen, PIPE, run
 from matplotlib.pyplot import cm
-from functions import tc, sim_data, import_data, compute_pdf, import_stats_data, import_sys_msr_data
+from functions import tc, sim_data, import_data, compute_pdf, import_stats_data, import_sys_msr_data, import_phase_sync_data, compute_pdf_from_hist, compute_pdf
 
 
 ###############################
@@ -124,6 +124,9 @@ if __name__ == '__main__':
     ## Read in sys_msr data
     sys_msr_data = import_sys_msr_data(data_file_path, sys_vars, method)
 
+    ## Read in sys_msr data
+    phase_sync = import_phase_sync_data(data_file_path, sys_vars, method)
+
     ## Make output folder for Run Info plots
     cmdargs.out_dir_info = cmdargs.out_dir + "RUN_INFO_PLOTS/"
     if os.path.isdir(cmdargs.out_dir_info) != True:
@@ -141,12 +144,12 @@ if __name__ == '__main__':
     # # --------  Compute Post data
     # -----------------------------------------
     u_sqr_av = np.mean(np.absolute(run_data.u)**2, axis = 0)
-    for i in range(1, 100, 10):
-        # print(run_data.tot_enrg[i], 0.5 * np.sum(np.absolute(run_data.u[i, :])**2), run_data.tot_enrg[i]/np.sum(np.absolute(run_data.u[i, :])**2))
-        print(2 * sys_msr_data.tot_enrg[i], np.sum(np.absolute(run_data.u[i, :] * np.conjugate(run_data.u[i, :]))))
-    print()
+    # for i in range(1, 100, 10):
+    #     # print(run_data.tot_enrg[i], 0.5 * np.sum(np.absolute(run_data.u[i, :])**2), run_data.tot_enrg[i]/np.sum(np.absolute(run_data.u[i, :])**2))
+    #     print(2 * sys_msr_data.tot_enrg[i], np.sum(np.absolute(run_data.u[i, :] * np.conjugate(run_data.u[i, :]))))
+    # print()
     
-    print()
+    # print()
     # -----------------------------------------
     # # --------  Plot Data
     # -----------------------------------------
@@ -155,17 +158,23 @@ if __name__ == '__main__':
         fig = plt.figure(figsize = (32, 8))
         gs  = GridSpec(2, 4, hspace = 0.35)
         ax1 = fig.add_subplot(gs[0, 0])
-        ax1.plot(sys_msr_data.time, sys_msr_data.tot_diss / sys_msr_data.tot_diss[0] - 1)
+        ax1.plot(sys_msr_data.time, sys_msr_data.tot_diss_u / sys_msr_data.tot_diss_u[0] - 1, label = "$\epsilon_u$")
+        if hasattr(run_data, 'b'):
+            ax1.plot(sys_msr_data.time, sys_msr_data.tot_diss_b / sys_msr_data.tot_diss_b[0] - 1, label = "$\epsilon_b$")
         ax1.set_xlabel(r"$t$")
         ax1.set_yscale('log')
         ax1.set_title(r"Relative Dissipation")
         ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        ax1.legend()
         ax2 = fig.add_subplot(gs[1, 0])
-        ax2.plot(sys_msr_data.time, sys_msr_data.tot_diss)
+        ax2.plot(sys_msr_data.time, sys_msr_data.tot_diss_u, label = "$\epsilon_u$")
+        if hasattr(run_data, 'b'):
+            ax1.plot(sys_msr_data.time, sys_msr_data.tot_diss_b, label = "$\epsilon_b$")
         ax2.set_xlabel(r"$t$")
-        ax1.set_yscale('log')
+        ax2.set_yscale('log')
         ax2.set_title(r"Total Dissipation")
         ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        ax2.legend()
         ax3 = fig.add_subplot(gs[0, 1])
         ax3.plot(sys_msr_data.time, sys_msr_data.u_charact)
         ax3.set_xlabel(r"$t$")
@@ -188,8 +197,8 @@ if __name__ == '__main__':
         ax4.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
         ax4 = fig.add_subplot(gs[1, 2])
         ax4.plot(sys_msr_data.time, sys_msr_data.int_scale / sys_msr_data.u_charact, label = "$\ell / U_{rms}$")
-        ax4.plot(sys_msr_data.time, 1 / sys_msr_data.tot_diss, label = "$k / \epsilon$")
-        ax4.plot(sys_msr_data.time, sys_msr_data.u_charact / sys_msr_data.tot_diss, label = "$U_{rms} / \epsilon$")
+        ax4.plot(sys_msr_data.time, 1 / sys_msr_data.tot_diss_u, label = "$k / \epsilon$")
+        ax4.plot(sys_msr_data.time, sys_msr_data.u_charact / sys_msr_data.tot_diss_u, label = "$U_{rms} / \epsilon$")
         ax4.plot(sys_msr_data.time, 1 / sys_msr_data.u_charact, label = "$1 / U_{rms}$") ## shouled be 1 / (U k)
         ax4.set_xlabel(r"$t$")
         ax4.set_title(r"Eddy Turn Over Time")
@@ -198,8 +207,8 @@ if __name__ == '__main__':
         ax4.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
         ax4 = fig.add_subplot(gs[1, 3])
         ax4.plot(sys_msr_data.time, sys_msr_data.int_scale / sys_msr_data.u_charact, label = "$\ell / U_{rms}$")
-        ax4.plot(sys_msr_data.time, 1 / sys_msr_data.tot_diss, label = "$k / \epsilon$")
-        ax4.plot(sys_msr_data.time, sys_msr_data.u_charact / sys_msr_data.tot_diss, label = "$U_{rms} / \epsilon$")
+        ax4.plot(sys_msr_data.time, 1 / sys_msr_data.tot_diss_u, label = "$k / \epsilon$")
+        ax4.plot(sys_msr_data.time, sys_msr_data.u_charact / sys_msr_data.tot_diss_u, label = "$U_{rms} / \epsilon$")
         ax4.plot(sys_msr_data.time, 1 / sys_msr_data.u_charact, label = "$1 / U_{rms}$")  ## shouled be 1 / (U k)
         ax4.set_xlabel(r"$t$")
         ax4.set_title(r"Eddy Turn Over Time")
@@ -282,7 +291,7 @@ if __name__ == '__main__':
         ax1.set_yscale('log')
         ax1.set_xscale('log')
         ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
-        ax1.legend()
+        ax1.set_title("Energy Spectra")
         ax2 = fig.add_subplot(gs[0, 1])
         for i in [0, 100, 500, -2]:
             ax2.plot(sys_msr_data.k, run_data.diss_spect[i, :], label = "Iter = {}".format(i))
@@ -291,7 +300,7 @@ if __name__ == '__main__':
         ax2.set_yscale('log')
         ax2.set_xscale('log')
         ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
-        ax2.legend()
+        ax2.set_title("Dissipation Spectra")
         plt.savefig(cmdargs.out_dir_info + "Spectra.png", bbox_inches='tight')
         plt.close()
 
@@ -597,9 +606,220 @@ if __name__ == '__main__':
         ax1.set_title("Velocity Energ Input")
         ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
 
-        print(run_data.enrg_input_u[:, 0])
-        print(run_data.enrg_diss_u[:, 0])
-        print(run_data.enrg_flux[:, 0])
-
         plt.savefig(cmdargs.out_dir_info + "Totals_EnergyFlux_EnergyDiss_EnergyInput_Tseries.png", bbox_inches='tight')
+        plt.close()
+
+
+        ##-------------- Plot Time Averaged Amplitudes Data
+        fig = plt.figure(figsize = (16, 8))
+        if hasattr(run_data, 'b'):
+            gs  = GridSpec(1, 2)
+        else: 
+            gs  = GridSpec(1, 1)
+        ax1 = fig.add_subplot(gs[0, 0])
+        ax1.plot(sys_msr_data.k, sys_msr_data.a_n_t_avg[:])
+        ax1.set_xlabel("$k_n$")
+        ax1.set_ylabel(r"$\langle a_n \rangle_t$")
+        ax1.set_title("Time Averaged Velocity Amplitudes")
+        ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        if hasattr(run_data, 'b'):
+            ax1 = fig.add_subplot(gs[0, 1])
+            ax1.plot(sys_msr_data.k, sys_msr_data.b_n_t_avg[:])
+            ax1.set_xlabel("$k_n$")
+            ax1.set_ylabel(r"$\langle b_n \rangle_t$")
+            ax1.set_title("Time Averaged Magnetic Amplitudes")
+            ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+
+        plt.savefig(cmdargs.out_dir_info + "TimeAveraged_Amplitudes.png", bbox_inches='tight')
+        plt.close()
+
+
+        ##-------------- Plot Time Averaged Energy Flux
+        fig = plt.figure(figsize = (16, 8))
+        gs  = GridSpec(1, 1)
+        ax1 = fig.add_subplot(gs[0, 0])
+        ax1.plot(sys_msr_data.k, sys_msr_data.enrg_flux_t_avg[:])
+        ax1.set_xlabel(r"$k_n$")
+        ax1.set_xscale(r"log")
+        ax1.set_yscale(r"log")
+        ax1.set_xlabel(r"$\langle a_n\rangle_t$")
+        ax1.set_title("Time Averaged Velocity Amplitudes")
+        ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        plt.savefig(cmdargs.out_dir_info + "TimeAveraged_EnergyFlux.png", bbox_inches='tight')
+        plt.close()
+
+        ##-------------- Plot Time Averaged Energy Flux
+        fig = plt.figure(figsize = (16, 8))
+        gs  = GridSpec(1, 1)
+        inert_range = np.arange(4, 16)
+        p_flux = np.polyfit(np.log(sys_msr_data.k[inert_range]), np.log(np.absolute(sys_msr_data.enrg_flux_t_avg[inert_range])), 1)
+        ax1 = fig.add_subplot(gs[0, 0])
+        ax1.plot(sys_msr_data.k, np.absolute(sys_msr_data.enrg_flux_t_avg[:]))
+        ax1.plot(sys_msr_data.k[inert_range], np.exp(p_flux[1]) * sys_msr_data.k[inert_range]**p_flux[0], '--', color='orangered',label="$\propto k^{:.2f}$".format(p_flux[0])) 
+        ax1.set_xlabel(r"$k_n$")
+        ax1.set_xscale(r"log")
+        ax1.set_yscale(r"log")
+        ax1.set_ylabel(r"$\langle |\Pi| \rangle_t$")
+        ax1.set_title("Time Averaged Energy Flux")
+        ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        ax1.legend()
+        plt.savefig(cmdargs.out_dir_info + "TimeAveraged_EnergyFlux.png", bbox_inches='tight')
+        plt.close()
+
+        print(sys_msr_data.enrg_flux_t_avg[:])
+
+        ##-------------- Plot Time Averaged Energy Spectrum
+        fig = plt.figure(figsize = (16, 8))
+        gs  = GridSpec(1, 1)
+        ax1 = fig.add_subplot(gs[0, 0])
+        ax1.plot(np.log2(sys_msr_data.k), np.log2(sys_msr_data.enrg_spec_t_avg[:]))
+        ax1.set_xlabel(r"$\log_2(k_n)$")
+        ax1.set_ylabel(r"$\log_2(\langle E(k) \rangle_t)$")
+        ax1.set_title("Time Averaged Energy Spectrum")
+        ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        plt.savefig(cmdargs.out_dir_info + "TimeAveraged_EnergySpectrum.png", bbox_inches='tight')
+        plt.close()
+
+        ##-------------- Plot Time Averaged Disspiation Spectrum
+        fig = plt.figure(figsize = (16, 8))
+        gs  = GridSpec(1, 1)
+        ax1 = fig.add_subplot(gs[0, 0])
+        ax1.plot(np.log2(sys_msr_data.k), np.log2(sys_msr_data.diss_spec_t_avg[:]))
+        ax1.set_xlabel(r"$\log_2(k_n)$")
+        ax1.set_ylabel(r"$\log_2(\langle \epsilon (k) \rangle_t)$")
+        ax1.set_title("Time Averaged Disspiation Spectrum")
+        ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        plt.savefig(cmdargs.out_dir_info + "TimeAveraged_DissSpectrum.png", bbox_inches='tight')
+        plt.close()
+
+        print(sys_msr_data.enrg_spec_t_avg[:])
+
+
+
+
+
+        ##-------------- Plot Phase Triad Order Parameters
+        fig = plt.figure(figsize = (16, 8))
+        gs  = GridSpec(1, 2)
+        ## Time Averaged Triad Sync Param
+        ax1 = fig.add_subplot(gs[0, 0])
+        ax1.plot(sys_msr_data.k, np.mean(np.absolute(phase_sync.vel_triad_order[:, :]), axis = 0))
+        ax1.set_xlabel("$k_n$")
+        ax1.set_ylabel(r"$\langle \mathcal{R}_{k_n} \rangle_t$")
+        ax1.set_title("Time Averaged Triad Sync Parameter")
+        ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        
+        ## Time Averaged Average Phase
+        ax1 = fig.add_subplot(gs[0, 1])
+        ax1 = fig.add_subplot(gs[0, 0])
+        ax1.plot(sys_msr_data.k, np.mean(np.angle(phase_sync.vel_triad_order[:, :]), axis = 0))
+        ax1.set_xlabel("$k_n$")
+        ax1.set_ylabel(r"$\langle \Phi_{k_n} \rangle_t$")
+        ax1.set_title("Time Averaged Average Angle")
+        ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        plt.savefig(cmdargs.out_dir_sync + "TimeAveraged_VelTriad_OrderParameters.png", bbox_inches='tight')
+        plt.close()
+
+
+        if hasattr(run_data, 'b'):
+            fig = plt.figure(figsize = (16, 8))
+            gs  = GridSpec(1, 2)
+            ## Time Averaged Triad Sync Param
+            ax1 = fig.add_subplot(gs[0, 0])
+            ax1.plot(sys_msr_data.k, np.mean(np.absolute(phase_sync.mag_triad_order[:, :]), axis = 0))
+            ax1.set_xlabel("$k_n$")
+            ax1.set_ylabel(r"$\langle \mathcal{R}_{k_n} \rangle_t$")
+            ax1.set_title("Time Averaged Triad Sync Parameter")
+            ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+            
+            ## Time Averaged Average Phase
+            ax1 = fig.add_subplot(gs[0, 1])
+            ax1 = fig.add_subplot(gs[0, 0])
+            ax1.plot(sys_msr_data.k, np.mean(np.angle(phase_sync.mag_triad_order[:, :]), axis = 0))
+            ax1.set_xlabel("$k_n$")
+            ax1.set_ylabel(r"$\langle \Phi_{k_n} \rangle_t$")
+            ax1.set_title("Time Averaged Average Angle")
+            ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+            plt.savefig(cmdargs.out_dir_sync + "TimeAveraged_MagTriad_OrderParameters.png", bbox_inches='tight')
+            plt.close()
+
+        ##-------------- Plot Phase Phase Difference Order Parameters
+        fig = plt.figure(figsize = (16, 8))
+        gs  = GridSpec(1, 2)
+        ## Time Averaged Phase Difference Sync Param
+        ax1 = fig.add_subplot(gs[0, 0])
+        ax1.plot(sys_msr_data.k, np.mean(np.absolute(phase_sync.vel_phase_diff_order[:, :]), axis = 0))
+        ax1.set_xlabel("$k_n$")
+        ax1.set_ylabel(r"$\langle \mathcal{R}_{k_n} \rangle_t$")
+        ax1.set_title("Time Averaged Phase Difference Sync Parameter")
+        ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        
+        ## Time Averaged Average Phase
+        ax1 = fig.add_subplot(gs[0, 1])
+        ax1 = fig.add_subplot(gs[0, 0])
+        ax1.plot(sys_msr_data.k, np.mean(np.angle(phase_sync.vel_phase_diff_order[:, :]), axis = 0))
+        ax1.set_xlabel("$k_n$")
+        ax1.set_ylabel(r"$\langle \Phi_{k_n} \rangle_t$")
+        ax1.set_title("Time Averaged Average Angle")
+        ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        plt.savefig(cmdargs.out_dir_sync + "TimeAveraged_VelPhaseDifference_OrderParameters.png", bbox_inches='tight')
+        plt.close()
+
+
+        if hasattr(run_data, 'b'):
+            fig = plt.figure(figsize = (16, 8))
+            gs  = GridSpec(1, 2)
+            ## Time Averaged Phase Difference Sync Param
+            ax1 = fig.add_subplot(gs[0, 0])
+            ax1.plot(sys_msr_data.k, np.mean(np.absolute(phase_sync.mag_phase_diff_order[:, :]), axis = 0))
+            ax1.set_xlabel("$k_n$")
+            ax1.set_ylabel(r"$\langle \mathcal{R}_{k_n} \rangle_t$")
+            ax1.set_title("Time Averaged PhaseDifference Sync Parameter")
+            ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+            
+            ## Time Averaged Average Phase
+            ax1 = fig.add_subplot(gs[0, 1])
+            ax1 = fig.add_subplot(gs[0, 0])
+            ax1.plot(sys_msr_data.k, np.mean(np.angle(phase_sync.mag_phase_diff_order[:, :]), axis = 0))
+            ax1.set_xlabel("$k_n$")
+            ax1.set_ylabel(r"$\langle \Phi_{k_n} \rangle_t$")
+            ax1.set_title("Time Averaged Average Angle")
+            ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+            plt.savefig(cmdargs.out_dir_sync + "TimeAveraged_MagTriad_OrderParameters.png", bbox_inches='tight')
+            plt.close()
+
+
+        fig = plt.figure(figsize = (16, 16))
+        gs  = GridSpec(5, 5)
+        ## Plot the velocity triad pdfs
+        for i in range(5):
+            for j in range(5):
+                if i * 5 + j < phase_sync.num_triads:
+                    pdf, centres = compute_pdf_from_hist(phase_sync.vel_triad_hist_counts, phase_sync.vel_triad_hist_ranges, normed = False)
+                    ax1.plot(centres, pdf, label = "$Tppp({})$".format(i * 5 + j + 1))
+                    ax1.set_xlabel("$\phi_n + \phi_{n + 1} + \phi_{n + 2}$")
+                    ax1.set_ylabel("PDF")
+                    ax1.set_yscale("log")
+                    ax1.legend()
+                    ax1.set_xlim(0, 2.0*np.pi)
+
+        plt.savefig(cmdargs.out_dir_sync + "Vel_TriadPDF.png", bbox_inches='tight')
+        plt.close()
+
+
+        fig = plt.figure(figsize = (16, 16))
+        gs  = GridSpec(5, 5)
+        ## Plot the velocity triad phase differences
+        for i in range(5):
+            for j in range(5):
+                if i * 5 + j < phase_sync.num_triads:
+                    pdf, centres = compute_pdf_from_hist(phase_sync.vel_phase_diff_hist_counts, phase_sync.vel_phase_diff_hist_ranges, normed = False)
+                    ax1.plot(centres, pdf, label = "$Tppp({})$".format(i * 5 + j + 1))
+                    ax1.set_xlabel("$\phi_n + \phi_{n + 1} + \phi_{n + 2}$")
+                    ax1.set_ylabel("PDF")
+                    ax1.set_yscale("log")
+                    ax1.legend()
+                    ax1.set_xlim(0, 2.0*np.pi)
+
+        plt.savefig(cmdargs.out_dir_sync + "Vel_PhaseDifferencesPDF.png", bbox_inches='tight')
         plt.close()

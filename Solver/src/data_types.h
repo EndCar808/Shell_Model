@@ -114,6 +114,8 @@
 // #define __ENRG_FLUX
 // #define __TOT_ENRG_FLUX
 // #define __ENRG_FLUX_AVG
+// #define __VEL_AMP_AVG
+// #define __MAG_AMP_AVG
 // Choose whether to compute the spectra
 // #define __ENRG_SPECT
 // #define __DISS_SPECT
@@ -171,6 +173,8 @@
 // Define the equations of motion parameters
 #define EPSILON 0.5 					// Interaction coefficient for the HD shell model
 #define EPSILON_M 1.0/3.0 				// Interaction coefficient for the MHD shell model
+// Define forcing parameters
+#define FORC_STOC_SIGMA 0.1				// The ampitude of the Gaussian white noise 
 // System checking parameters
 #define MIN_STEP_SIZE 1e-10 			// The minimum allowed stepsize for the solver 
 #define MAX_ITERS 1e+20					// The maximum iterations to perform
@@ -186,17 +190,6 @@
 // Phase sync parameters
 #define NUM_MAG_TRIAD_TYPES 3 			// The number of extra triad types under the magnetic field
 #define NUM_PHASE_SYNC_HIST_BINS 1000	// The number of histogram bins for the phase sync stats data
-// // Dormand Prince integrator parameters
-// #define DP_ABS_TOL 1e-7		    // The absolute error tolerance for the Dormand Prince Scheme
-// #define DP_REL_TOL 1e-7         // The relative error tolerance for the Dormand Prince Scheme
-// #define DP_DELTA_MIN 0.01       // The min delta value for the Dormand Prince scheme
-// #define DP_DELTA_MAX 1.5 		// The max delta value for the Dormand Prince scheme
-// #define DP_DELTA 0.8 			// The scaling parameter of the error for the Dormand Prince Scheme
-// // Forcing parameters
-// #define STOC_FORC_K_MIN	0.5		// The minimum value of the modulus forced wavevectors for the stochasitc (Gaussian) forcing
-// #define STOC_FORC_K_MAX 2.5     // The maximum value of the modulus forced wavevectors for the stochastic (Gaussian) forcing
-// #define CONST_GAUSS_K_MIN 10    // The minimum value of the mod of forced wavevectors for the Constant Gaussian Ring forcing
-// #define CONST_GAUSS_K_MAX 12    // The minimum value of the mod of forced wavevectors for the Constant Gaussian Ring forcing
 // ---------------------------------------------------------------------
 //  Global Struct Definitions
 // ---------------------------------------------------------------------
@@ -252,9 +245,11 @@ typedef struct runtime_data_struct {
 	double complex* rhs; 		  		// Array to hold the RHS of the equation of motion
 	double complex* nonlinterm; 		// Array to hold the nonlinear term
 	double* a_n;			  			// Fourier vorticity amplitudes
+	double* a_n_t_avg;		  			// Fourier vorticity amplitudes
 	double* tmp_a_n;		  			// Array to hold the amplitudes of the fourier vorticity before marching forward in time
 	double* phi_n;			  			// Fourier velocity phases
 	double* b_n;			  			// Fourier velocity amplitudes
+	double* b_n_t_avg;		  			// Fourier velocity amplitudes
 	double* tmp_b_n;		  			// Array to hold the amplitudes of the fourier vorticity before marching forward in time
 	double* psi_n;						// Array to hold the phases of the magnetic modes
 	double* time;			  			// Array to hold the simulation times
@@ -294,22 +289,22 @@ typedef struct runtime_data_struct {
 
 // Runge-Kutta Integration struct
 typedef struct RK_data_struct {
-	#if defined(PHASE_ONLY)
-	double* RK1_u;		  		 	// Array to hold the result of the first stage for the velocity field
-	double* RK2_u;		  		 	// Array to hold the result of the second stage for the velocity field
-	double* RK3_u;		  		 	// Array to hold the result of the third stage for the velocity field
-	double* RK4_u;		  		 	// Array to hold the result of the fourth stage for the velocity field
-	double* RK1_b;		  		 	// Array to hold the result of the first stage for the magnetic field
-	double* RK2_b;		  		 	// Array to hold the result of the second stage for the magnetic field
-	double* RK3_b;		  		 	// Array to hold the result of the third stage for the magnetic field
-	double* RK4_b;		  		 	// Array to hold the result of the fourth stage for the magnetic field
-	double* RK_u_tmp;		     	// Array to hold the tempory updates to u - input to Nonlinear term function
-	double* RK_b_tmp;		     	// Array to hold the tempory updates to b - input to Nonlinear term function
-	double* AB_tmp_u;	  			// Array to hold the result of the RHS/Nonlinear term for the Adams Bashforth scheme
-	double* AB_tmp_nonlin_u[3];	 	// Array to hold the previous 3 RHS/Nonlinear terms to update the Adams Bashforth scheme
-	double* AB_tmp_b;	  			// Array to hold the result of the RHS/Nonlinear term for the Adams Bashforth scheme
-	double* AB_tmp_nonlin_b[3];	 	// Array to hold the previous 3 RHS/Nonlinear terms to update the Adams Bashforth scheme
-	#else
+	// #if defined(PHASE_ONLY)
+	// double* RK1_u;		  		 	// Array to hold the result of the first stage for the velocity field
+	// double* RK2_u;		  		 	// Array to hold the result of the second stage for the velocity field
+	// double* RK3_u;		  		 	// Array to hold the result of the third stage for the velocity field
+	// double* RK4_u;		  		 	// Array to hold the result of the fourth stage for the velocity field
+	// double* RK1_b;		  		 	// Array to hold the result of the first stage for the magnetic field
+	// double* RK2_b;		  		 	// Array to hold the result of the second stage for the magnetic field
+	// double* RK3_b;		  		 	// Array to hold the result of the third stage for the magnetic field
+	// double* RK4_b;		  		 	// Array to hold the result of the fourth stage for the magnetic field
+	// double* RK_u_tmp;		     	// Array to hold the tempory updates to u - input to Nonlinear term function
+	// double* RK_b_tmp;		     	// Array to hold the tempory updates to b - input to Nonlinear term function
+	// double* AB_tmp_u;	  			// Array to hold the result of the RHS/Nonlinear term for the Adams Bashforth scheme
+	// double* AB_tmp_nonlin_u[3];	 	// Array to hold the previous 3 RHS/Nonlinear terms to update the Adams Bashforth scheme
+	// double* AB_tmp_b;	  			// Array to hold the result of the RHS/Nonlinear term for the Adams Bashforth scheme
+	// double* AB_tmp_nonlin_b[3];	 	// Array to hold the previous 3 RHS/Nonlinear terms to update the Adams Bashforth scheme
+	// #else
 	double complex* RK1_u;		  		// Array to hold the result of the first stage for the velocity field
 	double complex* RK2_u;		  		// Array to hold the result of the second stage for the velocity field
 	double complex* RK3_u;		  		// Array to hold the result of the third stage for the velocity field
@@ -324,7 +319,7 @@ typedef struct RK_data_struct {
 	double complex* AB_tmp_nonlin_u[3];	// Array to hold the previous 3 RHS/Nonlinear terms to update the Adams Bashforth scheme
 	double complex* AB_tmp_b;	  			// Array to hold the result of the RHS/Nonlinear term for the Adams Bashforth scheme
 	double complex* AB_tmp_nonlin_b[3];	// Array to hold the previous 3 RHS/Nonlinear terms to update the Adams Bashforth scheme
-	#endif
+	// #endif
 	int AB_pre_steps;				// The number of derivatives to perform for the AB4 scheme
 } RK_data_struct;
 

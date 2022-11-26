@@ -368,12 +368,16 @@ void FreePhaseSyncObjects(void) {
 	#if defined(__PHASE_SYNC_STATS)
 	for (int i = 0; i < phase_sync->num_triads; ++i) {
 		gsl_histogram_free(phase_sync->triad_u_hist[i]);
+		#if defined(__MAGNETO)
 		gsl_histogram_free(phase_sync->triad_b_hist[0 * phase_sync->num_triads + i]);
 		gsl_histogram_free(phase_sync->triad_b_hist[1 * phase_sync->num_triads + i]);
 		gsl_histogram_free(phase_sync->triad_b_hist[2 * phase_sync->num_triads + i]);
+		#endif
 		if (i < phase_sync->num_phase_diff) {
 			gsl_histogram_free(phase_sync->phase_diff_u_hist[i]);
+			#if defined(__MAGNETO)
 			gsl_histogram_free(phase_sync->phase_diff_b_hist[i]);
+			#endif
 		}
 	}
 	#endif

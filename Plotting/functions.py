@@ -392,6 +392,10 @@ def import_stats_data(input_file, sim_data, method = "default"):
                     self.vel_hist_counts = f["RealVelHist_Counts"][:, :]
                 if 'RealVelHist_Ranges' in list(f.keys()):
                     self.vel_hist_ranges = f["RealVelHist_Ranges"][:, :]
+                if 'RealMagHist_Counts' in list(f.keys()):
+                    self.mag_hist_counts = f["RealMagHist_Counts"][:, :]
+                if 'RealMagHist_Ranges' in list(f.keys()):
+                    self.mag_hist_ranges = f["RealMagHist_Ranges"][:, :]
                 if 'VelStats' in list(f.keys()):
                     self.vel_stats = f["VelStats"][:, :]
                 if 'MagStats' in list(f.keys()):
@@ -452,7 +456,7 @@ def import_sys_msr_data(input_file, sim_data, method = "default"):
         in_file = input_file
 
     ## Define a data class for the solver data
-    class SolverData:
+    class SystemMeasuresData:
 
         """
         Class for the run data.
@@ -467,8 +471,10 @@ def import_sys_msr_data(input_file, sim_data, method = "default"):
                 ## Allocate system measure arrays
                 if 'TotalEnergy' in list(f.keys()):
                     self.tot_enrg      = f["TotalEnergy"][:]
-                if 'TotalDissipation' in list(f.keys()):
-                    self.tot_diss      = f["TotalDissipation"][:]
+                if 'TotalVelocityDissipation' in list(f.keys()):
+                    self.tot_diss_u      = f["TotalVelocityDissipation"][:]
+                if 'TotalMagneticDissipation' in list(f.keys()):
+                    self.tot_diss_b      = f["TotalMagneticDissipation"][:]
                 if 'TotalVelocityHelicity' in list(f.keys()):
                     self.tot_hel_u       = f["TotalVelocityHelicity"][:]
                 if 'TotalMagneticHelicity' in list(f.keys()):
@@ -487,8 +493,103 @@ def import_sys_msr_data(input_file, sim_data, method = "default"):
                     self.taylor_micro_scale = f["TaylorMicroScale"][:]
                 if 'VelocityForcing' in list(f.keys()):
                     self.forcing_u = f["VelocityForcing"][:]
-
+                ## Energy Variation Data
+                if 'TotalEnergyFlux' in list(f.keys()):
+                    self.tot_vel_enrg_flux   = f["TotalEnergyFlux"][:]
+                if 'TotalVelEnergyDiss' in list(f.keys()):
+                    self.tot_vel_enrg_diss = f["TotalVelEnergyDiss"][:]
+                if 'TotalVelEnergyInput' in list(f.keys()):
+                    self.tot_vel_enrg_input   = f["TotalVelEnergyInput"][:]
+                ## Time Averaged Data
+                if 'TimeAveragedDissipationSpectrum' in list(f.keys()):
+                    self.diss_spec_t_avg = f["TimeAveragedDissipationSpectrum"][:]
+                if 'TimeAveragedEnergySpectrum' in list(f.keys()):
+                    self.enrg_spec_t_avg = f["TimeAveragedEnergySpectrum"][:]
+                if 'TimeAveragedEnergyFlux' in list(f.keys()):
+                    self.enrg_flux_t_avg = f["TimeAveragedEnergyFlux"][:]
+                if 'TimeAveragedVelocityAmplitudes' in list(f.keys()):
+                    self.a_n_t_avg = f["TimeAveragedVelocityAmplitudes"][:]
+                if 'TimeAveragedMagneticAmplitudes' in list(f.keys()):
+                    self.b_n_t_avg = f["TimeAveragedMagneticAmplitudes"][:]
+                
     ## Create instance of data class
-    data = SolverData()
+    data = SystemMeasuresData()
+
+    return data
+
+
+def import_phase_sync_data(input_file, sim_data, method = "default"):
+
+    """
+    Reads in system measures from system measures HDF5 file.
+
+    input_dir : string
+                - If method == "defualt" is True then this will be the path to
+               the input folder. if not then this will be the input folder
+    method    : string
+                - Determines whether the data is to be read in from a file or
+               from an input folder
+    sim_data  : class
+                - object containing the simulation parameters
+    """
+    
+    ## Depending on the output mmode of the solver the input files will be named differently
+    if method == "default":
+        in_file = input_file + "Phase_Sync_HDF_Data.h5"
+    else:
+        in_file = input_file
+
+    ## Define a data class for the solver data
+    class PhaseSync:
+
+        """
+        Class for the run data.
+        """
+        def __init__(self):
+            ## Open file and read in the data
+            with h5py.File(in_file, 'r') as f:
+                ## Number of triads and phase differences
+                self.num_triads      = sim_data.N - 2
+                self.num_phase_diffs = sim_data.N - 3
+                ## Phase Order Parameters
+                if 'VelPhaseDifferenceOrderParameter' in list(f.keys()):
+                    self.vel_phase_diff_order  = f["VelPhaseDifferenceOrderParameter"][:, :]
+                if 'MagPhaseDifferenceOrderParameter' in list(f.keys()):
+                    self.mag_phase_diff_order  = f["MagPhaseDifferenceOrderParameter"][:, :, :]
+                if 'VelTriadOrderParameter' in list(f.keys()):
+                    self.vel_triad_order  = f["VelTriadOrderParameter"][:, :]
+                if 'MagTriadOrderParameter' in list(f.keys()):
+                    self.mag_triad_order  = f["MagTriadOrderParameter"][:, :, :]
+                ## Triads
+                if 'VelTriads' in list(f.keys()):
+                    self.vel_triads  = f["VelTriads"][:, :]
+                if 'MagTriads' in list(f.keys()):
+                    self.mag_triads  = f["MagTriads"][:, :, :]
+                ## Phase Differences
+                if 'VelPhaseDifferences' in list(f.keys()):
+                    self.vel_phase_diffs  = f["VelPhaseDifferences"][:, :]
+                if 'MagPhaseDifferences' in list(f.keys()):
+                    self.mag_phase_diffs  = f["MagPhaseDifferences"][:, :, :]
+                ## Triad Histograms     
+                if 'VelTriads_Counts' in list(f.keys()):
+                    self.vel_triad_hist_counts  = f["VelTriads_Counts"][:, :]
+                if 'VelTriads_Ranges' in list(f.keys()):
+                    self.vel_triad_hist_ranges  = f["VelTriads_Ranges"][:]
+                if 'MagTriads_Counts' in list(f.keys()):
+                    self.mag_triad_hist_counts  = f["MagTriads_Counts"][:, :, :]
+                if 'MagTriads_Ranges' in list(f.keys()):
+                    self.mag_triad_hist_ranges  = f["MagTriads_Ranges"][:]
+                ## Phase Difference Histograms     
+                if 'VelPhaseDifference_Counts' in list(f.keys()):
+                    self.vel_phase_diff_hist_counts  = f["VelPhaseDifference_Counts"][:, :]
+                if 'VelPhaseDifference_Ranges' in list(f.keys()):
+                    self.vel_phase_diff_hist_ranges  = f["VelPhaseDifference_Ranges"][:]
+                if 'MagPhaseDifference_Counts' in list(f.keys()):
+                    self.mag_phase_diff_hist_counts  = f["MagPhaseDifference_Counts"][:, :]
+                if 'MagPhaseDifference_Ranges' in list(f.keys()):
+                    self.mag_phase_diff_hist_ranges  = f["MagPhaseDifference_Ranges"][:]
+                
+    ## Create instance of data class
+    data = PhaseSync()
 
     return data
