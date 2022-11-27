@@ -39,7 +39,7 @@ class tc:
 #################################
 ##          MISC               ##
 #################################
-def compute_pdf_from_hist(counts, ranges, normed = False):
+def compute_pdf_from_hist(counts, ranges, normed = False, remove_zeros = True):
 
     """
     Computes the PDF of input data from a histogram of that data
@@ -53,17 +53,25 @@ def compute_pdf_from_hist(counts, ranges, normed = False):
                 - Indicates if the PDF is to be normalized by the variances or not
     """
 
-    ## Get only non_zero counts
-    non_zero_indx = np.argwhere(counts != 0)
+    if remove_zeros:
+        ## Get only non_zero counts
+        non_zero_indx = np.argwhere(counts != 0)
 
-    ## Compute the bin info for plotting the pdf
-    bin_centres = (ranges[1:] + ranges[:-1]) * 0.5
-    bin_width   = ranges[1] - ranges[0]
-    bin_centres = bin_centres[non_zero_indx]
+        ## Compute the bin info for plotting the pdf
+        bin_centres = (ranges[1:] + ranges[:-1]) * 0.5
+        bin_width   = ranges[1] - ranges[0]
+        bin_centres = bin_centres[non_zero_indx]
 
-    ## Compute the PDF
-    bin_counts = counts[non_zero_indx]
-    pdf = bin_counts / (np.sum(bin_counts) * bin_width)
+        ## Compute the PDF
+        bin_counts = counts[non_zero_indx]
+        pdf = bin_counts / (np.sum(bin_counts) * bin_width)
+    else:
+        ## Compute the bin info for plotting the pdf
+        bin_centres = (ranges[1:] + ranges[:-1]) * 0.5
+        bin_width   = ranges[1] - ranges[0]
+
+        ## Compute the PDF
+        pdf = counts / (np.sum(counts) * bin_width)
 
     if normed is True:
         ## Compute the variance from the PDF data
@@ -555,7 +563,7 @@ def import_phase_sync_data(input_file, sim_data, method = "default"):
                 if 'VelPhaseDifferenceOrderParameter' in list(f.keys()):
                     self.vel_phase_diff_order  = f["VelPhaseDifferenceOrderParameter"][:, :]
                 if 'MagPhaseDifferenceOrderParameter' in list(f.keys()):
-                    self.mag_phase_diff_order  = f["MagPhaseDifferenceOrderParameter"][:, :, :]
+                    self.mag_phase_diff_order  = f["MagPhaseDifferenceOrderParameter"][:, :]
                 if 'VelTriadOrderParameter' in list(f.keys()):
                     self.vel_triad_order  = f["VelTriadOrderParameter"][:, :]
                 if 'MagTriadOrderParameter' in list(f.keys()):
@@ -569,7 +577,7 @@ def import_phase_sync_data(input_file, sim_data, method = "default"):
                 if 'VelPhaseDifferences' in list(f.keys()):
                     self.vel_phase_diffs  = f["VelPhaseDifferences"][:, :]
                 if 'MagPhaseDifferences' in list(f.keys()):
-                    self.mag_phase_diffs  = f["MagPhaseDifferences"][:, :, :]
+                    self.mag_phase_diffs  = f["MagPhaseDifferences"][:, :]
                 ## Triad Histograms     
                 if 'VelTriads_Counts' in list(f.keys()):
                     self.vel_triad_hist_counts  = f["VelTriads_Counts"][:, :]

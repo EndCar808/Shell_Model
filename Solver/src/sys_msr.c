@@ -111,7 +111,30 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
         run_data->diss_spect[i] = 0.0;
         #endif
     }
-    
+
+
+    ///----------------------- Get Fields from Phase Only data
+    #if defined(PHASE_ONLY)
+    // Get the input velocity and magnetic fields for the nonlinear term
+    for (int i = 0; i < N; ++i) {
+        // Get proper index
+        n = i + 2;
+
+        // Get the input fields
+        run_data->u[n] = run_data->a_n[n] * cexp(I * run_data->phi_n[n]);
+        #if defined(__MAGNETO)
+        run_data->b[n] = run_data->b_n[n] * cexp(I * run_data->psi_n[n]);
+        #endif
+    }
+    #endif
+
+    // -------------------------------------
+    // Compute Nonlinear Term
+    // -------------------------------------
+    #if defined(__ENRG_FLUX) || defined(__TOT_ENRG_FLUX) || defined(__ENRG_FLUX_AVG)
+    NonlinearTerm(run_data->u, run_data->b, RK_data->RK1_u, RK_data->RK1_b, sys_vars->N);
+    #endif
+
     // -------------------------------------
     // Compute Measurables
     // -------------------------------------
@@ -199,6 +222,12 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
                 run_data->energy_input_b[i] += creal(run_data->b[l] * conj(run_data->forcing_b[l]));
                 #endif
             }
+
+            // Get Flux terms
+            // run_data->energy_flux[i] = creal(RK_data->RK1_u[n] * conj(run_data->u[n]) + conj(RK_data->RK1_u[n]) * run_data->u[n]);
+            // #if defined(__MAGNETO)
+            // run_data->energy_flux[i] += creal(RK_data->RK1_b[n] * conj(run_data->b[n]) + conj(RK_data->RK1_b[n]) * run_data->b[n]);
+            // #endif
 
             // Get the correct k prefactor terms for the nonlinear flux term 
             if (i == 0) {

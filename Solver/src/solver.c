@@ -925,13 +925,6 @@ void NonlinearTerm(double complex* u, double complex* b, double complex* u_nonli
 		#endif
 		// printf("u[%d]:\t%lf\t%lfi\t-\tf[%d]:\t%lf\t%lfi\t----\t%lf\t%lf\n", i + 1, creal(u_nonlin[n]), cimag(u_nonlin[n]), i + i, creal(run_data->forcing_u[n]), cimag(run_data->forcing_u[n]), creal(u_nonlin[n]) / creal(run_data->forcing_u[n]), cimag(u_nonlin[n]) / cimag(run_data->forcing_u[n]));
 	}
-	
-
-	// -----------------------------------
-	// Add Forcing
-	// -----------------------------------
-	// Add forcing here
-	AddForcing(u_nonlin, b_nonlin);
 }
 /**
  * Wrapper function to get the approriate nonlinear term for the system being solver -> either phase only or full model
@@ -953,6 +946,12 @@ void NonlinearTermWithForcing(double complex* input_u, double complex* input_b, 
 	// Compute the Nonlinear Term with Forcing
 	// ----------------------------------------
 	NonlinearTerm(input_u, input_b, output_u, output_b, sys_vars->N);
+
+	// -----------------------------------
+	// Add Forcing
+	// -----------------------------------
+	// Add forcing here
+	AddForcing(output_u, output_b);
 
 	// ----------------------------------------
     // Get the Output Array
@@ -1574,6 +1573,7 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 	#endif
 	#endif
 
+
 	// -------------------------------
 	// Allocate Integration Variables 
 	// -------------------------------
@@ -1738,6 +1738,7 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 		#endif
 		#endif
 	}
+
 }
 /**
  * Wrapper function that frees any memory dynamcially allocated in the programme
@@ -1857,6 +1858,9 @@ void FreeMemory(RK_data_struct* RK_data) {
 		#if defined(__VEL_HIST)
 		gsl_histogram_free(stats_data->real_vel_hist[i]);
 		#endif
+		#if defined(__MAG_HIST)
+		gsl_histogram_free(stats_data->real_mag_hist[i]);
+		#endif
 	}
 	free(stats_data->real_vel_moments);
 	#if defined(__MAGNETO)
@@ -1864,6 +1868,9 @@ void FreeMemory(RK_data_struct* RK_data) {
 	#endif
 	#if defined(__VEL_HIST)
 	free(stats_data->real_vel_hist);
+	#endif
+	#if defined(__MAG_HIST)
+	free(stats_data->real_mag_hist);
 	#endif
 	#endif
 

@@ -1,9 +1,0 @@
-
-solver_hydro_IF:3479525 terminated with signal 11 at PC=561d3dc70440 SP=7ffe0f48db90.  Backtrace:
-Solver/bin/solver_hydro_IF(+0x6440)[0x561d3dc70440]
-Solver/bin/solver_hydro_IF(+0x88cb)[0x561d3dc728cb]
-Solver/bin/solver_hydro_IF(+0x8b54)[0x561d3dc72b54]
-Solver/bin/solver_hydro_IF(+0x295a)[0x561d3dc6c95a]
-/lib/x86_64-linux-gnu/libc.so.6(+0x29d90)[0x7f049ff54d90]
-/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x80)[0x7f049ff54e40]
-Solver/bin/solver_hydro_IF(+0x2a95)[0x561d3dc6ca95]

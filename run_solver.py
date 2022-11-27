@@ -286,7 +286,7 @@ if __name__ == '__main__':
 
         ## Get the number of processes to launch
         proc_limit = num_solver_job_threads
-        print("Number of Solver Processes Created = [" + tc.C + "{}".format(proc_limit) + tc.Rst + "]\n")
+        print("\nNumber of Solver Processes Created = [" + tc.C + "{}".format(proc_limit) + tc.Rst + "]\n")
 
         # Create output objects to store process error and output
         if collect_data:
@@ -294,7 +294,7 @@ if __name__ == '__main__':
             solver_error  = []
 
         ## Generate command list 
-        cmd_list = [["{} -o {} -n {} -s {:3.5f} -e {:3.5f} -T {} -T {} -c {} -c {:1.6f} -h {:1.16f} -h {} -a {:1.10f} -b {:1.10f} -w {:1.3f} -w {:1.3f} -y {:1.16f} -y {:1.16f} -v {:1.10f} -v {} -v {:1.1f} -d {:1.10f} -d {} -d {:1.1f} -i {} -t {} -f {} -f {} -f {:1.3f} -p {}".format(
+        cmd_list = [["{} -o {} -n {} -s {:3.5f} -e {:3.5f} -T {} -T {} -c {} -c {:1.6f} -h {:1.16f} -h {} -a {:1.10f} -b {:1.10f} -w {:1.3f} -w {:1.3f} -y {:1.16f} -y {:1.16f} -v {:g} -v {} -v {:1.1f} -d {:g} -d {} -d {:1.1f} -i {} -t {} -f {} -f {} -f {:1.3f} -p {}".format(
                                                                                                                                                     executable, 
                                                                                                                                                     output_dir,
                                                                                                                                                     n,
@@ -325,7 +325,7 @@ if __name__ == '__main__':
             for processes in zip_longest(*groups): 
                 for proc in filter(None, processes): # filters out 'None' fill values if proc_limit does not divide evenly into cmd_list
                     ## Print command to screen
-                    print("Executing the following command:\n\n\t" + tc.C + "{}\n".format(proc.args[0]) + tc.Rst)
+                    print("\nExecuting the following command:\n\n\t" + tc.C + "{}\n".format(proc.args[0]) + tc.Rst)
                     
                     if cmdargs.print:
                         ## Print output to terminal as it comes
@@ -370,7 +370,7 @@ if __name__ == '__main__':
     
         ## Get the number of processes to launch
         proc_limit = num_plotting_job_threads
-        print("Number of Post Processing Processes Created = [" + tc.C + "{}".format(proc_limit) + tc.Rst + "]")
+        print("\nNumber of Post Processing Processes Created = [" + tc.C + "{}".format(proc_limit) + tc.Rst + "]\n")
 
         # Create output objects to store process error and output
         if collect_data:
@@ -380,11 +380,14 @@ if __name__ == '__main__':
         
         ## Generate command list
         if "_mag_hydro" in executable:
-            cmd_list = [[]]
+            cmd_list = [["python3 {} -i {} {}".format(
+                                                plot_script, 
+                                                post_input_dir + "_N[{}]_T[{:1.1f},{:g},{:1.3f}]_NU[{:g}]_ETA[{:g}]_ALPHA[{:1.3f}]_BETA[{:1.3f}]_K[{:1.3f},{:1.3f}]_EPS[{:1.2f},{:1.2f}]_FORC[{},{},{:1.3f}]_u0[{}]_TAG[{}]/".format(n, t0, h, t, v, e, a, b, k0, lam, ep, ep_m, forcing, force_k, force_scale, u0, s_tag), 
+                                                plot_options)] for n in N for h in dt for t in T for e in eta for v in nu for a in alpha for b in beta for ep in eps for ep_m in eps_m for u0 in ic for s_tag in solver_tag]
         else:
             cmd_list = [["python3 {} -i {} {}".format(
                                                 plot_script, 
-                                                post_input_dir + "_N[{}]_T[{:1.1f},{:g},{:1.3f}]_NU[{:1.8f}]_ALPHA[{:1.3f}]_K[{:1.3f},{:1.6f}]_EPS[{:1.2f}]_FORC[{},{},{:1.3f}]_u0[{}]_TAG[{}]/".format(n, t0, h, t, v, a, k0, lam, ep, forcing, force_k, force_scale, u0, s_tag), 
+                                                post_input_dir + "_N[{}]_T[{:1.1f},{:g},{:1.3f}]_NU[{:g}]_ALPHA[{:1.3f}]_K[{:1.3f},{:1.3f}]_EPS[{:1.2f}]_FORC[{},{},{:1.3f}]_u0[{}]_TAG[{}]/".format(n, t0, h, t, v, a, k0, lam, ep, forcing, force_k, force_scale, u0, s_tag), 
                                                 plot_options)] for n in N for h in dt for t in T for v in nu for a in alpha for ep in eps for u0 in ic for s_tag in solver_tag]
 
         if cmdargs.cmd_only:
@@ -400,7 +403,7 @@ if __name__ == '__main__':
             for processes in zip_longest(*groups): 
                 for proc in filter(None, processes): # filters out 'None' fill values if proc_limit does not divide evenly into cmd_list
                     ## Print command to screen
-                    print("Executing the following command:\n\t" + tc.C + "{}".format(proc.args[0]) + tc.Rst)
+                    print("\nExecuting the following command:\n\n\t" + tc.C + "{}\n".format(proc.args[0]) + tc.Rst)
 
                     ## Print output to terminal as it comes
                     for line in proc.stdout:
