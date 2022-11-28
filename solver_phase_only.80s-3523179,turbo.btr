@@ -1,0 +1,13 @@
+
+solver_phase_only:3523179 terminated with signal 6 at PC=7fa63c6b1a7c SP=7ffc06da9c80.  Backtrace:
+/lib/x86_64-linux-gnu/libc.so.6(pthread_kill+0x12c)[0x7fa63c6b1a7c]
+/lib/x86_64-linux-gnu/libc.so.6(raise+0x16)[0x7fa63c65d476]
+/lib/x86_64-linux-gnu/libc.so.6(abort+0xd3)[0x7fa63c6437f3]
+/lib/x86_64-linux-gnu/libgsl.so.27(+0x759e1)[0x7fa63c8b89e1]
+/lib/x86_64-linux-gnu/libgsl.so.27(gsl_histogram_set_ranges_uniform+0xf5)[0x7fa63c8d7a35]
+Solver/bin/solver_phase_only(+0x9662)[0x560bc00bd662]
+Solver/bin/solver_phase_only(+0x8f54)[0x560bc00bcf54]
+Solver/bin/solver_phase_only(+0x29ba)[0x560bc00b69ba]
+/lib/x86_64-linux-gnu/libc.so.6(+0x29d90)[0x7fa63c644d90]
+/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x80)[0x7fa63c644e40]
+Solver/bin/solver_phase_only(+0x2af5)[0x560bc00b6af5]

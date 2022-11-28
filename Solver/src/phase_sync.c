@@ -50,11 +50,14 @@ void ComputePhaseSyncData(const long int iter) {
 		if (i < num_triads) {
 			// Get the triad phase
 			#if defined(PHASE_ONLY)
-			phase_u = fmod(run_data->phi_n[n] + run_data->phi_n[n + 1] + run_data->phi_n[n + 2], 2.0 * M_PI);
+			phase_u_1 = fmod(run_data->phi_n[n] + 2.0 * M_PI, 2.0 * M_PI);
+			phase_u_2 = fmod(run_data->phi_n[n + 1] + 2.0 * M_PI, 2.0 * M_PI);
+			phase_u_3 = fmod(run_data->phi_n[n + 2] + 2.0 * M_PI, 2.0 * M_PI);
+			phase_u   = fmod(phase_u_1 + phase_u_2 + phase_u_3 + 2.0 * M_PI, 2.0 * M_PI);
 			#if defined(__MAGNETO)
-			phase_b_1 = fmod(run_data->phi_n[n] + run_data->psi_n[n + 1] + run_data->psi_n[n + 2], 2.0 * M_PI);
-			phase_b_2 = fmod(run_data->psi_n[n] + run_data->phi_n[n + 1] + run_data->psi_n[n + 2], 2.0 * M_PI);
-			phase_b_3 = fmod(run_data->psi_n[n] + run_data->psi_n[n + 1] + run_data->phi_n[n + 2], 2.0 * M_PI);
+			phase_b_1 = fmod(run_data->phi_n[n] + run_data->psi_n[n + 1] + run_data->psi_n[n + 2] + 2.0 * M_PI, 2.0 * M_PI);
+			phase_b_2 = fmod(run_data->psi_n[n] + run_data->phi_n[n + 1] + run_data->psi_n[n + 2] + 2.0 * M_PI, 2.0 * M_PI);
+			phase_b_3 = fmod(run_data->psi_n[n] + run_data->psi_n[n + 1] + run_data->phi_n[n + 2] + 2.0 * M_PI, 2.0 * M_PI);
 			#endif
 			#else 
 			phase_u_1 = fmod(carg(run_data->u[n]) + 2.0 * M_PI, 2.0 * M_PI);
@@ -129,9 +132,13 @@ void ComputePhaseSyncData(const long int iter) {
 		if (i < num_phase_diff) {
 			// Get the phase differences
 			#if defined(PHASE_ONLY)
-			phase_u = fmod(run_data->phi_n[n] - run_data->phi_n[n + 3] + 4.0 * M_PI, 2.0 * M_PI);
+			phase_u_1 = fmod(run_data->phi_n[n] + 2.0 * M_PI, 2.0 * M_PI);
+			phase_u_2 = fmod(run_data->phi_n[n + 3] + 2.0 * M_PI, 2.0 * M_PI);
+			phase_u   = fmod((phase_u_1 - phase_u_2) + 2.0 * M_PI, 2.0 * M_PI);			
 			#if defined(__MAGNETO)
-			phase_b_1 = fmod(run_data->psi_n[n] - run_data->psi_n[n + 3] + 4.0 * M_PI, 2.0 * M_PI);
+			phase_b_1     = fmod(run_data->psi_n[n] + 2.0 * M_PI, 2.0 * M_PI);
+			phase_b_2     = fmod(run_data->psi_n[n + 3] + 2.0 * M_PI, 2.0 * M_PI);
+			phase_b_type1 = fmod((phase_b_1 - phase_b_2) + 2.0 * M_PI, 2.0 * M_PI);
 			#endif
 			#else
 			phase_u_1 = fmod(carg(run_data->u[n]) + 2.0 * M_PI, 2.0 * M_PI);

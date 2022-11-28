@@ -131,6 +131,8 @@ void ComputeStats(const long int iters, const long int save_data_indx) {
 				}
 				#endif
 
+
+
 				///-------------------------------------------- Set Magnetic Histogram Bin ranges				
 				#if defined(__MAG_HIST) && defined(__MAGNETO)
 				if (sys_vars->TRANS_ITERS_FLAG == TRANSIENT_ITERS) {
@@ -153,6 +155,7 @@ void ComputeStats(const long int iters, const long int save_data_indx) {
 					}
 				}
 				#endif
+
 
 				// Reset stats counters
 				gsl_status = gsl_rstat_reset(stats_data->real_vel_moments[i]);

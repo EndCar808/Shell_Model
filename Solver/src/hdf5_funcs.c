@@ -1622,14 +1622,14 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	// Write Bin Count data 
 	dims2D[0] = N;
 	dims2D[1] = VEL_NUM_BINS;
-	if ( (H5LTmake_dataset(file_info->stats_file_handle, "RealVelHist_Counts", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_mag_hist_bin)) < 0) {
-		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "RealVelHist_Counts");
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "RealMagHist_Counts", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_mag_hist_bin)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "RealMagHist_Counts");
 	}
 	// Write Bin Range data 
 	dims2D[0] = N;
 	dims2D[1] = VEL_NUM_BINS + 1;
-	if ( (H5LTmake_dataset(file_info->stats_file_handle, "RealVelHist_Ranges", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_mag_hist_ranges)) < 0) {
-		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "RealVelHist_Ranges");
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "RealMagHist_Ranges", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_mag_hist_ranges)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "RealMagHist_Ranges");
 	}
 
 	// Free temporary memory

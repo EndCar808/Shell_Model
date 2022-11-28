@@ -52,7 +52,6 @@ void Solve(void) {
 	struct RK_data_struct RK_data_tmp; // Initialize a RK_data_struct
 	RK_data = &RK_data_tmp;		       // Point the ptr to this new RK_data_struct
 
-	
 	// -------------------------------
 	// Allocate memory
 	// -------------------------------
@@ -68,13 +67,13 @@ void Solve(void) {
 	#if defined(STATS)
 	InitializeStats();
 	#endif
-
-	// Initialize the forcing
-	InitializeForicing(N);
 	
 	// Get initial conditions - seed for random number generator is set here
 	// If input file is selected the function to read input file is called from here
 	InitialConditions(N);
+
+	// Initialize the forcing
+	InitializeForicing(N);
 
 	// -------------------------------
 	// Integration Variables
@@ -150,6 +149,8 @@ void Solve(void) {
 
 			// Record System Measurables
 			ComputeSystemMeasurables(t, save_data_indx, RK_data);
+
+			// printf("Eddy Turnover: %lf\n", pow(run_data->k[2] / K_0, 2.0 / 3.0));
 
 			// Compute the conserved phases and phase order parameters
 			#if defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC_STATS)
@@ -1003,6 +1004,12 @@ void InitialConditions(const long int N) {
 	#endif
 
 	// ------------------------------------------------
+    // Set Seed for RNG
+    // ------------------------------------------------
+    srand(123456789);
+
+
+	// ------------------------------------------------
     // Check if Reading From Input File
     // ------------------------------------------------
     if (sys_vars->INPUT_FILE_FLAG == INPUT_FILE) {
@@ -1012,11 +1019,6 @@ void InitialConditions(const long int N) {
 	    ReadInputFile(N);
     }	
     else {
-		// ------------------------------------------------
-	    // Set Seed for RNG
-	    // ------------------------------------------------
-	    srand(123456789);
-
 		for (int i = 0; i < N + 4; ++i) {
 
 			// Initialize the edges shells
@@ -1049,18 +1051,18 @@ void InitialConditions(const long int N) {
 					run_data->u[i] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) * cexp(I * pow(i - 1, 2.0)) / sqrt(75);
 					// Record the phases and amplitudes
 					#if defined(PHASE_ONLY) || defined(PHASE_ONLY_FXD_AMP)
-					run_data->a_n[i]   = (1.0 / pow(run_data->k[i], sys_vars->ALPHA)) / sqrt(75);
+					run_data->a_n[i]   = (1.0 / pow(run_data->k[i], sys_vars->ALPHA));
 					run_data->phi_n[i] = pow(i - 1, 2.0);
 					#endif
 
 					// Initialize the magnetic field
 					#if defined(__MAGNETO)
-					run_data->b[i] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * cexp(I * pow(i - 1, 4.0)) * 1e-2;
+					run_data->b[i] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * cexp(I * pow(i - 1, 4.0)) * 1e-2 / sqrt(75);
 
 					// Record the phases and amplitudes
 					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
-					run_data->b_n[i]   = cabs(run_data->b[i]);
-					run_data->psi_n[i] = carg(run_data->b[i]);
+					run_data->b_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-2;
+					run_data->psi_n[i] = cexp(I * pow(i - 1, 4.0));
 					#endif
 					#endif
 				}
@@ -1075,7 +1077,7 @@ void InitialConditions(const long int N) {
 					#endif
 
 					// Initialize the velocity field
-					run_data->u[i] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) * cexp(I * r1 * 2.0 * M_PI) / sqrt(100);
+					run_data->u[i] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) * cexp(I * r1 * 2.0 * M_PI) / sqrt(75);
 					// Record the phases and amplitudes
 					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
 					run_data->a_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->ALPHA);
@@ -1084,7 +1086,7 @@ void InitialConditions(const long int N) {
 
 					// Initialize the magnetic field
 					#if defined(__MAGNETO)
-					run_data->b[i] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * cexp(I * r2 * 2.0 * M_PI) * 1e-2;
+					run_data->b[i] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * cexp(I * r2 * 2.0 * M_PI) * 1e-2 / sqrt(75);
 
 					// Record the phases and amplitudes
 					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
@@ -1213,6 +1215,9 @@ void InitializeForicing(const long int N) {
 			else {
 				run_data->forcing_u[i] = 0.0 + 0.0 * I;			
 			}
+			#if defined(__MAGNETO)
+			run_data->forcing_b[i] = 0.0 + 0.0 * I;			
+			#endif
 		}
 		else if(!(strcmp(sys_vars->forcing, "FXD_AMP"))) {
 			// -----------------------------------------------
@@ -1284,6 +1289,7 @@ void InitializeForicing(const long int N) {
 			}
 		}
 		// printf("f_u[%d]:\t%1.16lf\t%1.16lf i\t\tf_b[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->forcing_u[i]), creal(run_data->forcing_u[i]), i - 1, creal(run_data->forcing_b[i]), creal(run_data->forcing_b[i]));
+		// printf("u[%d]:\t%1.16lf\t%1.16lf i\t\tf_u[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->forcing_u[i]), creal(run_data->forcing_u[i]), i - 1, creal(run_data->forcing_b[i]), creal(run_data->forcing_b[i]));
 	}
 	// printf("\n");
 }
@@ -1293,19 +1299,24 @@ void InitializeForicing(const long int N) {
  */
 void ComputeForicing(const long int N) {
 
+	// Initialize varaibles
+	double rand1, rand2, z;
+	double tau_0 = pow(run_data->k[2] / K_0, 2.0/3.0);
+
 	// ------------------------------------------------
-	// Initialize Forcing Data
+	// Stochastic Forcing
 	// ------------------------------------------------
-	for (int i = 0; i < N + 4; ++i) {
-		// Compute the forcing and intialize
-		 if(!(strcmp(sys_vars->forcing, "STOC"))) {
-			// ------------------------------------------------
-			// Stochastic Forcing
-			// ------------------------------------------------
-			// Get the forcing for the first timestep
-			if (i >= 2 && i <= sys_vars->force_k + 1) {
-				run_data->forcing_u[i] = -(pow(run_data->k[2] / K_0, 2.0/3.0)) * run_data->forcing_u[i] + FORC_STOC_SIGMA * ((double)rand() / (double)RAND_MAX);
-			}
+ 	if(!(strcmp(sys_vars->forcing, "STOC"))) {
+ 		// Generate two uniform random numbers
+		rand1 = ((double)rand() / (double) RAND_MAX);
+		rand2 = ((double)rand() / (double) RAND_MAX);
+
+		// Use Box Muller transform to get standard normal devaite
+		z = sqrt(-2.0 * log(rand1)) * cos(2.0 * M_PI * rand2);
+
+		// Loop over the forced modes and compute the forcing
+		for (int i = 2; i <= sys_vars->force_k + 1; ++i) {
+			run_data->forcing_u[i] = -(1.0 / tau_0) * run_data->forcing_u[i] + sys_vars->force_scale_var * z;
 		}
 	}
 }
@@ -1351,6 +1362,9 @@ void AddForcing(double complex* u_nonlin, double complex* b_nonlin) {
 			b_nonlin[n] += run_data->forcing_b[n]; 
 			#endif
 		}
+	if (n >= 2 && n <= N - 1) {
+		// printf("u[%d]: %lf %lf\ta_n[%d]: %lf\tf[%d]: %lf %lf\tf_n[%d]: %lf\n", n, creal(run_data->u[n]), cimag(run_data->u[n]), n, cabs(run_data->u[n]), n, creal(run_data->forcing_u[n]), cimag(run_data->forcing_u[n]), n, cabs(run_data->forcing_u[n]));
+	}
 	}
 }
 /**
