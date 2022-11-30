@@ -358,8 +358,8 @@ if __name__ == '__main__':
         ax1.set_xlabel("$t$")
         ax1.set_ylabel("$\phi_n$")
         ax1.set_title("Low N")
+        ax1.set_xlim(3000, 3050)
         ## Plot the velocity amplitudes
-        ax2.set_title("Low N")
         ax1 = fig.add_subplot(gs[0, 1])
         for i in range(sys_vars.N//2, sys_vars.N):
             ax1.plot(sys_msr_data.time, np.angle(run_data.u[:, i]) % 2.0 * np.pi)
@@ -972,3 +972,4 @@ if __name__ == '__main__':
             cb1.set_label(r"$\phi_n - \phi_{n + 3}$")
             plt.savefig(cmdargs.out_dir_sync + "MagPhase_Differences_SpaceTimePlot.png", bbox_inches='tight')
             plt.close()
+            

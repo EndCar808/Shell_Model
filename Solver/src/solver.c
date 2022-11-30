@@ -75,6 +75,7 @@ void Solve(void) {
 	// Initialize the forcing
 	InitializeForicing(N);
 
+
 	// -------------------------------
 	// Integration Variables
 	// -------------------------------
@@ -263,7 +264,7 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 
 	///----------------------- Forcing
 	// Compute the forcing for the current iteration
-	ComputeForicing(N);
+	ComputeForcing(dt, N);
 
 	///----------------------- Input to RHS/Nonlinear Term
 	// Get the input velocity and magnetic fields for the nonlinear term
@@ -466,7 +467,7 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 
 	///----------------------- Forcing
 	// Compute the forcing for the current iteration
-	ComputeForicing(N);
+	ComputeForcing(dt, N);
 
 	///----------------------- Input to RHS/Nonlinear Term
 	// Get the input velocity and magnetic fields for the nonlinear term
@@ -682,7 +683,7 @@ void AB4CNStep(const double dt, const long iters, const long int N, RK_data_stru
 		// Compute Forcing
 		// -----------------------------------
 		// Compute the forcing for the current iteration
-		ComputeForicing(N);
+		ComputeForcing(dt, N);
 
 		// -----------------------------------
 		// Compute RHS
@@ -1077,7 +1078,7 @@ void InitialConditions(const long int N) {
 					#endif
 
 					// Initialize the velocity field
-					run_data->u[i] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) * cexp(I * r1 * 2.0 * M_PI) / sqrt(75);
+					run_data->u[i] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) * cexp(I * r1 * 2.0 * M_PI);
 					// Record the phases and amplitudes
 					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
 					run_data->a_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->ALPHA);
@@ -1086,7 +1087,7 @@ void InitialConditions(const long int N) {
 
 					// Initialize the magnetic field
 					#if defined(__MAGNETO)
-					run_data->b[i] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * cexp(I * r2 * 2.0 * M_PI) * 1e-2 / sqrt(75);
+					run_data->b[i] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * cexp(I * r2 * 2.0 * M_PI) * 1e-2;
 
 					// Record the phases and amplitudes
 					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
@@ -1189,6 +1190,9 @@ void InitializeForicing(const long int N) {
 
 	// Initialize variables
 	int n; 
+	double tau_0;
+	double rand1 = ((double)rand() / (double) RAND_MAX);
+	double rand2 = ((double)rand() / (double) RAND_MAX);
 
 	// ------------------------------------------------
 	// Allocate Memory for Forcing Data
@@ -1270,8 +1274,14 @@ void InitializeForicing(const long int N) {
 			// ------------------------------------------------
 			// Stochastic Forcing - Satisfying a Langevin Eqn -> \dot{f}_n = -1/\tau_1 f_n + \sigma\zeta; \zeta ~ N(0, 1); \sigma is noise amplitude and \tau_1 is the largest scale eddy turnover time
 			// ------------------------------------------------
-			// Get the forcing for the first timestep
-			run_data->forcing_u[i] = 0.0 + 0.0 * I; // Setting the initial condition for the forcing to 0;
+			// Loop over the forced modes and compute the intial forcing forcing
+			if (i >= 2 && i <= sys_vars->force_k + 1){
+				// Compute the forcing timescale
+				tau_0 = 1.0 / pow(run_data->k[i] / K_0, 2.0/3.0);
+
+				// Compute the forcing
+				run_data->forcing_u[i] = sqrt(- 2.0 * tau_0 * log10(rand1)) * cexp(I * 2.0 * M_PI * rand2);
+			}
 		}
 		else if(!(strcmp(sys_vars->forcing, "NONE"))) {
 			// ------------------------------------------------
@@ -1297,11 +1307,11 @@ void InitializeForicing(const long int N) {
  * Function compute the forcing for the current timestep
  * @param N Number of shells
  */
-void ComputeForicing(const long int N) {
+void ComputeForcing(double dt, const long int N) {
 
 	// Initialize varaibles
-	double rand1, rand2, z;
-	double tau_0 = pow(run_data->k[2] / K_0, 2.0/3.0);
+	double rand1, rand2;
+	double tau_0, exp_fac;
 
 	// ------------------------------------------------
 	// Stochastic Forcing
@@ -1311,12 +1321,16 @@ void ComputeForicing(const long int N) {
 		rand1 = ((double)rand() / (double) RAND_MAX);
 		rand2 = ((double)rand() / (double) RAND_MAX);
 
-		// Use Box Muller transform to get standard normal devaite
-		z = sqrt(-2.0 * log(rand1)) * cos(2.0 * M_PI * rand2);
-
 		// Loop over the forced modes and compute the forcing
 		for (int i = 2; i <= sys_vars->force_k + 1; ++i) {
-			run_data->forcing_u[i] = -(1.0 / tau_0) * run_data->forcing_u[i] + sys_vars->force_scale_var * z;
+			// Compute the forcing timescale
+			tau_0 = 1.0 / pow(run_data->k[i] / K_0, 2.0/3.0);
+
+			// Compute the exponential prefactor
+			exp_fac = cexp(-dt / tau_0);
+
+			// Compute
+			run_data->forcing_u[i] = exp_fac * run_data->forcing_u[i] + sys_vars->force_scale_var * sqrt(-2.0 * (1.0 - pow(exp_fac, 2.0)) * log10(rand1)) * cexp(I * 2.0 * M_PI * rand2);
 		}
 	}
 }

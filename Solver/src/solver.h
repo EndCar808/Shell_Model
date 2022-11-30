@@ -45,7 +45,7 @@ void InitialConditions(const long int N);
 void InitializeIntegrationVariables(double* t0, double* t, double* dt, double* T, long int* trans_steps);
 void InitializeForicing(const long int N);
 // Forcing Functions
-void ComputeForicing(const long int N);
+void ComputeForcing(double dt, const long int N);
 // Memory Functions
 void AllocateMemory(const long int N, RK_data_struct* RK_data);
 void FreeMemory(RK_data_struct* RK_data);
