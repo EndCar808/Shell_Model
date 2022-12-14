@@ -80,7 +80,7 @@ def plot_str_funcs_with_slope(outdir_path, k, str_funcs, inert_range):
 	for i in range(str_funcs.shape[-1]):
 	    
 	    ## Plot strucure function
-	    p, = ax1.plot(np.log2(k), np.log2(str_funcs[:, i]) + i * 10, label = "$p = {}$".format(i + 1), marker = mark_style[i], markerfacecolor = 'None', markersize = 5.0, markevery = 2)
+	    p, = ax1.plot(np.log2(k), np.log2(str_funcs[:, i]) + i * 10, label = "$p = {}$".format(i + 1), marker = mark_style[i], markerfacecolor = 'None', markersize = 5.0, markevery = 1)
 	    
 	    ## Find polynomial fit and plot
 	    pfit_info  = np.polyfit(np.log2(k[inert_lim_low:inert_lim_high]), np.log2(str_funcs[inert_lim_low:inert_lim_high, i]) + i * 10, 1)
@@ -150,6 +150,9 @@ def plot_anomalous_exponent(outdir_path, p, zeta_p, ns_zeta_p = None, label_str 
 	
 	## Plot the NS structure function slopes
 	ax1.plot(p, ns_zeta_p, marker = mark_style[1], markerfacecolor = 'None', markersize = 5.0, markevery = 1, label = "Navier Stokes")
+
+	## Plot the She-Leveque prediction
+	ax1.plot(p, p/9.0 + 2.0 * (1.0 - np.power(2.0/3.0, p/3.0)), label = "She-Leveque Model; $p/9 + 2(1 - (2/3)^{p/3})$")
 
 	## Plot the slopes according to K41 theory
 	ax1.plot(p, p / 3, 'k--', label = "K41")

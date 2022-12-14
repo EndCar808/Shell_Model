@@ -44,6 +44,7 @@
 
 // Choose which system to solver 
 // #define __MAGNETO
+// #define __ELSASSAR_MHD
 // Choose which integrator to use
 #if defined(__INT_FAC_RK4)
 #define INT_FAC_RK4
@@ -240,6 +241,8 @@ typedef struct system_vars_struct {
 // Runtime data struct
 typedef struct runtime_data_struct {
 	double* k;			  				// Array to hold wavenumbers
+	double complex* z_plus;	   			// Fourier space Positive Elsassar variable
+	double complex* z_minus;   			// Fourier space Negative Elsassar variable
 	double complex* u;	      			// Fourier space velocity
 	double complex* b;	      			// Fourier space vorticity
 	double complex* rhs; 		  		// Array to hold the RHS of the equation of motion
@@ -289,22 +292,6 @@ typedef struct runtime_data_struct {
 
 // Runge-Kutta Integration struct
 typedef struct RK_data_struct {
-	// #if defined(PHASE_ONLY)
-	// double* RK1_u;		  		 	// Array to hold the result of the first stage for the velocity field
-	// double* RK2_u;		  		 	// Array to hold the result of the second stage for the velocity field
-	// double* RK3_u;		  		 	// Array to hold the result of the third stage for the velocity field
-	// double* RK4_u;		  		 	// Array to hold the result of the fourth stage for the velocity field
-	// double* RK1_b;		  		 	// Array to hold the result of the first stage for the magnetic field
-	// double* RK2_b;		  		 	// Array to hold the result of the second stage for the magnetic field
-	// double* RK3_b;		  		 	// Array to hold the result of the third stage for the magnetic field
-	// double* RK4_b;		  		 	// Array to hold the result of the fourth stage for the magnetic field
-	// double* RK_u_tmp;		     	// Array to hold the tempory updates to u - input to Nonlinear term function
-	// double* RK_b_tmp;		     	// Array to hold the tempory updates to b - input to Nonlinear term function
-	// double* AB_tmp_u;	  			// Array to hold the result of the RHS/Nonlinear term for the Adams Bashforth scheme
-	// double* AB_tmp_nonlin_u[3];	 	// Array to hold the previous 3 RHS/Nonlinear terms to update the Adams Bashforth scheme
-	// double* AB_tmp_b;	  			// Array to hold the result of the RHS/Nonlinear term for the Adams Bashforth scheme
-	// double* AB_tmp_nonlin_b[3];	 	// Array to hold the previous 3 RHS/Nonlinear terms to update the Adams Bashforth scheme
-	// #else
 	double complex* RK1_u;		  		// Array to hold the result of the first stage for the velocity field
 	double complex* RK2_u;		  		// Array to hold the result of the second stage for the velocity field
 	double complex* RK3_u;		  		// Array to hold the result of the third stage for the velocity field

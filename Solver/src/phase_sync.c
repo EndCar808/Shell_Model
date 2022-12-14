@@ -67,18 +67,18 @@ void ComputePhaseSyncData(const long int iter) {
 			#if defined(__MAGNETO)
 			// MHD Triad Type 1
 			phase_b_1     = fmod(carg(run_data->u[n]) + 2.0 * M_PI, 2.0 * M_PI);
-			phase_b_2     = fmod(carg(run_data->b[n]) + 2.0 * M_PI, 2.0 * M_PI);
-			phase_b_3     = fmod(carg(run_data->b[n]) + 2.0 * M_PI, 2.0 * M_PI);
+			phase_b_2     = fmod(carg(run_data->b[n + 1]) + 2.0 * M_PI, 2.0 * M_PI);
+			phase_b_3     = fmod(carg(run_data->b[n + 2]) + 2.0 * M_PI, 2.0 * M_PI);
 			phase_b_type1 = fmod(phase_b_1 + phase_b_2 + phase_b_3, 2.0 * M_PI);
 			// MHD Triad Type 2
 			phase_b_1     = fmod(carg(run_data->b[n]) + 2.0 * M_PI, 2.0 * M_PI);
-			phase_b_2     = fmod(carg(run_data->u[n]) + 2.0 * M_PI, 2.0 * M_PI);
-			phase_b_3     = fmod(carg(run_data->b[n]) + 2.0 * M_PI, 2.0 * M_PI);
+			phase_b_2     = fmod(carg(run_data->u[n + 1]) + 2.0 * M_PI, 2.0 * M_PI);
+			phase_b_3     = fmod(carg(run_data->b[n + 2]) + 2.0 * M_PI, 2.0 * M_PI);
 			phase_b_type2 = fmod(phase_b_1 + phase_b_2 + phase_b_3, 2.0 * M_PI);
 			// MHD Triad Type 3
 			phase_b_1     = fmod(carg(run_data->b[n]) + 2.0 * M_PI, 2.0 * M_PI);
-			phase_b_2     = fmod(carg(run_data->b[n]) + 2.0 * M_PI, 2.0 * M_PI);
-			phase_b_3     = fmod(carg(run_data->u[n]) + 2.0 * M_PI, 2.0 * M_PI);
+			phase_b_2     = fmod(carg(run_data->b[n + 1]) + 2.0 * M_PI, 2.0 * M_PI);
+			phase_b_3     = fmod(carg(run_data->u[n + 2]) + 2.0 * M_PI, 2.0 * M_PI);
 			phase_b_type3 = fmod(phase_b_1 + phase_b_2 + phase_b_3, 2.0 * M_PI);
 			#endif
 			#endif

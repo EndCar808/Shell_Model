@@ -1111,11 +1111,11 @@ void InitialConditions(const long int N) {
 
 					// Initialize the magnetic field
 					#if defined(__MAGNETO)
-					run_data->b[i] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-2;
+					run_data->b[i] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-4;
 
 					// Record the phases and amplitudes
 					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
-					run_data->b_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-2;
+					run_data->b_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-4;
 					run_data->psi_n[i] = 0.0;
 					#endif
 					#endif
@@ -1172,7 +1172,7 @@ void InitializeShellWavenumbers(double* k, const long int N) {
 	// -------------------------------
 	for (int i = 0; i < N + 4; ++i) {
 		if (i >= 2 && i < N + 2) {
-			k[i] = sys_vars->k_0 * pow(sys_vars->Lambda, i - 2);
+			k[i] = sys_vars->k_0 * pow(sys_vars->Lambda, (i - 2)); // - 5
 		}
 		else {
 			k[i] = 0.0;
@@ -1578,13 +1578,26 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 	// ---------------------------------
 	// Allocate Magnetic Field Variables
 	// ---------------------------------
-	#if defined(__MAGNETO)
-	// Full velocity field
+	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+	// Full magnetic field
 	run_data->b = (double complex* ) malloc(sizeof(double complex) * (N + 4));
 	if (run_data->b == NULL) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Magnetic Field");
 		exit(1);
 	}	
+	#if defined(__ELSASSAR_MHD)
+	// Elsassar Variables
+	run_data->z_plus = (double complex* ) malloc(sizeof(double complex) * (N + 4));
+	if (run_data->z_plus == NULL) {
+		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Elsassar Z+");
+		exit(1);
+	}	
+	run_data->z_minus = (double complex* ) malloc(sizeof(double complex) * (N + 4));
+	if (run_data->z_minus == NULL) {
+		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Elsassar Z-");
+		exit(1);
+	}	
+	#endif
 	#if defined(PHASE_ONLY_FXD_AMP)	|| defined(PHASE_ONLY)
 	// The Fourier amplitudes
 	run_data->b_n = (double* ) malloc(sizeof(double) * (N + 4));
@@ -1606,32 +1619,6 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 	// Allocate Integration Variables 
 	// -------------------------------
 	// Runge-Kutta Integration arrays
-	// #if defined(PHASE_ONLY)
-	// RK_data->RK1_u       = (double* )malloc(sizeof(double) * (N + 4));
-	// RK_data->RK2_u       = (double* )malloc(sizeof(double) * (N + 4));
-	// RK_data->RK3_u       = (double* )malloc(sizeof(double) * (N + 4));
-	// RK_data->RK4_u       = (double* )malloc(sizeof(double) * (N + 4));
-	// RK_data->RK_u_tmp    = (double* )malloc(sizeof(double) * (N + 4));
-	// #if defined(AB4CN)
-	// RK_data->AB_tmp_u	 = (double* )malloc(sizeof(double) * (N + 4));
-	// for (int i = 0; i < 3; ++i) {
-	// 	RK_data->AB_tmp_nonlin_u[i] = (double* )malloc(sizeof(double) * (N + 4));
-	// }
-	// #endif
-	// #if defined(__MAGNETO)
-	// RK_data->RK1_b       = (double* )malloc(sizeof(double) * (N + 4));
-	// RK_data->RK2_b       = (double* )malloc(sizeof(double) * (N + 4));
-	// RK_data->RK3_b       = (double* )malloc(sizeof(double) * (N + 4));
-	// RK_data->RK4_b       = (double* )malloc(sizeof(double) * (N + 4));
-	// RK_data->RK_b_tmp    = (double* )malloc(sizeof(double) * (N + 4));
-	// #if defined(AB4CN)
-	// RK_data->AB_tmp_b	 = (double* )malloc(sizeof(double) * (N + 4));
-	// for (int i = 0; i < 3; ++i) {
-	// 	RK_data->AB_tmp_nonlin_b[i] = (double* )malloc(sizeof(double) * (N + 4));
-	// }
-	// #endif
-	// #endif
-	// #else
 	RK_data->RK1_u       = (double complex* )malloc(sizeof(double complex) * (N + 4));
 	RK_data->RK2_u       = (double complex* )malloc(sizeof(double complex) * (N + 4));
 	RK_data->RK3_u       = (double complex* )malloc(sizeof(double complex) * (N + 4));
@@ -1747,13 +1734,17 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 		run_data->a_n[i]   = 0.0;
 		run_data->phi_n[i] = 0.0;
 		#endif
-		#if defined(__MAGNETO)
+		#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 		run_data->b[i]       = 0.0 + 0.0 * I;
 		RK_data->RK1_b[i]    = 0.0 + 0.0 * I;
 		RK_data->RK2_b[i]    = 0.0 + 0.0 * I;
 		RK_data->RK3_b[i]    = 0.0 + 0.0 * I;
 		RK_data->RK4_b[i]    = 0.0 + 0.0 * I;
 		RK_data->RK_b_tmp[i] = 0.0 + 0.0 * I;
+		#if defined(__ELSASSAR_MHD)
+		run_data->z_plus[i]  = 0.0 + 0.0 * I;
+		run_data->z_minus[i] = 0.0 + 0.0 * I;
+		#endif
 		#if defined(AB4CN)
 		RK_data->AB_tmp_b[i] = 0.0 + 0.0 * I;
 		for (int j = 0; j < 3; ++j) {
@@ -1786,8 +1777,12 @@ void FreeMemory(RK_data_struct* RK_data) {
 	free(run_data->a_n);
 	free(run_data->phi_n);
 	#endif
-	#if defined(__MAGNETO)
+	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	free(run_data->b);
+	#if defined(__ELSASSAR_MHD)
+	free(run_data->z_plus);
+	free(run_data->z_minus);
+	#endif
 	#if defined(PHASE_ONLY_FXD_AMP)
 	free(run_data->b_n);
 	free(run_data->psi_n);
