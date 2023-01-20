@@ -72,10 +72,6 @@ void Solve(void) {
 	// If input file is selected the function to read input file is called from here
 	InitialConditions(N);
 
-	// Initialize the forcing
-	InitializeForicing(N);
-
-
 	// -------------------------------
 	// Integration Variables
 	// -------------------------------
@@ -88,6 +84,12 @@ void Solve(void) {
 
 	// // Get timestep and other integration variables
 	InitializeIntegrationVariables(&t0, &t, &dt, &T, &trans_steps);
+
+	// -------------------------------
+	// Forcing
+	// -------------------------------
+	// Initialize the forcing
+	InitializeForicing(N, dt);
 	
 	// -------------------------------
 	// Create & Open Output File
@@ -105,6 +107,7 @@ void Solve(void) {
 
 	// Print update of the initial conditions to the terminal
 	PrintUpdateToTerminal(0, t0, dt, T, 0);
+
 
 	//////////////////////////////
 	// Begin Integration
@@ -780,91 +783,6 @@ void AB4CNStep(const double dt, const long iters, const long int N, RK_data_stru
 	}
 }
 #endif
-// #if defined(PHASE_ONLY) && !defined(PHASE_ONLY_FXD_AMP)
-// /**
-//  * Function that performs the evluation of the nonlinear term
-//  * @param u        array containing the input velocity phases
-//  * @param b        array containing the input magnetic phases
-//  * @param u_nonlin array to hold the result of computing the nonlinear term for velocity field
-//  * @param b_nonlin array to hold the result of computing the nonlinear term for the magnetic field
-//  * @param N        int defining the number of shells
-//  */
-// void NonlinearTerm(double* u, double* b, double* u_nonlin, double* b_nonlin, const long int N) {
-
-// 	// Initialize variables
-// 	int n;
-// 	const double lambda_pow         = sys_vars->Lambda * sys_vars->Lambda;
-// 	const double interact_coeff_u_1 = sys_vars->EPS / sys_vars->Lambda;
-// 	const double interact_coeff_u_2 = (1.0 - sys_vars->EPS) / lambda_pow;
-// 	#if defined(__MAGNETO)
-// 	const double interact_coeff_b_1 = 1.0 - sys_vars->EPS - sys_vars->EPS_M;
-// 	const double interact_coeff_b_2 = sys_vars->EPS_M / sys_vars->Lambda;
-// 	const double interact_coeff_b_3 = (1.0 - sys_vars->EPS_M) / lambda_pow;
-// 	#endif
-// 	double u_tmp_1, u_tmp_2, u_tmp_3;
-// 	#if defined(__MAGNETO)
-// 	double b_tmp_1, b_tmp_2, b_tmp_3;
-// 	#endif 
-
-// 	// -----------------------------------
-// 	// Compute The Nonlinear Terms
-// 	// -----------------------------------
-// 	for (int i = 0; i < N; ++i) {
-// 		// Get tmp array index
-// 		n = i + 2;
-
-// 		// -----------------------------------
-// 		// Compute Temporary Terms
-// 		// -----------------------------------
-// 		// Compute the velocity phase temporary terms in the nonlinear term
-// 		u_tmp_1 = run_data->a_n[n + 1] * run_data->a_n[n + 2] * cos(u[n] + u[n + 1] + u[n + 2]);
-// 		u_tmp_2 = run_data->a_n[n - 1] * run_data->a_n[n + 1] * cos(u[n - 1] + u[n] + u[n + 1]);
-// 		u_tmp_3 = run_data->a_n[n - 2] * run_data->a_n[n - 1] * cos(u[n - 2] + u[n - 1] + u[n]);
-// 		#if defined(__MAGNETO)
-// 		// Update velocity temporary terms with magnetic field
-// 		u_tmp_1 -= run_data->b_n[n + 1] * run_data->b_n[n + 2] * cos(u[n] + b[n + 1] + b[n + 2]);
-// 		u_tmp_2 -= run_data->b_n[n - 1] * run_data->b_n[n + 1] * cos(b[n - 1] + u[n] + b[n + 1]);
-// 		u_tmp_3 -= run_data->b_n[n - 2] * run_data->b_n[n - 1] * cos(b[n - 2] + b[n - 1] + u[n]);
-
-// 		// Compute the magnetic temporary terms in the nonlinear term
-// 		b_tmp_1 = run_data->a_n[n + 1] * run_data->b_n[n + 2] * cos(b[n] + u[n + 1] + b[n + 2]) - run_data->b_n[n + 1] * run_data->a_n[n + 2] * cos(b[n] + b[n + 1] + u[n + 2]);
-// 		b_tmp_2 = run_data->a_n[n - 1] * run_data->b_n[n + 1] * cos(u[n - 1] + b[n] + b[n + 1]) - run_data->b_n[n - 1] * run_data->a_n[n + 1] * cos(b[n - 1] + b[n] + u[n + 1]);
-// 		b_tmp_3 = run_data->a_n[n - 2] * run_data->b_n[n - 1] * cos(u[n - 2] + b[n - 1] + b[n]) - run_data->b_n[n - 2] * run_data->a_n[n - 1] * cos(b[n - 2] + u[n - 1] + b[n]);
-// 		#endif
-		
-// 		// -----------------------------------
-// 		// Compute Nonlinear Terms
-// 		// -----------------------------------
-// 		// Compute the nonlinear term for the velocity field
-// 		u_nonlin[n] = (run_data->k[n] / run_data->a_n[n]) * (u_tmp_1 - interact_coeff_u_1 * u_tmp_2 - interact_coeff_u_2 *  u_tmp_3);
-// 		#if defined(__MAGNETO)
-// 		// Compute the nonlinear term for the magnetic field
-// 		b_nonlin[n] = (run_data->k[n] / run_data->b_n[n]) * (interact_coeff_b_1 * b_tmp_1 + interact_coeff_b_2 * b_tmp_2 + interact_coeff_b_3 * b_tmp_3); 
-// 		#endif
-
-// 		// -----------------------------------
-// 		// Add Forcing
-// 		// -----------------------------------
-// 		if(!(strcmp(sys_vars->forcing, "FXD_AMP"))) {
-// 			run_data->a_n[n] = cabs(run_data->forcing_u[n]);
-// 			#if defined(__MAGNETO)
-// 			// Add forcing here for the magnetic field
-// 			run_data->b_n[n] = cabs(run_data->forcing_b[n]); 
-// 			#endif
-// 		}
-// 		// If not fixed amplitude then add the forcing to the forced modes
-// 		else {
-// 			// Add forcing here for the velocity field
-// 			u_nonlin[n] += cabs(run_data->forcing_u[n]) * sin(carg(run_data->forcing_u[n]) - u[n]) / run_data->a_n[n] ;
-// 			#if defined(__MAGNETO)
-// 			// Add forcing here for the magnetic field
-// 			b_nonlin[n] += cabs(run_data->forcing_b[n]) * sin(carg(run_data->forcing_b[n]) - b[n]) / run_data->b_n[n]; 
-// 			#endif
-// 		}
-// 		// printf("u[%d]:\t%lf\t-\tf[%d]:\t%lf\t%lfi\t----\t%lf\n", i + 1, u_nonlin[n], i + i, creal(run_data->forcing_u[n]), cimag(run_data->forcing_u[n]), u_nonlin[n] / creal(run_data->forcing_u[n]));
-// 	}
-// }
-// #else
 /**
  * Function that performs the evluation of the nonlinear term
  * @param u        array containing the input velocity modes
@@ -1033,7 +951,7 @@ void InitialConditions(const long int N) {
 				#endif
 
 				// Initialize the magnetic field
-				#if defined(__MAGNETO)
+				#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 				run_data->b[i] = 0.0 + 0.0 * I;
 				// Initialize the phases and amplitudes
 				#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) 
@@ -1057,9 +975,8 @@ void InitialConditions(const long int N) {
 					#endif
 
 					// Initialize the magnetic field
-					#if defined(__MAGNETO)
+					#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 					run_data->b[i] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * cexp(I * pow(i - 1, 4.0)) * 1e-2 / sqrt(75);
-
 					// Record the phases and amplitudes
 					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
 					run_data->b_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-2;
@@ -1073,30 +990,30 @@ void InitialConditions(const long int N) {
 					// ------------------------------------------------	
 					// Get random uniform number
 					r1 = (double)rand() / (double)RAND_MAX;
-					#if defined(__MAGNETO)
+					#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 					r2 = (double)rand() / (double)RAND_MAX;
 					#endif
 
 					// Initialize the velocity field
-					run_data->u[i] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) * cexp(I * r1 * 2.0 * M_PI);
+					run_data->u[i] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) * cexp(I * r1 * 2.0 * M_PI); // *1e-3
 					// Record the phases and amplitudes
 					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
-					run_data->a_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->ALPHA);
+					run_data->a_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->ALPHA); // *1e-3
 					run_data->phi_n[i] = r1 * 2.0 * M_PI;
 					#endif
 
 					// Initialize the magnetic field
-					#if defined(__MAGNETO)
-					run_data->b[i] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * cexp(I * r2 * 2.0 * M_PI) * 1e-2;
+					#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+					run_data->b[i] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * cexp(I * r2 * 2.0 * M_PI); // *1e-3
 
 					// Record the phases and amplitudes
 					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
-					run_data->b_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-2;
+					run_data->b_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->BETA); // *1e-3
 					run_data->psi_n[i] = r2 * 2.0 * M_PI;
 					#endif
 					#endif
 				}
-				else if(!(strcmp(sys_vars->u0, "ZERO"))) {
+				else if(!(strcmp(sys_vars->u0, "ZERO_PHASE"))) {
 					// ------------------------------------------------
 					// Zero Initial Conditions
 					// ------------------------------------------------	
@@ -1110,12 +1027,36 @@ void InitialConditions(const long int N) {
 					#endif
 
 					// Initialize the magnetic field
-					#if defined(__MAGNETO)
+					#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 					run_data->b[i] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-4;
 
 					// Record the phases and amplitudes
 					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
 					run_data->b_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-4;
+					run_data->psi_n[i] = 0.0;
+					#endif
+					#endif
+				}
+				else if(!(strcmp(sys_vars->u0, "ZERO"))) {
+					// ------------------------------------------------
+					// Zero Initial Conditions
+					// ------------------------------------------------	
+					// Initialize the velocity field
+					run_data->u[i] = 0.0 + 0.0 * I;
+
+					// Record the phases and amplitudes
+					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
+					run_data->a_n[i]   = 0.0;
+					run_data->phi_n[i] = 0.0;
+					#endif
+
+					// Initialize the magnetic field
+					#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+					run_data->b[i] = 0.0 + 0.0 * I;
+
+					// Record the phases and amplitudes
+					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
+					run_data->b_n[i]   = 0.0;
 					run_data->psi_n[i] = 0.0;
 					#endif
 					#endif
@@ -1127,7 +1068,7 @@ void InitialConditions(const long int N) {
 					// Get random uniform number
 					r1 = (double)rand() / (double)RAND_MAX;
 					r3 = (double)rand() / (double)RAND_MAX;
-					#if defined(__MAGNETO)
+					#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 					r2 = (double)rand() / (double)RAND_MAX;
 					r4 = (double)rand() / (double)RAND_MAX;
 					#endif
@@ -1142,7 +1083,7 @@ void InitialConditions(const long int N) {
 					#endif
 
 					// Initialize the magnetic field
-					#if defined(__MAGNETO)
+					#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 					run_data->b[i] = (r2 + r4) * 1e-2;
 					// Record the phases and amplitudes
 					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
@@ -1152,6 +1093,13 @@ void InitialConditions(const long int N) {
 					#endif
 				}
 			}
+			// ------------------------------------------------
+			// Get the Elsassar Variables 
+			// ------------------------------------------------
+			#if defined(__ELSASSAR_MHD) 
+			run_data->z_plus[i]  = run_data->u[i] + run_data->b[i];
+			run_data->z_minus[i] = run_data->u[i] - run_data->b[i];
+			#endif
 			// printf("u[%d]:\t%1.16lf\t%1.16lf i\tb[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]),  i - 1, creal(run_data->b[i]), cimag(run_data->b[i]));		
 			// printf("a_n[%d]:\t%1.16lf\tphi[%d]:\t%1.16lf\tb_n[%d]:\t%1.16lf\tpsi[%d]:\t%1.16lf\n", i, run_data->a_n[i], i, run_data->phi_n[i], i, run_data->b_n[i], i, run_data->psi_n[i]);
 			// printf("a_n[%d]:\t%1.16lf\tphi[%d]:\t%1.16lf\n", i - 1, run_data->a_n[i], i - 1, run_data->phi_n[i]);
@@ -1172,28 +1120,23 @@ void InitializeShellWavenumbers(double* k, const long int N) {
 	// -------------------------------
 	for (int i = 0; i < N + 4; ++i) {
 		if (i >= 2 && i < N + 2) {
-			k[i] = sys_vars->k_0 * pow(sys_vars->Lambda, (i - 2)); // - 5
+			k[i] = sys_vars->k_0 * pow(sys_vars->Lambda, (i - 2));
 		}
 		else {
 			k[i] = 0.0;
 		}
-		// printf("k[%d]: %lf\n", i - 1, k[i]);
 	}
-	// printf("\n");
-
 }
 /**
  * Function to initialize the forcing 
  * @param N Number of shells
  */
-void InitializeForicing(const long int N) {
+void InitializeForicing(const long int N, double dt) {
 
 	// Initialize variables
 	int n; 
 	double tau_0;
-	double rand1 = ((double)rand() / (double) RAND_MAX);
-	double rand2 = ((double)rand() / (double) RAND_MAX);
-
+	
 	// ------------------------------------------------
 	// Allocate Memory for Forcing Data
 	// ------------------------------------------------
@@ -1270,17 +1213,56 @@ void InitializeForicing(const long int N) {
 				#endif	
 			}
 		}
-		else if(!(strcmp(sys_vars->forcing, "STOC"))) {
+		else if(!(strcmp(sys_vars->forcing, "EXP_STOC"))) {
 			// ------------------------------------------------
-			// Stochastic Forcing - Satisfying a Langevin Eqn -> \dot{f}_n = -1/\tau_1 f_n + \sigma\zeta; \zeta ~ N(0, 1); \sigma is noise amplitude and \tau_1 is the largest scale eddy turnover time
+			// Exponentially Correlated Stochastic Forcing - Satisfying a Langevin Eqn -> \dot{f}_n = -1/\tau_1 f_n + \sigma\zeta; \zeta ~ N(0, 1); \sigma is noise amplitude and \tau_1 is the largest scale eddy turnover time
 			// ------------------------------------------------
 			// Loop over the forced modes and compute the intial forcing forcing
 			if (i >= 2 && i <= sys_vars->force_k + 1){
+				// Generate uniform random numbers
+				double rand1 = ((double)rand() / (double) RAND_MAX);
+				double rand2 = ((double)rand() / (double) RAND_MAX);
+
 				// Compute the forcing timescale
 				tau_0 = 1.0 / pow(run_data->k[i] / K_0, 2.0/3.0);
 
 				// Compute the forcing
-				run_data->forcing_u[i] = sqrt(- 2.0 * tau_0 * log10(rand1)) * cexp(I * 2.0 * M_PI * rand2);
+				run_data->forcing_u[i] = sqrt(- 2.0 * (dt / tau_0) * log10(rand1)) * cexp(I * 2.0 * M_PI * rand2);
+				#if defined(__MAGNETO)
+				run_data->forcing_b[i] = 0.0 + 0.0 * I;
+				#endif
+			}
+			else {
+				run_data->forcing_u[i] = 0.0 + 0.0 * I;	
+				#if defined(__MAGNETO)
+				run_data->forcing_b[i] = 0.0 + 0.0 * I;
+				#endif
+			}
+		}
+		else if(!(strcmp(sys_vars->forcing, "DELTA_STOC"))) {
+			// ------------------------------------------------
+			// Delta Correlated Stochastic Forcing - Satisfying a Langevin Eqn -> \dot{f}_n = -1/\tau_1 f_n + \sigma\zeta; \zeta ~ N(0, 1); \sigma is noise amplitude and \tau_1 is the largest scale eddy turnover time
+			// ------------------------------------------------
+			// Loop over the forced modes and compute the intial forcing forcing
+			if (i >= 2 && i <= sys_vars->force_k + 1){
+				// Generate uniform random numbers
+				double rand1 = ((double)rand() / (double) RAND_MAX);
+				double rand2 = ((double)rand() / (double) RAND_MAX);
+
+				// Compute the forcing timescale
+				tau_0 = 1.0 / pow(run_data->k[i] / K_0, 2.0/3.0);
+
+				// Compute the forcing
+				run_data->forcing_u[i] = FORC_STOC_SIGMA * sqrt(-2.0 * (dt / tau_0) * log10(rand1)) * cexp(I * 2.0 * M_PI * rand2);
+				#if defined(__MAGNETO)
+				run_data->forcing_b[i] = 0.0 + 0.0 * I;
+				#endif
+			}
+			else {
+				run_data->forcing_u[i] = 0.0 + 0.0 * I;	
+				#if defined(__MAGNETO)
+				run_data->forcing_b[i] = 0.0 + 0.0 * I;
+				#endif
 			}
 		}
 		else if(!(strcmp(sys_vars->forcing, "NONE"))) {
@@ -1314,23 +1296,41 @@ void ComputeForcing(double dt, const long int N) {
 	double tau_0, exp_fac;
 
 	// ------------------------------------------------
-	// Stochastic Forcing
+	// Exponentially Correlated Stochastic Forcing
 	// ------------------------------------------------
- 	if(!(strcmp(sys_vars->forcing, "STOC"))) {
- 		// Generate two uniform random numbers
-		rand1 = ((double)rand() / (double) RAND_MAX);
-		rand2 = ((double)rand() / (double) RAND_MAX);
-
-		// Loop over the forced modes and compute the forcing
+ 	if(!(strcmp(sys_vars->forcing, "EXP_STOC"))) {
+		// Loop over the forced modes and compute the forcing -> note shell n = 1 is at index 2
 		for (int i = 2; i <= sys_vars->force_k + 1; ++i) {
+ 			// Generate two uniform random numbers
+			rand1 = ((double)rand() / (double) RAND_MAX);
+			rand2 = ((double)rand() / (double) RAND_MAX);
+
 			// Compute the forcing timescale
 			tau_0 = 1.0 / pow(run_data->k[i] / K_0, 2.0/3.0);
 
 			// Compute the exponential prefactor
 			exp_fac = cexp(-dt / tau_0);
 
-			// Compute
-			run_data->forcing_u[i] = exp_fac * run_data->forcing_u[i] + sys_vars->force_scale_var * sqrt(-2.0 * (1.0 - pow(exp_fac, 2.0)) * log10(rand1)) * cexp(I * 2.0 * M_PI * rand2);
+			// Compute forcing
+			run_data->forcing_u[i] = sys_vars->force_scale_var * (exp_fac * run_data->forcing_u[i] + sqrt(-2.0 * (1.0 - pow(exp_fac, 2.0)) * log10(rand1)) * cexp(I * 2.0 * M_PI * rand2));
+		}
+	}
+	else if(!(strcmp(sys_vars->forcing, "DELTA_STOC"))) {
+		// Loop over the forced modes and compute the forcing -> note shell n = 1 is at index 2
+		for (int i = 2; i <= sys_vars->force_k + 1; ++i) {
+ 			// Generate two uniform random numbers
+			rand1 = ((double)rand() / (double) RAND_MAX);
+			rand2 = ((double)rand() / (double) RAND_MAX);
+
+			// Compute the forcing timescale
+			tau_0 = 1.0 / pow(run_data->k[i] / K_0, 2.0/3.0);
+
+			// printf("|u|: %lf \t|k|: %lf \t tau: %lf\n", cabs(run_data->u[i]), cabs(run_data->k[i]), tau_0);
+
+			// Compute forcing 
+			run_data->forcing_u[i] = run_data->forcing_u[i] - dt * run_data->forcing_u[i] / tau_0 + sys_vars->force_scale_var * sqrt(-2.0 * (dt / tau_0) * log10(rand1)) * cexp(I * 2.0 * M_PI * rand2);
+			// run_data->forcing_u[i] = run_data->forcing_u[i] - dt * run_data->forcing_u[i] / tau_0 + FORC_STOC_SIGMA * sqrt(-2.0 * (dt / tau_0) * log10(rand1)) * cexp(I * 2.0 * M_PI * rand2);
+			// run_data->forcing_u[i] = run_data->forcing_u[i] + sys_vars->force_scale_var * (- run_data->forcing_u[i] / tau_0 + FORC_STOC_SIGMA * sqrt(-2.0 * (dt / tau_0) * log10(rand1)) * cexp(I * 2.0 * M_PI * rand2));
 		}
 	}
 }
@@ -1362,10 +1362,10 @@ void AddForcing(double complex* u_nonlin, double complex* b_nonlin) {
 			}
 		}
 		//------------------------------------------------------- Add Stochastic forcing and also update the forcing for the next iteration
-		else if(!(strcmp(sys_vars->forcing, "STOC"))) {
-			if (i >= 2 && i <= sys_vars->force_k + 1) {
+		else if(!(strcmp(sys_vars->forcing, "EXP_STOC")) || !(strcmp(sys_vars->forcing, "DELTA_STOC"))) {
+			if (n >= 2 && n <= sys_vars->force_k + 1){
 				// Add the forcing 
-				u_nonlin[i] += run_data->forcing_u[i];
+				u_nonlin[n] += run_data->forcing_u[n];
 			}
 		}
 		//------------------------------------------------------- Else if normal forcing is selected just add the forcing to the forced modes
@@ -1376,10 +1376,14 @@ void AddForcing(double complex* u_nonlin, double complex* b_nonlin) {
 			b_nonlin[n] += run_data->forcing_b[n]; 
 			#endif
 		}
-	if (n >= 2 && n <= N - 1) {
-		// printf("u[%d]: %lf %lf\ta_n[%d]: %lf\tf[%d]: %lf %lf\tf_n[%d]: %lf\n", n, creal(run_data->u[n]), cimag(run_data->u[n]), n, cabs(run_data->u[n]), n, creal(run_data->forcing_u[n]), cimag(run_data->forcing_u[n]), n, cabs(run_data->forcing_u[n]));
+	// if (n >= 2 && n <= N - 1) {
+	// 	printf("u[%d]: %lf %lf\ta_n[%d]: %lf\tf[%d]: %lf %lf\tf_n[%d]: %lf\n", n, creal(run_data->u[n]), cimag(run_data->u[n]), n, cabs(run_data->u[n]), n, creal(run_data->forcing_u[n]), cimag(run_data->forcing_u[n]), n, cabs(run_data->forcing_u[n]));
+	// }
 	}
-	}
+	// for (n = 0; n < N + 4; ++n) {
+	// 	printf("u[%d]: %lf %lf\ta_n[%d]: %lf\tf[%d]: %lf %lf\tf_n[%d]: %lf\n", n, creal(run_data->u[n]), cimag(run_data->u[n]), n, cabs(run_data->u[n]), n, creal(run_data->forcing_u[n]), cimag(run_data->forcing_u[n]), n, cabs(run_data->forcing_u[n]));
+	// }
+	// printf("\n");
 }
 /**
  * Function to initialize all the integration time variables

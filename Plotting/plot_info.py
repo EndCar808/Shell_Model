@@ -587,6 +587,20 @@ if __name__ == '__main__':
         plt.savefig(cmdargs.out_dir_info + "EnergyFlux_EnergyDiss_EnergyInput_Tseries.png", bbox_inches='tight')
         plt.close()
 
+        fig = plt.figure(figsize = (16, 16))
+        gs  = GridSpec(5, 5, wspace = 0.25, hspace = 0.25)
+        ## Plot the mag phase differences
+        for i in range(5):
+            for j in range(5):
+                if i * 5 + j < sys_vars.N:
+                    ax1 = fig.add_subplot(gs[i, j])
+                    ax1.plot(sys_msr_data.time, run_data.enrg_flux[:, i * 5 + j])
+                    ax1.set_xlabel("$t$")
+                    ax1.set_title("Energ Flux {}".format(i * 5 + j + 1))
+                    ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        
+        plt.savefig(cmdargs.out_dir_info + "EnergyFlux_N_Tseries.png", bbox_inches='tight')
+        plt.close()
 
         ##-------------- Plot The Total Flux & Diss over time
         fig = plt.figure(figsize = (16, 8))
@@ -644,7 +658,7 @@ if __name__ == '__main__':
         ax1.set_xscale("log")
         ax1.set_yscale("log")
         ax1.set_xlabel(r"$\langle a_n\rangle_t$")
-        ax1.set_title("Time Averaged Velocity Amplitudes")
+        ax1.set_title("Time Averaged Energy Flux")
         ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
         plt.savefig(cmdargs.out_dir_info + "TimeAveraged_EnergyFlux_Log10.png", bbox_inches='tight')
         plt.close()

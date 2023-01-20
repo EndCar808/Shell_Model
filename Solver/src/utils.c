@@ -325,8 +325,13 @@ int GetCMLArgs(int argc, char** argv) {
 					strncpy(sys_vars->u0, "RANDOM", 64);
 					break;
 				}
-				else if (!(strcmp(optarg,"ZERO"))) {
+				else if (!(strcmp(optarg,"ZERO_PHASE"))) {
 					// Zero Phases Initial Conditions
+					strncpy(sys_vars->u0, "ZERO_PHASE", 64);
+					break;
+				}
+				else if (!(strcmp(optarg,"ZERO"))) {
+					// Zero Field Initial Conditions
 					strncpy(sys_vars->u0, "ZERO", 64);
 					break;
 				}
@@ -389,9 +394,15 @@ int GetCMLArgs(int argc, char** argv) {
 					force_flag = 1;
 					break;
 				}
-				else if (!(strcmp(optarg,"STOC"))  && (force_flag == 0)) {
-					// Stochastic forcing
-					strncpy(sys_vars->forcing, "STOC", 64);
+				else if (!(strcmp(optarg,"EXP_STOC"))  && (force_flag == 0)) {
+					// Exponentially Correlated Stochastic forcing
+					strncpy(sys_vars->forcing, "EXP_STOC", 64);
+					force_flag = 1;
+					break;
+				}
+				else if (!(strcmp(optarg,"DELTA_STOC"))  && (force_flag == 0)) {
+					// Delta Correlated Stochastic forcing
+					strncpy(sys_vars->forcing, "DELTA_STOC", 64);
 					force_flag = 1;
 					break;
 				}
