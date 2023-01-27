@@ -108,6 +108,7 @@ void Solve(void) {
 	// Print update of the initial conditions to the terminal
 	PrintUpdateToTerminal(0, t0, dt, T, 0);
 
+	printf("Scale: %lf", sys_vars->force_scale_var);
 
 	//////////////////////////////
 	// Begin Integration
@@ -1253,7 +1254,7 @@ void InitializeForicing(const long int N, double dt) {
 				tau_0 = 1.0 / pow(run_data->k[i] / K_0, 2.0/3.0);
 
 				// Compute the forcing
-				run_data->forcing_u[i] = FORC_STOC_SIGMA * sqrt(-2.0 * (dt / tau_0) * log10(rand1)) * cexp(I * 2.0 * M_PI * rand2);
+				run_data->forcing_u[i] = sys_vars->force_scale_var * sqrt(-2.0 * (dt / tau_0) * log10(rand1)) * cexp(I * 2.0 * M_PI * rand2);
 				#if defined(__MAGNETO)
 				run_data->forcing_b[i] = 0.0 + 0.0 * I;
 				#endif
