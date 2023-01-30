@@ -41,6 +41,22 @@ void ComputePhaseSyncData(const long int iter) {
 	phase_sync->num_phase_sync_steps++;
 
 	// -------------------------------
+	// Get the Phases
+	// -------------------------------
+	#if !defined(PHASE_ONLY)
+	for (int i = 0; i < N; ++i)	{
+		n = i + 2;
+
+		// Get the phases
+		run_data->phi_n[n] = fmod(carg(run_data->u[n]) + 2.0 * M_PI, 2.0 * M_PI);	
+		#if defined(__MAGNETO)
+		run_data->psi_n[n] = fmod(carg(run_data->b[n]) + 2.0 * M_PI, 2.0 * M_PI);
+		#endif
+	}
+	#endif
+
+
+	// -------------------------------
 	// Compute Phases & Phase Order
 	// -------------------------------
 	for (int i = 0; i < N; ++i)	{
@@ -48,44 +64,22 @@ void ComputePhaseSyncData(const long int iter) {
 
 		///--------------------------------- Compute the triad phases and triad order parameters
 		if (i < num_triads) {
+
 			// Get the triad phase
-			#if defined(PHASE_ONLY)
 			phase_u_1 = fmod(run_data->phi_n[n] + 2.0 * M_PI, 2.0 * M_PI);
 			phase_u_2 = fmod(run_data->phi_n[n + 1] + 2.0 * M_PI, 2.0 * M_PI);
 			phase_u_3 = fmod(run_data->phi_n[n + 2] + 2.0 * M_PI, 2.0 * M_PI);
 			phase_u   = fmod(phase_u_1 + phase_u_2 + phase_u_3 + 2.0 * M_PI, 2.0 * M_PI);
-			#if defined(__MAGNETO)
-			phase_b_1 = fmod(run_data->phi_n[n] + run_data->psi_n[n + 1] + run_data->psi_n[n + 2] + 2.0 * M_PI, 2.0 * M_PI);
-			phase_b_2 = fmod(run_data->psi_n[n] + run_data->phi_n[n + 1] + run_data->psi_n[n + 2] + 2.0 * M_PI, 2.0 * M_PI);
-			phase_b_3 = fmod(run_data->psi_n[n] + run_data->psi_n[n + 1] + run_data->phi_n[n + 2] + 2.0 * M_PI, 2.0 * M_PI);
+			#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+			phase_b_type1 = fmod(run_data->phi_n[n] + run_data->psi_n[n + 1] + run_data->psi_n[n + 2] + 2.0 * M_PI, 2.0 * M_PI);
+			phase_b_type2 = fmod(run_data->psi_n[n] + run_data->phi_n[n + 1] + run_data->psi_n[n + 2] + 2.0 * M_PI, 2.0 * M_PI);
+			phase_b_type3 = fmod(run_data->psi_n[n] + run_data->psi_n[n + 1] + run_data->phi_n[n + 2] + 2.0 * M_PI, 2.0 * M_PI);
 			#endif
-			#else 
-			phase_u_1 = fmod(carg(run_data->u[n]) + 2.0 * M_PI, 2.0 * M_PI);
-			phase_u_2 = fmod(carg(run_data->u[n + 1]) + 2.0 * M_PI, 2.0 * M_PI);
-			phase_u_3 = fmod(carg(run_data->u[n + 2]) + 2.0 * M_PI, 2.0 * M_PI);
-			phase_u   = fmod(phase_u_1 + phase_u_2 + phase_u_3, 2.0 * M_PI);
-			#if defined(__MAGNETO)
-			// MHD Triad Type 1
-			phase_b_1     = fmod(carg(run_data->u[n]) + 2.0 * M_PI, 2.0 * M_PI);
-			phase_b_2     = fmod(carg(run_data->b[n + 1]) + 2.0 * M_PI, 2.0 * M_PI);
-			phase_b_3     = fmod(carg(run_data->b[n + 2]) + 2.0 * M_PI, 2.0 * M_PI);
-			phase_b_type1 = fmod(phase_b_1 + phase_b_2 + phase_b_3, 2.0 * M_PI);
-			// MHD Triad Type 2
-			phase_b_1     = fmod(carg(run_data->b[n]) + 2.0 * M_PI, 2.0 * M_PI);
-			phase_b_2     = fmod(carg(run_data->u[n + 1]) + 2.0 * M_PI, 2.0 * M_PI);
-			phase_b_3     = fmod(carg(run_data->b[n + 2]) + 2.0 * M_PI, 2.0 * M_PI);
-			phase_b_type2 = fmod(phase_b_1 + phase_b_2 + phase_b_3, 2.0 * M_PI);
-			// MHD Triad Type 3
-			phase_b_1     = fmod(carg(run_data->b[n]) + 2.0 * M_PI, 2.0 * M_PI);
-			phase_b_2     = fmod(carg(run_data->b[n + 1]) + 2.0 * M_PI, 2.0 * M_PI);
-			phase_b_3     = fmod(carg(run_data->u[n + 2]) + 2.0 * M_PI, 2.0 * M_PI);
-			phase_b_type3 = fmod(phase_b_1 + phase_b_2 + phase_b_3, 2.0 * M_PI);
-			#endif
-			#endif
+			
 			
 			///--------------------- Record the triad phases
 			phase_sync->triads_u[i] = phase_u;
-			#if defined(__MAGNETO)
+			#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 			phase_sync->triads_b[0 * phase_sync->num_triads + i] = phase_b_type1;
 			phase_sync->triads_b[1 * phase_sync->num_triads + i] = phase_b_type2;
 			phase_sync->triads_b[2 * phase_sync->num_triads + i] = phase_b_type3;
@@ -94,7 +88,7 @@ void ComputePhaseSyncData(const long int iter) {
 			///--------------------- Record the triad phase order parameters
 			#if defined(__PHASE_SYNC)
 			phase_sync->triad_u_order[i] += cexp(I * phase_u);
-			#if defined(__MAGNETO)
+			#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 			phase_sync->triad_b_order[0 * phase_sync->num_triads + i] += cexp(I * phase_b_type1);
 			phase_sync->triad_b_order[1 * phase_sync->num_triads + i] += cexp(I * phase_b_type2);
 			phase_sync->triad_b_order[2 * phase_sync->num_triads + i] += cexp(I * phase_b_type3);
@@ -108,7 +102,7 @@ void ComputePhaseSyncData(const long int iter) {
 				fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to update bin count for ["CYAN"%s"RESET"] for Iter ["CYAN"%ld"RESET"] -- GSL Exit Status [Err:"CYAN" %d"RESET" - Val:"CYAN" %lf"RESET"]\n-->> Exiting!!!\n", "Velocity Triads Histogram", iter, gsl_status, phase_u);
 				exit(1);
 			}
-			#if defined(__MAGNETO)
+			#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 			gsl_status = gsl_histogram_increment(phase_sync->triad_b_hist[0 * phase_sync->num_triads + i], phase_b_type1);
 			if (gsl_status != 0) {
 				fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to update bin count for ["CYAN"%s"RESET"] for Iter ["CYAN"%ld"RESET"] -- GSL Exit Status [Err:"CYAN" %d"RESET" - Val:"CYAN" %lf"RESET"]\n-->> Exiting!!!\n", "Magnetic Triads Histogram 1", iter, gsl_status, phase_b_type1);
@@ -130,8 +124,8 @@ void ComputePhaseSyncData(const long int iter) {
 
 		///--------------------------------- Compute the phase differences and phase difference order parameters
 		if (i < num_phase_diff) {
+
 			// Get the phase differences
-			#if defined(PHASE_ONLY)
 			phase_u_1 = fmod(run_data->phi_n[n] + 2.0 * M_PI, 2.0 * M_PI);
 			phase_u_2 = fmod(run_data->phi_n[n + 3] + 2.0 * M_PI, 2.0 * M_PI);
 			phase_u   = fmod((phase_u_1 - phase_u_2) + 2.0 * M_PI, 2.0 * M_PI);			
@@ -140,27 +134,18 @@ void ComputePhaseSyncData(const long int iter) {
 			phase_b_2     = fmod(run_data->psi_n[n + 3] + 2.0 * M_PI, 2.0 * M_PI);
 			phase_b_type1 = fmod((phase_b_1 - phase_b_2) + 2.0 * M_PI, 2.0 * M_PI);
 			#endif
-			#else
-			phase_u_1 = fmod(carg(run_data->u[n]) + 2.0 * M_PI, 2.0 * M_PI);
-			phase_u_2 = fmod(carg(run_data->u[n + 3]) + 2.0 * M_PI, 2.0 * M_PI);
-			phase_u   = fmod((phase_u_1 - phase_u_2) + 2.0 * M_PI, 2.0 * M_PI);
-			#if defined(__MAGNETO)
-			phase_b_1     = fmod(carg(run_data->b[n]) + 2.0 * M_PI, 2.0 * M_PI);
-			phase_b_2     = fmod(carg(run_data->b[n + 3]) + 2.0 * M_PI, 2.0 * M_PI);
-			phase_b_type1 = fmod((phase_b_1 - phase_b_2) + 2.0 * M_PI, 2.0 * M_PI);
-			#endif
-			#endif
+			
 			
 			///--------------------- Record the phase differences
 			phase_sync->phase_diff_u[i] = phase_u;
-			#if defined(__MAGNETO)
+			#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 			phase_sync->phase_diff_b[i] = phase_b_type1;
 			#endif
 
 			///--------------------- Record the phase difference order parameters
 			#if defined(__PHASE_SYNC)
 			phase_sync->phase_diff_u_order[i] += cexp(I * phase_u);
-			#if defined(__MAGNETO)
+			#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 			phase_sync->phase_diff_b_order[i] += cexp(I * phase_b_type1);
 			#endif
 			#endif
@@ -172,7 +157,7 @@ void ComputePhaseSyncData(const long int iter) {
 				fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to update bin count for ["CYAN"%s"RESET"] for Iter ["CYAN"%ld"RESET"] -- GSL Exit Status [Err:"CYAN" %d"RESET" - Val:"CYAN" %lf"RESET"]\n-->> Exiting!!!\n", "Velocity Phase Difference Histogram", iter, gsl_status, phase_u);
 				exit(1);
 			}
-			#if defined(__MAGNETO)
+			#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 			gsl_status = gsl_histogram_increment(phase_sync->phase_diff_b_hist[i], phase_b_type1);
 			if (gsl_status != 0) {
 				fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to update bin count for ["CYAN"%s"RESET"] for Iter ["CYAN"%ld"RESET"] -- GSL Exit Status [Err:"CYAN" %d"RESET" - Val:"CYAN" %lf"RESET"]\n-->> Exiting!!!\n", "Magnetic Phase Difference Histogram", iter, gsl_status, phase_b_type1);
@@ -206,7 +191,7 @@ void InitializePhaseSyncObjects(void) {
 	}
 	
 	///---------------- Allocate Magentic Triads
-	#if defined(__MAGNETO)
+	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	phase_sync->triads_b = (double* )malloc(sizeof(double) * num_triads * NUM_MAG_TRIAD_TYPES);
 	if (phase_sync->triads_b == NULL) {
 	    fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Magnetic Triads");
@@ -225,7 +210,7 @@ void InitializePhaseSyncObjects(void) {
 	}
 	
 	///---------------- Allocate Magentic Phase Difference
-	#if defined(__MAGNETO)
+	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	phase_sync->phase_diff_b = (double* )malloc(sizeof(double) * num_phase_diff);
 	if (phase_sync->phase_diff_b == NULL) {
 	    fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Magnetic Phase Difference");
@@ -246,7 +231,7 @@ void InitializePhaseSyncObjects(void) {
 	}
 
 	///----------------- Magentic Triad Order Parameter
-	#if defined(__MAGNETO)
+	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	phase_sync->triad_b_order = (complex double* )malloc(sizeof(complex double) * num_triads * NUM_MAG_TRIAD_TYPES);
 	if (phase_sync->triad_b_order == NULL) {
 	    fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Magnetic Triad Order Parameter");
@@ -262,7 +247,7 @@ void InitializePhaseSyncObjects(void) {
 	}
 
 	///----------------- Magentic Phase Difference Order Parameter
-	#if defined(__MAGNETO)
+	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	phase_sync->phase_diff_b_order = (complex double* )malloc(sizeof(complex double) * num_phase_diff);
 	if (phase_sync->phase_diff_b_order == NULL) {
 	    fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Magnetic Phase Difference Order Parameter");
@@ -316,7 +301,7 @@ void InitializePhaseSyncObjects(void) {
 	}
 
 	///---------------- Allocate Magentic Field Phase Histogram memory
-	#if defined(__MAGNETO)
+	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	phase_sync->triad_b_hist = (gsl_histogram** )malloc(sizeof(gsl_histogram*) * num_triads * NUM_MAG_TRIAD_TYPES);
 	if (phase_sync->triad_b_hist == NULL) {
 	    fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Magnetic Triads Histograms");
@@ -396,14 +381,14 @@ void FreePhaseSyncObjects(void) {
 	#if defined(__PHASE_SYNC_STATS)
 	for (int i = 0; i < phase_sync->num_triads; ++i) {
 		gsl_histogram_free(phase_sync->triad_u_hist[i]);
-		#if defined(__MAGNETO)
+		#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 		gsl_histogram_free(phase_sync->triad_b_hist[0 * phase_sync->num_triads + i]);
 		gsl_histogram_free(phase_sync->triad_b_hist[1 * phase_sync->num_triads + i]);
 		gsl_histogram_free(phase_sync->triad_b_hist[2 * phase_sync->num_triads + i]);
 		#endif
 		if (i < phase_sync->num_phase_diff) {
 			gsl_histogram_free(phase_sync->phase_diff_u_hist[i]);
-			#if defined(__MAGNETO)
+			#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 			gsl_histogram_free(phase_sync->phase_diff_b_hist[i]);
 			#endif
 		}

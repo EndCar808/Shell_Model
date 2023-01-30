@@ -580,7 +580,7 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
         #if defined(__VEL_AMP_AVG)
         run_data->a_n_t_avg[i] = 0.0;
         #endif
-        #if defined(__MAG_AMP_AVG) && defined(__MAGNETO)
+        #if defined(__MAG_AMP_AVG) && (defined(__MAGNETO) || defined(__ELSASSAR_MHD))
         run_data->b_n_t_avg[i] = 0.0;
         #endif
     }

@@ -33,7 +33,7 @@ void CreateOutputFilesWriteICs(const long int N) {
 	// Initialize variables
 	herr_t status;
 
-	#if defined(__VEL) || defined(__MAG) || defined(__FORCING) || defined(__STATS) || defined(__PHASE_SYNC)
+	#if defined(__VEL) || defined(__MAG) || defined(__Z_PLUS) || defined(__Z_MINUS) || defined(__FORCING) || defined(__STATS) || defined(__PHASE_SYNC)
 	// Create compound datatype for the complex datasets
 	file_info->COMPLEX_DTYPE = CreateComplexDatatype();
 	#endif
@@ -74,7 +74,7 @@ void CreateOutputFilesWriteICs(const long int N) {
 	hsize_t chunkdims2D[Dim2D]; 	// array to hold dims of the hyperslab chunks
 	hsize_t index2D[Dim2D]; 		// stores the index in the hyperslabbed dataset to start writing to
 	hsize_t count2D[Dim2D];       	// stores the size of hyperslab to write to the dataset
-	#if defined(__MAGNETO) && (defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC))
+	#if (defined(__MAGNETO) || defined(__ELSASSAR_MHD)) && (defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC))
 	const int Dim3D = 3;
 	hsize_t dims3D[Dim3D];      	// array to hold dims of full evolution data
 	hsize_t maxdims3D[Dim3D];   	// array to hold max dims of full evolution data
@@ -109,10 +109,21 @@ void CreateOutputFilesWriteICs(const long int N) {
 	CreateSlabbedDSet(0.0, 0, file_info->output_file_handle, "VelPhases", &(file_info->file_space[DSET_VEL_PHI]), &(file_info->data_set[DSET_VEL_PHI]), &(file_info->mem_space[DSET_VEL_PHI]), H5T_NATIVE_DOUBLE, dims2D, maxdims2D, chunkdims2D, Dim2D);
 	#endif
 
-	#if defined(__MAGNETO)
+	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	///--------------------------------------- Magnetic Modes
 	#if defined(__MAG) && !(defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY))
 	CreateSlabbedDSet(0.0, 0, file_info->output_file_handle, "MagModes", &(file_info->file_space[DSET_MAG]), &(file_info->data_set[DSET_MAG]), &(file_info->mem_space[DSET_MAG]), file_info->COMPLEX_DTYPE, dims2D, maxdims2D, chunkdims2D, Dim2D);
+	#endif
+
+	#if defined(__ELSASSAR_MHD)
+	///--------------------------------------- Z_Plus Elsassar Variable
+	#if defined(__Z_PLUS) && !(defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY))
+	CreateSlabbedDSet(0.0, 0, file_info->output_file_handle, "ZPlus", &(file_info->file_space[DSET_Z_PLUS]), &(file_info->data_set[DSET_Z_PLUS]), &(file_info->mem_space[DSET_Z_PLUS]), file_info->COMPLEX_DTYPE, dims2D, maxdims2D, chunkdims2D, Dim2D);
+	#endif
+	///--------------------------------------- Z_Minus Elsassar Variable
+	#if defined(__Z_MINUS) && !(defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY))
+	CreateSlabbedDSet(0.0, 0, file_info->output_file_handle, "ZMinus", &(file_info->file_space[DSET_MINUS]), &(file_info->data_set[DSET_MINUS]), &(file_info->mem_space[DSET_MINUS]), file_info->COMPLEX_DTYPE, dims2D, maxdims2D, chunkdims2D, Dim2D);
+	#endif
 	#endif
 
 	///--------------------------------------- Magnetic Amplitudes
@@ -174,7 +185,7 @@ void CreateOutputFilesWriteICs(const long int N) {
 	maxdims2D[1]   = phase_sync->num_phase_diff;
 	chunkdims2D[1] = phase_sync->num_phase_diff;
 	CreateSlabbedDSet(0.0, 0, file_info->phase_sync_file_handle, "VelPhaseDifferences", &(file_info->file_space[DSET_VEL_PHASE_DIFF]), &(file_info->data_set[DSET_VEL_PHASE_DIFF]), &(file_info->mem_space[DSET_VEL_PHASE_DIFF]), H5T_NATIVE_DOUBLE, dims2D, maxdims2D, chunkdims2D, Dim2D);
-	#if defined(__MAGNETO)
+	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	// Create slabbed dataset for the magnetic triads
 	dims3D[0]      = sys_vars->num_print_steps;
 	dims3D[1]      = NUM_MAG_TRIAD_TYPES;
@@ -207,7 +218,7 @@ void CreateOutputFilesWriteICs(const long int N) {
 	maxdims2D[1]   = phase_sync->num_phase_diff;
 	chunkdims2D[1] = phase_sync->num_phase_diff;
 	CreateSlabbedDSet(0.0, 0, file_info->phase_sync_file_handle, "VelPhaseDifferenceOrderParameter", &(file_info->file_space[DSET_VEL_PHASE_DIFF_ORDER]), &(file_info->data_set[DSET_VEL_PHASE_DIFF_ORDER]), &(file_info->mem_space[DSET_VEL_PHASE_DIFF_ORDER]), file_info->COMPLEX_DTYPE, dims2D, maxdims2D, chunkdims2D, Dim2D);
-	#if defined(__MAGNETO)
+	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	// Initialize the hyperslab arrays for the magnetic triad order parameter
 	dims3D[0]      = sys_vars->num_print_steps;
 	dims3D[1]      = NUM_MAG_TRIAD_TYPES;
@@ -247,10 +258,21 @@ void CreateOutputFilesWriteICs(const long int N) {
 		WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_VEL_PHI], file_info->data_set[DSET_VEL_PHI], file_info->mem_space[DSET_VEL_PHI], H5T_NATIVE_DOUBLE, &(run_data->phi_n[2]), "VelPhases", count2D, index2D);
 		#endif
 
-		#if defined(__MAGNETO)
+		#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 		///--------------------------------------- Magnetic Modes
 		#if defined(__MAG) && !(defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY))
 		WriteSlabbedDataFourier(0.0, 0, file_info->file_space[DSET_MAG], file_info->data_set[DSET_MAG], file_info->mem_space[DSET_MAG], file_info->COMPLEX_DTYPE, &(run_data->b[2]), "MagModes", count2D, index2D);
+		#endif
+
+		#if defined(__ELSASSAR_MHD)
+		///--------------------------------------- Z_Plus Elsassar Variable
+		#if defined(__Z_PLUS) && !(defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY))
+		WriteSlabbedDataFourier(0.0, 0, file_info->file_space[DSET_Z_PLUS], file_info->data_set[DSET_Z_PLUS], file_info->mem_space[DSET_Z_PLUS], file_info->COMPLEX_DTYPE, &(run_data->z_plus[2]), "ZPlus", count2D, index2D);
+		#endif
+		///--------------------------------------- Z_Minus Elsassar Variables
+		#if defined(__Z_MINUS) && !(defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY))
+		WriteSlabbedDataFourier(0.0, 0, file_info->file_space[DSET_Z_MINUS], file_info->data_set[DSET_Z_MINUS], file_info->mem_space[DSET_Z_MINUS], file_info->COMPLEX_DTYPE, &(run_data->z_minus[2]), "ZMinus", count2D, index2D);
+		#endif
 		#endif
 
 		///--------------------------------------- Magnetic Amplitudes
@@ -307,7 +329,7 @@ void CreateOutputFilesWriteICs(const long int N) {
 		// Write slabbed dataset for the velocity phase differrences
 		count2D[1] = phase_sync->num_phase_diff;
 		WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_VEL_PHASE_DIFF], file_info->data_set[DSET_VEL_PHASE_DIFF], file_info->mem_space[DSET_VEL_PHASE_DIFF], H5T_NATIVE_DOUBLE, phase_sync->phase_diff_u, "VelPhaseDifferences", count2D, index2D);
-		#if defined(__MAGNETO)
+		#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 		// Write slabbed dataset for the magnetic triads
 		count3D[0] = 1;
 		count3D[1] = NUM_MAG_TRIAD_TYPES;
@@ -345,7 +367,7 @@ void CreateOutputFilesWriteICs(const long int N) {
 		// Free tmp memory
 		free(tmp_vel_triad_order);
 		free(tmp_vel_phase_diff_order);
-		#if defined(__MAGNETO)
+		#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 		// Record the time averaged order parameters here
 		double complex* tmp_mag_triad_order = (double complex* )malloc(sizeof(double complex) * NUM_MAG_TRIAD_TYPES * phase_sync->num_triads);
 		double complex* tmp_mag_phase_diff_order = (double complex* )malloc(sizeof(double complex) * phase_sync->num_phase_diff);
@@ -430,9 +452,11 @@ void GetOutputDirPath(void) {
 		// ----------------------------------
 		// Get Simulation Details
 		// ----------------------------------
-		#if defined(__MAGNETO)
+		#if defined(__MAGNETO) && !defined(__ELSASSAR_MHD)
 		sprintf(sys_type, "%s", "MAGHYDRO");
-		#elif !defined(__MAGNETO)
+		#elif defined(__ELSASSAR_MHD) && !defined(__MAGNETO)
+		sprintf(sys_type, "%s", "ELSASSAR_MHD");
+		#elif !defined(__MAGNETO) || !defined(__ELSASSAR_MHD)
 		sprintf(sys_type, "%s", "HYDRO");
 		#else
 		sprintf(sys_type, "%s", "UKN");
@@ -457,7 +481,7 @@ void GetOutputDirPath(void) {
 		// -------------------------------------
 		// Get File Label from Simulation Data
 		// -------------------------------------
-		#if defined(__MAGNETO)
+		#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 		// Construct file label from simulation data
 		sprintf(file_data, "_SIM_DATA_[%s-%s-%s]_N[%ld]_T[%1.1lf,%g,%1.3lf]_NU[%g]_ETA[%g]_ALPHA[%1.3lf]_BETA[%1.3lf]_K[%1.3lf,%1.3lf]_EPS[%1.2lf,%1.2lf]_FORC[%s,%d,%1.3lf]_u0[%s].h5", 
 							sys_type, solv_type, model_type, 
@@ -498,9 +522,11 @@ void GetOutputDirPath(void) {
 		// ----------------------------------
 		// Get Simulation Details
 		// ----------------------------------
-		#if defined(__MAGNETO)
+		#if defined(__MAGNETO) && !defined(__ELSASSAR_MHD)
 		sprintf(sys_type, "%s", "MAGHYDRO");
-		#elif !defined(__MAGNETO)
+		#elif defined(__ELSASSAR_MHD) && !defined(__MAGNETO)
+		sprintf(sys_type, "%s", "ELSASSAR_MHD");
+		#elif !defined(__MAGNETO) || !defined(__ELSASSAR_MHD)
 		sprintf(sys_type, "%s", "HYDRO");
 		#else
 		sprintf(sys_type, "%s", "UKN");
@@ -525,7 +551,7 @@ void GetOutputDirPath(void) {
 		// ----------------------------------
 		// Construct Output folder
 		// ----------------------------------
-		#if defined(__MAGNETO)
+		#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 		// Construct file label from simulation data
 		sprintf(file_data, "SIM_DATA_[%s-%s-%s]_N[%ld]_T[%1.1lf,%g,%1.3lf]_NU[%g]_ETA[%g]_ALPHA[%1.3lf]_BETA[%1.3lf]_K[%1.3lf,%1.3lf]_EPS[%1.2lf,%1.2lf]_FORC[%s,%d,%1.3lf]_u0[%s]_TAG[%s]/", 
 							sys_type, solv_type, model_type, 
@@ -646,7 +672,7 @@ void WriteDataToFile(double t, const long int iters, const long int save_indx) {
 	const int Dim2D = 2;
 	hsize_t index2D[Dim2D]; 		// stores the index in the hyperslabbed dataset to start writing to
 	hsize_t count2D[Dim2D];       	// stores the size of hyperslab to write to the dataset
-	#if defined(__MAGNETO) && (defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC))
+	#if (defined(__MAGNETO) || defined(__ELSASSAR_MHD)) && (defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC))
 	const int Dim3D = 3;
 	hsize_t index3D[Dim3D]; 		// stores the index in the hyperslabbed dataset to start writing to
 	hsize_t count3D[Dim3D];       	// stores the size of hyperslab to write to the dataset
@@ -672,10 +698,21 @@ void WriteDataToFile(double t, const long int iters, const long int save_indx) {
 	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_VEL_PHI], file_info->data_set[DSET_VEL_PHI], file_info->mem_space[DSET_VEL_PHI], H5T_NATIVE_DOUBLE, &(run_data->phi_n[2]), "VelPhases", count2D, index2D);
 	#endif
 
-	#if defined(__MAGNETO)
+	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	///--------------------------------------- Magnetic Modes
 	#if defined(__MAG) && !(defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY))
 	WriteSlabbedDataFourier(t, iters, file_info->file_space[DSET_MAG], file_info->data_set[DSET_MAG], file_info->mem_space[DSET_MAG], file_info->COMPLEX_DTYPE, &(run_data->b[2]), "MagModes", count2D, index2D);
+	#endif
+
+	#if defined(__ELSASSAR_MHD)
+	///--------------------------------------- Z_Plus Elsassar Variable
+	#if defined(__Z_PLUS) && !(defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY))
+	WriteSlabbedDataFourier(t, iters, file_info->file_space[DSET_Z_PLUS], file_info->data_set[DSET_Z_PLUS], file_info->mem_space[DSET_Z_PLUS], file_info->COMPLEX_DTYPE, &(run_data->z_plus[2]), "ZPlus", count2D, index2D);
+	#endif
+	///--------------------------------------- Z_Minus Elsassar Variables
+	#if defined(__Z_MINUS) && !(defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY))
+	WriteSlabbedDataFourier(t, iters, file_info->file_space[DSET_Z_MINUS], file_info->data_set[DSET_Z_MINUS], file_info->mem_space[DSET_Z_MINUS], file_info->COMPLEX_DTYPE, &(run_data->z_minus[2]), "ZMinus", count2D, index2D);
+	#endif
 	#endif
 
 	///--------------------------------------- Magnetic Amplitudes
@@ -736,7 +773,7 @@ void WriteDataToFile(double t, const long int iters, const long int save_indx) {
 	// Write slabbed dataset for the velocity phase differrences
 	count2D[1] = phase_sync->num_phase_diff;
 	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_VEL_PHASE_DIFF], file_info->data_set[DSET_VEL_PHASE_DIFF], file_info->mem_space[DSET_VEL_PHASE_DIFF], H5T_NATIVE_DOUBLE, phase_sync->phase_diff_u, "VelPhaseDifferences", count2D, index2D);
-	#if defined(__MAGNETO)
+	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	// Write slabbed dataset for the magnetic triads
 	count3D[0] = 1;
 	count3D[1] = NUM_MAG_TRIAD_TYPES;
@@ -774,7 +811,7 @@ void WriteDataToFile(double t, const long int iters, const long int save_indx) {
 	// Free tmp memory
 	free(tmp_vel_triad_order_n);
 	free(tmp_vel_phase_diff_order_n);
-	#if defined(__MAGNETO)
+	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	// Record the time averaged order parameters here
 	double complex* tmp_mag_triad_order_n = (double complex* )malloc(sizeof(double complex) * NUM_MAG_TRIAD_TYPES * phase_sync->num_triads);
 	double complex* tmp_mag_phase_diff_order_n = (double complex* )malloc(sizeof(double complex) * phase_sync->num_phase_diff);
@@ -866,7 +903,7 @@ void ReadInputFile(const long int N) {
 	free(tmp_u_amp);
 	free(tmp_u_phase);
 
-	#if defined(__MAGNETO)
+	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	///----------------------------- Read in initial magnetic amps and phases
 	// Create tmp array to read in data
 	double* tmp_b_amp = (double* )malloc(sizeof(double) * N);
@@ -910,7 +947,7 @@ void ReadInputFile(const long int N) {
 	// Free temp memory
 	free(tmp_u);
 
-	#if defined(__MAGNETO)
+	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	///----------------------------- Read in initial magnetic modes
 	// Create tmp array to read in data
 	double complex* tmp_b = (double complex* )malloc(sizeof(double complex) * N);
@@ -1211,7 +1248,7 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "KolmogorovLengthScale", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->kolmogorov_scale)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "KolmogorovLengthScale");
 	}
-	#if defined(__MAGNETO)
+	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	// Magnetic Helicity
 	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalMagneticHelicity", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_hel_b)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalMagneticHelicity");
@@ -1240,7 +1277,7 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TimeAveragedVelocityAmplitudes");
 	}
 	#endif
-	#if defined(__MAG_AMP_AVG) && defined(__MAGNETO)
+	#if defined(__MAG_AMP_AVG) && (defined(__MAGNETO) || defined(__ELSASSAR_MHD))
 	// Time average the data
 	for (int i = 0; i < sys_vars->N; ++i) {
 		run_data->b_n_t_avg[i] /= run_data->num_sys_msr_steps;
@@ -1397,7 +1434,7 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	free(vel_phase_diff_counts);
 	free(vel_phase_diff_ranges);
 
-	#if defined(__MAGNETO)
+	#if (defined(__MAGNETO) || defined(__ELSASSAR_MHD))
 	///--------------------- Write Mag triads histogram
 	double* mag_triads_counts = (double* )malloc(sizeof(double) * phase_sync->num_triads * NUM_PHASE_SYNC_HIST_BINS * NUM_MAG_TRIAD_TYPES);
 	double* mag_triads_ranges = (double* )malloc(sizeof(double) * (NUM_PHASE_SYNC_HIST_BINS + 1));
@@ -1591,7 +1628,7 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	#endif
 
 
-	#if defined(__MAGNETO)
+	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	///-------------------------- Write Magnetic field 
 	#if defined(PHASE_ONLY)
 	if ( (H5LTmake_dataset(file_info->stats_file_handle, "MagAmps", D1, dims1D, H5T_NATIVE_DOUBLE, &(run_data->b_n[2]))) < 0) {
@@ -1744,7 +1781,7 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	}
 	#endif
 
-	#if defined(__VEL) || defined(__MAG) || defined(__FORCING) || defined(__STATS) || defined(__PHASE_SYNC)
+	#if defined(__VEL) || defined(__MAG) defined(__Z_PLUS) || defined(__Z_MINUS) || defined(__FORCING) || defined(__STATS) || defined(__PHASE_SYNC)
 	// Close the complex datatype identifier
 	H5Tclose(file_info->COMPLEX_DTYPE);
 	#endif

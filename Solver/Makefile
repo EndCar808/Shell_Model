@@ -68,6 +68,7 @@ HYDRO_SOLVER_RK4_FLAGS := -D__RK4 -D__VEL # -D__ADAPTIVE_STEP -D__CFL_STEP
 HYDRO_SOLVER_AB4CN_FLAGS := -D__AB4CN -D__VEL # -D__ADAPTIVE_STEP -D__CFL_STEP
 
 MAG_HYDRO_SOLVER_FLAGS := -D__INT_FAC_RK4 -D__MAGNETO -D__VEL -D__MAG # -D__ADAPTIVE_STEP -D__CFL_STEP
+ELSASSAR_MHD_SOLVER_FLAGS := -D__INT_FAC_RK4 -D__ELSASSAR_MHD -D__Z_PLUS -D__Z_MINUS # -D__ADAPTIVE_STEP -D__CFL_STEP
 
 # Phase only flags to be passed to solver
 PHASE_ONLY_FLAGS := -D__PHASE_ONLY -D__RK4 -D__VEL_AMP -D__VEL_PHI #-D__MAGNETO -D__HYPER -D__TRANSIENTS
@@ -76,12 +77,12 @@ PHASE_ONLY_FLAGS := -D__PHASE_ONLY -D__RK4 -D__VEL_AMP -D__VEL_PHI #-D__MAGNETO 
 PHASE_ONLY_FXD_AMP_FLAGS := -D__PHASE_ONLY_FXD_AMP -D__RK4 -D__VEL_AMP -D__VEL_PHI #-D__MAGNETO -D__HYPER -D__TRANSIENTS
 
 # Dataset Flags to be passed to the solver
-DSET_FLAGS = -D__SYS_MEASURES 
+# DSET_FLAGS = -D__SYS_MEASURES 
 # DSET_FLAGS += -D__CONSERVED_PHASES -D__PHASE_SYNC -D__PHASE_SYNC_STATS 
 # DSET_FLAGS += -D__STATS 
-DSET_FLAGS += -D__ENRG_SPECT_AVG -D__DISS_SPECT_AVG -D__TOT_ENRG_FLUX -D__ENRG_FLUX_AVG -D__VEL_AMP_AVG -D__MAG_AMP_AVG
-DSET_FLAGS += -D__ENRG_SPECT -D__DISS_SPECT -D__ENRG_FLUX 
-DSET_FLAGS += -D__FORCING
+# DSET_FLAGS += -D__ENRG_SPECT_AVG -D__DISS_SPECT_AVG -D__TOT_ENRG_FLUX -D__ENRG_FLUX_AVG -D__VEL_AMP_AVG -D__MAG_AMP_AVG
+# DSET_FLAGS += -D__ENRG_SPECT -D__DISS_SPECT -D__ENRG_FLUX 
+# DSET_FLAGS += -D__FORCING
 DSET_FLAGS += -D__VEL 
 DSET_FLAGS += -D__MAG
  
@@ -105,6 +106,7 @@ SRCOBJ_H_IF    	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_hydro_IF.o, $(SRCFILE))
 SRCOBJ_H_RK    	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_hydro_RK.o, $(SRCFILE))
 SRCOBJ_H_AB    	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_hydro_AB.o, $(SRCFILE))
 SRCOBJ_MHD  	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_mag_hydro.o, $(SRCFILE))
+SRCOBJ_ELS  	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_elsassar_mhd.o, $(SRCFILE))
 SRCOBJ_PO  		:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_phase_only.o, $(SRCFILE))
 SRCOBJ_PO_D 	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_phase_only_fxd_amp.o, $(SRCFILE))
 SRCOBJ_Test 	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_test.o, $(SRCFILE))
@@ -156,6 +158,14 @@ $(BIN)/solver_mag_hydro: $(SRCOBJ_MHD) $(DEPS)
 
 $(OBJBIN)/%_mag_hydro.o: $(SRCDIR)/%.c $(DEPS)
 	$(GCC) $(CCFLAG) $(MAG_HYDRO_SOLVER_FLAGS) $(DSET_FLAGS) -c $^ -o $@ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+
+solver_elsassar_mhd: $(BIN)/solver_elsassar_mhd 
+
+$(BIN)/solver_elsassar_mhd: $(SRCOBJ_ELS) $(DEPS)
+	$(GCC) $(CCFLAG) $(ELSASSAR_MHD_SOLVER_FLAGS) $(DSET_FLAGS) -o $@ $^ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+
+$(OBJBIN)/%_elsassar_mhd.o: $(SRCDIR)/%.c $(DEPS)
+	$(GCC) $(CCFLAG) $(ELSASSAR_MHD_SOLVER_FLAGS) $(DSET_FLAGS) -c $^ -o $@ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
 
 ####-----------
 #  Phase Only 

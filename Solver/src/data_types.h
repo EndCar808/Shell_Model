@@ -162,7 +162,9 @@
 #define DSET_MAG_TRIAD_ORDER 20
 #define DSET_VEL_PHASE_DIFF_ORDER 21
 #define DSET_MAG_PHASE_DIFF_ORDER 22
-#define NUM_DSETS 23
+#define DSET_Z_PLUS 23
+#define DSET_Z_MINUS 24
+#define NUM_DSETS 25
 // ---------------------------------------------------------------------
 //  Global Variables
 // ---------------------------------------------------------------------

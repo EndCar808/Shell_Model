@@ -108,7 +108,6 @@ void Solve(void) {
 	// Print update of the initial conditions to the terminal
 	PrintUpdateToTerminal(0, t0, dt, T, 0);
 
-	printf("Scale: %lf", sys_vars->force_scale_var);
 
 	//////////////////////////////
 	// Begin Integration
@@ -919,7 +918,7 @@ void InitialConditions(const long int N) {
 
 	// Initialize variables
 	double r1, r3;
-	#if defined(__MAGNETO)
+	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	double r2, r4;
 	#endif
 
@@ -1163,7 +1162,7 @@ void InitializeForicing(const long int N, double dt) {
 			else {
 				run_data->forcing_u[i] = 0.0 + 0.0 * I;			
 			}
-			#if defined(__MAGNETO)
+			#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 			run_data->forcing_b[i] = 0.0 + 0.0 * I;			
 			#endif
 		}
@@ -1182,14 +1181,14 @@ void InitializeForicing(const long int N, double dt) {
 				#if defined(PHASE_ONLY)
 				amp_u_1                = run_data->a_n[i];
 				run_data->forcing_u[i] = run_data->a_n[i] * cexp(I * run_data->phi_n[i]);
-				#if defined(__MAGNETO)
+				#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 				amp_b_1                = run_data->b_n[i];
 				run_data->forcing_b[i] = run_data->b_n[i] * cexp(I * run_data->psi_n[i]);
 				#endif				
 				#else
 				amp_u_1                = cabs(run_data->u[i]);
 				run_data->forcing_u[i] = run_data->u[i];
-				#if defined(__MAGNETO)
+				#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 				amp_b_1                = cabs(run_data->b[i]);
 				run_data->forcing_b[i] = run_data->b[i];
 				#endif				
@@ -1200,14 +1199,14 @@ void InitializeForicing(const long int N, double dt) {
 				#if defined(PHASE_ONLY)
 				run_data->a_n[i]       = amp_u_1;
 				run_data->forcing_u[i] = run_data->a_n[i] * cexp(I * run_data->phi_n[i]);
-				#if defined(__MAGNETO)
+				#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 				run_data->b_n[i]       = amp_b_1;
 				run_data->forcing_b[i] = run_data->b_n[i] * cexp(I * run_data->psi_n[i]);
 				#endif				
 				#else
 				run_data->u[i]         = amp_u_1;
 				run_data->forcing_u[i] = run_data->u[i];
-				#if defined(__MAGNETO)
+				#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 				run_data->b[i]         = amp_b_1;
 				run_data->forcing_b[i] = run_data->b[i];
 				#endif		
@@ -1229,13 +1228,13 @@ void InitializeForicing(const long int N, double dt) {
 
 				// Compute the forcing
 				run_data->forcing_u[i] = sqrt(- 2.0 * (dt / tau_0) * log10(rand1)) * cexp(I * 2.0 * M_PI * rand2);
-				#if defined(__MAGNETO)
+				#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 				run_data->forcing_b[i] = 0.0 + 0.0 * I;
 				#endif
 			}
 			else {
 				run_data->forcing_u[i] = 0.0 + 0.0 * I;	
-				#if defined(__MAGNETO)
+				#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 				run_data->forcing_b[i] = 0.0 + 0.0 * I;
 				#endif
 			}
@@ -1255,13 +1254,13 @@ void InitializeForicing(const long int N, double dt) {
 
 				// Compute the forcing
 				run_data->forcing_u[i] = sys_vars->force_scale_var * sqrt(-2.0 * (dt / tau_0) * log10(rand1)) * cexp(I * 2.0 * M_PI * rand2);
-				#if defined(__MAGNETO)
+				#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 				run_data->forcing_b[i] = 0.0 + 0.0 * I;
 				#endif
 			}
 			else {
 				run_data->forcing_u[i] = 0.0 + 0.0 * I;	
-				#if defined(__MAGNETO)
+				#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 				run_data->forcing_b[i] = 0.0 + 0.0 * I;
 				#endif
 			}
@@ -1271,7 +1270,7 @@ void InitializeForicing(const long int N, double dt) {
 			// No Forcing
 			// ------------------------------------------------
 			run_data->forcing_u[i] = 0.0 + 0.0 * I;
-			#if defined(__MAGNETO)
+			#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 			run_data->forcing_b[i] = 0.0 + 0.0 * I;
 			#endif
 		}
@@ -1356,7 +1355,7 @@ void AddForcing(double complex* u_nonlin, double complex* b_nonlin) {
 			// If fixed amplitude forcing reset the amplitudes to the forced modes
 			if (i >= 2 && i <= sys_vars->force_k + 1) {
 				u_nonlin[i] *= cabs(run_data->forcing_u[i]) / cabs(u_nonlin[i]);
-				#if defined(__MAGNETO)
+				#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 				// Add forcing here for the magnetic field
 				b_nonlin[i] *= cabs(run_data->forcing_b[i]) / cabs(b_nonlin[i]); 
 				#endif
@@ -1372,7 +1371,7 @@ void AddForcing(double complex* u_nonlin, double complex* b_nonlin) {
 		//------------------------------------------------------- Else if normal forcing is selected just add the forcing to the forced modes
 		else {
 			u_nonlin[n] += run_data->forcing_u[n];
-			#if defined(__MAGNETO)
+			#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 			// Add forcing here for the magnetic field
 			b_nonlin[n] += run_data->forcing_b[n]; 
 			#endif
@@ -1801,7 +1800,7 @@ void FreeMemory(RK_data_struct* RK_data) {
 	free(run_data->tot_energy);
 	free(run_data->tot_hel_u);
 	free(run_data->tot_diss_u);
-	#if defined(__MAGNETO)
+	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	free(run_data->tot_hel_b);
 	free(run_data->tot_cross_hel);
 	free(run_data->tot_diss_b);
@@ -1880,24 +1879,24 @@ void FreeMemory(RK_data_struct* RK_data) {
 	}
 	for (int i = 0; i < sys_vars->N; ++i) {
 		gsl_rstat_free(stats_data->real_vel_moments[i]);
-		#if defined(__MAGNETO)
+		#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 		gsl_rstat_free(stats_data->real_mag_moments[i]);
 		#endif
 		#if defined(__VEL_HIST)
 		gsl_histogram_free(stats_data->real_vel_hist[i]);
 		#endif
-		#if defined(__MAG_HIST)
+		#if (defined(__MAGNETO) || defined(__ELSASSAR_MHD)) && defined(__MAG_HIST)
 		gsl_histogram_free(stats_data->real_mag_hist[i]);
 		#endif
 	}
 	free(stats_data->real_vel_moments);
-	#if defined(__MAGNETO)
+	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	free(stats_data->real_mag_moments);
 	#endif
 	#if defined(__VEL_HIST)
 	free(stats_data->real_vel_hist);
 	#endif
-	#if defined(__MAG_HIST)
+	#if (defined(__MAGNETO) || defined(__ELSASSAR_MHD)) && defined(__MAG_HIST)
 	free(stats_data->real_mag_hist);
 	#endif
 	#endif
@@ -1924,7 +1923,7 @@ void FreeMemory(RK_data_struct* RK_data) {
 		free(RK_data->AB_tmp_nonlin_u[i]);
 	}
 	#endif
-	#if defined(__MAGNETO)
+	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	free(RK_data->RK1_b);
 	free(RK_data->RK2_b);
 	free(RK_data->RK3_b);
