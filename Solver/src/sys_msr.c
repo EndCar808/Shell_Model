@@ -540,7 +540,7 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
         fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Velocity Energy Input");
         exit(1);
     }
-    #if defined(__MAGNETO)
+    #if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
     // Allocate energy dissipation for the magnetic field
     run_data->tot_energy_diss_b = (double* )malloc(sizeof(double) * print_steps);
     if (run_data->tot_energy_diss_b == NULL) {

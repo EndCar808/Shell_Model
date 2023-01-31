@@ -276,12 +276,17 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		n = i + 2;
 
 		// Get the input fields
-		#if defined(PHASE_ONLY)
+		#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
 		// Get the Fourier velocity from the Fourier phases and amplitudes
 		RK_data->RK_u_tmp[n] = run_data->a_n[n] * cexp(I * run_data->phi_n[n]);
 		#if defined(__MAGNETO)
 		RK_data->RK_b_tmp[n] = run_data->b_n[n] * cexp(I * run_data->psi_n[n]);
 		#endif
+		#elif defined(__ELSASSAR_MHD)
+		// Z_plus term
+		RK_data->RK_u_tmp[n] = run_data->z_plus[n];
+		// Z_minus term
+		RK_data->RK_b_tmp[n] = run_data->z_minus[n];
 		#else
 		// Get the Fourier velocity field
 		RK_data->RK_u_tmp[n] = run_data->u[n];
@@ -479,12 +484,17 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		n = i + 2;
 
 		// Get the input fields
-		#if defined(PHASE_ONLY)
+		#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
 		// Get the Fourier velocity from the Fourier phases and amplitudes
 		RK_data->RK_u_tmp[n] = run_data->a_n[n] * cexp(I * run_data->phi_n[n]);
 		#if defined(__MAGNETO)
 		RK_data->RK_b_tmp[n] = run_data->b_n[n] * cexp(I * run_data->psi_n[n]);
 		#endif
+		#elif defined(__ELSASSAR_MHD)
+		// Z_plus term
+		RK_data->RK_u_tmp[n] = run_data->z_plus[n];
+		// Z_minus term
+		RK_data->RK_b_tmp[n] = run_data->z_minus[n];
 		#else
 		// Get the Fourier velocity field
 		RK_data->RK_u_tmp[n] = run_data->u[n];
@@ -504,11 +514,19 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		n = i + 2;
 
 		// Update temporary input for nonlinear term
-		#if defined(PHASE_ONLY)
+		#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
 		RK_data->RK_u_tmp[n] = run_data->a_n[n] * cexp(I * (run_data->phi_n[n] + dt * RK4_A21 * RK_data->RK1_u[n]));
 		#if defined(__MAGNETO)
 		RK_data->RK_b_tmp[n] = run_data->a_n[n] * cexp(I * (run_data->psi_n[n] + dt * RK4_A21 * RK_data->RK1_b[n]));
 		#endif
+		#elif defined(__ELSASSAR_MHD)
+		// Add dissipative terms
+		RK_data->RK1_u[n] -= run_data->k[n] * run_data->k[n] * (sys_vars->NU_plus * run_data->z_plus[n] + sys_vars->NU_minus * run_data->z_minus[n]);
+		RK_data->RK1_b[n] -= run_data->k[n] * run_data->k[n] * (sys_vars->NU_plus * run_data->z_minus[n] + sys_vars->NU_minus * run_data->z_plus[n]);
+
+		// Update temporary field terms
+		RK_data->RK_u_tmp[n] = run_data->z_plus[n] + dt * RK4_A21 * RK_data->RK1_u[n];
+		RK_data->RK_b_tmp[n] = run_data->z_minus[n] + dt * RK4_A21 * RK_data->RK1_b[n];
 		#else
 		// Add dissipative and forcing terms & Update temorary velocity term
 		RK_data->RK1_u[n] -= sys_vars->NU * run_data->k[n] * run_data->k[n] * run_data->u[n];
@@ -528,11 +546,19 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		n = i + 2;
 
 		// Update temporary input for nonlinear term
-		#if defined(PHASE_ONLY)
+		#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
 		RK_data->RK_u_tmp[n] = run_data->a_n[n] * cexp(I * (run_data->phi_n[n] + dt * RK4_A32 * RK_data->RK2_u[n]));
 		#if defined(__MAGNETO)
 		RK_data->RK_b_tmp[n] = run_data->b_n[n] * cexp(I * (run_data->psi_n[n] + dt * RK4_A32 * RK_data->RK2_b[n]));
 		#endif
+		#elif defined(__ELSASSAR_MHD)
+		// Add dissipative terms
+		RK_data->RK2_u[n] -= run_data->k[n] * run_data->k[n] * (sys_vars->NU_plus * run_data->z_plus[n] + sys_vars->NU_minus * run_data->z_minus[n]);
+		RK_data->RK2_b[n] -= run_data->k[n] * run_data->k[n] * (sys_vars->NU_plus * run_data->z_minus[n] + sys_vars->NU_minus * run_data->z_plus[n]);
+
+		// Update temporary field terms
+		RK_data->RK_u_tmp[n] = run_data->z_plus[n] + dt * RK4_A32 * RK_data->RK2_u[n];
+		RK_data->RK_b_tmp[n] = run_data->z_minus[n] + dt * RK4_A32 * RK_data->RK2_b[n];
 		#else
 		// Add dissipative & Update temorary velocity term
 		RK_data->RK2_u[n] -= sys_vars->NU * run_data->k[n] * run_data->k[n] * run_data->u[n];
@@ -551,11 +577,19 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		// Get proper index
 		n = i + 2;
 
-		#if defined(PHASE_ONLY)
+		#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
 		RK_data->RK_u_tmp[n] = run_data->a_n[n] * cexp(I * (run_data->phi_n[n] + dt * RK4_A43 * RK_data->RK3_u[n]));
 		#if defined(__MAGNETO)
 		RK_data->RK_b_tmp[n] = run_data->b_n[n] * cexp(I * (run_data->psi_n[n] + dt * RK4_A43 * RK_data->RK3_b[n]));
 		#endif
+		#elif defined(__ELSASSAR_MHD)
+		// Add dissipative terms
+		RK_data->RK3_u[n] -= run_data->k[n] * run_data->k[n] * (sys_vars->NU_plus * run_data->z_plus[n] + sys_vars->NU_minus * run_data->z_minus[n]);
+		RK_data->RK3_b[n] -= run_data->k[n] * run_data->k[n] * (sys_vars->NU_plus * run_data->z_minus[n] + sys_vars->NU_minus * run_data->z_plus[n]);
+
+		// Update temporary field terms
+		RK_data->RK_u_tmp[n] = run_data->z_plus[n] + dt * RK4_A43 * RK_data->RK3_u[n];
+		RK_data->RK_b_tmp[n] = run_data->z_minus[n] + dt * RK4_A43 * RK_data->RK3_b[n];
 		#else
 		// Add dissipative & Update temorary velocity term
 		RK_data->RK3_u[n] -= sys_vars->NU * run_data->k[n] * run_data->k[n] * run_data->u[n];
@@ -575,7 +609,10 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		// Get proper index
 		n = i + 2;
 
-		#if !defined(PHASE_ONLY)
+		#if !defined(PHASE_ONLY) && defined(__ELSASSAR_MHD)
+		RK_data->RK4_u[n] -= run_data->k[n] * run_data->k[n] * (sys_vars->NU_plus * run_data->z_plus[n] + sys_vars->NU_minus * run_data->z_minus[n]);
+		RK_data->RK4_b[n] -= run_data->k[n] * run_data->k[n] * (sys_vars->NU_plus * run_data->z_minus[n] + sys_vars->NU_minus * run_data->z_plus[n]);
+		#elif !defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
 		RK_data->RK4_u[n] -= sys_vars->NU * run_data->k[n] * run_data->k[n] * run_data->u[n];
 		#if defined(__MAGNETO)
 		RK_data->RK4_b[n] -= sys_vars->ETA * run_data->k[n] * run_data->k[n] * run_data->b[n];
@@ -590,7 +627,7 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		// Get tmp index
 		n = i + 2;
 
-		#if defined(PHASE_ONLY_FXD_AMP)
+		#if defined(PHASE_ONLY_FXD_AMP) && !defined(__ELSASSAR_MHD)
 		// Pre-record the amplitudes for resetting after update step
 		po_norm_fac_u = cabs(run_data->u[n]);
 		#if defined(__MAGNETO)
@@ -599,13 +636,17 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		#endif
 
 		///-------------------- Update Step
-		#if defined(PHASE_ONLY)
+		#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
 		// Update the new velocity field
 		run_data->phi_n[n] = run_data->phi_n[n] + dt * RK4_B1 * RK_data->RK1_u[n] + dt * RK4_B2 * RK_data->RK2_u[n] + dt * RK4_B3 * RK_data->RK3_u[n] + dt * RK4_B4 * RK_data->RK4_u[n];
 		#if defined(__MAGNETO)
 		// Update the new magnetic field
 		run_data->psi_n[n] = run_data->psi_n[n] + dt * RK4_B1 * RK_data->RK1_b[n] + dt * RK4_B2 * RK_data->RK2_b[n] + dt * RK4_B3 * RK_data->RK3_b[n] + dt * RK4_B4 * RK_data->RK4_b[n];
 		#endif
+		#elif defined(__ELSASSAR_MHD)
+		// Update the Elsassar variables
+		run_data->z_plus[n] = run_data->z_plus[n] + dt * RK4_B1 * RK_data->RK1_u[n] + dt * RK4_B2 * RK_data->RK2_u[n] + dt * RK4_B3 * RK_data->RK3_u[n] + dt * RK4_B4 * RK_data->RK4_u[n];
+		run_data->z_minus[n] = run_data->z_minus[n] + dt * RK4_B1 * RK_data->RK1_b[n] + dt * RK4_B2 * RK_data->RK2_b[n] + dt * RK4_B3 * RK_data->RK3_b[n] + dt * RK4_B4 * RK_data->RK4_b[n];
 		#else
 		// Update the new velocity field
 		run_data->u[n] = run_data->u[n] + dt * RK4_B1 * RK_data->RK1_u[n] + dt * RK4_B2 * RK_data->RK2_u[n] + dt * RK4_B3 * RK_data->RK3_u[n] + dt * RK4_B4 * RK_data->RK4_u[n];
@@ -615,7 +656,7 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		#endif
 		#endif
 
-		#if defined(PHASE_ONLY_FXD_AMP)
+		#if defined(PHASE_ONLY_FXD_AMP) && !defined(__ELSASSAR_MHD)
 		// Reset the amplitudes 
 		run_data->u[n] *= (po_norm_fac_u / cabs(run_data->u[n]));
 
@@ -785,8 +826,8 @@ void AB4CNStep(const double dt, const long iters, const long int N, RK_data_stru
 #endif
 /**
  * Function that performs the evluation of the nonlinear term
- * @param u        array containing the input velocity modes
- * @param b        array containing the input magnetic modes
+ * @param u        array containing the input velocity modes or z_plus
+ * @param b        array containing the input magnetic modes or z_minus
  * @param u_nonlin array to hold the result of computing the nonlinear term for velocity field
  * @param b_nonlin array to hold the result of computing the nonlinear term for the magnetic field
  * @param N        int defining the number of shells
@@ -795,6 +836,7 @@ void NonlinearTerm(double complex* u, double complex* b, double complex* u_nonli
 
 	// Initialize variables
 	int n;
+	#if !defined(__ELSASSAR_MHD)
 	const double lambda_pow         = sys_vars->Lambda * sys_vars->Lambda;
 	const double interact_coeff_u_1 = sys_vars->EPS / sys_vars->Lambda;
 	const double interact_coeff_u_2 = (1.0 - sys_vars->EPS) / lambda_pow;
@@ -807,6 +849,16 @@ void NonlinearTerm(double complex* u, double complex* b, double complex* u_nonli
 	#if defined(__MAGNETO)
 	double complex b_tmp_1, b_tmp_2, b_tmp_3;
 	#endif 
+	#elif defined(__ELSASSAR_MHD)
+	const double interact_coeff_z_1 = (sys_vars->EPS + sys_vars->EPS_M) / 2.0;
+	const double interact_coeff_z_2 = (2.0 - sys_vars->EPS - sys_vars->EPS_M) / 2.0;
+	const double interact_coeff_z_3 = (sys_vars->EPS_M - sys_vars->EPS) / (2.0 * sys_vars->Lambda);
+	const double interact_coeff_z_4 = (sys_vars->EPS + sys_vars->EPS_M) / (2.0 * sys_vars->Lambda);
+	const double interact_coeff_z_5 = interact_coeff_z_3 / sys_vars->Lambda;
+	const double interact_coeff_z_6 = interact_coeff_z_2 / sys_vars->Lambda;
+	double complex zplus_tmp_1, zplus_tmp_2, zplus_tmp_3, zplus_tmp_4, zplus_tmp_5, zplus_tmp_6;
+	double complex zminus_tmp_1, zminus_tmp_2, zminus_tmp_3, zminus_tmp_4, zminus_tmp_5, zminus_tmp_6;
+	#endif
 
 	// -----------------------------------
 	// Compute The Nonlinear Terms
@@ -818,6 +870,7 @@ void NonlinearTerm(double complex* u, double complex* b, double complex* u_nonli
 		// -----------------------------------
 		// Compute Temporary Terms
 		// -----------------------------------
+		#if !defined(__ELSASSAR_MHD)
 		// Compute the velocity temporary terms in the nonlinear term
 		u_tmp_1 = u[n + 1] * u[n + 2];
 		u_tmp_2 = u[n - 1] * u[n + 1];
@@ -833,23 +886,47 @@ void NonlinearTerm(double complex* u, double complex* b, double complex* u_nonli
 		b_tmp_2 = u[n - 1] * b[n + 1] - b[n - 1] * u[n + 1];
 		b_tmp_3 = u[n - 2] * b[n - 1] - b[n - 2] * u[n - 1];
 		#endif
+		#elif defined(__ELSASSAR_MHD)
+		// The zplus nonlinear terms
+		zplus_tmp_1 = u[n + 1] * b[n + 2];	// z_plus[n + 1] * z_minus[n + 2]
+		zplus_tmp_2 = b[n + 1] * u[n + 2];	// z_minus[n + 1] * z_plus[n + 2]
+		zplus_tmp_3 = u[n + 1] * b[n - 1];	// z_plus[n + 1] * z_minus[n - 1]
+		zplus_tmp_4 = b[n + 1] * u[n - 1];	// z_minus[n + 1] * z_plus[n - 1]
+		zplus_tmp_5 = u[n - 1] * b[n - 2];	// z_plus[n - 1] * z_minus[n - 2]
+		zplus_tmp_6 = b[n - 1] * u[n - 2];	// z_minus[n - 1] * z_plus[n - 2]
+
+		// The zminus nonlinear terms
+		zminus_tmp_1 = b[n + 1] * u[n + 2];	// z_minus[n + 1] * z_plus[n + 2]
+		zminus_tmp_2 = u[n + 1] * b[n + 2];	// z_plus[n + 1] * z_minus[n + 2]
+		zminus_tmp_3 = b[n + 1] * u[n - 1];	// z_minus[n + 1] * z_plus[n - 1]
+		zminus_tmp_4 = u[n + 1] * b[n - 1];	// z_plus[n + 1] * z_minus[n - 1]
+		zminus_tmp_5 = b[n - 1] * u[n - 2];	// z_minus[n - 1] * z_plus[n - 2]
+		zminus_tmp_6 = u[n - 1] * b[n - 2];	// z_plus[n - 1] * z_minus[n - 2]
+		#endif
 		
 		// -----------------------------------
 		// Compute Nonlinear Terms
 		// -----------------------------------
+		#if !defined(__ELSASSAR_MHD)
 		// Compute the nonlinear term for the velocity field
 		u_nonlin[n] = I * run_data->k[n] * conj(u_tmp_1 - interact_coeff_u_1 * u_tmp_2 - interact_coeff_u_2 *  u_tmp_3);
 		#if defined(__MAGNETO)
 		// Compute the nonlinear term for the magnetic field
 		b_nonlin[n] = I * run_data->k[n] * conj(interact_coeff_b_1 * b_tmp_1 + interact_coeff_b_2 * b_tmp_2 + interact_coeff_b_3 * b_tmp_3); 
 		#endif
-		// printf("u[%d]:\t%lf\t%lfi\t-\tf[%d]:\t%lf\t%lfi\t----\t%lf\t%lf\n", i + 1, creal(u_nonlin[n]), cimag(u_nonlin[n]), i + i, creal(run_data->forcing_u[n]), cimag(run_data->forcing_u[n]), creal(u_nonlin[n]) / creal(run_data->forcing_u[n]), cimag(u_nonlin[n]) / cimag(run_data->forcing_u[n]));
+		#elif defined(__ELSASSAR_MHD)
+		// This is the Z_plus nonlinear term
+		u_nonlin[n] = I * run_data->k[n] * conj(interact_coeff_z_1 * zplus_tmp_1 + interact_coeff_z_2 * zplus_tmp_2 + interact_coeff_z_3 * zplus_tmp_3 - interact_coeff_z_4 * zplus_tmp_4 - interact_coeff_z_5 * zplus_tmp_5 - interact_coeff_z_6 * zplus_tmp_6)
+		
+		// This is the Z_minus nonlinear term
+		b_nonlin[n] = I * run_data->k[n] * conj(interact_coeff_z_1 * zminus_tmp_1 + interact_coeff_z_2 * zminus_tmp_2 + interact_coeff_z_3 * zminus_tmp_3 - interact_coeff_z_4 * zminus_tmp_4 - interact_coeff_z_5 * zminus_tmp_5 - interact_coeff_z_6 * zminus_tmp_6)
+		#endif
 	}
 }
 /**
  * Wrapper function to get the approriate nonlinear term for the system being solver -> either phase only or full model
- * @param input_u  Input array for the velocity field, either velocity or the phases
- * @param input_b  Input array for the magnetic field, the magnetic field or the phases
+ * @param input_u  Input array for the velocity field, either velocity or the phases or z_plus
+ * @param input_b  Input array for the magnetic field, the magnetic field or the phases or z_minus
  * @param output_u Output array for the velocity field
  * @param output_b Output array for the magnetic field
  */
@@ -858,7 +935,7 @@ void NonlinearTermWithForcing(double complex* input_u, double complex* input_b, 
 	// Initialize variables
 	int n;
 	double complex tmp_output_u;
-	#if defined(__MAGNETO)
+	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	double complex tmp_output_b;
 	#endif
 
@@ -882,12 +959,12 @@ void NonlinearTermWithForcing(double complex* input_u, double complex* input_b, 
 
 		// Store tmp output value
 		tmp_output_u = output_u[n];
-		#if defined(__MAGNETO)
+		#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 		tmp_output_b = output_b[n];
 		#endif
 
 		// Get the appropriate output value depending on the system being solved
-		#if defined(PHASE_ONLY)
+		#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
 		// Get the Phase only RHS
 		if (run_data->a_n[n] != 0.0) {
 			output_u[n] = cimag(tmp_output_u * cexp(-I * run_data->phi_n[n])) / run_data->a_n[n];
@@ -904,7 +981,7 @@ void NonlinearTermWithForcing(double complex* input_u, double complex* input_b, 
 		#else
 		// Get the full systems Nonlinear term and forcing
 		output_u[n] = tmp_output_u;
-		#if defined(__MAGNETO)
+		#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 		output_b[n] = tmp_output_b;
 		#endif
 		#endif

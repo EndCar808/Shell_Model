@@ -226,6 +226,8 @@ typedef struct system_vars_struct {
 	double ALPHA;						// Slope of the velocity energy spectrum = 2 * ALPHA
 	double BETA; 						// Slope of the magnetic energy spectrum = 2 * BETA
 	double NU;							// The viscosity
+	double NU_plus;						// The viscosity for the Elsassar variables -> nu_plus = (nu + eta)/2
+	double NU_minus;					// The viscosity for the Elsassar variables -> nu_minus = (nu - eta)/2
 	int HYPER_VISC_FLAG;				// Flag to indicate if hyperviscosity is to be used
 	double HYPER_VISC_POW;				// The power of the hyper viscosity to use
 	double ETA;							// The magnetic diffusivity

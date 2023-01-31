@@ -86,10 +86,13 @@ int GetCMLArgs(int argc, char** argv) {
 	sys_vars->NU  = 1e-7;
 	sys_vars->HYPER_VISC_FLAG = 0;
 	sys_vars->HYPER_VISC_POW  = VISC_POW;
-	// // System ekman dray / hypodiffusivity
+	// System ekman dray / hypodiffusivity
 	sys_vars->ETA = 1e-7;
 	sys_vars->HYPO_MAG_DIFF_FLAG = 0;
 	sys_vars->HYPO_MAG_DIFF_POW  = HYPO_DIFF_POW;
+	// Elsassar system dissipation terms
+	sys_vars->NU_plus  = (sys_vars->NU + sys_vars->ETA) / 2.0;
+	sys_vars->NU_minus = (sys_vars->NU - sys_vars->ETA) / 2.0;
 	// Write to file every 
 	sys_vars->SAVE_EVERY = (long int)100;
 	// Input file flag
@@ -450,6 +453,12 @@ int GetCMLArgs(int argc, char** argv) {
 		}
 	}
 
+	#if defined(__ELSASSAR_MHD)
+	// Set Elsassar dissipation variables
+	sys_vars->NU_plus  = (sys_vars->NU + sys_vars->ETA) / 2.0;
+	sys_vars->NU_minus = (sys_vars->NU - sys_vars->ETA) / 2.0;
+	#endif
+	
 	return 0;
 }
 /**
