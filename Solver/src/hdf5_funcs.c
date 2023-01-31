@@ -1781,7 +1781,7 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	}
 	#endif
 
-	#if defined(__VEL) || defined(__MAG) defined(__Z_PLUS) || defined(__Z_MINUS) || defined(__FORCING) || defined(__STATS) || defined(__PHASE_SYNC)
+	#if defined(__VEL) || defined(__MAG) || defined(__Z_PLUS) || defined(__Z_MINUS) || defined(__FORCING) || defined(__STATS) || defined(__PHASE_SYNC)
 	// Close the complex datatype identifier
 	H5Tclose(file_info->COMPLEX_DTYPE);
 	#endif

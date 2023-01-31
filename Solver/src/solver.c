@@ -1641,7 +1641,7 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Velocity Field");
 		exit(1);
 	}
-	#if defined(PHASE_ONLY_FXD_AMP)	|| defined(PHASE_ONLY)
+	#if defined(PHASE_ONLY_FXD_AMP)	|| defined(PHASE_ONLY) || defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC_STATS)
 	// The Fourier amplitudes
 	run_data->a_n = (double* ) malloc(sizeof(double) * (N + 4));
 	if (run_data->a_n == NULL) {
@@ -1679,7 +1679,7 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 		exit(1);
 	}	
 	#endif
-	#if defined(PHASE_ONLY_FXD_AMP)	|| defined(PHASE_ONLY)
+	#if defined(PHASE_ONLY_FXD_AMP)	|| defined(PHASE_ONLY) || defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC_STATS)
 	// The Fourier amplitudes
 	run_data->b_n = (double* ) malloc(sizeof(double) * (N + 4));
 	if (run_data->b_n == NULL) {
