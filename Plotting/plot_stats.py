@@ -552,10 +552,11 @@ if __name__ == '__main__':
     # -----------------------------------------
     # # --------  Velocity Structure Functions w/ Fit & Anomolous Exponent
     # -----------------------------------------
-    inertial_range = np.arange(2, 16)
+    inertial_range = np.arange(5, 15 + 1)
 
 
     ## --------  Structure function with fit
+    print("Velocity Structure Func")
     zeta_p, ns_zeta_p = plot_str_funcs_with_slope(cmdargs.out_dir_stats + "VelStrFunc_Fit.png", sys_msr_data.k, stats_data.vel_str_func, inertial_range)
 
     ## --------  Plot Anomalous Exponent
@@ -567,12 +568,14 @@ if __name__ == '__main__':
     # # --------  Velocity Structure Functions w/ Fit & Anomolous Exponent
     # -----------------------------------------
     ## --------  Structure function with fit
+    print("Velocity Energy Structure Func")
     enrg_flux_zeta_p, ns_zeta_p = plot_str_funcs_with_slope(cmdargs.out_dir_stats + "VelEnergyFluxAbsStrFunc_Fit.png", sys_msr_data.k, stats_data.vel_flux_str_func_abs[:, :, 0], inertial_range)
 
     ## --------  Plot Anomalous Exponent
     plot_anomalous_exponent(cmdargs.out_dir_stats + "VelEnergyFluxAbs_Anonalous_Exponent_Zeta_p.png", p, enrg_flux_zeta_p[1:], label_str = r"Velocity Energy Flux; Shell Modell")
 
     ## --------  Structure function with fit
+    print("Velocity Helicity Structure Func")
     hel_flux_zeta_p, ns_zeta_p = plot_str_funcs_with_slope(cmdargs.out_dir_stats + "VelHelicityFluxAbsStrFunc_Fit.png", sys_msr_data.k, stats_data.vel_flux_str_func_abs[:, :, 1], inertial_range)
 
     ## --------  Plot Anomalous Exponent
@@ -606,6 +609,7 @@ if __name__ == '__main__':
     # -----------------------------------------
     if hasattr(stats_data, "mag_str_func"):
         ## --------  Structure function with fit
+        print("Magnetic Structure Func")
         zeta_p, ns_zeta_p = plot_str_funcs_with_slope(cmdargs.out_dir_stats + "MagStrFunc_Fit.png", sys_msr_data.k, stats_data.mag_str_func, inertial_range)
 
         ## --------  Plot Anomalous Exponent

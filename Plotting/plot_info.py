@@ -118,14 +118,14 @@ if __name__ == '__main__':
     ## Read in solver data
     run_data = import_data(data_file_path, sys_vars, method)
 
-    ## Read in stats data
-    stats_data = import_stats_data(data_file_path, sys_vars, method)
+    # ## Read in stats data
+    # stats_data = import_stats_data(data_file_path, sys_vars, method)
 
     ## Read in sys_msr data
     sys_msr_data = import_sys_msr_data(data_file_path, sys_vars, method)
 
-    ## Read in sys_msr data
-    phase_sync = import_phase_sync_data(data_file_path, sys_vars, method)
+    # ## Read in sys_msr data
+    # phase_sync = import_phase_sync_data(data_file_path, sys_vars, method)
 
     ## Make output folder for Run Info plots
     cmdargs.out_dir_info = cmdargs.out_dir + "RUN_INFO_PLOTS/"
@@ -711,411 +711,411 @@ if __name__ == '__main__':
 
 
 
-        ##-------------- Plot Phase Triad Order Parameters
-        num_triads_range     = np.arange(phase_sync.num_triads)
-        num_phase_diff_range = np.arange(phase_sync.num_phase_diffs)
+        # ##-------------- Plot Phase Triad Order Parameters
+        # num_triads_range     = np.arange(phase_sync.num_triads)
+        # num_phase_diff_range = np.arange(phase_sync.num_phase_diffs)
 
-        fig = plt.figure(figsize = (16, 8))
-        gs  = GridSpec(1, 2)
-        ## Time Averaged Triad Sync Param
-        ax1 = fig.add_subplot(gs[0, 0])
-        ax1.plot(num_triads_range, np.mean(np.absolute(phase_sync.vel_triad_order[:, :]), axis = 0), linestyle = "-", marker = ".")
-        ax1.set_ylim(0, 1.0)
-        ax1.set_xlabel("$k_n$")
-        ax1.set_ylabel(r"$\langle \mathcal{R}_{k_n} \rangle_t$")
-        ax1.set_title("Time Averaged Triad Sync Parameter")
-        ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        # fig = plt.figure(figsize = (16, 8))
+        # gs  = GridSpec(1, 2)
+        # ## Time Averaged Triad Sync Param
+        # ax1 = fig.add_subplot(gs[0, 0])
+        # ax1.plot(num_triads_range, np.mean(np.absolute(phase_sync.vel_triad_order[:, :]), axis = 0), linestyle = "-", marker = ".")
+        # ax1.set_ylim(0, 1.0)
+        # ax1.set_xlabel("$k_n$")
+        # ax1.set_ylabel(r"$\langle \mathcal{R}_{k_n} \rangle_t$")
+        # ax1.set_title("Time Averaged Triad Sync Parameter")
+        # ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
         
-        ## Time Averaged Average Phase
-        ax2 = fig.add_subplot(gs[0, 1])
-        ax2.plot(num_triads_range, np.mod(np.mean(np.angle(phase_sync.vel_triad_order[:, :]), axis = 0), 2.0 * np.pi), linestyle = "-", marker = ".")
-        ax2.set_xlabel("$k_n$")
-        ax2.set_ylabel(r"$\langle \Phi_{k_n} \rangle_t$")
-        ax2.set_ylim(0, 2.0 * np.pi)
-        ax2.set_yticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
-        ax2.set_yticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
-        ax2.set_title("Time Averaged Average Angle")
-        ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
-        plt.savefig(cmdargs.out_dir_sync + "TimeAveraged_VelTriad_OrderParameters.png", bbox_inches='tight')
-        plt.close()
+        # ## Time Averaged Average Phase
+        # ax2 = fig.add_subplot(gs[0, 1])
+        # ax2.plot(num_triads_range, np.mod(np.mean(np.angle(phase_sync.vel_triad_order[:, :]), axis = 0), 2.0 * np.pi), linestyle = "-", marker = ".")
+        # ax2.set_xlabel("$k_n$")
+        # ax2.set_ylabel(r"$\langle \Phi_{k_n} \rangle_t$")
+        # ax2.set_ylim(0, 2.0 * np.pi)
+        # ax2.set_yticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
+        # ax2.set_yticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
+        # ax2.set_title("Time Averaged Average Angle")
+        # ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        # plt.savefig(cmdargs.out_dir_sync + "TimeAveraged_VelTriad_OrderParameters.png", bbox_inches='tight')
+        # plt.close()
 
-        ##-------------- Plot Space Time Phase Triad Order Parameters
-        fig = plt.figure(figsize = (30, 10))
-        gs  = GridSpec(2, 1)
-        ax1 = fig.add_subplot(gs[0, 0])
-        im1 = ax1.imshow(np.rot90(np.absolute(phase_sync.vel_triad_order[:, :])), extent = (1, sys_vars.ndata, 1, phase_sync.num_triads), aspect = 'auto', cmap = cm.get_cmap('magma_r'), vmin = 0.0, vmax = 1.0)
-        ax1.set_xlabel(r"$t$")
-        ax1.set_ylabel(r"Triad $n$")
-        ax1.set_ylim(1.0, phase_sync.num_triads)
-        ax1.set_title(r"Velocity Triad Phase Sync Parameter")
-        ## Plot colourbar
-        div1  = make_axes_locatable(ax1)
-        cbax1 = div1.append_axes("right", size = "5%", pad = 0.05)
-        cb1   = plt.colorbar(im1, cax = cbax1)
-        cb1.set_label(r"$R$")
+        # ##-------------- Plot Space Time Phase Triad Order Parameters
+        # fig = plt.figure(figsize = (30, 10))
+        # gs  = GridSpec(2, 1)
+        # ax1 = fig.add_subplot(gs[0, 0])
+        # im1 = ax1.imshow(np.rot90(np.absolute(phase_sync.vel_triad_order[:, :])), extent = (1, sys_vars.ndata, 1, phase_sync.num_triads), aspect = 'auto', cmap = cm.get_cmap('magma_r'), vmin = 0.0, vmax = 1.0)
+        # ax1.set_xlabel(r"$t$")
+        # ax1.set_ylabel(r"Triad $n$")
+        # ax1.set_ylim(1.0, phase_sync.num_triads)
+        # ax1.set_title(r"Velocity Triad Phase Sync Parameter")
+        # ## Plot colourbar
+        # div1  = make_axes_locatable(ax1)
+        # cbax1 = div1.append_axes("right", size = "5%", pad = 0.05)
+        # cb1   = plt.colorbar(im1, cax = cbax1)
+        # cb1.set_label(r"$R$")
 
-        ax1 = fig.add_subplot(gs[1, 0])
-        im1 = ax1.imshow(np.rot90(np.mod(np.angle(phase_sync.vel_triad_order[:, :]), 2.0 * np.pi)), extent = (1, sys_vars.ndata, 1, phase_sync.num_triads), aspect = 'auto', cmap = "hsv", vmin = 0.0, vmax = 2.0 * np.pi)
-        ax1.set_xlabel(r"$t$")
-        ax1.set_ylabel(r"Triad $n$")
-        ax1.set_ylim(1.0, phase_sync.num_triads)
-        ax1.set_title(r"Velocity Triad Average Angle $\Phi$")
-        ## Plot colourbar
-        div1  = make_axes_locatable(ax1)
-        cbax1 = div1.append_axes("right", size = "5%", pad = 0.05)
-        cb1   = plt.colorbar(im1, cax = cbax1)
-        cb1.set_label(r"$\phi_n - \phi_{n + 3}$")
-        cb1.set_ticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
-        cb1.set_ticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
-        plt.savefig(cmdargs.out_dir_sync + "VelTriadOrder_SpaceTimePlot.png", bbox_inches='tight')
-        plt.close()
+        # ax1 = fig.add_subplot(gs[1, 0])
+        # im1 = ax1.imshow(np.rot90(np.mod(np.angle(phase_sync.vel_triad_order[:, :]), 2.0 * np.pi)), extent = (1, sys_vars.ndata, 1, phase_sync.num_triads), aspect = 'auto', cmap = "hsv", vmin = 0.0, vmax = 2.0 * np.pi)
+        # ax1.set_xlabel(r"$t$")
+        # ax1.set_ylabel(r"Triad $n$")
+        # ax1.set_ylim(1.0, phase_sync.num_triads)
+        # ax1.set_title(r"Velocity Triad Average Angle $\Phi$")
+        # ## Plot colourbar
+        # div1  = make_axes_locatable(ax1)
+        # cbax1 = div1.append_axes("right", size = "5%", pad = 0.05)
+        # cb1   = plt.colorbar(im1, cax = cbax1)
+        # cb1.set_label(r"$\phi_n - \phi_{n + 3}$")
+        # cb1.set_ticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
+        # cb1.set_ticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
+        # plt.savefig(cmdargs.out_dir_sync + "VelTriadOrder_SpaceTimePlot.png", bbox_inches='tight')
+        # plt.close()
 
 
-        if hasattr(run_data, 'b'):
-            triad_label = [r"$\phi_n + \psi_{n + 1} + \psi_{n + 2}$", r"$\psi_n + \phi_{n + 1} + \psi_{n + 2}$", r"$\psi_n + \psi_{n + 1} + \phi_{n + 2}$"]
-            mag_triad_types = [r"$T_{pss}$", r"$T_{sps}$", r"$T_{ssp}$"]
-            for m, mag_triad_type in enumerate(mag_triad_types):
-                fig = plt.figure(figsize = (16, 8))
-                gs  = GridSpec(1, 2)
-                ## Time Averaged Triad Sync Param
-                ax1 = fig.add_subplot(gs[0, 0])
-                ax1.plot(num_triads_range, np.mean(np.absolute(phase_sync.mag_triad_order[:, m, :]), axis = 0), linestyle = "-", marker = ".")
-                ax1.set_ylim(0, 1.0)
-                ax1.set_xlabel("$k_n$")
-                ax1.set_ylabel(r"$\langle \mathcal{R}_{k_n} \rangle_t$")
-                ax1.set_title("Magnetic Time Averaged Triad Sync Parameter")
-                ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        # if hasattr(run_data, 'b'):
+        #     triad_label = [r"$\phi_n + \psi_{n + 1} + \psi_{n + 2}$", r"$\psi_n + \phi_{n + 1} + \psi_{n + 2}$", r"$\psi_n + \psi_{n + 1} + \phi_{n + 2}$"]
+        #     mag_triad_types = [r"$T_{pss}$", r"$T_{sps}$", r"$T_{ssp}$"]
+        #     for m, mag_triad_type in enumerate(mag_triad_types):
+        #         fig = plt.figure(figsize = (16, 8))
+        #         gs  = GridSpec(1, 2)
+        #         ## Time Averaged Triad Sync Param
+        #         ax1 = fig.add_subplot(gs[0, 0])
+        #         ax1.plot(num_triads_range, np.mean(np.absolute(phase_sync.mag_triad_order[:, m, :]), axis = 0), linestyle = "-", marker = ".")
+        #         ax1.set_ylim(0, 1.0)
+        #         ax1.set_xlabel("$k_n$")
+        #         ax1.set_ylabel(r"$\langle \mathcal{R}_{k_n} \rangle_t$")
+        #         ax1.set_title("Magnetic Time Averaged Triad Sync Parameter")
+        #         ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
                 
-                ## Time Averaged Average Phase
-                ax2 = fig.add_subplot(gs[0, 1])
-                ax2.plot(num_triads_range, np.mod(np.mean(np.angle(phase_sync.mag_triad_order[:, m, :]), axis = 0), 2.0 * np.pi), linestyle = "-", marker = ".")
-                ax2.set_xlabel("$k_n$")
-                ax2.set_ylabel(r"$\langle \Phi_{k_n} \rangle_t$")
-                ax2.set_ylim(0, 2.0 * np.pi)
-                ax2.set_yticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
-                ax2.set_yticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
-                ax2.set_title("Magnetic Time Averaged Average Angle")
-                ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
-                plt.savefig(cmdargs.out_dir_sync + "TimeAveraged_MagTriad_Type[{}]_OrderParameters.png".format(mag_triad_type), bbox_inches='tight')
-                plt.close()
+        #         ## Time Averaged Average Phase
+        #         ax2 = fig.add_subplot(gs[0, 1])
+        #         ax2.plot(num_triads_range, np.mod(np.mean(np.angle(phase_sync.mag_triad_order[:, m, :]), axis = 0), 2.0 * np.pi), linestyle = "-", marker = ".")
+        #         ax2.set_xlabel("$k_n$")
+        #         ax2.set_ylabel(r"$\langle \Phi_{k_n} \rangle_t$")
+        #         ax2.set_ylim(0, 2.0 * np.pi)
+        #         ax2.set_yticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
+        #         ax2.set_yticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
+        #         ax2.set_title("Magnetic Time Averaged Average Angle")
+        #         ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        #         plt.savefig(cmdargs.out_dir_sync + "TimeAveraged_MagTriad_Type[{}]_OrderParameters.png".format(mag_triad_type), bbox_inches='tight')
+        #         plt.close()
 
-                ##-------------- Plot Space Time Phase Triad Order Parameters
-                fig = plt.figure(figsize = (30, 10))
-                gs  = GridSpec(2, 1)
-                ax1 = fig.add_subplot(gs[0, 0])
-                im1 = ax1.imshow(np.rot90(np.absolute(phase_sync.mag_triad_order[:, m, :])), extent = (1, sys_vars.ndata, 1, phase_sync.num_triads), aspect = 'auto', cmap = cm.get_cmap('magma_r'), vmin = 0.0, vmax = 1.0)
-                ax1.set_xlabel(r"$t$")
-                ax1.set_ylabel(r"Triad $n$")
-                ax1.set_ylim(1.0, phase_sync.num_triads)
-                ax1.set_title(r"Magnetic Triad Phase Sync Parameter")
-                ## Plot colourbar
-                div1  = make_axes_locatable(ax1)
-                cbax1 = div1.append_axes("right", size = "5%", pad = 0.05)
-                cb1   = plt.colorbar(im1, cax = cbax1)
-                cb1.set_label(r"$R$")
+        #         ##-------------- Plot Space Time Phase Triad Order Parameters
+        #         fig = plt.figure(figsize = (30, 10))
+        #         gs  = GridSpec(2, 1)
+        #         ax1 = fig.add_subplot(gs[0, 0])
+        #         im1 = ax1.imshow(np.rot90(np.absolute(phase_sync.mag_triad_order[:, m, :])), extent = (1, sys_vars.ndata, 1, phase_sync.num_triads), aspect = 'auto', cmap = cm.get_cmap('magma_r'), vmin = 0.0, vmax = 1.0)
+        #         ax1.set_xlabel(r"$t$")
+        #         ax1.set_ylabel(r"Triad $n$")
+        #         ax1.set_ylim(1.0, phase_sync.num_triads)
+        #         ax1.set_title(r"Magnetic Triad Phase Sync Parameter")
+        #         ## Plot colourbar
+        #         div1  = make_axes_locatable(ax1)
+        #         cbax1 = div1.append_axes("right", size = "5%", pad = 0.05)
+        #         cb1   = plt.colorbar(im1, cax = cbax1)
+        #         cb1.set_label(r"$R$")
 
-                ax1 = fig.add_subplot(gs[1, 0])
-                im1 = ax1.imshow(np.rot90(np.mod(np.angle(phase_sync.mag_triad_order[:, m, :]), 2.0 * np.pi)), extent = (1, sys_vars.ndata, 1, phase_sync.num_triads), aspect = 'auto', cmap = "hsv", vmin = 0.0, vmax = 2.0 * np.pi)
-                ax1.set_xlabel(r"$t$")
-                ax1.set_ylabel(r"Triad $n$")
-                ax1.set_ylim(1.0, phase_sync.num_triads)
-                ax1.set_xticks(np.arange(1, phase_sync.num_triads + 1))
-                ax1.set_xticklabels([r"${}$".format(i) for i in range(1, phase_sync.num_triads + 1)])
-                ax1.set_title(r"Magnetic Triad Average Angle $\Phi$")
-                ## Plot colourbar
-                div1  = make_axes_locatable(ax1)
-                cbax1 = div1.append_axes("right", size = "5%", pad = 0.05)
-                cb1   = plt.colorbar(im1, cax = cbax1)
-                cb1.set_label(r"$\phi_n - \phi_{n + 3}$")
-                cb1.set_ticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
-                cb1.set_ticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
-                plt.savefig(cmdargs.out_dir_sync + "MagTriadOrder_Type[{}]_SpaceTimePlot.png".format(mag_triad_type), bbox_inches='tight')
-                plt.close()
+        #         ax1 = fig.add_subplot(gs[1, 0])
+        #         im1 = ax1.imshow(np.rot90(np.mod(np.angle(phase_sync.mag_triad_order[:, m, :]), 2.0 * np.pi)), extent = (1, sys_vars.ndata, 1, phase_sync.num_triads), aspect = 'auto', cmap = "hsv", vmin = 0.0, vmax = 2.0 * np.pi)
+        #         ax1.set_xlabel(r"$t$")
+        #         ax1.set_ylabel(r"Triad $n$")
+        #         ax1.set_ylim(1.0, phase_sync.num_triads)
+        #         ax1.set_xticks(np.arange(1, phase_sync.num_triads + 1))
+        #         ax1.set_xticklabels([r"${}$".format(i) for i in range(1, phase_sync.num_triads + 1)])
+        #         ax1.set_title(r"Magnetic Triad Average Angle $\Phi$")
+        #         ## Plot colourbar
+        #         div1  = make_axes_locatable(ax1)
+        #         cbax1 = div1.append_axes("right", size = "5%", pad = 0.05)
+        #         cb1   = plt.colorbar(im1, cax = cbax1)
+        #         cb1.set_label(r"$\phi_n - \phi_{n + 3}$")
+        #         cb1.set_ticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
+        #         cb1.set_ticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
+        #         plt.savefig(cmdargs.out_dir_sync + "MagTriadOrder_Type[{}]_SpaceTimePlot.png".format(mag_triad_type), bbox_inches='tight')
+        #         plt.close()
 
-        ##-------------- Plot Phase Phase Difference Order Parameters
-        fig = plt.figure(figsize = (16, 8))
-        gs  = GridSpec(1, 2)
-        ## Time Averaged Phase Difference Sync Param
-        ax1 = fig.add_subplot(gs[0, 0])
-        ax1.plot(num_phase_diff_range, np.mean(np.absolute(phase_sync.vel_phase_diff_order[:, :]), axis = 0), linestyle = "-", marker = ".")
-        ax1.set_ylim(0, 1.0)
-        ax1.set_xlabel("$k_n$")
-        ax1.set_ylabel(r"$\langle \mathcal{R}_{k_n} \rangle_t$")
-        ax1.set_title("Time Averaged Phase Difference Sync Parameter")
-        ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        # ##-------------- Plot Phase Phase Difference Order Parameters
+        # fig = plt.figure(figsize = (16, 8))
+        # gs  = GridSpec(1, 2)
+        # ## Time Averaged Phase Difference Sync Param
+        # ax1 = fig.add_subplot(gs[0, 0])
+        # ax1.plot(num_phase_diff_range, np.mean(np.absolute(phase_sync.vel_phase_diff_order[:, :]), axis = 0), linestyle = "-", marker = ".")
+        # ax1.set_ylim(0, 1.0)
+        # ax1.set_xlabel("$k_n$")
+        # ax1.set_ylabel(r"$\langle \mathcal{R}_{k_n} \rangle_t$")
+        # ax1.set_title("Time Averaged Phase Difference Sync Parameter")
+        # ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
         
-        ## Time Averaged Average Phase
-        ax2 = fig.add_subplot(gs[0, 1])
-        ax2.plot(num_phase_diff_range, np.mod(np.mean(np.angle(phase_sync.vel_phase_diff_order[:, :]), axis = 0), 2.0 * np.pi), linestyle = "-", marker = ".")
-        ax2.set_xlabel("$k_n$")
-        ax2.set_ylabel(r"$\langle \Phi_{k_n} \rangle_t$")
-        ax2.set_ylim(0, 2.0 * np.pi)
-        ax2.set_yticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
-        ax2.set_yticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
-        ax2.set_title("Time Averaged Average Angle")
-        ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
-        plt.savefig(cmdargs.out_dir_sync + "TimeAveraged_VelPhaseDifference_OrderParameters.png", bbox_inches='tight')
-        plt.close()
+        # ## Time Averaged Average Phase
+        # ax2 = fig.add_subplot(gs[0, 1])
+        # ax2.plot(num_phase_diff_range, np.mod(np.mean(np.angle(phase_sync.vel_phase_diff_order[:, :]), axis = 0), 2.0 * np.pi), linestyle = "-", marker = ".")
+        # ax2.set_xlabel("$k_n$")
+        # ax2.set_ylabel(r"$\langle \Phi_{k_n} \rangle_t$")
+        # ax2.set_ylim(0, 2.0 * np.pi)
+        # ax2.set_yticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
+        # ax2.set_yticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
+        # ax2.set_title("Time Averaged Average Angle")
+        # ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        # plt.savefig(cmdargs.out_dir_sync + "TimeAveraged_VelPhaseDifference_OrderParameters.png", bbox_inches='tight')
+        # plt.close()
 
 
-        ##-------------- Plot Space Time Phase Triad Order Parameters
-        fig = plt.figure(figsize = (30, 10))
-        gs  = GridSpec(2, 1)
-        ax1 = fig.add_subplot(gs[0, 0])
-        im1 = ax1.imshow(np.rot90(np.absolute(phase_sync.vel_phase_diff_order[:, :])), extent = (1, sys_vars.ndata, 1, phase_sync.num_phase_diffs), aspect = 'auto', cmap = cm.get_cmap('magma_r'), vmin = 0.0, vmax = 1.0)
-        ax1.set_xlabel(r"$t$")
-        ax1.set_ylabel(r"Phase Difference $n$")
-        ax1.set_ylim(1.0, phase_sync.num_phase_diffs)
-        ax1.set_title(r"Velocity Phase Difference Phase Sync Parameter")
-        ## Plot colourbar
-        div1  = make_axes_locatable(ax1)
-        cbax1 = div1.append_axes("right", size = "5%", pad = 0.05)
-        cb1   = plt.colorbar(im1, cax = cbax1)
-        cb1.set_label(r"$R$")
+        # ##-------------- Plot Space Time Phase Triad Order Parameters
+        # fig = plt.figure(figsize = (30, 10))
+        # gs  = GridSpec(2, 1)
+        # ax1 = fig.add_subplot(gs[0, 0])
+        # im1 = ax1.imshow(np.rot90(np.absolute(phase_sync.vel_phase_diff_order[:, :])), extent = (1, sys_vars.ndata, 1, phase_sync.num_phase_diffs), aspect = 'auto', cmap = cm.get_cmap('magma_r'), vmin = 0.0, vmax = 1.0)
+        # ax1.set_xlabel(r"$t$")
+        # ax1.set_ylabel(r"Phase Difference $n$")
+        # ax1.set_ylim(1.0, phase_sync.num_phase_diffs)
+        # ax1.set_title(r"Velocity Phase Difference Phase Sync Parameter")
+        # ## Plot colourbar
+        # div1  = make_axes_locatable(ax1)
+        # cbax1 = div1.append_axes("right", size = "5%", pad = 0.05)
+        # cb1   = plt.colorbar(im1, cax = cbax1)
+        # cb1.set_label(r"$R$")
 
-        ax1 = fig.add_subplot(gs[1, 0])
-        im1 = ax1.imshow(np.rot90(np.mod(np.angle(phase_sync.vel_phase_diff_order[:, :]), 2.0 * np.pi)), extent = (1, sys_vars.ndata, 1, phase_sync.num_phase_diffs), aspect = 'auto', cmap = "hsv", vmin = 0.0, vmax = 2.0 * np.pi)
-        ax1.set_xlabel(r"$t$")
-        ax1.set_ylabel(r"Phase Difference $n$")
-        ax1.set_ylim(1.0, phase_sync.num_triads)
-        ax1.set_title(r"Velocity Phase Difference Average Angle $\Phi$")
-        ## Plot colourbar
-        div1  = make_axes_locatable(ax1)
-        cbax1 = div1.append_axes("right", size = "5%", pad = 0.05)
-        cb1   = plt.colorbar(im1, cax = cbax1)
-        cb1.set_label(r"$\phi_n - \phi_{n + 3}$")
-        cb1.set_ticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
-        cb1.set_ticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
-        plt.savefig(cmdargs.out_dir_sync + "VelPhaseDifferenceOrder_SpaceTimePlot.png", bbox_inches='tight')
-        plt.close()
+        # ax1 = fig.add_subplot(gs[1, 0])
+        # im1 = ax1.imshow(np.rot90(np.mod(np.angle(phase_sync.vel_phase_diff_order[:, :]), 2.0 * np.pi)), extent = (1, sys_vars.ndata, 1, phase_sync.num_phase_diffs), aspect = 'auto', cmap = "hsv", vmin = 0.0, vmax = 2.0 * np.pi)
+        # ax1.set_xlabel(r"$t$")
+        # ax1.set_ylabel(r"Phase Difference $n$")
+        # ax1.set_ylim(1.0, phase_sync.num_triads)
+        # ax1.set_title(r"Velocity Phase Difference Average Angle $\Phi$")
+        # ## Plot colourbar
+        # div1  = make_axes_locatable(ax1)
+        # cbax1 = div1.append_axes("right", size = "5%", pad = 0.05)
+        # cb1   = plt.colorbar(im1, cax = cbax1)
+        # cb1.set_label(r"$\phi_n - \phi_{n + 3}$")
+        # cb1.set_ticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
+        # cb1.set_ticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
+        # plt.savefig(cmdargs.out_dir_sync + "VelPhaseDifferenceOrder_SpaceTimePlot.png", bbox_inches='tight')
+        # plt.close()
 
 
-        if hasattr(run_data, 'b'):
-            fig = plt.figure(figsize = (16, 8))
-            gs  = GridSpec(1, 2)
-            ## Time Averaged Phase Difference Sync Param
-            ax1 = fig.add_subplot(gs[0, 0])
-            ax1.plot(num_phase_diff_range, np.mean(np.absolute(phase_sync.mag_phase_diff_order[:, :]), axis = 0), linestyle = "-", marker = ".")
-            ax1.set_ylim(0, 1.0)
-            ax1.set_xlabel("$k_n$")
-            ax1.set_ylabel(r"$\langle \mathcal{R}_{k_n} \rangle_t$")
-            ax1.set_title("Time Averaged PhaseDifference Sync Parameter")
-            ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        # if hasattr(run_data, 'b'):
+        #     fig = plt.figure(figsize = (16, 8))
+        #     gs  = GridSpec(1, 2)
+        #     ## Time Averaged Phase Difference Sync Param
+        #     ax1 = fig.add_subplot(gs[0, 0])
+        #     ax1.plot(num_phase_diff_range, np.mean(np.absolute(phase_sync.mag_phase_diff_order[:, :]), axis = 0), linestyle = "-", marker = ".")
+        #     ax1.set_ylim(0, 1.0)
+        #     ax1.set_xlabel("$k_n$")
+        #     ax1.set_ylabel(r"$\langle \mathcal{R}_{k_n} \rangle_t$")
+        #     ax1.set_title("Time Averaged PhaseDifference Sync Parameter")
+        #     ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
             
-            ## Time Averaged Average Phase
-            ax2 = fig.add_subplot(gs[0, 1])
-            ax2.plot(num_phase_diff_range, np.mod(np.mean(np.angle(phase_sync.mag_phase_diff_order[:, :]), axis = 0), 2.0 * np.pi), linestyle = "-", marker = ".")
-            ax2.set_xlabel("$k_n$")
-            ax2.set_ylabel(r"$\langle \Phi_{k_n} \rangle_t$")
-            ax2.set_ylim(0, 2.0 * np.pi)
-            ax2.set_yticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
-            ax2.set_yticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
-            ax2.set_title("Time Averaged Average Angle")
-            ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
-            plt.savefig(cmdargs.out_dir_sync + "TimeAveraged_MagPhaseDifference_OrderParameters.png", bbox_inches='tight')
-            plt.close()
+        #     ## Time Averaged Average Phase
+        #     ax2 = fig.add_subplot(gs[0, 1])
+        #     ax2.plot(num_phase_diff_range, np.mod(np.mean(np.angle(phase_sync.mag_phase_diff_order[:, :]), axis = 0), 2.0 * np.pi), linestyle = "-", marker = ".")
+        #     ax2.set_xlabel("$k_n$")
+        #     ax2.set_ylabel(r"$\langle \Phi_{k_n} \rangle_t$")
+        #     ax2.set_ylim(0, 2.0 * np.pi)
+        #     ax2.set_yticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
+        #     ax2.set_yticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
+        #     ax2.set_title("Time Averaged Average Angle")
+        #     ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        #     plt.savefig(cmdargs.out_dir_sync + "TimeAveraged_MagPhaseDifference_OrderParameters.png", bbox_inches='tight')
+        #     plt.close()
 
-            fig = plt.figure(figsize = (30, 10))
-            gs  = GridSpec(2, 1)
-            ax1 = fig.add_subplot(gs[0, 0])
-            im1 = ax1.imshow(np.rot90(np.absolute(phase_sync.mag_phase_diff_order[:, :])), extent = (1, sys_vars.ndata, 1, phase_sync.num_phase_diffs), aspect = 'auto', cmap = cm.get_cmap('magma_r'), vmin = 0.0, vmax = 1.0)
-            ax1.set_xlabel(r"$t$")
-            ax1.set_ylabel(r"Phase Difference $n$")
-            ax1.set_ylim(1.0, phase_sync.num_phase_diffs)
-            ax1.set_title(r"Magnetic Phase Difference Phase Sync Parameter")
-            ## Plot colourbar
-            div1  = make_axes_locatable(ax1)
-            cbax1 = div1.append_axes("right", size = "5%", pad = 0.05)
-            cb1   = plt.colorbar(im1, cax = cbax1)
-            cb1.set_label(r"$R$")
+        #     fig = plt.figure(figsize = (30, 10))
+        #     gs  = GridSpec(2, 1)
+        #     ax1 = fig.add_subplot(gs[0, 0])
+        #     im1 = ax1.imshow(np.rot90(np.absolute(phase_sync.mag_phase_diff_order[:, :])), extent = (1, sys_vars.ndata, 1, phase_sync.num_phase_diffs), aspect = 'auto', cmap = cm.get_cmap('magma_r'), vmin = 0.0, vmax = 1.0)
+        #     ax1.set_xlabel(r"$t$")
+        #     ax1.set_ylabel(r"Phase Difference $n$")
+        #     ax1.set_ylim(1.0, phase_sync.num_phase_diffs)
+        #     ax1.set_title(r"Magnetic Phase Difference Phase Sync Parameter")
+        #     ## Plot colourbar
+        #     div1  = make_axes_locatable(ax1)
+        #     cbax1 = div1.append_axes("right", size = "5%", pad = 0.05)
+        #     cb1   = plt.colorbar(im1, cax = cbax1)
+        #     cb1.set_label(r"$R$")
 
-            ax1 = fig.add_subplot(gs[1, 0])
-            im1 = ax1.imshow(np.rot90(np.mod(np.angle(phase_sync.mag_phase_diff_order[:, :]), 2.0 * np.pi)), extent = (1, sys_vars.ndata, 1, phase_sync.num_phase_diffs), aspect = 'auto', cmap = "hsv", vmin = 0.0, vmax = 2.0 * np.pi)
-            ax1.set_xlabel(r"$t$")
-            ax1.set_ylabel(r"Phase Difference $n$")
-            ax1.set_ylim(1.0, phase_sync.num_phase_diffs)
-            ax1.set_title(r"Magnetic Phase Difference Average Angle $\Phi$")
-            ## Plot colourbar
-            div1  = make_axes_locatable(ax1)
-            cbax1 = div1.append_axes("right", size = "5%", pad = 0.05)
-            cb1   = plt.colorbar(im1, cax = cbax1)
-            cb1.set_label(r"$\phi_n - \phi_{n + 3}$")
-            cb1.set_ticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
-            cb1.set_ticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
-            plt.savefig(cmdargs.out_dir_sync + "MagPhaseDifferenceOrder_SpaceTimePlot.png", bbox_inches='tight')
-            plt.close()
-
-
-
-        fig = plt.figure(figsize = (16, 16))
-        gs  = GridSpec(5, 5, wspace = 0.25, hspace = 0.25)
-        ## Plot the velocity triad pdfs
-        for i in range(5):
-            for j in range(5):
-                if i * 5 + j < phase_sync.num_triads:
-                    ax1 = fig.add_subplot(gs[i, j])
-                    pdf, centres = compute_pdf_from_hist(phase_sync.vel_triad_hist_counts[i * 5 + j, :], phase_sync.vel_triad_hist_ranges[:], remove_zeros = False)
-                    ax1.plot(centres, pdf, label = "$Tppp({})$".format(i * 5 + j + 1))
-                    ax1.set_xlabel("$\phi_n + \phi_{n + 1} + \phi_{n + 2}$")
-                    ax1.set_ylabel("PDF")
-                    ax1.set_yscale("log")
-                    ax1.legend()
-                    ax1.set_xlim(0, 2.0*np.pi)
-                    ax1.set_xticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
-                    ax1.set_xticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
-
-        plt.savefig(cmdargs.out_dir_sync + "Vel_TriadPDF.png", bbox_inches='tight')
-        plt.close()
-
-
-        fig = plt.figure(figsize = (16, 16))
-        gs  = GridSpec(5, 5, wspace = 0.25, hspace = 0.25)
-        ## Plot the velocity triad phase differences
-        for i in range(5):
-            for j in range(5):
-                if i * 5 + j < phase_sync.num_phase_diffs:
-                    ax1 = fig.add_subplot(gs[i, j])
-                    pdf, centres = compute_pdf_from_hist(phase_sync.vel_phase_diff_hist_counts[i * 5 + j, :], phase_sync.vel_phase_diff_hist_ranges[:], remove_zeros = False)
-                    ax1.plot(centres, pdf, label = "$Tppp({})$".format(i * 5 + j + 1))
-                    ax1.set_xlabel("$\phi_n - \phi_{n + 3}$")
-                    ax1.set_ylabel("PDF")
-                    ax1.set_yscale("log")
-                    ax1.legend()
-                    ax1.set_xlim(0, 2.0*np.pi)
-                    ax1.set_xticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
-                    ax1.set_xticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
-
-        plt.savefig(cmdargs.out_dir_sync + "Vel_PhaseDifferencesPDF.png", bbox_inches='tight')
-        plt.close()
-
-
-        if hasattr(run_data, 'b'):
-            triad_label = [r"$\phi_n + \psi_{n + 1} + \psi_{n + 2}$", r"$\psi_n + \phi_{n + 1} + \psi_{n + 2}$", r"$\psi_n + \psi_{n + 1} + \phi_{n + 2}$"]
-            mag_triad_types = [r"T_{pss}", r"T_{sps}", r"T_{ssp}"]
-            for m, mag_triad_type in enumerate(mag_triad_types):
-                fig = plt.figure(figsize = (16, 16))
-                gs  = GridSpec(5, 5, wspace = 0.25, hspace = 0.25)
-                ## Plot the velocity triad pdfs
-                for i in range(5):
-                    for j in range(5):
-                        if i * 5 + j < phase_sync.num_triads:
-                            ax1 = fig.add_subplot(gs[i, j])
-                            pdf, centres = compute_pdf_from_hist(phase_sync.mag_triad_hist_counts[i * 5 + j, :, m], phase_sync.mag_triad_hist_ranges[:], remove_zeros = False)
-                            ax1.plot(centres, pdf, label = "${}({})$".format(mag_triad_type, i * 5 + j + 1))
-                            ax1.set_xlabel(triad_label[m])
-                            ax1.set_ylabel("PDF")
-                            ax1.set_yscale("log")
-                            ax1.legend()
-                            ax1.set_xlim(0, 2.0*np.pi)
-                            ax1.set_xticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
-                            ax1.set_xticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
-
-                plt.savefig(cmdargs.out_dir_sync + "Mag_TriadPDF_Type[{}].png".format(mag_triad_type), bbox_inches='tight')
-                plt.close()
-
-
-            fig = plt.figure(figsize = (16, 16))
-            gs  = GridSpec(5, 5, wspace = 0.25, hspace = 0.25)
-            ## Plot the mag phase differences
-            for i in range(5):
-                for j in range(5):
-                    if i * 5 + j < phase_sync.num_phase_diffs:
-                        ax1 = fig.add_subplot(gs[i, j])
-                        pdf, centres = compute_pdf_from_hist(phase_sync.mag_phase_diff_hist_counts[i * 5 + j, :], phase_sync.mag_phase_diff_hist_ranges[:], remove_zeros = False)
-                        ax1.plot(centres, pdf, label = "$Tppp({})$".format(i * 5 + j + 1))
-                        ax1.set_xlabel("$\psi_n - \psi_{n + 3}$")
-                        ax1.set_ylabel("PDF")
-                        ax1.set_yscale("log")
-                        ax1.legend()
-                        ax1.set_xlim(0, 2.0*np.pi)
-                        ax1.set_xticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
-                        ax1.set_xticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
-
-            plt.savefig(cmdargs.out_dir_sync + "Mag_PhaseDifferencesPDF.png", bbox_inches='tight')
-            plt.close()
+        #     ax1 = fig.add_subplot(gs[1, 0])
+        #     im1 = ax1.imshow(np.rot90(np.mod(np.angle(phase_sync.mag_phase_diff_order[:, :]), 2.0 * np.pi)), extent = (1, sys_vars.ndata, 1, phase_sync.num_phase_diffs), aspect = 'auto', cmap = "hsv", vmin = 0.0, vmax = 2.0 * np.pi)
+        #     ax1.set_xlabel(r"$t$")
+        #     ax1.set_ylabel(r"Phase Difference $n$")
+        #     ax1.set_ylim(1.0, phase_sync.num_phase_diffs)
+        #     ax1.set_title(r"Magnetic Phase Difference Average Angle $\Phi$")
+        #     ## Plot colourbar
+        #     div1  = make_axes_locatable(ax1)
+        #     cbax1 = div1.append_axes("right", size = "5%", pad = 0.05)
+        #     cb1   = plt.colorbar(im1, cax = cbax1)
+        #     cb1.set_label(r"$\phi_n - \phi_{n + 3}$")
+        #     cb1.set_ticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
+        #     cb1.set_ticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
+        #     plt.savefig(cmdargs.out_dir_sync + "MagPhaseDifferenceOrder_SpaceTimePlot.png", bbox_inches='tight')
+        #     plt.close()
 
 
 
-        ##------------------ Plot Imshow of Triads
-        fig = plt.figure(figsize = (30, 10))
-        gs  = GridSpec(1, 1)
-        ax1 = fig.add_subplot(gs[0, 0])
-        im1 = ax1.imshow(np.transpose(phase_sync.vel_triads[:, :]), extent = (1, sys_vars.ndata, 1, phase_sync.num_triads), aspect = 'auto', cmap = "hsv", vmin = 0.0, vmax = 2.0 * np.pi)
-        ax1.set_xlabel(r"$t$")
-        ax1.set_ylabel(r"Triad")
-        # ax1.set_xlim(0.0, sys_msr_data.time[-1])
-        ax1.set_ylim(1.0, phase_sync.num_triads)
-        ax1.set_title(r"Velocity Triads")
-        ## Plot colourbar
-        div1  = make_axes_locatable(ax1)
-        cbax1 = div1.append_axes("right", size = "5%", pad = 0.05)
-        cb1   = plt.colorbar(im1, cax = cbax1)
-        cb1.set_label(r"$\phi_n + \phi_{n + 1} + \phi_{n + 2}$")
-        cb1.set_ticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
-        cb1.set_ticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
-        plt.savefig(cmdargs.out_dir_sync + "VelTriads_SpaceTimePlot.png", bbox_inches='tight')
-        plt.close()
+        # fig = plt.figure(figsize = (16, 16))
+        # gs  = GridSpec(5, 5, wspace = 0.25, hspace = 0.25)
+        # ## Plot the velocity triad pdfs
+        # for i in range(5):
+        #     for j in range(5):
+        #         if i * 5 + j < phase_sync.num_triads:
+        #             ax1 = fig.add_subplot(gs[i, j])
+        #             pdf, centres = compute_pdf_from_hist(phase_sync.vel_triad_hist_counts[i * 5 + j, :], phase_sync.vel_triad_hist_ranges[:], remove_zeros = False)
+        #             ax1.plot(centres, pdf, label = "$Tppp({})$".format(i * 5 + j + 1))
+        #             ax1.set_xlabel("$\phi_n + \phi_{n + 1} + \phi_{n + 2}$")
+        #             ax1.set_ylabel("PDF")
+        #             ax1.set_yscale("log")
+        #             ax1.legend()
+        #             ax1.set_xlim(0, 2.0*np.pi)
+        #             ax1.set_xticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
+        #             ax1.set_xticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
 
-        ##------------------ Plot Imshow of Phase Differences
-        fig = plt.figure(figsize = (30, 10))
-        gs  = GridSpec(1, 1)
-        ax1 = fig.add_subplot(gs[0, 0])
-        im1 = ax1.imshow(np.transpose(phase_sync.vel_phase_diffs[:, :]), extent = (1, sys_vars.ndata, 1, phase_sync.num_phase_diffs), aspect = 'auto', cmap = "hsv", vmin = 0.0, vmax = 2.0 * np.pi)
-        ax1.set_xlabel(r"$t$")
-        ax1.set_ylabel(r"Phase Difference")
-        # ax1.set_xlim(0.0, sys_msr_data.time[-1])
-        ax1.set_ylim(1.0, phase_sync.num_phase_diffs)
-        ax1.set_title(r"Velocity Phase Differences")
-        ## Plot colourbar
-        div1  = make_axes_locatable(ax1)
-        cbax1 = div1.append_axes("right", size = "5%", pad = 0.05)
-        cb1   = plt.colorbar(im1, cax = cbax1)
-        cb1.set_label(r"$\phi_n - \phi_{n + 3}$")
-        cb1.set_ticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
-        cb1.set_ticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
-        plt.savefig(cmdargs.out_dir_sync + "VelPhase_Differences_SpaceTimePlot.png", bbox_inches='tight')
-        plt.close()
+        # plt.savefig(cmdargs.out_dir_sync + "Vel_TriadPDF.png", bbox_inches='tight')
+        # plt.close()
 
-        if hasattr(run_data, 'b'):
-            triad_label = [r"$\phi_n + \psi_{n + 1} + \psi_{n + 2}$", r"$\psi_n + \phi_{n + 1} + \psi_{n + 2}$", r"$\psi_n + \psi_{n + 1} + \phi_{n + 2}$"]
-            mag_triad_types = [r"$T_{pss}$", r"$T_{sps}$", r"$T_{ssp}$"]
-            for m, mag_triad_type in enumerate(mag_triad_types):
-                ##------------------ Plot Imshow of Triads
-                fig = plt.figure(figsize = (30, 10))
-                gs  = GridSpec(1, 1)
-                ax1 = fig.add_subplot(gs[0, 0])
-                im1 = ax1.imshow(np.transpose(phase_sync.mag_triads[:, m, :]), extent = (1, sys_vars.ndata, 1, phase_sync.num_triads), aspect = 'auto', cmap = "hsv", vmin = 0.0, vmax = 2.0 * np.pi)
-                ax1.set_xlabel(r"$t$")
-                ax1.set_ylabel(r"Triad")
-                ax1.set_ylim(1.0, phase_sync.num_triads)
-                ax1.set_title(r"Magnetic Triads")
-                ## Plot colourbar
-                div1  = make_axes_locatable(ax1)
-                cbax1 = div1.append_axes("right", size = "5%", pad = 0.05)
-                cb1   = plt.colorbar(im1, cax = cbax1)
-                cb1.set_label(triad_label[m])
-                cb1.set_ticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
-                cb1.set_ticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
 
-                plt.savefig(cmdargs.out_dir_sync + "MagTriads_Type[{}]_SpaceTimePlot.png".format(mag_triad_type), bbox_inches='tight')
-                plt.close()
+        # fig = plt.figure(figsize = (16, 16))
+        # gs  = GridSpec(5, 5, wspace = 0.25, hspace = 0.25)
+        # ## Plot the velocity triad phase differences
+        # for i in range(5):
+        #     for j in range(5):
+        #         if i * 5 + j < phase_sync.num_phase_diffs:
+        #             ax1 = fig.add_subplot(gs[i, j])
+        #             pdf, centres = compute_pdf_from_hist(phase_sync.vel_phase_diff_hist_counts[i * 5 + j, :], phase_sync.vel_phase_diff_hist_ranges[:], remove_zeros = False)
+        #             ax1.plot(centres, pdf, label = "$Tppp({})$".format(i * 5 + j + 1))
+        #             ax1.set_xlabel("$\phi_n - \phi_{n + 3}$")
+        #             ax1.set_ylabel("PDF")
+        #             ax1.set_yscale("log")
+        #             ax1.legend()
+        #             ax1.set_xlim(0, 2.0*np.pi)
+        #             ax1.set_xticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
+        #             ax1.set_xticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
 
-            ##------------------ Plot Imshow of Phase Differences
-            fig = plt.figure(figsize = (30, 10))
-            gs  = GridSpec(1, 1)
-            ax1 = fig.add_subplot(gs[0, 0])
-            im1 = ax1.imshow(np.transpose(phase_sync.mag_phase_diffs[:, :]), extent = (1, sys_vars.ndata, 1, phase_sync.num_phase_diffs), aspect = 'auto', cmap = "hsv", vmin = 0.0, vmax = 2.0 * np.pi)
-            ax1.set_xlabel(r"$t$")
-            ax1.set_ylabel(r"Phase Difference")
-            ax1.set_ylim(1.0, phase_sync.num_phase_diffs)
-            ax1.set_title(r"Magnetic Phase Differences")
-            ## Plot colourbar
-            div1  = make_axes_locatable(ax1)
-            cbax1 = div1.append_axes("right", size = "5%", pad = 0.05)
-            cb1   = plt.colorbar(im1, cax = cbax1)
-            cb1.set_label(r"$\phi_n - \phi_{n + 3}$")
-            cb1.set_ticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
-            cb1.set_ticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
-            plt.savefig(cmdargs.out_dir_sync + "MagPhase_Differences_SpaceTimePlot.png", bbox_inches='tight')
-            plt.close()
+        # plt.savefig(cmdargs.out_dir_sync + "Vel_PhaseDifferencesPDF.png", bbox_inches='tight')
+        # plt.close()
+
+
+        # if hasattr(run_data, 'b'):
+        #     triad_label = [r"$\phi_n + \psi_{n + 1} + \psi_{n + 2}$", r"$\psi_n + \phi_{n + 1} + \psi_{n + 2}$", r"$\psi_n + \psi_{n + 1} + \phi_{n + 2}$"]
+        #     mag_triad_types = [r"T_{pss}", r"T_{sps}", r"T_{ssp}"]
+        #     for m, mag_triad_type in enumerate(mag_triad_types):
+        #         fig = plt.figure(figsize = (16, 16))
+        #         gs  = GridSpec(5, 5, wspace = 0.25, hspace = 0.25)
+        #         ## Plot the velocity triad pdfs
+        #         for i in range(5):
+        #             for j in range(5):
+        #                 if i * 5 + j < phase_sync.num_triads:
+        #                     ax1 = fig.add_subplot(gs[i, j])
+        #                     pdf, centres = compute_pdf_from_hist(phase_sync.mag_triad_hist_counts[i * 5 + j, :, m], phase_sync.mag_triad_hist_ranges[:], remove_zeros = False)
+        #                     ax1.plot(centres, pdf, label = "${}({})$".format(mag_triad_type, i * 5 + j + 1))
+        #                     ax1.set_xlabel(triad_label[m])
+        #                     ax1.set_ylabel("PDF")
+        #                     ax1.set_yscale("log")
+        #                     ax1.legend()
+        #                     ax1.set_xlim(0, 2.0*np.pi)
+        #                     ax1.set_xticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
+        #                     ax1.set_xticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
+
+        #         plt.savefig(cmdargs.out_dir_sync + "Mag_TriadPDF_Type[{}].png".format(mag_triad_type), bbox_inches='tight')
+        #         plt.close()
+
+
+        #     fig = plt.figure(figsize = (16, 16))
+        #     gs  = GridSpec(5, 5, wspace = 0.25, hspace = 0.25)
+        #     ## Plot the mag phase differences
+        #     for i in range(5):
+        #         for j in range(5):
+        #             if i * 5 + j < phase_sync.num_phase_diffs:
+        #                 ax1 = fig.add_subplot(gs[i, j])
+        #                 pdf, centres = compute_pdf_from_hist(phase_sync.mag_phase_diff_hist_counts[i * 5 + j, :], phase_sync.mag_phase_diff_hist_ranges[:], remove_zeros = False)
+        #                 ax1.plot(centres, pdf, label = "$Tppp({})$".format(i * 5 + j + 1))
+        #                 ax1.set_xlabel("$\psi_n - \psi_{n + 3}$")
+        #                 ax1.set_ylabel("PDF")
+        #                 ax1.set_yscale("log")
+        #                 ax1.legend()
+        #                 ax1.set_xlim(0, 2.0*np.pi)
+        #                 ax1.set_xticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
+        #                 ax1.set_xticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
+
+        #     plt.savefig(cmdargs.out_dir_sync + "Mag_PhaseDifferencesPDF.png", bbox_inches='tight')
+        #     plt.close()
+
+
+
+        # ##------------------ Plot Imshow of Triads
+        # fig = plt.figure(figsize = (30, 10))
+        # gs  = GridSpec(1, 1)
+        # ax1 = fig.add_subplot(gs[0, 0])
+        # im1 = ax1.imshow(np.transpose(phase_sync.vel_triads[:, :]), extent = (1, sys_vars.ndata, 1, phase_sync.num_triads), aspect = 'auto', cmap = "hsv", vmin = 0.0, vmax = 2.0 * np.pi)
+        # ax1.set_xlabel(r"$t$")
+        # ax1.set_ylabel(r"Triad")
+        # # ax1.set_xlim(0.0, sys_msr_data.time[-1])
+        # ax1.set_ylim(1.0, phase_sync.num_triads)
+        # ax1.set_title(r"Velocity Triads")
+        # ## Plot colourbar
+        # div1  = make_axes_locatable(ax1)
+        # cbax1 = div1.append_axes("right", size = "5%", pad = 0.05)
+        # cb1   = plt.colorbar(im1, cax = cbax1)
+        # cb1.set_label(r"$\phi_n + \phi_{n + 1} + \phi_{n + 2}$")
+        # cb1.set_ticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
+        # cb1.set_ticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
+        # plt.savefig(cmdargs.out_dir_sync + "VelTriads_SpaceTimePlot.png", bbox_inches='tight')
+        # plt.close()
+
+        # ##------------------ Plot Imshow of Phase Differences
+        # fig = plt.figure(figsize = (30, 10))
+        # gs  = GridSpec(1, 1)
+        # ax1 = fig.add_subplot(gs[0, 0])
+        # im1 = ax1.imshow(np.transpose(phase_sync.vel_phase_diffs[:, :]), extent = (1, sys_vars.ndata, 1, phase_sync.num_phase_diffs), aspect = 'auto', cmap = "hsv", vmin = 0.0, vmax = 2.0 * np.pi)
+        # ax1.set_xlabel(r"$t$")
+        # ax1.set_ylabel(r"Phase Difference")
+        # # ax1.set_xlim(0.0, sys_msr_data.time[-1])
+        # ax1.set_ylim(1.0, phase_sync.num_phase_diffs)
+        # ax1.set_title(r"Velocity Phase Differences")
+        # ## Plot colourbar
+        # div1  = make_axes_locatable(ax1)
+        # cbax1 = div1.append_axes("right", size = "5%", pad = 0.05)
+        # cb1   = plt.colorbar(im1, cax = cbax1)
+        # cb1.set_label(r"$\phi_n - \phi_{n + 3}$")
+        # cb1.set_ticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
+        # cb1.set_ticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
+        # plt.savefig(cmdargs.out_dir_sync + "VelPhase_Differences_SpaceTimePlot.png", bbox_inches='tight')
+        # plt.close()
+
+        # if hasattr(run_data, 'b'):
+        #     triad_label = [r"$\phi_n + \psi_{n + 1} + \psi_{n + 2}$", r"$\psi_n + \phi_{n + 1} + \psi_{n + 2}$", r"$\psi_n + \psi_{n + 1} + \phi_{n + 2}$"]
+        #     mag_triad_types = [r"$T_{pss}$", r"$T_{sps}$", r"$T_{ssp}$"]
+        #     for m, mag_triad_type in enumerate(mag_triad_types):
+        #         ##------------------ Plot Imshow of Triads
+        #         fig = plt.figure(figsize = (30, 10))
+        #         gs  = GridSpec(1, 1)
+        #         ax1 = fig.add_subplot(gs[0, 0])
+        #         im1 = ax1.imshow(np.transpose(phase_sync.mag_triads[:, m, :]), extent = (1, sys_vars.ndata, 1, phase_sync.num_triads), aspect = 'auto', cmap = "hsv", vmin = 0.0, vmax = 2.0 * np.pi)
+        #         ax1.set_xlabel(r"$t$")
+        #         ax1.set_ylabel(r"Triad")
+        #         ax1.set_ylim(1.0, phase_sync.num_triads)
+        #         ax1.set_title(r"Magnetic Triads")
+        #         ## Plot colourbar
+        #         div1  = make_axes_locatable(ax1)
+        #         cbax1 = div1.append_axes("right", size = "5%", pad = 0.05)
+        #         cb1   = plt.colorbar(im1, cax = cbax1)
+        #         cb1.set_label(triad_label[m])
+        #         cb1.set_ticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
+        #         cb1.set_ticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
+
+        #         plt.savefig(cmdargs.out_dir_sync + "MagTriads_Type[{}]_SpaceTimePlot.png".format(mag_triad_type), bbox_inches='tight')
+        #         plt.close()
+
+        #     ##------------------ Plot Imshow of Phase Differences
+        #     fig = plt.figure(figsize = (30, 10))
+        #     gs  = GridSpec(1, 1)
+        #     ax1 = fig.add_subplot(gs[0, 0])
+        #     im1 = ax1.imshow(np.transpose(phase_sync.mag_phase_diffs[:, :]), extent = (1, sys_vars.ndata, 1, phase_sync.num_phase_diffs), aspect = 'auto', cmap = "hsv", vmin = 0.0, vmax = 2.0 * np.pi)
+        #     ax1.set_xlabel(r"$t$")
+        #     ax1.set_ylabel(r"Phase Difference")
+        #     ax1.set_ylim(1.0, phase_sync.num_phase_diffs)
+        #     ax1.set_title(r"Magnetic Phase Differences")
+        #     ## Plot colourbar
+        #     div1  = make_axes_locatable(ax1)
+        #     cbax1 = div1.append_axes("right", size = "5%", pad = 0.05)
+        #     cb1   = plt.colorbar(im1, cax = cbax1)
+        #     cb1.set_label(r"$\phi_n - \phi_{n + 3}$")
+        #     cb1.set_ticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
+        #     cb1.set_ticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
+        #     plt.savefig(cmdargs.out_dir_sync + "MagPhase_Differences_SpaceTimePlot.png", bbox_inches='tight')
+        #     plt.close()
             

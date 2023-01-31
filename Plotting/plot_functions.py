@@ -49,20 +49,21 @@ class tc:
 ###################################
 ##          STATS PLOT           ##
 ###################################
-def plot_str_funcs_with_slope(outdir_path, k, str_funcs, inert_range):
+def plot_str_funcs_with_slope(outdir_path, k, str_funcs, inert_range, insert_fig = True, scaling = 'loge'):
 
 	## Set up figure
 	fig   = plt.figure(figsize = (16, 8))
 	gs    = GridSpec(1, 1)
 	ax1   = fig.add_subplot(gs[0, 0])
 
-	## Set up for insert figure
-	x0     = 0.15 
-	y0     = 0.15
-	width  = 0.3
-	height = 0.2
-	## Add insert
-	ax1in = fig.add_axes([x0, y0, width, height])
+	if insert_fig:
+		## Set up for insert figure
+		x0     = 0.15 
+		y0     = 0.15
+		width  = 0.3
+		height = 0.2
+		## Add insert
+		ax1in = fig.add_axes([x0, y0, width, height])
 
 	## Slopes of structure functions
 	ns_zeta_p = [0.72, 1, 1.273, 1.534, 1.786]
@@ -71,19 +72,34 @@ def plot_str_funcs_with_slope(outdir_path, k, str_funcs, inert_range):
 	## Get inertial range limits
 	inert_lim_low  = inert_range[0]
 	inert_lim_high = inert_range[-1]
+	print(inert_lim_low, inert_lim_high)
 
 	## Marker style list
 	mark_style = ['o','s','^','x','D','p']
+
+	## Get the scaling of the axes
+	if scaling == 'log2':
+		log_func = np.log2
+		xlabel_Str = r"$\log_2(k_n)$"
+		ylabel_Str = r"$\log_2\left(S_p(k_n)\right)$"
+	elif scaling == 'log10':
+		log_func = np.log10
+		xlabel_Str = r"$\log_10(k_n)$"
+		ylabel_Str = r"$\log_10\left(S_p(k_n)\right)$"
+	else:
+		log_func = np.log
+		xlabel_Str = r"$\ln(k_n)$"
+		ylabel_Str = r"$\ln\left(S_p(k_n)\right)$"
 
 	## Loop over structure functions and plot
 	print("Power\tp/3\t\tDNS Slope\tNS")
 	for i in range(str_funcs.shape[-1]):
 	    
 	    ## Plot strucure function
-	    p, = ax1.plot(np.log2(k), np.log2(str_funcs[:, i]) + i * 10, label = "$p = {}$".format(i + 1), marker = mark_style[i], markerfacecolor = 'None', markersize = 5.0, markevery = 1)
+	    p, = ax1.plot(log_func(k), log_func(str_funcs[:, i]), label = "$p = {}$".format(i + 1), marker = mark_style[i], markerfacecolor = 'None', markersize = 5.0, markevery = 1)
 	    
 	    ## Find polynomial fit and plot
-	    pfit_info  = np.polyfit(np.log2(k[inert_lim_low:inert_lim_high]), np.log2(str_funcs[inert_lim_low:inert_lim_high, i]) + i * 10, 1)
+	    pfit_info  = np.polyfit(log_func(k[inert_lim_low:inert_lim_high]), log_func(str_funcs[inert_lim_low:inert_lim_high, i]), 1)
 	    pfit_slope = pfit_info[0]
 	    pfit_c     = pfit_info[1]
 	    zeta_p.append(np.absolute(pfit_slope))
@@ -95,26 +111,28 @@ def plot_str_funcs_with_slope(outdir_path, k, str_funcs, inert_range):
 	        print(" {}\t {:1.4f} \t {:1.4f}".format(i + 1, -(i + 1) / 3, pfit_slope))
 
 	    ## Plot slopes computed from llinear fit    
-	    ax1.plot(np.log2(k[inert_lim_low:inert_lim_high]), np.log2(k[inert_lim_low:inert_lim_high])*pfit_slope + pfit_c + 1.5, '--', color = p.get_color())
+	    ax1.plot(x_axis, x_axis*pfit_slope + pfit_c, '--', color = p.get_color())
 	    
-	    ## Compute the local derivative and plot in insert
-	    d_str_func  = np.diff(np.log2(str_funcs[:, i]))
-	    d_k         = np.diff(np.log2(k))
-	    local_deriv = d_str_func / d_k
-	    local_deriv = np.concatenate((local_deriv, [(np.log2(str_funcs[-1, i]) - np.log2(str_funcs[-2, i])) / (np.log2(k[-1] - np.log2(k[-2])))]))
-	    
-	    ## Plot local slopes
-	    ax1in.plot(np.log2(k), local_deriv, color = p.get_color(), marker = mark_style[i], markerfacecolor = 'None', markersize = 5.0, markevery = 2)
-	    ax1in.set_ylabel(r"$\zeta_p$", labelpad = -40)
-	    ax1in.set_xlabel(r"$log2(k_n)$", labelpad = -30)
+	    if insert_fig:
+		    ## Compute the local derivative and plot in insert
+		    d_str_func  = np.diff(log_func(str_funcs[:, i]), n = 2)
+		    d_k         = np.diff(log_func(k), n = 2)
+		    local_deriv = d_str_func / d_k
+		    local_deriv = np.concatenate((local_deriv, [(log_func(str_funcs[-1, i]) - log_func(str_funcs[-2, i])) / (log_func(k[-1] - log_func(k[-2])))]))
+		    
+		    ## Plot local slopes
+		    ax1in.plot(log_func(k), local_deriv, color = p.get_color(), marker = mark_style[i], markerfacecolor = 'None', markersize = 5.0, markevery = 2)
+		    ax1in.set_ylabel(r"$\zeta_p$", labelpad = -40)
+		    ax1in.set_xlabel(xlabel_Str, labelpad = -30)
 
 	## Set axis labels 
-	ax1.set_xlabel(r"$log_2 (k_n)$")
-	ax1.set_ylabel(r"$log_2 (S_p(k_n))$")
+	ax1.set_xlabel(xlabel_Str)
+	ax1.set_ylabel(ylabel_Str)
 
 	## Set grids
 	ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
-	ax1in.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+	if insert_fig:
+		ax1in.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
 
 	## Turn on axes
 	ax1.legend()
