@@ -32,7 +32,7 @@ void ComputePhaseSyncData(const long int iter) {
 	int gsl_status;
 	double phase_u;
 	double phase_u_1, phase_u_2, phase_u_3;
-	#if defined(__MAGNETO)
+	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	double phase_b_type1, phase_b_type2, phase_b_type3;	
 	double phase_b_1, phase_b_2, phase_b_3;	
 	#endif
@@ -47,9 +47,14 @@ void ComputePhaseSyncData(const long int iter) {
 	for (int i = 0; i < N; ++i)	{
 		n = i + 2;
 
+		#if defined(__ELSASSAR_MHD)
+		run_data->u[n] = (run_data->z_plus[n] + run_data->z_minus[n]) / 2.0;
+		run_data->b[n] = (run_data->z_plus[n] - run_data->z_minus[n]) / 2.0;
+		#endif
+
 		// Get the phases
 		run_data->phi_n[n] = fmod(carg(run_data->u[n]) + 2.0 * M_PI, 2.0 * M_PI);	
-		#if defined(__MAGNETO)
+		#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 		run_data->psi_n[n] = fmod(carg(run_data->b[n]) + 2.0 * M_PI, 2.0 * M_PI);
 		#endif
 	}

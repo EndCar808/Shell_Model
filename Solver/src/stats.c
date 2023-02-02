@@ -44,17 +44,22 @@ void ComputeStats(const long int iters, const long int save_data_indx) {
 	#endif
 
 	// ------------------------------------
-    // If Phase Only Get Fourier Fields
+    // Get Fourier Fields
     // ------------------------------------	
-	#if defined(PHASE_ONLY) || defined(PHASE_ONLY_FXD_AMP)
+	#if defined(PHASE_ONLY) || defined(PHASE_ONLY_FXD_AMP) || defined(__ELSASSAR_MHDL)
 	for (int i = 0; i < N; ++i) {
 		// Get temp indx
 		n = i + 2;
 
 		// Get the Fourier fields
+		#if defined(__ELSASSAR_MHD)
+		run_data->u[n] = (run_data->z_plus[n] + run_data->z_minus[n]) / 2.0;
+		run_data->b[n] = (run_data->z_plus[n] - run_data->z_minus[n]) / 2.0;
+		#elif defined(PHASE_ONLY) || defined(PHASE_ONLY_FXD_AMP)
 		run_data->u[n] = run_data->a_n[n] * cexp(I * run_data->phi_n[n]);
 		#if defined(__MAGNETO) 
 		run_data->b[n] = run_data->b_n[n] * cexp(I * run_data->psi_n[n]);
+		#endif
 		#endif
 	}
 	#endif

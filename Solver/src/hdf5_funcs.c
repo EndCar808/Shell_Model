@@ -1248,6 +1248,16 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "KolmogorovLengthScale", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->kolmogorov_scale)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "KolmogorovLengthScale");
 	}
+	#if defined(__ELSASSAR_MHD)
+	// Total Pseudo Energy Plus
+	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalPseudoEnergyPlus", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_pseudo_enrg_plus)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalPseudoEnergyPlus");
+	}
+	// Total Psuedo Energy Minus
+	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalPseudoEnrgMinus", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_pseudo_enrg_minus)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalPseudoEnrgMinus");
+	}
+	#endif
 	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	// Magnetic Helicity
 	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalMagneticHelicity", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_hel_b)) < 0) {
@@ -1315,7 +1325,7 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	}
 	#endif
 
-	///----------------- Time Averaged Dissipation Spectrum
+	///----------------- Time Averaged Energy Flux
 	#if defined(__ENRG_FLUX_AVG)
 	// Time average the data
 	for (int i = 0; i < sys_vars->N; ++i) {
@@ -1325,6 +1335,23 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	dims1D[0] = sys_vars->N;
 	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TimeAveragedEnergyFlux", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->energy_flux_t_avg)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TimeAveragedEnergyFlux");
+	}
+	#endif
+
+	///----------------- Time Averaged Pseudo Energy Flux
+	#if defined(__PSEUDO_ENRG_FLUX_AVG) && defined(__ELSASSAR_MHD)
+	// Time average the data
+	for (int i = 0; i < sys_vars->N; ++i) {
+		run_data->pseudo_enrg_flux_plus_t_avg[i] /= run_data->num_sys_msr_steps;
+		run_data->pseudo_enrg_flux_minus_t_avg[i] /= run_data->num_sys_msr_steps;
+	}
+
+	dims1D[0] = sys_vars->N;
+	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TimeAveragedPseudoEnergyFluxPlus", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->pseudo_enrg_flux_plus_t_avg)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TimeAveragedPseudoEnergyFluxPlus");
+	}
+	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TimeAveragedPseudoEnergyFluxMinus", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->pseudo_enrg_flux_minus_t_avg)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TimeAveragedPseudoEnergyFluxMinus");
 	}
 	#endif
 

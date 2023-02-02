@@ -115,6 +115,7 @@
 // #define __ENRG_FLUX
 // #define __TOT_ENRG_FLUX
 // #define __ENRG_FLUX_AVG
+// #define __PSEUDO_ENRG_FLUX_AVG
 // #define __VEL_AMP_AVG
 // #define __MAG_AMP_AVG
 // Choose whether to compute the spectra
@@ -246,54 +247,58 @@ typedef struct system_vars_struct {
 
 // Runtime data struct
 typedef struct runtime_data_struct {
-	double* k;			  				// Array to hold wavenumbers
-	double complex* z_plus;	   			// Fourier space Positive Elsassar variable
-	double complex* z_minus;   			// Fourier space Negative Elsassar variable
-	double complex* u;	      			// Fourier space velocity
-	double complex* b;	      			// Fourier space vorticity
-	double complex* rhs; 		  		// Array to hold the RHS of the equation of motion
-	double complex* nonlinterm; 		// Array to hold the nonlinear term
-	double* a_n;			  			// Fourier vorticity amplitudes
-	double* a_n_t_avg;		  			// Fourier vorticity amplitudes
-	double* tmp_a_n;		  			// Array to hold the amplitudes of the fourier vorticity before marching forward in time
-	double* phi_n;			  			// Fourier velocity phases
-	double* b_n;			  			// Fourier velocity amplitudes
-	double* b_n_t_avg;		  			// Fourier velocity amplitudes
-	double* tmp_b_n;		  			// Array to hold the amplitudes of the fourier vorticity before marching forward in time
-	double* psi_n;						// Array to hold the phases of the magnetic modes
-	double* time;			  			// Array to hold the simulation times
-	double* tot_energy;       			// Array to hold the total energy over the simulation
-	double* tot_hel_u;		  			// Array to hold the total helicity in the velocity field
-	double* tot_hel_b;		  			// Array to hold the total helicity in the magnetic field
-	double* tot_cross_hel;	  			// Array to hold the total cross helicity
-	double* tot_diss_u;					// Array to hold the total velocity dissipation 
-	double* tot_diss_b;					// Array to hold the total magnetic dissipation 
-	double* energy_flux;				// Array to hold the energy flux
-	double* energy_diss_u;				// Array to hold the energy dissipation for the velocity field
-	double* energy_diss_b;				// Array to hold the energy dissipation for the magnetic field
-	double* energy_input_u;				// Array to hold the energy input for the velocity field in the flux balance computation
-	double* energy_input_b;				// Array to hold the energy input for the magnetic field in the flux balance computation
-	double* tot_energy_flux;			// Array to hold the total energy flux for the current iteration
-	double* tot_energy_diss_u;			// Array to hold the total energy dissipation for the velocity field for the current iteration
-	double* tot_energy_diss_b;			// Array to hold the total energy dissipation for the magnetic field for the current iteration
-	double* tot_energy_input_u;			// Array to hold the total energy input for the velocity field in the flux balance computation for the current iteration
-	double* tot_energy_input_b;			// Array to hold the total energy input for the magnetic field in the flux balance computation for the current iteration
-	double* energy_spect;				// Array containing the energy spectrum for the current iteration 
-	double* diss_spect;					// Array containing the dissipation spectrum for the current iteration 
-	double* energy_flux_t_avg;			// Array containing the energy flux time average over simulation
-	double* energy_spect_t_avg;			// Array containing the energy spectrum time average over simulation
-	double* diss_spect_t_avg;			// Array containing the dissipation spectrum time average over simulation
-	double* u_charact;					// Array containing the characteristic velocity
-	double* int_scale;					// Array containing the characteristic length scale
-	double* taylor_micro_scale;			// Array containing the Taylor microscale
-	double* reynolds_no;				// Array containing the Reynolds no.
-	double* kolmogorov_scale;			// Array containing the Kolmogorov length scale
-	double complex* forcing_u;  		// Array to hold the forcing for the current timestep for the velocity field
-	double complex* forcing_b;  		// Array to hold the forcing for the current timestep for the magnetic field
-	double* forcing_scaling;  			// Array to hold the initial scaling for the forced modes
-	int* forcing_indx;		  			// Array to hold the indices of the forced modes
-	int* forcing_k;			  			// Array containg the wavenumbers for the forced modes
-	long int num_sys_msr_steps;			// Counts the number of times system measures have been computed, for time averaging.
+	double* k;			  					// Array to hold wavenumbers
+	double complex* z_plus;	   				// Fourier space Positive Elsassar variable
+	double complex* z_minus;   				// Fourier space Negative Elsassar variable
+	double complex* u;	      				// Fourier space velocity
+	double complex* b;	      				// Fourier space vorticity
+	double complex* rhs; 		  			// Array to hold the RHS of the equation of motion
+	double complex* nonlinterm; 			// Array to hold the nonlinear term
+	double* a_n;			  				// Fourier vorticity amplitudes
+	double* a_n_t_avg;		  				// Fourier vorticity amplitudes
+	double* tmp_a_n;		  				// Array to hold the amplitudes of the fourier vorticity before marching forward in time
+	double* phi_n;			  				// Fourier velocity phases
+	double* b_n;			  				// Fourier velocity amplitudes
+	double* b_n_t_avg;		  				// Fourier velocity amplitudes
+	double* tmp_b_n;		  				// Array to hold the amplitudes of the fourier vorticity before marching forward in time
+	double* psi_n;							// Array to hold the phases of the magnetic modes
+	double* time;			  				// Array to hold the simulation times
+	double* tot_energy;       				// Array to hold the total energy over the simulation
+	double* tot_hel_u;		  				// Array to hold the total helicity in the velocity field
+	double* tot_hel_b;		  				// Array to hold the total helicity in the magnetic field
+	double* tot_cross_hel;	  				// Array to hold the total cross helicity
+	double* tot_diss_u;						// Array to hold the total velocity dissipation 
+	double* tot_diss_b;						// Array to hold the total magnetic dissipation
+	double* tot_pseudo_enrg_plus;			// Array to hold the total psuedo energies plus
+	double* tot_pseudo_enrg_minus;			// Array to hold the total psuedo energies minus
+	double* pseudo_enrg_flux_plus_t_avg;	// Time averaged pseudo energ flux of z plus
+	double* pseudo_enrg_flux_minus_t_avg;	// Time averaged pseudo energ flux of z minus	
+	double* energy_flux;					// Array to hold the energy flux
+	double* energy_diss_u;					// Array to hold the energy dissipation for the velocity field
+	double* energy_diss_b;					// Array to hold the energy dissipation for the magnetic field
+	double* energy_input_u;					// Array to hold the energy input for the velocity field in the flux balance computation
+	double* energy_input_b;					// Array to hold the energy input for the magnetic field in the flux balance computation
+	double* tot_energy_flux;				// Array to hold the total energy flux for the current iteration
+	double* tot_energy_diss_u;				// Array to hold the total energy dissipation for the velocity field for the current iteration
+	double* tot_energy_diss_b;				// Array to hold the total energy dissipation for the magnetic field for the current iteration
+	double* tot_energy_input_u;				// Array to hold the total energy input for the velocity field in the flux balance computation for the current iteration
+	double* tot_energy_input_b;				// Array to hold the total energy input for the magnetic field in the flux balance computation for the current iteration
+	double* energy_spect;					// Array containing the energy spectrum for the current iteration 
+	double* diss_spect;						// Array containing the dissipation spectrum for the current iteration 
+	double* energy_flux_t_avg;				// Array containing the energy flux time average over simulation
+	double* energy_spect_t_avg;				// Array containing the energy spectrum time average over simulation
+	double* diss_spect_t_avg;				// Array containing the dissipation spectrum time average over simulation
+	double* u_charact;						// Array containing the characteristic velocity
+	double* int_scale;						// Array containing the characteristic length scale
+	double* taylor_micro_scale;				// Array containing the Taylor microscale
+	double* reynolds_no;					// Array containing the Reynolds no.
+	double* kolmogorov_scale;				// Array containing the Kolmogorov length scale
+	double complex* forcing_u;  			// Array to hold the forcing for the current timestep for the velocity field
+	double complex* forcing_b;  			// Array to hold the forcing for the current timestep for the magnetic field
+	double* forcing_scaling;  				// Array to hold the initial scaling for the forced modes
+	int* forcing_indx;		  				// Array to hold the indices of the forced modes
+	int* forcing_k;			  				// Array containg the wavenumbers for the forced modes
+	long int num_sys_msr_steps;				// Counts the number of times system measures have been computed, for time averaging.
 } runtime_data_struct;
 
 // Runge-Kutta Integration struct

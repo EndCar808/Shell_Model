@@ -29,7 +29,7 @@ import time as TIME
 from subprocess import Popen, PIPE, run
 from matplotlib.pyplot import cm
 from functions import tc, sim_data, import_data, compute_pdf, import_stats_data, import_sys_msr_data, import_phase_sync_data, compute_pdf_from_hist, compute_pdf
-
+from plot_functions import plot_anomalous_exponent, plot_str_funcs_with_slope
 
 ###############################
 ##       FUNCTION DEFS       ##
@@ -177,19 +177,18 @@ if __name__ == '__main__':
         ax2 = fig.add_subplot(gs[0, 1])
         ax2.plot(np.log(sys_msr_data.k), np.log(amp_z_minus_avg), label = "Short Average Window")
         ax2.plot(np.log(sys_msr_data.k), np.log(amp_z_minus_avg), 'r', label = "Long Average Window")
-        ax2.plot(np.log(sys_msr_data.k), np.log(sys_msr_data.k) * slope + intercept, 'b--', label = "$k^{-a}, a = 1/3$")
+        ax2.plot(np.log(sys_msr_data.k), np.log(sys_msr_data.k) * slope + intercept, 'b--', label = "$k^{-1/3}$")
         ax2.set_xlabel(r"$\log k_n$")
         ax2.set_ylabel(r"$\log \langle |z^{+}|\rangle$")
         ax2.legend()
         plt.savefig(cmdargs.out_dir_MHD + "TimeAveraged_Z_Both.png", bbox_inches='tight')
         plt.close()
 
-
         ## Plot Reduced Cross Helicity
         fig = plt.figure(figsize = (16, 8))
         gs  = GridSpec(1, 1)
         ax1 = fig.add_subplot(gs[0, 0])
-        ax1.plot(sys_msr_data.t, run_data.tot_cross_hel / run_data.tot_enrg, label = "Reduced Cross Helicity")
+        ax1.plot(sys_msr_data.time, sys_msr_data.tot_cross_hel / sys_msr_data.tot_enrg, label = "Reduced Cross Helicity")
         ax1.set_xlabel(r"Time")
         ax1.set_ylabel(r"$H_{c} / E$")
         ax1.legend()
@@ -213,8 +212,8 @@ if __name__ == '__main__':
         fig = plt.figure(figsize = (16, 8))
         gs  = GridSpec(1, 1)
         ax1 = fig.add_subplot(gs[0, 0])
-        ax1.plot(sys_msr_data.k, np.multiply(np.multiply(z_plus, z_plus), z_minus), label = "Time Averaged Nonlinear Term")
-        ax1.plot(sys_msr_data.k, sys_msr_data.k * -1, label = "k^{-a}, a = 1")
+        ax1.plot(sys_msr_data.k, np.mean(np.multiply(np.multiply(z_plus, z_plus), z_minus), axis = 0), label = "Time Averaged Nonlinear Term")
+        ax1.plot(sys_msr_data.k, sys_msr_data.k * -1, label = "$k^{-1}$")
         ax1.set_xlabel(r"$k$")
         ax1.set_ylabel(r"$\langle z^{+}z^{+}z^{-} \rangle$")
         ax1.legend()
@@ -223,5 +222,5 @@ if __name__ == '__main__':
         plt.close()
 
         ## Plot The magnetic field structure function
-        inert_range = np.arange(2, 13 + 1)
-        dns_zeta_p, ns_zeta_p = plot_str_funcs_with_slope(cmdargs.out_dir_MHD + "Magnetic_StrFunc.png", sys_msr_data.k, stats_data.mag_str_func[:, :3], inert_range, insert_fig = False, scaling = 'loge')
+        inert_range = np.arange(2, 11 + 1)
+        dns_zeta_p, ns_zeta_p, dns_zetap_p_res = plot_str_funcs_with_slope(cmdargs.out_dir_MHD + "Magnetic_StrFunc.png", sys_msr_data.k, stats_data.mag_str_func[:, :3], inert_range, insert_fig = False, scaling = 'loge')

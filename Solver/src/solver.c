@@ -254,11 +254,11 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 	int n;
 	double complex int_fac_u;
 	double complex int_fac_u_1;
-	#if defined(__MAGNETO)
+	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	double complex int_fac_b;
 	double complex int_fac_b_1;
 	#endif
-	#if defined(PHASE_ONLY_FXD_AMP)
+	#if defined(PHASE_ONLY_FXD_AMP) && !defined(__ELSASSAR_MHD)
 	double po_norm_fac_u;
 	#if defined(__MAGNETO)
 	double po_norm_fac_b;
@@ -305,11 +305,18 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		// Get proper indx
 		n = i + 2;
 
+		#if defined(__ELSASSAR_MHD)
+		int_fac_u = cexp(-sys_var->NU_PLUS * dt * run_data->k[n] * run_data->k[n] / 2.0);
+		int_fac_b = cexp(-sys_var->NU_MINUS * dt * run_data->k[n] * run_data->k[n] / 2.0);
+
+		RK_data->RK_u_tmp[n] = run_data->z_plus[n] * int_fac_u + dt * RK4_A21 * RK_data->RK1_u[n];
+		RK_data->RK_b_tmp[n] = run_data->z_minus[n] * int_fac_b + dt * RK4_A21 * RK_data->RK1_b[n];
+		#else
 		// Get the integrating factor
 		int_fac_u = cexp(-sys_vars->NU * dt * run_data->k[n] * run_data->k[n] / 2.0);
 
 		// Update temorary velocity term
-		#if defined(PHASE_ONLY)
+		#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
 		RK_data->RK_u_tmp[n] = run_data->a_n[n] * cexp(I * (run_data->phi_n[n] * int_fac_u + dt * RK4_A21 * RK_data->RK1_u[n] * int_fac_u));
 		#else
 		RK_data->RK_u_tmp[n] = run_data->u[n] * int_fac_u + dt * RK4_A21 * RK_data->RK1_u[n] * int_fac_u;
@@ -319,10 +326,11 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		int_fac_b = cexp(-sys_vars->ETA * dt * run_data->k[n] * run_data->k[n] / 2.0);
 		
 		// Update temporary magnetic term
-		#if defined(PHASE_ONLY)
+		#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
 		RK_data->RK_b_tmp[n] = run_data->b_n[n] * cexp(I * (run_data->psi_n[n] * int_fac_b + dt * RK4_A21 * RK_data->RK1_b[n] * int_fac_b));
 		#else
 		RK_data->RK_b_tmp[n] = run_data->b[n] * int_fac_b + dt * RK4_A21 * RK_data->RK1_b[n] * int_fac_b;
+		#endif
 		#endif
 		#endif
 	}
@@ -333,11 +341,18 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		// Get proper indx
 		n = i + 2;
 
+		#if defined(__ELSASSAR_MHD)
+		int_fac_u = cexp(-sys_var->NU_PLUS * dt * run_data->k[n] * run_data->k[n] / 2.0);
+		int_fac_b = cexp(-sys_var->NU_MINUS * dt * run_data->k[n] * run_data->k[n] / 2.0);
+
+		RK_data->RK_u_tmp[n] = run_data->z_plus[n] * int_fac_u + dt * RK4_A32 * RK_data->RK2_u[n];
+		RK_data->RK_b_tmp[n] = run_data->z_minus[n] * int_fac_b + dt * RK4_A32 * RK_data->RK2_b[n];
+		#else
 		// Get the integrating factor
 		int_fac_u = cexp(-sys_vars->NU * dt * run_data->k[n] * run_data->k[n] / 2.0);
 
 		// Update temorary velocity term
-		#if defined(PHASE_ONLY)
+		#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
 		RK_data->RK_u_tmp[n] = run_data->a_n[n] * cexp(I * (run_data->phi_n[n] * int_fac_u + dt * RK4_A32 * RK_data->RK2_u[n]));
 		#else
 		RK_data->RK_u_tmp[n] = run_data->u[n] * int_fac_u + dt * RK4_A32 * RK_data->RK2_u[n];
@@ -347,10 +362,11 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		int_fac_b = cexp(-sys_vars->ETA * dt * run_data->k[n] * run_data->k[n] / 2.0);
 
 		// Update temporary magnetic term
-		#if defined(PHASE_ONLY)
+		#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
 		RK_data->RK_b_tmp[n] = run_data->b_n[n] * cexp(I * (run_data->b[n] * int_fac_b + dt * RK4_A32 * RK_data->RK2_b[n]));
 		#else
 		RK_data->RK_b_tmp[n] = run_data->b[n] * int_fac_b + dt * RK4_A32 * RK_data->RK2_b[n];		
+		#endif
 		#endif
 		#endif
 	}
@@ -361,12 +377,19 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		// Get proper indx
 		n = i + 2;
 
+		#if defined(__ELSASSAR_MHD)
+		int_fac_u = cexp(-sys_var->NU_PLUS * dt * run_data->k[n] * run_data->k[n] / 2.0);
+		int_fac_b = cexp(-sys_var->NU_MINUS * dt * run_data->k[n] * run_data->k[n] / 2.0);
+
+		RK_data->RK_u_tmp[n] = run_data->z_plus[n] * int_fac_u + dt * RK4_A43 * RK_data->RK3_u[n];
+		RK_data->RK_b_tmp[n] = run_data->z_minus[n] * int_fac_b + dt * RK4_A43 * RK_data->RK3_b[n];
+		#else
 		// Get the integrating factor
 		int_fac_u   = cexp(-sys_vars->NU * dt * run_data->k[n] * run_data->k[n]);
 		int_fac_u_1 = cexp(-sys_vars->NU * dt * run_data->k[n] * run_data->k[n] / 2.0);
 
 		// Update temorary velocity term
-		#if defined(PHASE_ONLY)
+		#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
 		RK_data->RK_u_tmp[n] = run_data->a_n[n] * cexp(I * (run_data->phi_n[n] * int_fac_u + dt * RK4_A43 * RK_data->RK3_u[n] * int_fac_u_1));
 		#else
 		RK_data->RK_u_tmp[n] = run_data->u[n] * int_fac_u + dt * RK4_A43 * RK_data->RK3_u[n] * int_fac_u_1;
@@ -377,10 +400,11 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		int_fac_b_1 = cexp(-sys_vars->ETA * dt * run_data->k[n] * run_data->k[n] / 2.0);
 		
 		// Update temporary magnetic term
-		#if defined(PHASE_ONLY)
+		#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
 		RK_data->RK_b_tmp[n] = run_data->b_n[n] * cexp(I * (run_data->b[n] * int_fac_b + dt * RK4_A43 * RK_data->RK3_b[n] * int_fac_b_1));
 		#else
 		RK_data->RK_b_tmp[n] = run_data->b[n] * int_fac_b + dt * RK4_A43 * RK_data->RK3_b[n] * int_fac_b_1;		
+		#endif
 		#endif
 		#endif
 	}
@@ -397,7 +421,7 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		n = i + 2;
 
 		// Pre-record the amplitudes for resetting after update step
-		#if defined(PHASE_ONLY_FXD_AMP)
+		#if defined(PHASE_ONLY_FXD_AMP) && !defined(__ELSASSAR_MHD)
 		po_norm_fac_u = cabs(run_data->u[n]);
 		#if defined(__MAGNETO)
 		po_norm_fac_b = cabs(run_data->b[n]);
@@ -405,12 +429,21 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		#endif
 
 		///-------------------- Update Step
+		#if defined(__ELSASSAR_MHD)
+		int_fac_u   = cexp(-sys_vars->NU_PLUS * dt * run_data->k[n] * run_data->k[n]);
+		int_fac_u_1 = cexp(-sys_vars->NU_PLUS * dt * run_data->k[n] * run_data->k[n] / 2.0);
+		int_fac_b   = cexp(-sys_vars->NU_MINUS * dt * run_data->k[n] * run_data->k[n]);
+		int_fac_b_1 = cexp(-sys_vars->NU_MINUS * dt * run_data->k[n] * run_data->k[n] / 2.0);
+
+		run_data->z_plus[n]  = int_fac_u * run_data->z_plus[n] + dt * RK4_B1 * int_fac_u * RK_data->RK1_u[n] + dt * RK4_B2 * int_fac_u_1 * RK_data->RK2_u[n] + dt * RK4_B3 * int_fac_u_1 * RK_data->RK3_u[n] + dt * RK4_B4 * RK_data->RK4_u[n];
+		run_data->z_minus[n] = int_fac_b * run_data->z_minus[n] + dt * RK4_B1 * int_fac_b * RK_data->RK1_b[n] + dt * RK4_B2 * int_fac_b_1 * RK_data->RK2_b[n] + dt * RK4_B3 * int_fac_b_1 * RK_data->RK3_b[n] + dt * RK4_B4 * RK_data->RK4_b[n];
+		#else
 		// Get the integrating factors
 		int_fac_u   = cexp(-sys_vars->NU * dt * run_data->k[n] * run_data->k[n]);
 		int_fac_u_1 = cexp(-sys_vars->NU * dt * run_data->k[n] * run_data->k[n] / 2.0);
 
 		// Update the new velocity field
-		#if defined(PHASE_ONLY)
+		#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
 		run_data->phi_n[n] = int_fac_u * run_data->phi_n[n] + dt * RK4_B1 * int_fac_u * RK_data->RK1_u[n] + dt * RK4_B2 * int_fac_u_1 * RK_data->RK2_u[n] + dt * RK4_B3 * int_fac_u_1 * RK_data->RK3_u[n] + dt * RK4_B4 * RK_data->RK4_u[n];
 		#else
 		run_data->u[n] = int_fac_u * run_data->u[n] + dt * RK4_B1 * int_fac_u * RK_data->RK1_u[n] + dt * RK4_B2 * int_fac_u_1 * RK_data->RK2_u[n] + dt * RK4_B3 * int_fac_u_1 * RK_data->RK3_u[n] + dt * RK4_B4 * RK_data->RK4_u[n];
@@ -421,16 +454,17 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		int_fac_b_1 = cexp(-sys_vars->ETA * dt * run_data->k[n] * run_data->k[n] / 2.0);
 
 		// Update the new magnetic field
-		#if defined(PHASE_ONLY)
+		#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
 		run_data->psi_n[n] = int_fac_b * run_data->psi_n[n] + dt * RK4_B1 * int_fac_b * RK_data->RK1_b[n] + dt * RK4_B2 * int_fac_b_1 * RK_data->RK2_b[n] + dt * RK4_B3 * int_fac_b_1 * RK_data->RK3_b[n] + dt * RK4_B4 * RK_data->RK4_b[n];
 		#else
 		run_data->b[n] = int_fac_b * run_data->b[n] + dt * RK4_B1 * int_fac_b * RK_data->RK1_b[n] + dt * RK4_B2 * int_fac_b_1 * RK_data->RK2_b[n] + dt * RK4_B3 * int_fac_b_1 * RK_data->RK3_b[n] + dt * RK4_B4 * RK_data->RK4_b[n];
 		#endif
 		#endif
+		#endif
 
 
 		///-------------------- Phase Only resetting
-		#if defined(PHASE_ONLY_FXD_AMP)
+		#if defined(PHASE_ONLY_FXD_AMP) && !defined(__ELSASSAR_MHD)
 		// Reset the amplitudes 
 		run_data->u[n] *= (po_norm_fac_u / cabs(run_data->u[n]));
 		
@@ -466,7 +500,7 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 
 	// Initialize vairables
 	int n;
-	#if defined(PHASE_ONLY_FXD_AMP)
+	#if defined(PHASE_ONLY_FXD_AMP) && !defined(__ELSASSAR_MHD)
 	double po_norm_fac_u;
 	#if defined(__MAGNETO)
 	double po_norm_fac_b;
@@ -696,10 +730,10 @@ void AB4CNStep(const double dt, const long iters, const long int N, RK_data_stru
 	// Initialize variables
 	int n;
 	double D_fac_u;
-	#if defined(__MAGNETO)	
+	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	double D_fac_b;
 	#endif
-	#if defined(PHASE_ONLY_FXD_AMP)
+	#if defined(PHASE_ONLY_FXD_AMP) && !defined(__ELSASSAR_MHD)
 	double po_norm_fac_u;
 	#if defined(__MAGNETO)
 	double po_norm_fac_b;
@@ -718,7 +752,7 @@ void AB4CNStep(const double dt, const long iters, const long int N, RK_data_stru
 
 		// Save the nonlinear term for each pre step for use in the update step of the AB4CN scheme
 		memcpy(&(RK_data->AB_tmp_nonlin_u[iters - 1][0]), RK_data->RK1_u, sizeof(double complex) * (N + 4));
-		#if defined(__MAGNETO)
+		#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 		memcpy(&(RK_data->AB_tmp_nonlin_b[iters - 1][0]), RK_data->RK1_b, sizeof(double complex) * (N + 4));		
 		#endif
 	}
@@ -738,12 +772,17 @@ void AB4CNStep(const double dt, const long iters, const long int N, RK_data_stru
 			n = i + 2;
 
 			// Get the input fields
-			#if defined(PHASE_ONLY)
+			#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
 			// Get the Fourier velocity from the Fourier phases and amplitudes
 			RK_data->RK_u_tmp[n] = run_data->a_n[n] * cexp(I * run_data->phi_n[n]);
 			#if defined(__MAGNETO)
 			RK_data->RK_b_tmp[n] = run_data->b_n[n] * cexp(I * run_data->psi_n[n]);
 			#endif
+			#elif defined(__ELSASSAR_MHD)
+			// Z_plus term
+			RK_data->RK_u_tmp[n] = run_data->z_plus[n];
+			// Z_minus term
+			RK_data->RK_b_tmp[n] = run_data->z_minus[n];
 			#else
 			// Get the Fourier velocity field
 			RK_data->RK_u_tmp[n] = run_data->u[n];
@@ -765,18 +804,26 @@ void AB4CNStep(const double dt, const long iters, const long int N, RK_data_stru
 			n = i + 2;
 
 			// Pre-record the amplitudes for resetting after update step
-			#if defined(PHASE_ONLY_FXD_AMP)
+			#if defined(PHASE_ONLY_FXD_AMP) && !defined(__ELSASSAR_MHD)
 			po_norm_fac_u = cabs(run_data->u[n]);
 			#if defined(__MAGNETO)
 			po_norm_fac_b = cabs(run_data->b[n]);
 			#endif
 			#endif
 
-			#if defined(PHASE_ONLY)
+			#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
 			run_data->phi_n[n] = run_data->phi_n[n] + dt * (AB4_1 * RK_data->AB_tmp_u[n] + AB4_2 * RK_data->AB_tmp_nonlin_u[2][n] + AB4_3 * RK_data->AB_tmp_nonlin_u[1][n] + AB4_4 * RK_data->AB_tmp_nonlin_u[0][n]);
 			#if defined(__MAGNETO)
 			run_data->psi_n[n] = run_data->psi_n[n] + dt * (AB4_1 * RK_data->AB_tmp_b[n] + AB4_2 * RK_data->AB_tmp_nonlin_b[2][n] + AB4_3 * RK_data->AB_tmp_nonlin_b[1][n] + AB4_4 * RK_data->AB_tmp_nonlin_b[0][n]);
-			#endif
+			#endif 
+			#elif defined(__ELSASSAR_MHD)
+			// Compute the D factor for the velocity field
+			D_fac_u = dt * (sys_vars->NU_PLUS * run_data->k[i] * run_data->k[i]);
+			D_fac_b = dt * (sys_vars->NU_MINUS * run_data->k[i] * run_data->k[i]);
+
+			// Update the new velocity field
+			run_data->z_plus[n] = run_data->z_plus[n] * ((2.0 - D_fac_u) / (2.0 + D_fac_u)) + (2.0 * dt / (2.0 + D_fac_u)) * (AB4_1 * RK_data->AB_tmp_u[n] + AB4_2 * RK_data->AB_tmp_nonlin_u[2][n] + AB4_3 * RK_data->AB_tmp_nonlin_u[1][n] + AB4_4 * RK_data->AB_tmp_nonlin_u[0][n]);
+			run_data->z_minus[n] = run_data->z_minus[n] * ((2.0 - D_fac_b) / (2.0 + D_fac_b)) + (2.0 * dt / (2.0 + D_fac_b)) * (AB4_1 * RK_data->AB_tmp_b[n] + AB4_2 * RK_data->AB_tmp_nonlin_b[2][n] + AB4_3 * RK_data->AB_tmp_nonlin_b[1][n] + AB4_4 * RK_data->AB_tmp_nonlin_b[0][n]);
 			#else
 			// Compute the D factor for the velocity field
 			D_fac_u = dt * (sys_vars->NU * run_data->k[i] * run_data->k[i]);
@@ -793,7 +840,7 @@ void AB4CNStep(const double dt, const long iters, const long int N, RK_data_stru
 			#endif
 
 			// Reset the amplitudes 
-			#if defined(PHASE_ONLY_FXD_AMP)
+			#if defined(PHASE_ONLY_FXD_AMP) && !defined(__ELSASSAR_MHD)
 			run_data->u[n] *= (po_norm_fac_u / cabs(run_data->u[n]));
 
 			// Record the phases and amplitudes
@@ -816,7 +863,7 @@ void AB4CNStep(const double dt, const long iters, const long int N, RK_data_stru
 		memcpy(&(RK_data->AB_tmp_nonlin_u[0][0]), &(RK_data->AB_tmp_nonlin_u[1][0]), sizeof(double complex) * (N + 4));
 		memcpy(&(RK_data->AB_tmp_nonlin_u[1][0]), &(RK_data->AB_tmp_nonlin_u[2][0]), sizeof(double complex) * (N + 4));
 		memcpy(&(RK_data->AB_tmp_nonlin_u[2][0]), RK_data->AB_tmp_u, sizeof(double complex) * (N + 4));
-		#if defined(__MAGNETO)
+		#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 		memcpy(&(RK_data->AB_tmp_nonlin_b[0][0]), &(RK_data->AB_tmp_nonlin_b[1][0]), sizeof(double complex) * (N + 4));
 		memcpy(&(RK_data->AB_tmp_nonlin_b[1][0]), &(RK_data->AB_tmp_nonlin_b[2][0]), sizeof(double complex) * (N + 4));
 		memcpy(&(RK_data->AB_tmp_nonlin_b[2][0]), RK_data->AB_tmp_b, sizeof(double complex) * (N + 4));
@@ -1877,6 +1924,10 @@ void FreeMemory(RK_data_struct* RK_data) {
 	free(run_data->tot_energy);
 	free(run_data->tot_hel_u);
 	free(run_data->tot_diss_u);
+	#if defined(__ELSASSAR_MHD)
+	free(run_data->tot_pseudo_enrg_plus);
+	free(run_data->tot_pseudo_enrg_minus);
+	#endif
 	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	free(run_data->tot_hel_b);
 	free(run_data->tot_cross_hel);
@@ -1907,7 +1958,7 @@ void FreeMemory(RK_data_struct* RK_data) {
 	free(run_data->energy_flux);
 	free(run_data->energy_diss_u);
 	free(run_data->energy_input_u);
-	#if defined(__MAGNETO)
+	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	free(run_data->energy_diss_b);
 	free(run_data->energy_input_b);
 	#endif
@@ -1916,13 +1967,17 @@ void FreeMemory(RK_data_struct* RK_data) {
 	free(run_data->tot_energy_flux);
 	free(run_data->tot_energy_diss_u);
 	free(run_data->tot_energy_input_u);
-	#if defined(__MAGNETO)
+	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	free(run_data->tot_energy_diss_b);
 	free(run_data->tot_energy_input_b);
 	#endif
 	#endif
 	#if defined(__ENRG_FLUX_AVG)
 	free(run_data->energy_flux_t_avg);
+	#endif
+	#if defined(__PSEUDO_ENRG_FLUX_AVG) && defined(__ELSASSAR_MHD)
+	free(run_data->pseduo_enrg_flux_plus_t_avg);
+	free(run_data->pseduo_enrg_flux_minus_t_avg);
 	#endif
 	free(run_data->forcing_u);
 	free(run_data->forcing_b);

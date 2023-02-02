@@ -558,6 +558,14 @@ if __name__ == '__main__':
     ## --------  Structure function with fit
     print("Velocity Structure Func")
     zeta_p, ns_zeta_p, zeta_p_res = plot_str_funcs_with_slope(cmdargs.out_dir_stats + "VelStrFunc_Fit.png", sys_msr_data.k, stats_data.vel_str_func, inertial_range)
+    with open(cmdargs.out_dir_stats + "ComputedStrFuncSlopes.txt", 'w') as f:
+        f.write("Velocity Structure Func\n")
+        for i in range(stats_data.vel_str_func.shape[-1]):
+            if i >= 1:
+                f.write(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f} \t{:1.3f}\n".format(i + 1, -(i + 1) / 3, zeta_p[i], zeta_p_res[i], -ns_zeta_p[i - 1]))
+            else:
+                f.write(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f}\n".format(i + 1, -(i + 1) / 3, zeta_p[i], zeta_p_res[i]))
+        
 
     ## --------  Plot Anomalous Exponent
     p = np.arange(2, stats_data.vel_str_func.shape[-1] + 1)
@@ -570,6 +578,14 @@ if __name__ == '__main__':
     ## --------  Structure function with fit
     print("Velocity Energy Structure Func")
     enrg_flux_zeta_p, ns_zeta_p, enrg_flux_zeta_p_res = plot_str_funcs_with_slope(cmdargs.out_dir_stats + "VelEnergyFluxAbsStrFunc_Fit.png", sys_msr_data.k, stats_data.vel_flux_str_func_abs[:, :, 0], inertial_range)
+    with open(cmdargs.out_dir_stats + "ComputedStrFuncSlopes.txt", 'a') as f:
+        f.write("Velocity Energy Structure Func\n")
+        for i in range(stats_data.vel_str_func.shape[-1]):
+            if i >= 1:
+                f.write(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f} \t{:1.3f}\n".format(i + 1, -(i + 1) / 3, enrg_flux_zeta_p[i], enrg_flux_zeta_p_res[i], -ns_zeta_p[i - 1]))
+            else:
+                f.write(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f}\n".format(i + 1, -(i + 1) / 3, enrg_flux_zeta_p[i], enrg_flux_zeta_p_res[i]))
+
 
     ## --------  Plot Anomalous Exponent
     plot_anomalous_exponent(cmdargs.out_dir_stats + "VelEnergyFluxAbs_Anonalous_Exponent_Zeta_p.png", p, enrg_flux_zeta_p[1:], label_str = r"Velocity Energy Flux; Shell Modell")
@@ -577,6 +593,14 @@ if __name__ == '__main__':
     ## --------  Structure function with fit
     print("Velocity Helicity Structure Func")
     hel_flux_zeta_p, ns_zeta_p, hel_flux_zeta_p_res = plot_str_funcs_with_slope(cmdargs.out_dir_stats + "VelHelicityFluxAbsStrFunc_Fit.png", sys_msr_data.k, stats_data.vel_flux_str_func_abs[:, :, 1], inertial_range)
+    with open(cmdargs.out_dir_stats + "ComputedStrFuncSlopes.txt", 'a') as f:
+        f.write("Velocity Helicity Structure Func\n")
+        for i in range(stats_data.vel_str_func.shape[-1]):
+            if i >= 1:
+                f.write(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f} \t{:1.3f}\n".format(i + 1, -(i + 1) / 3, hel_flux_zeta_p[i], hel_flux_zeta_p_res[i], -ns_zeta_p[i - 1]))
+            else:
+                f.write(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f}\n".format(i + 1, -(i + 1) / 3, hel_flux_zeta_p[i], hel_flux_zeta_p_res[i]))
+
 
     ## --------  Plot Anomalous Exponent
     plot_anomalous_exponent(cmdargs.out_dir_stats + "VelHelicityFluxAbs_Anonalous_Exponent_Zeta_p.png", p, hel_flux_zeta_p[1:], label_str = r"Velocity HelicityFlux; Shell Modell")
@@ -611,6 +635,14 @@ if __name__ == '__main__':
         ## --------  Structure function with fit
         print("Magnetic Structure Func")
         mag_zeta_p, ns_zeta_p, mag_zeta_p_res = plot_str_funcs_with_slope(cmdargs.out_dir_stats + "MagStrFunc_Fit.png", sys_msr_data.k, stats_data.mag_str_func, inertial_range)
+        with open(cmdargs.out_dir_stats + "ComputedStrFuncSlopes.txt", 'a') as f:
+            f.write("Magnetic Structure Func\n")
+            for i in range(stats_data.vel_str_func.shape[-1]):
+                if i >= 1:
+                    f.write(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f} \t{:1.3f}\n".format(i + 1, -(i + 1) / 3, mag_zeta_p[i], mag_zeta_p_res[i], -ns_zeta_p[i - 1]))
+                else:
+                    f.write(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f}\n".format(i + 1, -(i + 1) / 3, mag_zeta_p[i], mag_zeta_p_res[i]))
+
 
         ## --------  Plot Anomalous Exponent
         p = np.arange(2, stats_data.vel_str_func.shape[-1] + 1)
