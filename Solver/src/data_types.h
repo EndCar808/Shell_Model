@@ -135,6 +135,8 @@
 // #define __MAG_HIST
 #define __STR_FUNC_VEL
 #define __STR_FUNC_MAG
+#define __STR_FUNC_TRIP_PROD_VEL
+#define __STR_FUNC_TRIP_PROD_MAG
 #define __STR_FUNC_VEL_FLUX
 #define __STR_FUNC_MAG_FLUX
 #endif
@@ -183,7 +185,7 @@
 #define MAX_ITERS 1e+20					// The maximum iterations to perform
 #define MAX_FIELD_LIM 1e+100    		// The maximum allowed velocity &/or magnetic
 // Stats parameters
-#define NUM_POW 6 						// The highest moment to compute for the structure function
+#define NUM_POW 8 						// The highest moment to compute for the structure function
 #define NUM_RUN_STATS 7 				// The number of running stats moments to record
 #define VEL_BIN_LIM	40					// The bin limits (in units of standard deviations) for the velocity histogram
 #define VEL_NUM_BINS 1000				// The number of bins to use for the velocity histograms
@@ -367,6 +369,10 @@ typedef struct stats_data_struct {
 	double* mag_flux_str_func[2][NUM_POW];			// Array to hold the structure functions of the value of flux magnetic modes
 	double* vel_flux_str_func_abs[2][NUM_POW];		// Array to hold the structure functions of the absolute value of flux Velocity modes
 	double* mag_flux_str_func_abs[2][NUM_POW];		// Array to hold the structure functions of the absolute value of flux magnetic modes
+	double* vel_trip_prod_str_func[NUM_POW];		// Array to hold the tripple product structure functions of Velocity modes
+	double* mag_trip_prod_str_func[NUM_POW];		// Array to hold the tripple product structure functions of magnetic modes
+	double* vel_trip_prod_str_func_abs[NUM_POW];	// Array to hold the tripple product structure functions of Velocity modes
+	double* mag_trip_prod_str_func_abs[NUM_POW];	// Array to hold the tripple product structure functions of magnetic modes
 	gsl_rstat_workspace** real_vel_moments;			// Struct to hold the running stats for the velocity field
 	gsl_rstat_workspace** real_mag_moments;			// Struct to hold the running stats for the magnetic field
 	gsl_histogram** real_vel_hist;					// Struct to hold the histogram info for the velocity field

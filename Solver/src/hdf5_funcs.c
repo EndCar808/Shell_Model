@@ -1589,6 +1589,27 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	free(tmp_vel_str);
 	#endif
 
+	///-------------------------- Tripple product structure function
+	#if defined(__STR_FUNC_TRIP_PROD_VEL) 
+	// Allocate temporary contiguous array
+	double* tmp_vel_trip_prod_str = (double* )malloc(sizeof(double) * NUM_POW * N);
+	for (int i = 0; i < N; ++i) {
+		for (int p = 0; p < NUM_POW; ++p) {
+			tmp_vel_trip_prod_str[i * NUM_POW + p] = stats_data->vel_trip_prod_str_func[p][i] / stats_data->num_stats_steps;
+		}
+	}
+
+	// Write data 
+	dims2D[0] = N;
+	dims2D[1] = NUM_POW;
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "StructureFunctionTrippleProdVel", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_vel_trip_prod_str)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "StructureFunctionTrippleProdVel");
+	}
+
+	// Free temp memory
+	free(tmp_vel_trip_prod_str);
+	#endif
+
 	///-------------------------- Velocity Flux structure function
 	#if defined(__STR_FUNC_VEL_FLUX)
 	// Allocate temporary contiguous array
@@ -1716,6 +1737,27 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 
 	// Free temp memory
 	free(tmp_mag_str);
+	#endif
+
+	///-------------------------- Tripple product structure function
+	#if defined(__STR_FUNC_TRIP_PROD_MAG) 
+	// Allocate temporary contiguous array
+	double* tmp_mag_trip_prod_str = (double* )malloc(sizeof(double) * NUM_POW * N);
+	for (int i = 0; i < N; ++i) {
+		for (int p = 0; p < NUM_POW; ++p) {
+			tmp_mag_trip_prod_str[i * NUM_POW + p] = stats_data->mag_trip_prod_str_func[p][i] / stats_data->num_stats_steps;
+		}
+	}
+
+	// Write data 
+	dims2D[0] = N;
+	dims2D[1] = NUM_POW;
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "StructureFunctionTrippleProdMag", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_mag_trip_prod_str)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "StructureFunctionTrippleProdMag");
+	}
+
+	// Free temp memory
+	free(tmp_mag_trip_prod_str);
 	#endif
 
 	///-------------------------- Magnetic flux structure function

@@ -66,13 +66,14 @@ def plot_str_funcs_with_slope(outdir_path, k, str_funcs, inert_range, insert_fig
 		ax1in = fig.add_axes([x0, y0, width, height])
 
 	## Slopes of structure functions
-	ns_zeta_p = [0.72, 1, 1.273, 1.534, 1.786]
-	zeta_p    = []
+	ns_zeta_p    = [0.72, 1, 1.273, 1.534, 1.786]
+	zeta_p       = []
+	zeta_p_resid = []
 
 	## Get inertial range limits
 	inert_lim_low  = inert_range[0]
 	inert_lim_high = inert_range[-1]
-	print(inert_lim_low, inert_lim_high)
+	print("Inertial Range Shell No.s: {} = {}".format(inert_lim_low + 1, inert_lim_high + 1))
 
 	## Marker style list
 	mark_style = ['o','s','^','x','D','p']
@@ -95,35 +96,42 @@ def plot_str_funcs_with_slope(outdir_path, k, str_funcs, inert_range, insert_fig
 	print("Power\tp/3\t\tDNS Slope\tNS")
 	for i in range(str_funcs.shape[-1]):
 	    
-	    ## Plot strucure function
-	    p, = ax1.plot(log_func(k), log_func(str_funcs[:, i]), label = "$p = {}$".format(i + 1), marker = mark_style[i], markerfacecolor = 'None', markersize = 5.0, markevery = 1)
-	    
-	    ## Find polynomial fit and plot
-	    pfit_info  = np.polyfit(log_func(k[inert_lim_low:inert_lim_high]), log_func(str_funcs[inert_lim_low:inert_lim_high, i]), 1)
-	    pfit_slope = pfit_info[0]
-	    pfit_c     = pfit_info[1]
-	    zeta_p.append(np.absolute(pfit_slope))
-	    
-	    ## Plot slope ddata to screen
-	    if i >= 1:
-	        print(" {}\t {:1.4f} \t {:1.4f} \t{:1.3f}".format(i + 1, -(i + 1) / 3, pfit_slope, -ns_zeta_p[i - 1]))
-	    else:
-	        print(" {}\t {:1.4f} \t {:1.4f}".format(i + 1, -(i + 1) / 3, pfit_slope))
+		## Plot strucure function
+		p, = ax1.plot(log_func(k), log_func(str_funcs[:, i]), label = "$p = {}$".format(i + 1), marker = mark_style[i], markerfacecolor = 'None', markersize = 5.0, markevery = 1)
 
-	    ## Plot slopes computed from llinear fit    
-	    ax1.plot(x_axis, x_axis*pfit_slope + pfit_c, '--', color = p.get_color())
-	    
-	    if insert_fig:
-		    ## Compute the local derivative and plot in insert
-		    d_str_func  = np.diff(log_func(str_funcs[:, i]), n = 2)
-		    d_k         = np.diff(log_func(k), n = 2)
-		    local_deriv = d_str_func / d_k
-		    local_deriv = np.concatenate((local_deriv, [(log_func(str_funcs[-1, i]) - log_func(str_funcs[-2, i])) / (log_func(k[-1] - log_func(k[-2])))]))
-		    
-		    ## Plot local slopes
-		    ax1in.plot(log_func(k), local_deriv, color = p.get_color(), marker = mark_style[i], markerfacecolor = 'None', markersize = 5.0, markevery = 2)
-		    ax1in.set_ylabel(r"$\zeta_p$", labelpad = -40)
-		    ax1in.set_xlabel(xlabel_Str, labelpad = -30)
+		## Find polynomial fit and plot
+		poly_output = np.polyfit(log_func(k[inert_lim_low:inert_lim_high]), log_func(str_funcs[inert_lim_low:inert_lim_high, i]), 1, full = True)
+		pfit_info   = poly_output[0]
+		poly_resid  = poly_output[1][0]
+		pfit_slope  = pfit_info[0]
+		pfit_c      = pfit_info[1]
+		zeta_p.append(np.absolute(pfit_slope))
+		zeta_p_resid.append(poly_resid)
+
+		## Plot slope ddata to screen
+		if i >= 1:
+			print(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f} \t{:1.3f}".format(i + 1, -(i + 1) / 3, pfit_slope, poly_resid, -ns_zeta_p[i - 1]))
+		else:
+			print(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f}".format(i + 1, -(i + 1) / 3, pfit_slope, poly_resid))
+
+		## Plot slopes computed from llinear fit    
+		ax1.plot(log_func(k[inert_lim_low:inert_lim_high]), log_func(k[inert_lim_low:inert_lim_high])*pfit_slope + pfit_c, '--', color = p.get_color())
+
+		if insert_fig:
+			# ## Compute the local derivative and plot in insert
+			# d_str_func  = np.diff(log_func(str_funcs[:, i]), n = 2)
+			# d_k         = np.diff(log_func(k), n = 2)
+			# print(d_str_func)
+			# print(d_k)
+			# local_deriv = d_str_func / d_k
+			# print(local_deriv)
+			# local_deriv = np.concatenate((local_deriv, [(log_func(str_funcs[-1, i]) - 2.0 * log_func(str_funcs[-2, i]) + log_func(str_funcs[-3, i])) / (log_func(k[-1]) - log_func(k[-2]))**2, (log_func(str_funcs[-1, i]) - 2.0 * log_func(str_funcs[-2, i]) + log_func(str_funcs[-3, i])) / (log_func(k[-1]) - log_func(k[-2]))**2]))
+			# print()
+			local_deriv = np.gradient(log_func(str_funcs[:, i]))
+			## Plot local slopes
+			ax1in.plot(log_func(k), local_deriv, color = p.get_color(), marker = mark_style[i], markerfacecolor = 'None', markersize = 5.0, markevery = 2)
+			ax1in.set_ylabel(r"$\zeta_p$", labelpad = -40)
+			ax1in.set_xlabel(xlabel_Str, labelpad = -30)
 
 	## Set axis labels 
 	ax1.set_xlabel(xlabel_Str)
@@ -142,7 +150,7 @@ def plot_str_funcs_with_slope(outdir_path, k, str_funcs, inert_range, insert_fig
 	plt.close()
 
 
-	return zeta_p, ns_zeta_p
+	return zeta_p, ns_zeta_p, zeta_p_resid
 
 
 def plot_anomalous_exponent(outdir_path, p, zeta_p, ns_zeta_p = None, label_str = "GOY Model"):

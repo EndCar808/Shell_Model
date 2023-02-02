@@ -38,9 +38,9 @@ void ComputeStats(const long int iters, const long int save_data_indx) {
 	double max = 10;
 	#endif
 	const long int N = sys_vars->N;
-	double vel_enrg_flux_term, vel_hel_flux_term;
+	double vel_enrg_flux_term, vel_hel_flux_term, vel_trip_prod_term;
 	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
-	double mag_enrg_flux_term, mag_hel_flux_term;
+	double mag_enrg_flux_term, mag_hel_flux_term, mag_trip_prod_term;
 	#endif
 
 	// ------------------------------------
@@ -235,12 +235,20 @@ void ComputeStats(const long int iters, const long int save_data_indx) {
 	    	
 	    	///---------------------------------- Structure Functions
 	    	// Compute the flux terms
-	    	#if defined(__STR_FUNC_VEL_FLUX) || defined(__STR_FUNC_MAG_FLUX)
+	    	#if defined(__STR_FUNC_VEL_FLUX) || defined(__STR_FUNC_MAG_FLUX) || defined(__STR_FUNC_TRIP_PROD_VEL) || defined(__STR_FUNC_TRIP_PROD_MAG)
+	    	// Tripple product term
+	    	vel_trip_prod_term = cimag(run_data->u[n + 1] * run_data->u[n] * run_data->u[n - 1]);
+
+	    	// Flux terms
 			vel_enrg_flux_term = cimag(run_data->u[n + 2] * run_data->u[n + 1] * run_data->u[n] + (1.0 - sys_vars->EPS) / sys_vars->Lambda * run_data->u[n + 1] * run_data->u[n] * run_data->u[n - 1]);
 			vel_hel_flux_term  = cimag(run_data->u[n + 2] * run_data->u[n + 1] * run_data->u[n] - (sys_vars->EPS * sys_vars->Lambda + 1.0) / pow(sys_vars->Lambda, 2.0) * run_data->u[n + 1] * run_data->u[n] * run_data->u[n - 1]);
 			#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
-			mag_enrg_flux_term = cimag(run_data->u[n + 2] * run_data->u[n + 2] * run_data->u[n + 2]);
-			mag_hel_flux_term  = cimag(run_data->u[n + 2] * run_data->u[n + 2] * run_data->u[n + 2]);
+			// Tripple product term
+			mag_trip_prod_term = cimag(run_data->b[n + 1] * run_data->b[n] * run_data->b[n - 1]);
+
+			// Flux product term
+			mag_enrg_flux_term = cimag(run_data->b[n + 2] * run_data->b[n + 1] * run_data->b[n] + (1.0 - sys_vars->EPS) / sys_vars->Lambda * run_data->b[n + 1] * run_data->b[n] * run_data->b[n - 1]);
+			mag_hel_flux_term  = cimag(run_data->b[n + 2] * run_data->b[n + 2] * run_data->b[n + 2]);
 			#endif    	
 			#endif
 
@@ -257,15 +265,25 @@ void ComputeStats(const long int iters, const long int save_data_indx) {
 
 				// Compute the moments of the fluxes
 				#if defined(__STR_FUNC_VEL_FLUX) || defined(__STR_FUNC_MAG_FLUX)
+				// Tripple product str func
+				stats_data->vel_trip_prod_str_func[p - 1][i] += pow(sgn(vel_trip_prod_term), p) * pow(fabs(vel_trip_prod_term), p / 3.0);
+				stats_data->vel_trip_prod_str_func_abs[p - 1][i] += pow(fabs(vel_trip_prod_term), p / 3.0);
+
+				// Flux term str func
 				stats_data->vel_flux_str_func[0][p - 1][i] += pow(sgn(vel_enrg_flux_term), p) * pow(fabs(vel_enrg_flux_term), p / 3.0);
 				stats_data->vel_flux_str_func[1][p - 1][i] += pow(sgn(vel_hel_flux_term), p) * pow(fabs(vel_hel_flux_term), p / 3.0);
 				stats_data->vel_flux_str_func_abs[0][p - 1][i] += pow(fabs(vel_enrg_flux_term), p / 3.0);
 				stats_data->vel_flux_str_func_abs[1][p - 1][i] += pow(fabs(vel_hel_flux_term), p / 3.0);
 	    		#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
-				stats_data->mag_flux_str_func[0][p - 1][i] += pow(sgn(mag_enrg_flux_term), p) * pow(fabs(mag_enrg_flux_term), p);
-				stats_data->mag_flux_str_func[1][p - 1][i] += pow(sgn(mag_hel_flux_term), p) * pow(fabs(mag_hel_flux_term), p);
-				stats_data->mag_flux_str_func_abs[0][p - 1][i] += pow(fabs(mag_enrg_flux_term), p);
-				stats_data->mag_flux_str_func_abs[1][p - 1][i] += pow(fabs(mag_hel_flux_term), p);
+	    		// Tripple product str func
+				stats_data->mag_trip_prod_str_func[p - 1][i] += pow(sgn(mag_trip_prod_term), p) * pow(fabs(mag_trip_prod_term), p / 3.0);
+				stats_data->mag_trip_prod_str_func_abs[p - 1][i] += pow(fabs(mag_trip_prod_term), p / 3.0);
+
+				// Flux term str func
+				stats_data->mag_flux_str_func[0][p - 1][i] += pow(sgn(mag_enrg_flux_term), p) * pow(fabs(mag_enrg_flux_term), p / 3.0);
+				stats_data->mag_flux_str_func[1][p - 1][i] += pow(sgn(mag_hel_flux_term), p) * pow(fabs(mag_hel_flux_term), p / 3.0);
+				stats_data->mag_flux_str_func_abs[0][p - 1][i] += pow(fabs(mag_enrg_flux_term), p / 3.0);
+				stats_data->mag_flux_str_func_abs[1][p - 1][i] += pow(fabs(mag_hel_flux_term), p / 3.0);
 	    		#endif
 	    		#endif
 	    	}
@@ -302,6 +320,18 @@ void InitializeStats(void) {
 			exit(1);
 		}
 		#endif
+		#if defined(__STR_FUNC_TRIP_PROD_VEL)
+		stats_data->vel_trip_prod_str_func[i] = (double* )malloc(sizeof(double) * N);
+		if (stats_data->vel_trip_prod_str_func[i] == NULL) {
+			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Stats Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Velocity Tripple Product Structure Function");
+			exit(1);
+		}
+		stats_data->vel_trip_prod_str_func_abs[i] = (double* )malloc(sizeof(double) * N);
+		if (stats_data->vel_trip_prod_str_func_abs[i] == NULL) {
+			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Stats Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Absolute Velocity Tripple Product Structure Function");
+			exit(1);
+		}		
+		#endif
 		#if defined(__STR_FUNC_VEL_FLUX)
 		for (int j = 0; j < 2; ++j) {
 			stats_data->vel_flux_str_func[j][i] = (double* )malloc(sizeof(double) * N);
@@ -323,6 +353,18 @@ void InitializeStats(void) {
 			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Stats Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Magnetic Structure Function");
 			exit(1);
 		}
+		#endif
+		#if defined(__STR_FUNC_TRIP_PROD_MAG)
+		stats_data->mag_trip_prod_str_func[i] = (double* )malloc(sizeof(double) * N);
+		if (stats_data->mag_trip_prod_str_func[i] == NULL) {
+			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Stats Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Magnetic Tripple Product Structure Function");
+			exit(1);
+		}
+		stats_data->mag_trip_prod_str_func_abs[i] = (double* )malloc(sizeof(double) * N);
+		if (stats_data->mag_trip_prod_str_func_abs[i] == NULL) {
+			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Stats Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "Absolute Magnetic Tripple Product Structure Function");
+			exit(1);
+		}		
 		#endif
 		#if defined(__STR_FUNC_MAG_FLUX)
 		for (int j = 0; j < 2; ++j) {

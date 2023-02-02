@@ -1936,15 +1936,23 @@ void FreeMemory(RK_data_struct* RK_data) {
 		#if defined(__STR_FUNC_VEL)
 		free(stats_data->vel_str_func[i]);
 		#endif
+		#if defined(__STR_FUNC_TRIP_PROD_VEL)
+		free(stats_data->vel_trip_prod_str_func[i]);
+		free(stats_data->vel_trip_prod_str_func_abs[i]);
+		#endif
 		#if defined(__STR_FUNC_VEL_FLUX)
 		for (int j = 0; j < 2; ++j) {
 			free(stats_data->vel_flux_str_func[j][i]);
 			free(stats_data->vel_flux_str_func_abs[j][i]);
 		}		
 		#endif
-		#if defined(__MAGNETO)
+		#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 		#if defined(__STR_FUNC_MAG)
 		free(stats_data->mag_str_func[i]);
+		#endif
+		#if defined(__STR_FUNC_TRIP_PROD_MAG)
+		free(stats_data->mag_trip_prod_str_func[i]);
+		free(stats_data->mag_trip_prod_str_func_abs[i]);
 		#endif
 		#if defined(__STR_FUNC_MAG_FLUX)
 		for (int j = 0; j < 2; ++j) {
