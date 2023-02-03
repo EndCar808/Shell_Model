@@ -122,7 +122,7 @@ void CreateOutputFilesWriteICs(const long int N) {
 	#endif
 	///--------------------------------------- Z_Minus Elsassar Variable
 	#if defined(__Z_MINUS) && !(defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY))
-	CreateSlabbedDSet(0.0, 0, file_info->output_file_handle, "ZMinus", &(file_info->file_space[DSET_MINUS]), &(file_info->data_set[DSET_MINUS]), &(file_info->mem_space[DSET_MINUS]), file_info->COMPLEX_DTYPE, dims2D, maxdims2D, chunkdims2D, Dim2D);
+	CreateSlabbedDSet(0.0, 0, file_info->output_file_handle, "ZMinus", &(file_info->file_space[DSET_Z_MINUS]), &(file_info->data_set[DSET_Z_MINUS]), &(file_info->mem_space[DSET_Z_MINUS]), file_info->COMPLEX_DTYPE, dims2D, maxdims2D, chunkdims2D, Dim2D);
 	#endif
 	#endif
 
@@ -148,12 +148,20 @@ void CreateOutputFilesWriteICs(const long int N) {
 
 	///--------------------------------------- Spectra
 	#if defined(__ENRG_SPECT)
-	// Energy Spectrum
+	// Total Energy Spectrum
 	CreateSlabbedDSet(0.0, 0, file_info->output_file_handle, "EnergySpectrum", &(file_info->file_space[DSET_ENRG_SPECT]), &(file_info->data_set[DSET_ENRG_SPECT]), &(file_info->mem_space[DSET_ENRG_SPECT]), H5T_NATIVE_DOUBLE, dims2D, maxdims2D, chunkdims2D, Dim2D);	
 	#endif
 	#if defined(__DISS_SPECT)
 	// Dissipation Spectrum
 	CreateSlabbedDSet(0.0, 0, file_info->output_file_handle, "DissipationSpectrum", &(file_info->file_space[DSET_DISS_SPECT]), &(file_info->data_set[DSET_DISS_SPECT]), &(file_info->mem_space[DSET_DISS_SPECT]), H5T_NATIVE_DOUBLE, dims2D, maxdims2D, chunkdims2D, Dim2D);
+	#endif
+	#if defined(__KIN_ENRG_SPECT)
+	// Kinetic Energy Spectrum
+	CreateSlabbedDSet(0.0, 0, file_info->output_file_handle, "KineticEnergySpectrum", &(file_info->file_space[DSET_KIN_ENRG_SPECT]), &(file_info->data_set[DSET_KIN_ENRG_SPECT]), &(file_info->mem_space[DSET_KIN_ENRG_SPECT]), H5T_NATIVE_DOUBLE, dims2D, maxdims2D, chunkdims2D, Dim2D);	
+	#endif
+	#if defined(__MAG_ENRG_SPECT) && (defined(__MAGNETO) || defined(__ELSASSAR_MHD))
+	// Magnetic Energy Spectrum
+	CreateSlabbedDSet(0.0, 0, file_info->output_file_handle, "MagneticEnergySpectrum", &(file_info->file_space[DSET_MAG_ENRG_SPECT]), &(file_info->data_set[DSET_MAG_ENRG_SPECT]), &(file_info->mem_space[DSET_MAG_ENRG_SPECT]), H5T_NATIVE_DOUBLE, dims2D, maxdims2D, chunkdims2D, Dim2D);	
 	#endif
 
 	///--------------------------------------- Energy Flux
@@ -299,6 +307,14 @@ void CreateOutputFilesWriteICs(const long int N) {
 		#if defined(__ENRG_SPECT)
 		// Energy Spectrum
 		WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_ENRG_SPECT], file_info->data_set[DSET_ENRG_SPECT], file_info->mem_space[DSET_ENRG_SPECT], H5T_NATIVE_DOUBLE, run_data->energy_spect, "EnergySpectrum", count2D, index2D);
+		#endif
+		#if defined(__KIN_ENRG_SPECT)
+		// Kinetic Energy Spectrum
+		WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_KIN_ENRG_SPECT], file_info->data_set[DSET_KIN_ENRG_SPECT], file_info->mem_space[DSET_KIN_ENRG_SPECT], H5T_NATIVE_DOUBLE, run_data->kin_enrg_spect, "KineticEnergySpectrum", count2D, index2D);
+		#endif
+		#if defined(__MAG_ENRG_SPECT) && (defined(__ELSASSAR_MHD) || defined(__MAGNETO))
+		// Magnetic Energy Spectrum
+		WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_MAG_ENRG_SPECT], file_info->data_set[DSET_MAG_ENRG_SPECT], file_info->mem_space[DSET_MAG_ENRG_SPECT], H5T_NATIVE_DOUBLE, run_data->mag_enrg_spect, "MagneticEnergySpectrum", count2D, index2D);
 		#endif
 		#if defined(__DISS_SPECT)
 		// Dissipation Spectrum
@@ -739,6 +755,14 @@ void WriteDataToFile(double t, const long int iters, const long int save_indx) {
 	#if defined(__ENRG_SPECT)
 	// Energy Spectrum
 	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_ENRG_SPECT], file_info->data_set[DSET_ENRG_SPECT], file_info->mem_space[DSET_ENRG_SPECT], H5T_NATIVE_DOUBLE, run_data->energy_spect, "EnergySpectrum", count2D, index2D);
+	#endif
+	#if defined(__KIN_ENRG_SPECT)
+	// Kinetic Energy Spectrum
+	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_KIN_ENRG_SPECT], file_info->data_set[DSET_KIN_ENRG_SPECT], file_info->mem_space[DSET_KIN_ENRG_SPECT], H5T_NATIVE_DOUBLE, run_data->kin_enrg_spect, "KineticEnergySpectrum", count2D, index2D);
+	#endif
+	#if defined(__MAG_ENRG_SPECT) && (defined(__ELSASSAR_MHD) || defined(__MAGNETO))
+	// Magnetic Energy Spectrum
+	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_MAG_ENRG_SPECT], file_info->data_set[DSET_MAG_ENRG_SPECT], file_info->mem_space[DSET_MAG_ENRG_SPECT], H5T_NATIVE_DOUBLE, run_data->mag_enrg_spect, "MagneticEnergySpectrum", count2D, index2D);
 	#endif
 	#if defined(__ENRG_SPECT)
 	// Dissipation Spectrum
@@ -1220,6 +1244,10 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalEnergy", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_energy)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalEnergy");
 	}
+	// Total Kinetic (Velocity) Energy
+	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalKineticEnergy", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_kin_enrg)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalKineticEnergy");
+	}
 	// Velocity Helicity
 	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalVelocityHelicity", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_hel_u)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalVelocityHelicity");
@@ -1259,6 +1287,10 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	}
 	#endif
 	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+	// Total Mag Energy
+	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalMagneticEnergy", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_mag_enrg)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalMagneticEnergy");
+	}
 	// Magnetic Helicity
 	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalMagneticHelicity", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_hel_b)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalMagneticHelicity");
@@ -1299,7 +1331,7 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	}
 	#endif
 
-	///----------------- Time Averaged Energy Spectrum
+	///----------------- Time Averaged Energy Spectra
 	#if defined(__ENRG_SPECT_AVG)
 	// Time average the data
 	for (int i = 0; i < sys_vars->N; ++i) {
@@ -1309,6 +1341,28 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	dims1D[0] = sys_vars->N;
 	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TimeAveragedEnergySpectrum", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->energy_spect_t_avg)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TimeAveragedEnergySpectrum");
+	}
+	#endif
+	#if defined(__KIN_ENRG_SPECT_AVG)
+	// Time average the data
+	for (int i = 0; i < sys_vars->N; ++i) {
+		run_data->kin_enrg_spect_t_avg[i] /= run_data->num_sys_msr_steps;
+	}
+
+	dims1D[0] = sys_vars->N;
+	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TimeAveragedKineticEnergySpectrum", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->kin_enrg_spect_t_avg)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TimeAveragedKineticEnergySpectrum");
+	}
+	#endif
+	#if defined(__MAG_ENRG_SPECT_AVG) && (defined(__MAGNETO) || defined(__ELSASSAR_MHD))
+	// Time average the data
+	for (int i = 0; i < sys_vars->N; ++i) {
+		run_data->mag_enrg_spect_t_avg[i] /= run_data->num_sys_msr_steps;
+	}
+
+	dims1D[0] = sys_vars->N;
+	if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TimeAveragedMagneticEnergySpectrum", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->mag_enrg_spect_t_avg)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TimeAveragedMagneticEnergySpectrum");
 	}
 	#endif
 

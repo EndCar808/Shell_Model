@@ -120,9 +120,13 @@
 // #define __MAG_AMP_AVG
 // Choose whether to compute the spectra
 // #define __ENRG_SPECT
+// #define __KIN_ENRG_SPECT
+// #define __MAG_ENRG_SPECT
 // #define __DISS_SPECT
 // #define __ENRG_SPECT_AVG
 // #define __DISS_SPECT_AVG
+// #define __KIN_ENRG_SPECT_AVG
+// #define __MAG_ENRG_SPECT_AVG
 // Choose whether to compute phase sync data
 // #define __CONSERVED_PHASES
 // #define __PHASE_SYNC
@@ -167,7 +171,9 @@
 #define DSET_MAG_PHASE_DIFF_ORDER 22
 #define DSET_Z_PLUS 23
 #define DSET_Z_MINUS 24
-#define NUM_DSETS 25
+#define DSET_KIN_ENRG_SPECT 25
+#define DSET_MAG_ENRG_SPECT 26
+#define NUM_DSETS 27
 // ---------------------------------------------------------------------
 //  Global Variables
 // ---------------------------------------------------------------------
@@ -264,6 +270,12 @@ typedef struct runtime_data_struct {
 	double* psi_n;							// Array to hold the phases of the magnetic modes
 	double* time;			  				// Array to hold the simulation times
 	double* tot_energy;       				// Array to hold the total energy over the simulation
+	double* tot_kin_enrg;      				// Array to hold the total energy over the simulation
+	double* tot_mag_enrg;      				// Array to hold the total energy over the simulation
+	double* kin_enrg_spect;					// Array to hold the kinetic (velocity) energy spectrum
+	double* mag_enrg_spect;					// Array to hold the magnetic energy spectrum
+	double* kin_enrg_spect_t_avg;			// Array to hold the time averaged kinetic (velocity) energy spectrum
+	double* mag_enrg_spect_t_avg;			// Array to hold the time averaged magnetic energy spectrum
 	double* tot_hel_u;		  				// Array to hold the total helicity in the velocity field
 	double* tot_hel_b;		  				// Array to hold the total helicity in the magnetic field
 	double* tot_cross_hel;	  				// Array to hold the total cross helicity

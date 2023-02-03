@@ -54,7 +54,6 @@ int main(int argc, char** argv) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"]: Error in reading in command line aguments, check utils.c file for details\n");
 		exit(1);
 	}
-
 	//////////////////////////////////
 	// Call Solver
 	//////////////////////////////////

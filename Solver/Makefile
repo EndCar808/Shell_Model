@@ -62,13 +62,20 @@ endif
 # ---------------------------------------------------------------------
 #  Executable flags
 # ---------------------------------------------------------------------
-# Flags to be passed to the solver for normal runs
+# Flags to be passed to the hyrdo solver for normal runs
 HYDRO_SOLVER_IFRK4_FLAGS := -D__INT_FAC_RK4 -D__VEL # -D__ADAPTIVE_STEP -D__CFL_STEP
 HYDRO_SOLVER_RK4_FLAGS := -D__RK4 -D__VEL # -D__ADAPTIVE_STEP -D__CFL_STEP
 HYDRO_SOLVER_AB4CN_FLAGS := -D__AB4CN -D__VEL # -D__ADAPTIVE_STEP -D__CFL_STEP
 
-MAG_HYDRO_SOLVER_FLAGS := -D__INT_FAC_RK4 -D__MAGNETO -D__VEL -D__MAG # -D__ADAPTIVE_STEP -D__CFL_STEP
-ELSASSAR_MHD_SOLVER_FLAGS := -D__INT_FAC_RK4 -D__ELSASSAR_MHD -D__Z_PLUS -D__Z_MINUS # -D__ADAPTIVE_STEP -D__CFL_STEP
+# Flags to be passed to the mag hyrdo solver for normal runs
+MAG_HYDRO_SOLVER_IFRK4_FLAGS := -D__INT_FAC_RK4 -D__MAGNETO -D__VEL -D__MAG # -D__ADAPTIVE_STEP -D__CFL_STEP
+MAG_HYDRO_SOLVER_RK4_FLAGS := -D__RK4 -D__MAGNETO -D__VEL -D__MAG # -D__ADAPTIVE_STEP -D__CFL_STEP
+MAG_HYDRO_SOLVER_AB4CN_FLAGS := -D__AB4CN -D__MAGNETO -D__VEL -D__MAG # -D__ADAPTIVE_STEP -D__CFL_STEP
+
+# Flags to be passed to the mag hyrdo solver for normal runs
+ELSASSAR_MHD_SOLVER_IFRK4_FLAGS := -D__INT_FAC_RK4 -D__ELSASSAR_MHD -D__Z_PLUS -D__Z_MINUS # -D__ADAPTIVE_STEP -D__CFL_STEP
+ELSASSAR_MHD_SOLVER_RK4_FLAGS := -D__RK4 -D__ELSASSAR_MHD -D__Z_PLUS -D__Z_MINUS # -D__ADAPTIVE_STEP -D__CFL_STEP
+ELSASSAR_MHD_SOLVER_AB4CN_FLAGS := -D__AB4CN -D__ELSASSAR_MHD -D__Z_PLUS -D__Z_MINUS # -D__ADAPTIVE_STEP -D__CFL_STEP
 
 # Phase only flags to be passed to solver
 PHASE_ONLY_FLAGS := -D__PHASE_ONLY -D__RK4 -D__VEL_AMP -D__VEL_PHI #-D__MAGNETO -D__HYPER -D__TRANSIENTS
@@ -81,7 +88,8 @@ DSET_FLAGS = -D__SYS_MEASURES
 DSET_FLAGS += -D__CONSERVED_PHASES -D__PHASE_SYNC -D__PHASE_SYNC_STATS 
 DSET_FLAGS += -D__STATS 
 DSET_FLAGS += -D__ENRG_SPECT_AVG -D__DISS_SPECT_AVG -D__TOT_ENRG_FLUX -D__ENRG_FLUX_AVG -D__VEL_AMP_AVG -D__MAG_AMP_AVG
-DSET_FLAGS += -D__ENRG_SPECT -D__DISS_SPECT -D__ENRG_FLUX 
+DSET_FLAGS += -D__KIN_ENRG_SPECT_AVG -D__MAG_ENRG_SPECT_AVG -D__PSEUDO_ENRG_FLUX_AVG
+DSET_FLAGS += -D__ENRG_SPECT -D__DISS_SPECT -D__ENRG_FLUX -D__KIN_ENRG_SPECT -D__MAG_ENRG_SPECT
 DSET_FLAGS += -D__FORCING
 DSET_FLAGS += -D__VEL 
 DSET_FLAGS += -D__MAG
@@ -105,8 +113,12 @@ SRCFILE     	:= $(wildcard $(SRCDIR)/*.c)
 SRCOBJ_H_IF    	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_hydro_IF.o, $(SRCFILE))
 SRCOBJ_H_RK    	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_hydro_RK.o, $(SRCFILE))
 SRCOBJ_H_AB    	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_hydro_AB.o, $(SRCFILE))
-SRCOBJ_MHD  	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_mag_hydro.o, $(SRCFILE))
-SRCOBJ_ELS  	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_elsassar_mhd.o, $(SRCFILE))
+SRCOBJ_MHD_IF  	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_mag_hydro_IF.o, $(SRCFILE))
+SRCOBJ_MHD_RK  	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_mag_hydro_RK.o, $(SRCFILE))
+SRCOBJ_MHD_AB  	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_mag_hydro_AB.o, $(SRCFILE))
+SRCOBJ_ELS_IF  	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_elsassar_mhd_IF.o, $(SRCFILE))
+SRCOBJ_ELS_RK  	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_elsassar_mhd_RK.o, $(SRCFILE))
+SRCOBJ_ELS_AB  	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_elsassar_mhd_AB.o, $(SRCFILE))
 SRCOBJ_PO  		:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_phase_only.o, $(SRCFILE))
 SRCOBJ_PO_D 	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_phase_only_fxd_amp.o, $(SRCFILE))
 SRCOBJ_Test 	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_test.o, $(SRCFILE))
@@ -121,12 +133,13 @@ DEPS = $(wildcard *.h)
 ############
 
 
-all: $(BIN)/solver_hydro_IF $(BIN)/solver_hydro_RK $(BIN)/solver_hydro_AB $(BIN)/solver_mag_hydro $(BIN)/solver_phase_only $(BIN)/solver_phase_only_fxd_amp $(BIN)/solver_test
+all: $(BIN)/solver_hydro_IF $(BIN)/solver_hydro_RK $(BIN)/solver_hydro_AB $(BIN)/solver_mag_hydro_IF $(BIN)/solver_mag_hydro_RK $(BIN)/solver_mag_hydro_AB $(BIN)/solver_elsassar_mhd_IF $(BIN)/solver_elsassar_mhd_RK $(BIN)/solver_elsassar_mhd_AB $(BIN)/solver_phase_only $(BIN)/solver_phase_only_fxd_amp $(BIN)/solver_test
 
 
 ####--------
-#  Solver
+#  Solvers
 ####--------
+##----------------------- Hydro Solvers
 solver_hydro_IF: $(BIN)/solver_hydro_IF
 
 $(BIN)/solver_hydro_IF: $(SRCOBJ_H_IF) $(DEPS)
@@ -151,21 +164,58 @@ $(BIN)/solver_hydro_AB: $(SRCOBJ_H_AB) $(DEPS)
 $(OBJBIN)/%_hydro_AB.o: $(SRCDIR)/%.c $(DEPS)
 	$(GCC) $(CCFLAG) $(HYDRO_SOLVER_AB4CN_FLAGS) $(DSET_FLAGS) -c $^ -o $@ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
 
-solver_mag_hydro: $(BIN)/solver_mag_hydro 
 
-$(BIN)/solver_mag_hydro: $(SRCOBJ_MHD) $(DEPS)
-	$(GCC) $(CCFLAG) $(MAG_HYDRO_SOLVER_FLAGS) $(DSET_FLAGS) -o $@ $^ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+##----------------------- Mag Hydro Solvers
+solver_mag_hydro_IF: $(BIN)/solver_mag_hydro_IF 
 
-$(OBJBIN)/%_mag_hydro.o: $(SRCDIR)/%.c $(DEPS)
-	$(GCC) $(CCFLAG) $(MAG_HYDRO_SOLVER_FLAGS) $(DSET_FLAGS) -c $^ -o $@ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+$(BIN)/solver_mag_hydro_IF: $(SRCOBJ_MHD_IF) $(DEPS)
+	$(GCC) $(CCFLAG) $(MAG_HYDRO_SOLVER_IFRK4_FLAGS) $(DSET_FLAGS) -o $@ $^ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
 
-solver_elsassar_mhd: $(BIN)/solver_elsassar_mhd 
+$(OBJBIN)/%_mag_hydro_IF.o: $(SRCDIR)/%.c $(DEPS)
+	$(GCC) $(CCFLAG) $(MAG_HYDRO_SOLVER_IFRK4_FLAGS) $(DSET_FLAGS) -c $^ -o $@ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
 
-$(BIN)/solver_elsassar_mhd: $(SRCOBJ_ELS) $(DEPS)
-	$(GCC) $(CCFLAG) $(ELSASSAR_MHD_SOLVER_FLAGS) $(DSET_FLAGS) -o $@ $^ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+solver_mag_hydro_RK: $(BIN)/solver_mag_hydro_RK
 
-$(OBJBIN)/%_elsassar_mhd.o: $(SRCDIR)/%.c $(DEPS)
-	$(GCC) $(CCFLAG) $(ELSASSAR_MHD_SOLVER_FLAGS) $(DSET_FLAGS) -c $^ -o $@ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+$(BIN)/solver_mag_hydro_RK: $(SRCOBJ_MHD_RK) $(DEPS)
+	$(GCC) $(CCFLAG) $(MAG_HYDRO_SOLVER_RK4_FLAGS) $(DSET_FLAGS) -o $@ $^ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+
+$(OBJBIN)/%_mag_hydro_RK.o: $(SRCDIR)/%.c $(DEPS)
+	$(GCC) $(CCFLAG) $(MAG_HYDRO_SOLVER_RK4_FLAGS) $(DSET_FLAGS) -c $^ -o $@ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+
+solver_mag_hydro_AB: $(BIN)/solver_mag_hydro_AB
+
+$(BIN)/solver_mag_hydro_AB: $(SRCOBJ_MHD_AB) $(DEPS)
+	$(GCC) $(CCFLAG) $(HYDRO_SOLVER_AB4CN_FLAGS) $(DSET_FLAGS) -o $@ $^ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+
+$(OBJBIN)/%_mag_hydro_AB.o: $(SRCDIR)/%.c $(DEPS)
+	$(GCC) $(CCFLAG) $(HYDRO_SOLVER_AB4CN_FLAGS) $(DSET_FLAGS) -c $^ -o $@ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+
+
+##----------------------- Elsassar Solvers
+solver_elsassar_mhd_IF: $(BIN)/solver_elsassar_mhd_IF 
+
+$(BIN)/solver_elsassar_mhd_IF: $(SRCOBJ_ELS_IF) $(DEPS)
+	$(GCC) $(CCFLAG) $(ELSASSAR_MHD_SOLVER_IFRK4_FLAGS) $(DSET_FLAGS) -o $@ $^ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+
+$(OBJBIN)/%_elsassar_mhd_IF.o: $(SRCDIR)/%.c $(DEPS)
+	$(GCC) $(CCFLAG) $(ELSASSAR_MHD_SOLVER_IFRK4_FLAGS) $(DSET_FLAGS) -c $^ -o $@ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+
+solver_elsassar_mhd_RK: $(BIN)/solver_elsassar_mhd_RK 
+
+$(BIN)/solver_elsassar_mhd_RK: $(SRCOBJ_ELS_RK) $(DEPS)
+	$(GCC) $(CCFLAG) $(ELSASSAR_MHD_SOLVER_RK4_FLAGS) $(DSET_FLAGS) -o $@ $^ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+
+$(OBJBIN)/%_elsassar_mhd_RK.o: $(SRCDIR)/%.c $(DEPS)
+	$(GCC) $(CCFLAG) $(ELSASSAR_MHD_SOLVER_RK4_FLAGS) $(DSET_FLAGS) -c $^ -o $@ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+
+solver_elsassar_mhd_AB: $(BIN)/solver_elsassar_mhd_AB 
+
+$(BIN)/solver_elsassar_mhd_AB: $(SRCOBJ_ELS_AB) $(DEPS)
+	$(GCC) $(CCFLAG) $(ELSASSAR_MHD_SOLVER_AB4CN_FLAGS) $(DSET_FLAGS) -o $@ $^ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+
+$(OBJBIN)/%_elsassar_mhd_AB.o: $(SRCDIR)/%.c $(DEPS)
+	$(GCC) $(CCFLAG) $(ELSASSAR_MHD_SOLVER_AB4CN_FLAGS) $(DSET_FLAGS) -c $^ -o $@ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+
 
 ####-----------
 #  Phase Only 

@@ -1,0 +1,144 @@
+%---------------------------PREAMBLE-------------------------------------------- %
+\documentclass[9pt]{article}
+% \documentclass[9pt]{amsart}
+% \documentclass[9pt]{revtex4-2}
+
+
+%------------------- PACKAGES 
+
+\usepackage{graphicx}
+	\graphicspath{ {plots/} }
+\usepackage{caption}
+\usepackage{epstopdf}
+\usepackage{pdfpages}
+\usepackage{array}
+\usepackage{ulem}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+	\newtheorem{definition}{Definition}[section]
+	\newtheorem*{remark}{Remark}
+	\newtheorem{theorem}{Theorem}[section]
+	\newtheorem{corollary}{Corollary}[theorem]
+	\newtheorem{lemma}[theorem]{Lemma}
+\usepackage{mathrsfs}
+\usepackage{color}
+\usepackage{float}
+\usepackage{tikz}
+\usetikzlibrary{arrows,%
+                plotmarks,patterns}
+\usepackage{pgfplots}
+\pgfplotsset{compat=newest}
+\usepgfplotslibrary{fillbetween}
+
+\usepackage{enumerate}
+\usepackage{array}
+\usepackage{wrapfig}
+\usepackage{enumitem}
+\usepackage{bm}
+\usepackage{booktabs}
+\usepackage{siunitx}
+\usepackage{authblk}
+\usepackage{cancel}
+\usepackage{listings}
+\usepackage[utf8]{inputenc}
+
+% \usepackage[table]{xcolor}
+
+\usepackage[unicode,psdextra, colorlinks=true, linkcolor=black, citecolor=black, urlcolor=blue, breaklinks]{hyperref}[2012/08/13]
+
+
+\setlength{\arrayrulewidth}{0.5mm}
+% \setlength{\tabcolsep}{10pt}
+\renewcommand{\arraystretch}{1.0}
+
+
+%------------------ USEFULL MACROS ------------------%
+%-- MISC
+\newcommand{\comment}[1]{}                                % for adding an inline comment
+\makeatletter 											  % This entire thing is for redefining *matrix environment in amsmath so that you can specify the line spacing in a matrix by  - \begin{pmatrix}[1.5]
+\renewcommand*\env@matrix[1][\arraystretch]{%             
+  \edef\arraystretch{#1}%
+  \hskip -\arraycolsep
+  \let\@ifnextchar\new@ifnextchar
+  \array{*\c@MaxMatrixCols c}}
+\makeatother
+
+%-- DERIVATIVES
+\newcommand{\der}[2]{\frac{\mathrm{d}#1}{\mathrm{d}#2}}          	 % first derivative
+\newcommand{\dder}[2]{\frac{\mathrm{d}^{2}#1}{\mathrm{d}#2^{2}}}	 % second derivative
+\newcommand{\nder}[3]{\frac{\mathrm{d}^{#3}#1}{\mathrm{d}#2^{#3}}}   % nth derivative
+\newcommand{\pder}[2]{\frac{\partial #1}{\partial #2}}               % first partial derivative
+\newcommand{\ppder}[2]{\frac{\partial^2 #1}{\partial {#2}^2}}        % second partial derivative
+\newcommand{\npder}[3]{\frac{\partial^{#3} #1}{\partial {#2}^{#3}}}  % second partial derivative
+
+%-- SUMMATION
+\newcommand{\sumk}[3]{\sum_{#1 = #2}^{#3}}        			% sum over #1 with limits #2 #3
+\newcommand{\sumkk}[2]{\sum_{#1, #2} }         	  			% sum over #1 and #2 no limits
+\newcommand{\sumkkdom}[3]{\sum_{#1 , #2 \in #3}}   			% sum over #1 and #2 with domain specified
+
+%-- RESEARCH RELATED
+\newcommand{\uhat}[1]{\hat{u}_{#1}}      				          % quick fourier mode
+\newcommand{\akak}[2]{a_{#1}a_{#2}}      				          % quick convolution amplitudes
+\newcommand{\akakak}[3]{\frac{a_{#1}a_{#2}}{a_{#3}}}      	      % quick convolution amplitudes
+\newcommand{\triadexpl}[3]{\phi_{#1} + \phi_{#2} - \phi_{#3}}      % quick triad explicitly
+\newcommand{\triad}[3]{\varphi_{#1, #2}^{#3}}                     % quick varphi triad
+\newcommand{\ii}{\mathrm{i}}      								  % imaginary i
+\newcommand{\e}{\mathrm{e}}      								  % e
+\newcommand{\Mod}[1]{\ (\mathrm{mod}\ #1)}
+\newcommand{\grad}[1]{\nabla{#1}}								% gradient operator
+\newcommand{\curl}[1]{\nabla \times {#1}}								% gradient operator
+\newcommand{\diverg}[1]{\nabla \cdot {#1}}			% divergence operator
+\newcommand{\bfu}{\mathbf{u}}											% vector u in bold font
+\newcommand{\omegahat}[1]{\hat{\omega}_{ \mathbf{#1} } }								% gradient operator
+\newcommand{\alphakkk}[3]{\alpha_{\bfkn{#1}, \bfkn{#2}}^{\bfkn{#3}}}
+\newcommand{\bfx}{\mathbf{x}}								% gradient operator
+\newcommand{\bfk}{\mathbf{k}}								% gradient operator
+\newcommand{\bfkn}[1]{\mathbf{k}_{#1}}								% gradient operator
+
+%-- COMMENTS / EDITING
+\newcommand{\TODO}[1]{\textcolor{red}{TODO: #1}}
+
+
+%-- CODE SNIPPETS
+\newcommand{\code}[1]{\texttt{#1}}
+
+
+
+
+
+%-------- PAGE STYLE & MARGIN SIZE
+% \pagestyle{plain} \setlength{\oddsidemargin}{0.05in}
+% \setlength{\evensidemargin}{0.05in} \setlength{\topmargin}{0in}
+% \setlength{\footskip}{1.05in} \setlength{\headsep}{0in}
+% \setlength{\textwidth}{6.4in} \setlength{\textheight}{8.25in}
+\usepackage[a4paper, margin=0.5cm]{geometry}
+
+
+
+
+\title{\textbf{Phase Dynamics: Shell Models}}
+
+\author[$1$]{E. M. Carroll}
+\author[$1$]{M. D. Bustamante}
+\affil[$1$]{Department of Mathematics and Statistics, University College Dublin, Dublin, Ireland} 
+
+
+
+
+
+\begin{document}
+
+
+\maketitle	
+
+
+\section{Shell Models for Turbulence}
+
+
+
+
+
+
+\end{document}

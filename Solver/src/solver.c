@@ -72,6 +72,7 @@ void Solve(void) {
 	// If input file is selected the function to read input file is called from here
 	InitialConditions(N);
 
+
 	// -------------------------------
 	// Integration Variables
 	// -------------------------------
@@ -306,8 +307,8 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		n = i + 2;
 
 		#if defined(__ELSASSAR_MHD)
-		int_fac_u = cexp(-sys_var->NU_PLUS * dt * run_data->k[n] * run_data->k[n] / 2.0);
-		int_fac_b = cexp(-sys_var->NU_MINUS * dt * run_data->k[n] * run_data->k[n] / 2.0);
+		int_fac_u = cexp(-sys_vars->NU_plus * dt * run_data->k[n] * run_data->k[n] / 2.0);
+		int_fac_b = cexp(-sys_vars->NU_minus * dt * run_data->k[n] * run_data->k[n] / 2.0);
 
 		RK_data->RK_u_tmp[n] = run_data->z_plus[n] * int_fac_u + dt * RK4_A21 * RK_data->RK1_u[n];
 		RK_data->RK_b_tmp[n] = run_data->z_minus[n] * int_fac_b + dt * RK4_A21 * RK_data->RK1_b[n];
@@ -342,8 +343,8 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		n = i + 2;
 
 		#if defined(__ELSASSAR_MHD)
-		int_fac_u = cexp(-sys_var->NU_PLUS * dt * run_data->k[n] * run_data->k[n] / 2.0);
-		int_fac_b = cexp(-sys_var->NU_MINUS * dt * run_data->k[n] * run_data->k[n] / 2.0);
+		int_fac_u = cexp(-sys_vars->NU_plus * dt * run_data->k[n] * run_data->k[n] / 2.0);
+		int_fac_b = cexp(-sys_vars->NU_minus * dt * run_data->k[n] * run_data->k[n] / 2.0);
 
 		RK_data->RK_u_tmp[n] = run_data->z_plus[n] * int_fac_u + dt * RK4_A32 * RK_data->RK2_u[n];
 		RK_data->RK_b_tmp[n] = run_data->z_minus[n] * int_fac_b + dt * RK4_A32 * RK_data->RK2_b[n];
@@ -378,8 +379,8 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		n = i + 2;
 
 		#if defined(__ELSASSAR_MHD)
-		int_fac_u = cexp(-sys_var->NU_PLUS * dt * run_data->k[n] * run_data->k[n] / 2.0);
-		int_fac_b = cexp(-sys_var->NU_MINUS * dt * run_data->k[n] * run_data->k[n] / 2.0);
+		int_fac_u = cexp(-sys_vars->NU_plus * dt * run_data->k[n] * run_data->k[n] / 2.0);
+		int_fac_b = cexp(-sys_vars->NU_minus * dt * run_data->k[n] * run_data->k[n] / 2.0);
 
 		RK_data->RK_u_tmp[n] = run_data->z_plus[n] * int_fac_u + dt * RK4_A43 * RK_data->RK3_u[n];
 		RK_data->RK_b_tmp[n] = run_data->z_minus[n] * int_fac_b + dt * RK4_A43 * RK_data->RK3_b[n];
@@ -430,10 +431,10 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 
 		///-------------------- Update Step
 		#if defined(__ELSASSAR_MHD)
-		int_fac_u   = cexp(-sys_vars->NU_PLUS * dt * run_data->k[n] * run_data->k[n]);
-		int_fac_u_1 = cexp(-sys_vars->NU_PLUS * dt * run_data->k[n] * run_data->k[n] / 2.0);
-		int_fac_b   = cexp(-sys_vars->NU_MINUS * dt * run_data->k[n] * run_data->k[n]);
-		int_fac_b_1 = cexp(-sys_vars->NU_MINUS * dt * run_data->k[n] * run_data->k[n] / 2.0);
+		int_fac_u   = cexp(-sys_vars->NU_plus * dt * run_data->k[n] * run_data->k[n]);
+		int_fac_u_1 = cexp(-sys_vars->NU_plus * dt * run_data->k[n] * run_data->k[n] / 2.0);
+		int_fac_b   = cexp(-sys_vars->NU_minus * dt * run_data->k[n] * run_data->k[n]);
+		int_fac_b_1 = cexp(-sys_vars->NU_minus * dt * run_data->k[n] * run_data->k[n] / 2.0);
 
 		run_data->z_plus[n]  = int_fac_u * run_data->z_plus[n] + dt * RK4_B1 * int_fac_u * RK_data->RK1_u[n] + dt * RK4_B2 * int_fac_u_1 * RK_data->RK2_u[n] + dt * RK4_B3 * int_fac_u_1 * RK_data->RK3_u[n] + dt * RK4_B4 * RK_data->RK4_u[n];
 		run_data->z_minus[n] = int_fac_b * run_data->z_minus[n] + dt * RK4_B1 * int_fac_b * RK_data->RK1_b[n] + dt * RK4_B2 * int_fac_b_1 * RK_data->RK2_b[n] + dt * RK4_B3 * int_fac_b_1 * RK_data->RK3_b[n] + dt * RK4_B4 * RK_data->RK4_b[n];
@@ -818,12 +819,12 @@ void AB4CNStep(const double dt, const long iters, const long int N, RK_data_stru
 			#endif 
 			#elif defined(__ELSASSAR_MHD)
 			// Compute the D factor for the velocity field
-			D_fac_u = dt * (sys_vars->NU_PLUS * run_data->k[i] * run_data->k[i]);
-			D_fac_b = dt * (sys_vars->NU_MINUS * run_data->k[i] * run_data->k[i]);
+			D_fac_u = dt * (sys_vars->NU_plus * run_data->k[i] * run_data->k[i]);
+			D_fac_b = dt * (sys_vars->NU_minus * run_data->k[i] * run_data->k[i]);
 
 			// Update the new velocity field
-			run_data->z_plus[n] = run_data->z_plus[n] * ((2.0 - D_fac_u) / (2.0 + D_fac_u)) + (2.0 * dt / (2.0 + D_fac_u)) * (AB4_1 * RK_data->AB_tmp_u[n] + AB4_2 * RK_data->AB_tmp_nonlin_u[2][n] + AB4_3 * RK_data->AB_tmp_nonlin_u[1][n] + AB4_4 * RK_data->AB_tmp_nonlin_u[0][n]);
-			run_data->z_minus[n] = run_data->z_minus[n] * ((2.0 - D_fac_b) / (2.0 + D_fac_b)) + (2.0 * dt / (2.0 + D_fac_b)) * (AB4_1 * RK_data->AB_tmp_b[n] + AB4_2 * RK_data->AB_tmp_nonlin_b[2][n] + AB4_3 * RK_data->AB_tmp_nonlin_b[1][n] + AB4_4 * RK_data->AB_tmp_nonlin_b[0][n]);
+			run_data->z_plus[n] = run_data->z_plus[n] * ((2.0 - D_fac_u) / (2.0 + D_fac_u)) + (2.0 * dt / (2.0 + D_fac_u)) * (AB4_1 * RK_data->AB_tmp_u[n] + AB4_2 * RK_data->AB_tmp_nonlin_u[2][n] + AB4_3 * RK_data->AB_tmp_nonlin_u[1][n] + AB4_4 * RK_data->AB_tmp_nonlin_u[0][n]) - 2.0 * dt * sys_vars->NU_minus * run_data->z_minus[n];
+			run_data->z_minus[n] = run_data->z_minus[n] * ((2.0 - D_fac_b) / (2.0 + D_fac_b)) + (2.0 * dt / (2.0 + D_fac_b)) * (AB4_1 * RK_data->AB_tmp_b[n] + AB4_2 * RK_data->AB_tmp_nonlin_b[2][n] + AB4_3 * RK_data->AB_tmp_nonlin_b[1][n] + AB4_4 * RK_data->AB_tmp_nonlin_b[0][n]) - 2.0 * dt * sys_vars->NU_minus * run_data->z_plus[n];
 			#else
 			// Compute the D factor for the velocity field
 			D_fac_u = dt * (sys_vars->NU * run_data->k[i] * run_data->k[i]);
@@ -963,10 +964,10 @@ void NonlinearTerm(double complex* u, double complex* b, double complex* u_nonli
 		#endif
 		#elif defined(__ELSASSAR_MHD)
 		// This is the Z_plus nonlinear term
-		u_nonlin[n] = I * run_data->k[n] * conj(interact_coeff_z_1 * zplus_tmp_1 + interact_coeff_z_2 * zplus_tmp_2 + interact_coeff_z_3 * zplus_tmp_3 - interact_coeff_z_4 * zplus_tmp_4 - interact_coeff_z_5 * zplus_tmp_5 - interact_coeff_z_6 * zplus_tmp_6)
+		u_nonlin[n] = I * run_data->k[n] * conj(interact_coeff_z_1 * zplus_tmp_1 + interact_coeff_z_2 * zplus_tmp_2 + interact_coeff_z_3 * zplus_tmp_3 - interact_coeff_z_4 * zplus_tmp_4 - interact_coeff_z_5 * zplus_tmp_5 - interact_coeff_z_6 * zplus_tmp_6);
 		
 		// This is the Z_minus nonlinear term
-		b_nonlin[n] = I * run_data->k[n] * conj(interact_coeff_z_1 * zminus_tmp_1 + interact_coeff_z_2 * zminus_tmp_2 + interact_coeff_z_3 * zminus_tmp_3 - interact_coeff_z_4 * zminus_tmp_4 - interact_coeff_z_5 * zminus_tmp_5 - interact_coeff_z_6 * zminus_tmp_6)
+		b_nonlin[n] = I * run_data->k[n] * conj(interact_coeff_z_1 * zminus_tmp_1 + interact_coeff_z_2 * zminus_tmp_2 + interact_coeff_z_3 * zminus_tmp_3 - interact_coeff_z_4 * zminus_tmp_4 - interact_coeff_z_5 * zminus_tmp_5 - interact_coeff_z_6 * zminus_tmp_6);
 		#endif
 	}
 }
@@ -1281,13 +1282,16 @@ void InitializeForicing(const long int N, double dt) {
 			// ------------------------------------------------
 			// Record the forcing 
 			if (i - 1 == sys_vars->force_k) {
-				run_data->forcing_u[i] = sys_vars->force_scale_var * (1.0 + 1.0 * I) * my_delta(0.0, 0.0);			
+				run_data->forcing_u[i] = sys_vars->force_scale_var * (1.0 + 1.0 * I) * my_delta(0.0, 0.0);
+				#if defined(__ELSASSAR_MHD)
+				run_data->forcing_b[i] = sys_vars->force_scale_var * (1.0 + 1.0 * I) * my_delta(0.0, 0.0);			
+				#endif			
 			}
 			else {
 				run_data->forcing_u[i] = 0.0 + 0.0 * I;			
 			}
 			#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
-			run_data->forcing_b[i] = 0.0 + 0.0 * I;			
+			run_data->forcing_b[i] = 0.0 + 0.0 * I;					
 			#endif
 		}
 		else if(!(strcmp(sys_vars->forcing, "FXD_AMP"))) {
@@ -1296,7 +1300,7 @@ void InitializeForicing(const long int N, double dt) {
 			// -----------------------------------------------
 			// Initialize variables
 			double amp_u_1;
-			#if defined(__MAGNETO)
+			#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 			double amp_b_1;			
 			#endif
 
@@ -1352,7 +1356,9 @@ void InitializeForicing(const long int N, double dt) {
 
 				// Compute the forcing
 				run_data->forcing_u[i] = sqrt(- 2.0 * (dt / tau_0) * log10(rand1)) * cexp(I * 2.0 * M_PI * rand2);
-				#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+				#if defined(__ELSASSAR_MHD)
+				run_data->forcing_b[i] = sqrt(- 2.0 * (dt / tau_0) * log10(rand1)) * cexp(I * 2.0 * M_PI * rand2);
+				#elif defined(__MAGNETO) 
 				run_data->forcing_b[i] = 0.0 + 0.0 * I;
 				#endif
 			}
@@ -1378,7 +1384,9 @@ void InitializeForicing(const long int N, double dt) {
 
 				// Compute the forcing
 				run_data->forcing_u[i] = sys_vars->force_scale_var * sqrt(-2.0 * (dt / tau_0) * log10(rand1)) * cexp(I * 2.0 * M_PI * rand2);
-				#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+				#if defined(__ELSASSAR_MHD)
+				run_data->forcing_b[i] = sys_vars->force_scale_var * sqrt(-2.0 * (dt / tau_0) * log10(rand1)) * cexp(I * 2.0 * M_PI * rand2);
+				#elif defined(__MAGNETO) 
 				run_data->forcing_b[i] = 0.0 + 0.0 * I;
 				#endif
 			}
@@ -1437,6 +1445,9 @@ void ComputeForcing(double dt, const long int N) {
 
 			// Compute forcing
 			run_data->forcing_u[i] = sys_vars->force_scale_var * (exp_fac * run_data->forcing_u[i] + sqrt(-2.0 * (1.0 - pow(exp_fac, 2.0)) * log10(rand1)) * cexp(I * 2.0 * M_PI * rand2));
+			#if defined(__ELSASSAR_MHD)
+			run_data->forcing_b[i] = sys_vars->force_scale_var * (exp_fac * run_data->forcing_b[i] + sqrt(-2.0 * (1.0 - pow(exp_fac, 2.0)) * log10(rand1)) * cexp(I * 2.0 * M_PI * rand2));
+			#endif
 		}
 	}
 	else if(!(strcmp(sys_vars->forcing, "DELTA_STOC"))) {
@@ -1453,6 +1464,9 @@ void ComputeForcing(double dt, const long int N) {
 
 			// Compute forcing 
 			run_data->forcing_u[i] = run_data->forcing_u[i] - dt * run_data->forcing_u[i] / tau_0 + sys_vars->force_scale_var * sqrt(-2.0 * (dt / tau_0) * log10(rand1)) * cexp(I * 2.0 * M_PI * rand2);
+			#if defined(__ELSASSAR_MHD)
+			run_data->forcing_b[i] = run_data->forcing_b[i] - dt * run_data->forcing_b[i] / tau_0 + sys_vars->force_scale_var * sqrt(-2.0 * (dt / tau_0) * log10(rand1)) * cexp(I * 2.0 * M_PI * rand2);
+			#endif
 			// run_data->forcing_u[i] = run_data->forcing_u[i] - dt * run_data->forcing_u[i] / tau_0 + FORC_STOC_SIGMA * sqrt(-2.0 * (dt / tau_0) * log10(rand1)) * cexp(I * 2.0 * M_PI * rand2);
 			// run_data->forcing_u[i] = run_data->forcing_u[i] + sys_vars->force_scale_var * (- run_data->forcing_u[i] / tau_0 + FORC_STOC_SIGMA * sqrt(-2.0 * (dt / tau_0) * log10(rand1)) * cexp(I * 2.0 * M_PI * rand2));
 		}
@@ -1490,6 +1504,10 @@ void AddForcing(double complex* u_nonlin, double complex* b_nonlin) {
 			if (n >= 2 && n <= sys_vars->force_k + 1){
 				// Add the forcing 
 				u_nonlin[n] += run_data->forcing_u[n];
+				#if defined(__ELSASSAR_MHD)
+				// Add forcing here for the magnetic field
+				b_nonlin[n] += run_data->forcing_b[n]; 
+				#endif
 			}
 		}
 		//------------------------------------------------------- Else if normal forcing is selected just add the forcing to the forced modes
@@ -1576,17 +1594,17 @@ void PrintUpdateToTerminal(long int iters, double t, double dt, double T, long i
 	// Initialize variables
 	
 	if (iters < sys_vars->trans_iters) {
-		#if defined(__MAGNETO)
-		printf("Iter: %1.3g / %1.1g\tt: %1.6lf / %1.3lf\ttau_0: %1.2lf\tdt: %1.6g\tKE: %6.6g\tHEL_U: %6.6g\tHEL_B: %6.6g\tX-HEL: %6.6g\n", (double)iters, (double)sys_vars->num_t_steps, t, T, sys_vars->eddy_turnover_time, dt, run_data->tot_energy[save_data_indx], run_data->tot_hel_u[save_data_indx], run_data->tot_hel_b[save_data_indx], run_data->tot_cross_hel[save_data_indx]);
+		#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+		printf("Iter: %1.3g / %1.1g\tt: %1.6lf / %1.3lf\ttau_0: %1.2lf\tdt: %1.6g\tKE: %6.6g\tDISS_U: %6.6g\tDISS_B: %6.6g\tHEL_U: %6.6g\tHEL_B: %6.6g\tX-HEL: %6.6g\n", (double)iters, (double)sys_vars->num_t_steps, t, T, sys_vars->eddy_turnover_time, dt, run_data->tot_energy[save_data_indx], run_data->tot_diss_u[save_data_indx], run_data->tot_diss_b[save_data_indx], run_data->tot_hel_u[save_data_indx], run_data->tot_hel_b[save_data_indx], run_data->tot_cross_hel[save_data_indx]);
 		#else
-		printf("Iter: %1.3g / %1.1g\tt: %1.6lf / %1.3lf\ttau_0: %1.2lf\tdt: %1.6g\tKE: %6.6g\tHEL: %6.6g\t\n", (double)iters, (double)sys_vars->num_t_steps, t, T, sys_vars->eddy_turnover_time, dt, run_data->tot_energy[save_data_indx], run_data->tot_hel_u[save_data_indx]);
+		printf("Iter: %1.3g / %1.1g\tt: %1.6lf / %1.3lf\ttau_0: %1.2lf\tdt: %1.6g\tKE: %6.6g\tDISS: %6.6g\tHEL: %6.6g\t\n", (double)iters, (double)sys_vars->num_t_steps, t, T, sys_vars->eddy_turnover_time, dt, run_data->tot_energy[save_data_indx], run_data->tot_diss_u[save_data_indx], run_data->tot_hel_u[save_data_indx]);
 		#endif
 	}
 	else {
-		#if defined(__MAGNETO)
-		printf("Iter: %1.3g / %1.1g\tt: %1.6lf / %1.3lf\ttau: %1.2lftau_0 / %1.2lftau_0\ttau_0: %1.2lf\tdt: %1.6g\tKE: %6.6g\tHEL_U: %6.6g\tHEL_B: %6.6g\tX-HEL: %6.6g\n", (double)iters, (double)sys_vars->num_t_steps, t, T, (t - sys_vars->trans_time)/sys_vars->eddy_turnover_time, (T - sys_vars->trans_time)/sys_vars->eddy_turnover_time, sys_vars->eddy_turnover_time, dt, run_data->tot_energy[save_data_indx], run_data->tot_hel_u[save_data_indx], run_data->tot_hel_b[save_data_indx], run_data->tot_cross_hel[save_data_indx]);
+		#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+		printf("Iter: %1.3g / %1.1g\tt: %1.6lf / %1.3lf\ttau: %1.2lftau_0 / %1.2lftau_0\ttau_0: %1.2lf\tdt: %1.6g\tKE: %6.6g\tDISS_U: %6.6g\tDISS_B: %6.6g\tHEL_U: %6.6g\tHEL_B: %6.6g\tX-HEL: %6.6g\n", (double)iters, (double)sys_vars->num_t_steps, t, T, (t - sys_vars->trans_time)/sys_vars->eddy_turnover_time, (T - sys_vars->trans_time)/sys_vars->eddy_turnover_time, sys_vars->eddy_turnover_time, dt, run_data->tot_energy[save_data_indx], run_data->tot_diss_u[save_data_indx], run_data->tot_diss_b[save_data_indx], run_data->tot_hel_u[save_data_indx], run_data->tot_hel_b[save_data_indx], run_data->tot_cross_hel[save_data_indx]);
 		#else
-		printf("Iter: %1.3g / %1.1g\tt: %1.6lf / %1.3lf\ttau: %1.2lftau_0 / %1.2lftau_0\ttau_0: %1.2lf\tdt: %1.6g\tKE: %6.6g\tHEL: %6.6g\t\n", (double)iters, (double)sys_vars->num_t_steps, t, T, (t - sys_vars->trans_time)/sys_vars->eddy_turnover_time, (T - sys_vars->trans_time)/sys_vars->eddy_turnover_time, sys_vars->eddy_turnover_time, dt, run_data->tot_energy[save_data_indx], run_data->tot_hel_u[save_data_indx]);
+		printf("Iter: %1.3g / %1.1g\tt: %1.6lf / %1.3lf\ttau: %1.2lftau_0 / %1.2lftau_0\ttau_0: %1.2lf\tdt: %1.6g\tKE: %6.6g\tDISS: %6.6g\tHEL: %6.6g\t\n", (double)iters, (double)sys_vars->num_t_steps, t, T, (t - sys_vars->trans_time)/sys_vars->eddy_turnover_time, (T - sys_vars->trans_time)/sys_vars->eddy_turnover_time, sys_vars->eddy_turnover_time, dt, run_data->tot_energy[save_data_indx], run_data->tot_diss_u[save_data_indx], run_data->tot_hel_u[save_data_indx]);
 		#endif
 	}
 }
@@ -1678,7 +1696,7 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Shell Wavenumber List");
 		exit(1);
 	}
-
+	
 	// ----------------------------------
 	// Allocate Velocity Field Variables
 	// ----------------------------------
@@ -1758,7 +1776,7 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 		RK_data->AB_tmp_nonlin_u[i] = (double complex* )malloc(sizeof(double complex) * (N + 4));
 	}
 	#endif
-	#if defined(__MAGNETO)
+	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	RK_data->RK1_b       = (double complex* )malloc(sizeof(double complex) * (N + 4));
 	RK_data->RK2_b       = (double complex* )malloc(sizeof(double complex) * (N + 4));
 	RK_data->RK3_b       = (double complex* )malloc(sizeof(double complex) * (N + 4));
@@ -1805,7 +1823,7 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 		}
 	}
 	#endif
-	#if defined(__MAGNETO)
+	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	if (RK_data->RK1_b == NULL) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for Integration Array ["CYAN"%s"RESET"] \n-->> Exiting!!!\n", "RK1 Magnetic");
 		exit(1);
@@ -1840,6 +1858,7 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 	#endif
 	#endif
 
+
 	// -------------------------------
 	// Initialize All Data 
 	// -------------------------------
@@ -1858,7 +1877,7 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 			RK_data->AB_tmp_nonlin_u[j][i] = 0.0 + 0.0 * I;
 		}
 		#endif
-		#if defined(PHASE_ONLY_FXD_AMP)
+		#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC_STATS)
 		run_data->a_n[i]   = 0.0;
 		run_data->phi_n[i] = 0.0;
 		#endif
@@ -1879,13 +1898,12 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 			RK_data->AB_tmp_nonlin_b[j][i] = 0.0 + 0.0 * I;
 		}
 		#endif
-		#if defined(PHASE_ONLY_FXD_AMP)
+		#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC_STATS)
 		run_data->b_n[i]   = 0.0;
 		run_data->psi_n[i] = 0.0;
 		#endif
 		#endif
 	}
-
 }
 /**
  * Wrapper function that frees any memory dynamcially allocated in the programme
@@ -1924,11 +1942,13 @@ void FreeMemory(RK_data_struct* RK_data) {
 	free(run_data->tot_energy);
 	free(run_data->tot_hel_u);
 	free(run_data->tot_diss_u);
+	free(run_data->tot_kin_enrg);
 	#if defined(__ELSASSAR_MHD)
 	free(run_data->tot_pseudo_enrg_plus);
 	free(run_data->tot_pseudo_enrg_minus);
 	#endif
 	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+	free(run_data->tot_mag_enrg);
 	free(run_data->tot_hel_b);
 	free(run_data->tot_cross_hel);
 	free(run_data->tot_diss_b);
@@ -1942,11 +1962,23 @@ void FreeMemory(RK_data_struct* RK_data) {
 	#if defined(__ENRG_SPECT) 
 	free(run_data->energy_spect);
 	#endif
+	#if defined(__KIN_ENRG_SPECT) 
+	free(run_data->kin_enrg_spect);
+	#endif
+	#if defined(__MAG_ENRG_SPECT) && (defined(__MAGNETO) || defined(__ELSASSAR_MHD))
+	free(run_data->mag_enrg_spect);
+	#endif
 	#if defined(__DISS_SPECT)
 	free(run_data->diss_spect);
 	#endif
 	#if defined(__ENRG_SPECT_AVG) 
 	free(run_data->energy_spect_t_avg);
+	#endif
+	#if defined(__KIN_ENRG_SPECT_AVG) 
+	free(run_data->kin_enrg_spect_t_avg);
+	#endif
+	#if defined(__MAG_ENRG_SPECT_AVG) && (defined(__MAGNETO) || defined(__ELSASSAR_MHD))
+	free(run_data->mag_enrg_spect_t_avg);
 	#endif
 	#if defined(__DISS_SPECT_AVG)
 	free(run_data->diss_spect_t_avg);
@@ -1976,8 +2008,8 @@ void FreeMemory(RK_data_struct* RK_data) {
 	free(run_data->energy_flux_t_avg);
 	#endif
 	#if defined(__PSEUDO_ENRG_FLUX_AVG) && defined(__ELSASSAR_MHD)
-	free(run_data->pseduo_enrg_flux_plus_t_avg);
-	free(run_data->pseduo_enrg_flux_minus_t_avg);
+	free(run_data->pseudo_enrg_flux_plus_t_avg);
+	free(run_data->pseudo_enrg_flux_minus_t_avg);
 	#endif
 	free(run_data->forcing_u);
 	free(run_data->forcing_b);
