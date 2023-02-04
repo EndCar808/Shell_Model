@@ -18,7 +18,6 @@ from numba import njit
 import pyfftw
 from collections.abc import Iterable
 from itertools import zip_longest
-from subprocess import Popen, PIPE
 
 #################################
 ## Colour Printing to Terminal ##
@@ -311,6 +310,10 @@ def import_data(input_file, sim_data, method = "default"):
                     self.b_n   = f["MagAmps"][:, :]
                 if 'MagPhases' in list(f.keys()):
                     self.psi_n = f["MagPhases"][:, :]
+                if 'ZPlus' in list(f.keys()):
+                    self.z_plus = f["ZPlus"][:, :]
+                if 'ZMinus' in list(f.keys()):
+                    self.z_minus = f["ZMinus"][:, :]
                 if 'EnergyFlux' in list(f.keys()):
                     self.enrg_flux = f["EnergyFlux"][:, :]
                 if 'VelEnergyDiss' in list(f.keys()):
@@ -328,11 +331,23 @@ def import_data(input_file, sim_data, method = "default"):
                 ## Read in spectra
                 if 'EnergySpectrum' in list(f.keys()):
                     self.enrg_spect = f["EnergySpectrum"][:]
+                if 'KineticEnergySpectrum' in list(f.keys()):
+                    self.kin_enrg_spect = f["KineticEnergySpectrum"][:]
+                if 'MagneticEnergySpectrum' in list(f.keys()):
+                    self.mag_enrg_spect = f["MagneticEnergySpectrum"][:]
                 if 'DissipationSpectrum' in list(f.keys()):
                     self.diss_spect = f["DissipationSpectrum"][:]
                 ## Allocate system measure arrays
                 if 'TotalEnergy' in list(f.keys()):
                     self.tot_enrg      = f["TotalEnergy"][:]
+                if 'TotalKineticEnergy' in list(f.keys()):
+                    self.tot_kin_enrg      = f["TotalKineticEnergy"][:]
+                if 'TotalMagneticEnergy' in list(f.keys()):
+                    self.tot_mag_enrg      = f["TotalMagneticEnergy"][:]
+                if 'TotalPseudoEnergyPlus' in list(f.keys()):
+                    self.tot_pseudo_enrg_plus = f["TotalPseudoEnergyPlus"][:]
+                if 'TotalPseudoEnergyMinus' in list(f.keys()):
+                    self.tot_pseudo_enrg_minus = f["TotalPseudoEnergyMinus"][:]
                 if 'TotalVelocityHelicity' in list(f.keys()):
                     self.tot_hel_u       = f["TotalVelocityHelicity"][:]
                 if 'TotalMagneticHelicity' in list(f.keys()):
@@ -408,31 +423,44 @@ def import_stats_data(input_file, sim_data, method = "default"):
                     self.vel_stats = f["VelStats"][:, :]
                 if 'MagStats' in list(f.keys()):
                     self.mag_stats = f["MagStats"][:, :]
+                ## Str Func Data
                 if 'StructureFunctionVel' in list(f.keys()):
                     self.vel_str_func = f["StructureFunctionVel"][:, :]
                 if 'StructureFunctionVelFlux' in list(f.keys()):
-                    self.vel_flux_str_func = f["StructureFunctionVelFlux"][:, :]
+                    self.vel_flux_str_func = f["StructureFunctionVelFlux"][:, :, :]
                 if 'StructureFunctionVelFluxAbs' in list(f.keys()):
-                    self.vel_flux_str_func_abs = f["StructureFunctionVelFluxAbs"][:, :]
+                    self.vel_flux_str_func_abs = f["StructureFunctionVelFluxAbs"][:, :, :]
                 if 'StructureFunctionMag' in list(f.keys()):
                     self.mag_str_func = f["StructureFunctionMag"][:, :]
                 if 'StructureFunctionMagFlux' in list(f.keys()):
-                    self.mag_flux_str_func = f["StructureFunctionMagFlux"][:, :]
+                    self.mag_flux_str_func = f["StructureFunctionMagFlux"][:, :, :]
                 if 'StructureFunctionMagFluxAbs' in list(f.keys()):
-                    self.mag_flux_str_func_abs = f["StructureFunctionMagFluxAbs"][:, :]
+                    self.mag_flux_str_func_abs = f["StructureFunctionMagFluxAbs"][:, :, :]
+                if 'StructureFunctionTrippleProdVel' in list(f.keys()):
+                    self.vel_trip_prod_str_func = f["StructureFunctionTrippleProdVel"][:, :]
+                if 'StructureFunctionTrippleProdVelAbs' in list(f.keys()):
+                    self.vel_trip_prod_flux_str_func_abs = f["StructureFunctionTrippleProdVelAbs"][:, :]
+                if 'StructureFunctionTrippleProdMag' in list(f.keys()):
+                    self.mag_trip_prod_str_func = f["StructureFunctionTrippleProdMag"][:, :]
+                if 'StructureFunctionTrippleProdMagAbs' in list(f.keys()):
+                    self.mag_trip_prod_flux_str_func_abs = f["StructureFunctionTrippleProdMagAbs"][:, :]
                 ## Read in final state of system
                 if 'VelModes' in list(f.keys()):
-                    self.u = f["VelModes"][:]
+                    self.u_final = f["VelModes"][:]
                 if 'VelAmps' in list(f.keys()):
-                    self.a_n = f["VelAmps"][:]
+                    self.a_n_final = f["VelAmps"][:]
                 if 'VelPhases' in list(f.keys()):
-                    self.phi_n = f["VelPhases"][:]
+                    self.phi_n_final = f["VelPhases"][:]
                 if 'MagModes' in list(f.keys()):
-                    self.b = f["MagModes"][:]
+                    self.b_final = f["MagModes"][:]
                 if 'MagAmps' in list(f.keys()):
-                    self.b_n = f["MagAmps"][:]
+                    self.b_n_final = f["MagAmps"][:]
                 if 'MagPhases' in list(f.keys()):
-                    self.psi_n = f["MagPhases"][:]
+                    self.psi_n_final = f["MagPhases"][:]
+                if 'ZPlus' in list(f.keys()):
+                    self.z_plus_final = f["ZPlus"][:]
+                if 'ZMinus' in list(f.keys()):
+                    self.z_minus_final = f["ZMinus"][:]
 
 
 
@@ -479,6 +507,14 @@ def import_sys_msr_data(input_file, sim_data, method = "default"):
                 ## Allocate system measure arrays
                 if 'TotalEnergy' in list(f.keys()):
                     self.tot_enrg      = f["TotalEnergy"][:]
+                if 'TotalKineticEnergy' in list(f.keys()):
+                    self.tot_kin_enrg      = f["TotalKineticEnergy"][:]
+                if 'TotalMagneticEnergy' in list(f.keys()):
+                    self.tot_mag_enrg      = f["TotalMagneticEnergy"][:]
+                if 'TotalPseudoEnergyPlus' in list(f.keys()):
+                    self.tot_pseudo_enrg_plus = f["TotalPseudoEnergyPlus"][:]
+                if 'TotalPseudoEnergyMinus' in list(f.keys()):
+                    self.tot_pseudo_enrg_minus = f["TotalPseudoEnergyMinus"][:]
                 if 'TotalVelocityDissipation' in list(f.keys()):
                     self.tot_diss_u      = f["TotalVelocityDissipation"][:]
                 if 'TotalMagneticDissipation' in list(f.keys()):
@@ -501,6 +537,8 @@ def import_sys_msr_data(input_file, sim_data, method = "default"):
                     self.taylor_micro_scale = f["TaylorMicroScale"][:]
                 if 'VelocityForcing' in list(f.keys()):
                     self.forcing_u = f["VelocityForcing"][:]
+                if 'MagneticForcing' in list(f.keys()):
+                    self.forcing_b = f["MagneticForcing"][:]
                 ## Energy Variation Data
                 if 'TotalEnergyFlux' in list(f.keys()):
                     self.tot_vel_enrg_flux   = f["TotalEnergyFlux"][:]
@@ -513,8 +551,16 @@ def import_sys_msr_data(input_file, sim_data, method = "default"):
                     self.diss_spec_t_avg = f["TimeAveragedDissipationSpectrum"][:]
                 if 'TimeAveragedEnergySpectrum' in list(f.keys()):
                     self.enrg_spec_t_avg = f["TimeAveragedEnergySpectrum"][:]
+                if 'TimeAveragedKineticEnergySpectrum' in list(f.keys()):
+                    self.kin_enrg_spec_t_avg = f["TimeAveragedKineticEnergySpectrum"][:]
+                if 'TimeAveragedMagneticEnergySpectrum' in list(f.keys()):
+                    self.mag_enrg_spec_t_avg = f["TimeAveragedMagneticEnergySpectrum"][:]
                 if 'TimeAveragedEnergyFlux' in list(f.keys()):
                     self.enrg_flux_t_avg = f["TimeAveragedEnergyFlux"][:]
+                if 'TimeAveragedPseudoEnergyFluxPlus' in list(f.keys()):
+                    self.pseudo_enrg_flux_plus_t_avg = f["TimeAveragedPseudoEnergyFluxPlus"][:]
+                if 'TimeAveragedPseudoEnergyFluxMinus' in list(f.keys()):
+                    self.pseudo_enrg_flux_minus_t_avg = f["TimeAveragedPseudoEnergyFluxMinus"][:]
                 if 'TimeAveragedVelocityAmplitudes' in list(f.keys()):
                     self.a_n_t_avg = f["TimeAveragedVelocityAmplitudes"][:]
                 if 'TimeAveragedMagneticAmplitudes' in list(f.keys()):

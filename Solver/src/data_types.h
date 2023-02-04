@@ -247,8 +247,10 @@ typedef struct system_vars_struct {
 	double k_0;							// Defines the wavenumber constant k_0
 	double Lambda;						// Defines the intershell ratio for radius of the shell wavenumber
 	int INPUT_FILE_FLAG;				// Flag to indicate if solver is to start by reading in initial condition from file
+	double tmp_eddy_turn_avg; 			// Temporary variable to compute the eddy turnover time
 	double eddy_turnover_time;			// Eddy turnover time is going to be defined as the max eddy turnover time during transient iterations
 	double trans_time;					// Integration time it takes to perform the transient iterations
+	int num_sys_msr_before_trans;		// The number of times system measures has been computed
 } system_vars_struct;
 
 // Runtime data struct

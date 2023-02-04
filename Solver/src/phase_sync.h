@@ -18,6 +18,7 @@
 void ComputePhaseSyncData(const long int iter);
 void InitializePhaseSyncObjects(void);
 void FreePhaseSyncObjects(void);
+void WritePhaseSyncStatsToFile(void);
 // ---------------------------------------------------------------------
 //  End of File
 // ---------------------------------------------------------------------

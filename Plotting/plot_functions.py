@@ -66,7 +66,7 @@ def plot_str_funcs_with_slope(outdir_path, k, str_funcs, inert_range, insert_fig
 		ax1in = fig.add_axes([x0, y0, width, height])
 
 	## Slopes of structure functions
-	ns_zeta_p    = [0.72, 1, 1.273, 1.534, 1.786]
+	ns_zeta_p    = [0.72, 1, 1.273, 1.534, 1.786, 2.11, 2.32]
 	zeta_p       = []
 	zeta_p_resid = []
 
@@ -76,7 +76,7 @@ def plot_str_funcs_with_slope(outdir_path, k, str_funcs, inert_range, insert_fig
 	print("Inertial Range Shell No.s: {} = {}".format(inert_lim_low + 1, inert_lim_high + 1))
 
 	## Marker style list
-	mark_style = ['o','s','^','x','D','p']
+	mark_style = ['o','s','^','x','D','p', '>', '<']
 
 	## Get the scaling of the axes
 	if scaling == 'log2':
@@ -150,7 +150,7 @@ def plot_str_funcs_with_slope(outdir_path, k, str_funcs, inert_range, insert_fig
 	plt.close()
 
 
-	return zeta_p, ns_zeta_p, zeta_p_resid
+	return zeta_p, ns_zeta_p[:str_funcs.shape[-1]], zeta_p_resid
 
 
 def plot_anomalous_exponent(outdir_path, p, zeta_p, ns_zeta_p = None, label_str = "GOY Model"):

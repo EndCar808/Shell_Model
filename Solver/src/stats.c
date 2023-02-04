@@ -447,6 +447,451 @@ void InitializeStats(void) {
 	}
 	#endif
 }
+/**
+ * Wrapper Function for writing all stats data at the end of the simulation to file
+ */
+void WriteStatsToFile(void) {
+
+	// Initialize variables
+	herr_t status;
+	static const hsize_t D1 = 1;
+	hsize_t dims1D[D1];
+	const hsize_t D2 = 2;
+	hsize_t dims2D[D2];
+	const hsize_t D3 = 3;
+	hsize_t dims3D[D3];
+
+	// ------------------------------------
+    // Write Number of Stats Steps To File
+    // ------------------------------------
+	dims1D[0] = 1;
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "NumStatsSteps", D1, dims1D, H5T_NATIVE_LONG, &(stats_data->num_stats_steps))) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "NumStatsSteps");
+	}
+
+	// ------------------------------------
+    // Write Velocity Field Data
+    // ------------------------------------
+	///-------------------------- Write velocity field 
+	dims1D[0] = sys_vars->N;
+	#if defined(PHASE_ONLY)
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "VelAmps", D1, dims1D, H5T_NATIVE_DOUBLE, &(run_data->a_n[2]))) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelAmps");
+	}
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "VelPhases", D1, dims1D, H5T_NATIVE_DOUBLE, &(run_data->phi_n[2]))) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelPhases");
+	}
+	#elif defined(__ELSASSAR_MHD)
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "ZPlus", D1, dims1D, file_info->COMPLEX_DTYPE, &(run_data->z_plus[2]))) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "ZPlus");
+	}
+	#else
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "VelModes", D1, dims1D, file_info->COMPLEX_DTYPE, &(run_data->u[2]))) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelModes");
+	}
+	#endif
+
+
+	// ------------------------------------
+    // Write Velocity Field Stats Data
+    // ------------------------------------
+	///-------------------------- Velocity field stats
+	double* tmp_vel_stats = (double* )malloc(sizeof(double) * (NUM_RUN_STATS) * sys_vars->N);
+	for (int i = 0; i < sys_vars->N; ++i) {
+		tmp_vel_stats[i * (NUM_RUN_STATS) + 0] = gsl_rstat_mean(stats_data->real_vel_moments[i]);
+		tmp_vel_stats[i * (NUM_RUN_STATS) + 1] = gsl_rstat_variance(stats_data->real_vel_moments[i]);
+		tmp_vel_stats[i * (NUM_RUN_STATS) + 2] = gsl_rstat_skew(stats_data->real_vel_moments[i]);
+		tmp_vel_stats[i * (NUM_RUN_STATS) + 3] = gsl_rstat_kurtosis(stats_data->real_vel_moments[i]);		
+		tmp_vel_stats[i * (NUM_RUN_STATS) + 4] = gsl_rstat_rms(stats_data->real_vel_moments[i]);
+		tmp_vel_stats[i * (NUM_RUN_STATS) + 5] = gsl_rstat_min(stats_data->real_vel_moments[i]);
+		tmp_vel_stats[i * (NUM_RUN_STATS) + 6] = gsl_rstat_max(stats_data->real_vel_moments[i]);
+	}
+
+	// Write data 
+	dims2D[0] = sys_vars->N;
+	dims2D[1] = NUM_RUN_STATS;
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "VelStats", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_vel_stats)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelStats");
+	}
+
+	// Free temp memory
+	free(tmp_vel_stats);
+
+
+
+	// ------------------------------------
+    // Write Velocity Field Hist Data
+    // ------------------------------------
+	///-------------------------- Real Velocity Histogram
+	#if defined(__VEL_HIST)
+	double* tmp_vel_hist_bin    = (double* )malloc(sizeof(double) * (VEL_NUM_BINS) * sys_vars->N);
+	double* tmp_vel_hist_ranges = (double* )malloc(sizeof(double) * (VEL_NUM_BINS + 1) * sys_vars->N);
+	for (int i = 0; i < sys_vars->N; ++i) {
+		for (int j = 0; j < VEL_NUM_BINS + 1; ++j) {
+			if (j < VEL_NUM_BINS) {
+				tmp_vel_hist_bin[i * VEL_NUM_BINS + j] = stats_data->real_vel_hist[i]->bin[j];
+			}
+			tmp_vel_hist_ranges[i * (VEL_NUM_BINS + 1) + j] = stats_data->real_vel_hist[i]->range[j];
+		}
+	}
+
+	// Write Bin Count data 
+	dims2D[0] = sys_vars->N;
+	dims2D[1] = VEL_NUM_BINS;
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "RealVelHist_Counts", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_vel_hist_bin)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "RealVelHist_Counts");
+	}
+	// Write Bin Range data 
+	dims2D[0] = sys_vars->N;
+	dims2D[1] = VEL_NUM_BINS + 1;
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "RealVelHist_Ranges", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_vel_hist_ranges)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "RealVelHist_Ranges");
+	}
+
+	// Free temporary memory
+	free(tmp_vel_hist_bin);
+	free(tmp_vel_hist_ranges);
+	#endif
+
+
+	// ------------------------------------
+    // Write Velocity Str Func Data
+    // ------------------------------------
+	///-------------------------- Velocity structure function
+	#if defined(__STR_FUNC_VEL)
+	// Allocate temporary contiguous array
+	double* tmp_vel_str = (double* )malloc(sizeof(double) * NUM_POW * sys_vars->N);
+	for (int i = 0; i < sys_vars->N; ++i) {
+		for (int p = 0; p < NUM_POW; ++p) {
+			tmp_vel_str[i * NUM_POW + p] = stats_data->vel_str_func[p][i];
+		}
+	}
+
+	// Write data 
+	dims2D[0] = sys_vars->N;
+	dims2D[1] = NUM_POW;
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "StructureFunctionVel", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_vel_str)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "StructureFunctionVel");
+	}
+
+	// Free temp memory
+	free(tmp_vel_str);
+	#endif
+
+	///-------------------------- Tripple product structure function
+	#if defined(__STR_FUNC_TRIP_PROD_VEL) 
+	// Allocate temporary contiguous array
+	double* tmp_vel_trip_prod_str = (double* )malloc(sizeof(double) * NUM_POW * sys_vars->N);
+	for (int i = 0; i < sys_vars->N; ++i) {
+		for (int p = 0; p < NUM_POW; ++p) {
+			tmp_vel_trip_prod_str[i * NUM_POW + p] = stats_data->vel_trip_prod_str_func[p][i];
+		}
+	}
+
+	// Write data 
+	dims2D[0] = sys_vars->N;
+	dims2D[1] = NUM_POW;
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "StructureFunctionTrippleProdVel", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_vel_trip_prod_str)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "StructureFunctionTrippleProdVel");
+	}
+
+	for (int i = 0; i < sys_vars->N; ++i) {
+		for (int p = 0; p < NUM_POW; ++p) {
+			tmp_vel_trip_prod_str[i * NUM_POW + p] = stats_data->vel_trip_prod_str_func_abs[p][i];
+		}
+	}
+
+	// Write data 
+	dims2D[0] = sys_vars->N;
+	dims2D[1] = NUM_POW;
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "StructureFunctionTrippleProdVelAbs", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_vel_trip_prod_str)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "StructureFunctionTrippleProdVelAbs");
+	}
+
+	// Free temp memory
+	free(tmp_vel_trip_prod_str);
+	#endif
+
+	///-------------------------- Velocity Flux structure function
+	#if defined(__STR_FUNC_VEL_FLUX)
+	// Allocate temporary contiguous array
+	double* tmp_vel_str_flux = (double* )malloc(sizeof(double) * 2 * NUM_POW * sys_vars->N);
+	for (int i = 0; i < sys_vars->N; ++i) {
+		for (int p = 0; p < NUM_POW; ++p) {
+			tmp_vel_str_flux[2 * (i * NUM_POW + p) + 0] = stats_data->vel_flux_str_func[0][p][i];
+			tmp_vel_str_flux[2 * (i * NUM_POW + p) + 1] = stats_data->vel_flux_str_func[1][p][i];
+		}
+	}
+
+	// Write data 
+	dims3D[0] = sys_vars->N;
+	dims3D[1] = NUM_POW;
+	dims3D[2] = 2;
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "StructureFunctionVelFlux", D3, dims3D, H5T_NATIVE_DOUBLE, tmp_vel_str_flux)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "StructureFunctionVelFlux");
+	}
+
+	for (int i = 0; i < sys_vars->N; ++i) {
+		for (int p = 0; p < NUM_POW; ++p) {
+			tmp_vel_str_flux[2 * (i * NUM_POW + p) + 0] = stats_data->vel_flux_str_func_abs[0][p][i];
+			tmp_vel_str_flux[2 * (i * NUM_POW + p) + 1] = stats_data->vel_flux_str_func_abs[1][p][i];
+		}
+	}
+
+	// Write data 
+	dims3D[0] = sys_vars->N;
+	dims3D[1] = NUM_POW;
+	dims3D[2] = 2;
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "StructureFunctionVelFluxAbs", D3, dims3D, H5T_NATIVE_DOUBLE, tmp_vel_str_flux)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "StructureFunctionVelFluxAbs");
+	}
+
+	// Free temp memory
+	free(tmp_vel_str_flux);
+	#endif
+
+
+
+	// ------------------------------------
+    // Write Magnetic Field Data
+    // ------------------------------------
+	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+	///-------------------------- Write Magnetic field 
+	dims1D[0] = sys_vars->N;
+	#if defined(PHASE_ONLY)
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "MagAmps", D1, dims1D, H5T_NATIVE_DOUBLE, &(run_data->b_n[2]))) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "MagAmps");
+	}
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "MagPhases", D1, dims1D, H5T_NATIVE_DOUBLE, &(run_data->psi_n[2]))) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "MagPhases");
+	}
+	#elif defined(__ELSASSAR_MHD)
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "ZMinus", D1, dims1D, file_info->COMPLEX_DTYPE, &(run_data->z_minus[2]))) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "ZMinus");
+	}
+	#else
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "MagModes", D1, dims1D, file_info->COMPLEX_DTYPE, &(run_data->b[2]))) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "MagModes");
+	}
+	#endif
+
+
+	// ------------------------------------
+    // Write Magnetic Field Stats Data
+    // ------------------------------------
+	///-------------------------- Magnetic field stats
+	double* tmp_mag_stat = (double* )malloc(sizeof(double) * (NUM_RUN_STATS) * sys_vars->N);
+	for (int i = 0; i < sys_vars->N; ++i) {
+		tmp_mag_stat[i * (NUM_RUN_STATS) + 0] = gsl_rstat_mean(stats_data->real_mag_moments[i]);
+		tmp_mag_stat[i * (NUM_RUN_STATS) + 1] = gsl_rstat_variance(stats_data->real_mag_moments[i]);
+		tmp_mag_stat[i * (NUM_RUN_STATS) + 2] = gsl_rstat_skew(stats_data->real_mag_moments[i]);
+		tmp_mag_stat[i * (NUM_RUN_STATS) + 3] = gsl_rstat_kurtosis(stats_data->real_mag_moments[i]);		
+		tmp_mag_stat[i * (NUM_RUN_STATS) + 4] = gsl_rstat_rms(stats_data->real_mag_moments[i]);
+		tmp_mag_stat[i * (NUM_RUN_STATS) + 5] = gsl_rstat_min(stats_data->real_mag_moments[i]);
+		tmp_mag_stat[i * (NUM_RUN_STATS) + 6] = gsl_rstat_max(stats_data->real_mag_moments[i]);
+	}
+
+	// Write data 
+	dims2D[0] = sys_vars->N;
+	dims2D[1] = NUM_RUN_STATS;
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "MagStats", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_mag_stat)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "MagStats");
+	}
+
+	// Free temp memory
+	free(tmp_mag_stat);
+
+
+	// ------------------------------------
+    // Write Magnetic Field Hist Data
+    // ------------------------------------
+	///-------------------------- Real Magnetic Histogram
+	#if defined(__MAG_HIST)
+	double* tmp_mag_hist_bin    = (double* )malloc(sizeof(double) * (VEL_NUM_BINS) * sys_vars->N);
+	double* tmp_mag_hist_ranges = (double* )malloc(sizeof(double) * (VEL_NUM_BINS + 1) * sys_vars->N);
+	for (int i = 0; i < sys_vars->N; ++i) {
+		for (int j = 0; j < VEL_NUM_BINS + 1; ++j) {
+			if (j < VEL_NUM_BINS) {
+				tmp_mag_hist_bin[i * VEL_NUM_BINS + j] = stats_data->real_mag_hist[i]->bin[j];
+			}
+			tmp_mag_hist_ranges[i * (VEL_NUM_BINS + 1) + j] = stats_data->real_mag_hist[i]->range[j];
+		}
+	}
+
+	// Write Bin Count data 
+	dims2D[0] = sys_vars->N;
+	dims2D[1] = VEL_NUM_BINS;
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "RealMagHist_Counts", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_mag_hist_bin)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "RealMagHist_Counts");
+	}
+	// Write Bin Range data 
+	dims2D[0] = sys_vars->N;
+	dims2D[1] = VEL_NUM_BINS + 1;
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "RealMagHist_Ranges", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_mag_hist_ranges)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "RealMagHist_Ranges");
+	}
+
+	// Free temporary memory
+	free(tmp_mag_hist_bin);
+	free(tmp_mag_hist_ranges);
+	#endif
+
+
+	// ------------------------------------
+    // Write Magnetic Str Func Data
+    // ------------------------------------
+	///-------------------------- Magnetic structure function
+	#if defined(__STR_FUNC_MAG) 
+	// Allocate temporary contiguous array
+	double* tmp_mag_str = (double* )malloc(sizeof(double) * NUM_POW * sys_vars->N);
+	for (int i = 0; i < sys_vars->N; ++i) {
+		for (int p = 0; p < NUM_POW; ++p) {
+			tmp_mag_str[i * NUM_POW + p] = stats_data->mag_str_func[p][i];
+		}
+	}
+
+	// Write data 
+	dims2D[0] = sys_vars->N;
+	dims2D[1] = NUM_POW;
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "StructureFunctionMag", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_mag_str)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "StructureFunctionMag");
+	}
+
+	// Free temp memory
+	free(tmp_mag_str);
+	#endif
+
+	///-------------------------- Tripple product structure function
+	#if defined(__STR_FUNC_TRIP_PROD_MAG) 
+	// Allocate temporary contiguous array
+	double* tmp_mag_trip_prod_str = (double* )malloc(sizeof(double) * NUM_POW * sys_vars->N);
+	for (int i = 0; i < sys_vars->N; ++i) {
+		for (int p = 0; p < NUM_POW; ++p) {
+			tmp_mag_trip_prod_str[i * NUM_POW + p] = stats_data->mag_trip_prod_str_func[p][i];
+		}
+	}
+
+	// Write data 
+	dims2D[0] = sys_vars->N;
+	dims2D[1] = NUM_POW;
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "StructureFunctionTrippleProdMag", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_mag_trip_prod_str)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "StructureFunctionTrippleProdMag");
+	}
+
+	for (int i = 0; i < sys_vars->N; ++i) {
+		for (int p = 0; p < NUM_POW; ++p) {
+			tmp_mag_trip_prod_str[i * NUM_POW + p] = stats_data->mag_trip_prod_str_func_abs[p][i];
+		}
+	}
+
+	// Write data 
+	dims2D[0] = sys_vars->N;
+	dims2D[1] = NUM_POW;
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "StructureFunctionTrippleProdMagAbs", D2, dims2D, H5T_NATIVE_DOUBLE, tmp_mag_trip_prod_str)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "StructureFunctionTrippleProdMagAbs");
+	}
+
+	// Free temp memory
+	free(tmp_mag_trip_prod_str);
+	#endif
+
+	///-------------------------- Magnetic flux structure function
+	#if defined(__STR_FUNC_MAG_FLUX)
+	// Allocate temporary contiguous array
+	double* tmp_mag_str_flux = (double* )malloc(sizeof(double) * 2 * NUM_POW * sys_vars->N);
+	for (int i = 0; i < sys_vars->N; ++i) {
+		for (int p = 0; p < NUM_POW; ++p) {
+			tmp_mag_str_flux[2 * (i * NUM_POW + p) + 0] = stats_data->mag_flux_str_func[0][p][i];
+			tmp_mag_str_flux[2 * (i * NUM_POW + p) + 1] = stats_data->mag_flux_str_func[1][p][i];
+		}
+	}
+
+	// Write data 
+	dims3D[0] = sys_vars->N;
+	dims3D[1] = NUM_POW;
+	dims3D[2] = 2;
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "StructureFunctionMagFlux", D3, dims3D, H5T_NATIVE_DOUBLE, tmp_mag_str_flux)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "StructureFunctionMagFlux");
+	}
+
+	for (int i = 0; i < sys_vars->N; ++i) {
+		for (int p = 0; p < NUM_POW; ++p) {
+			tmp_mag_str_flux[2 * (i * NUM_POW + p) + 0] = stats_data->mag_flux_str_func_abs[0][p][i];
+			tmp_mag_str_flux[2 * (i * NUM_POW + p) + 1] = stats_data->mag_flux_str_func_abs[1][p][i];
+		}
+	}
+
+	// Write data 
+	dims3D[0] = sys_vars->N;
+	dims3D[1] = NUM_POW;
+	dims3D[2] = 2;
+	if ( (H5LTmake_dataset(file_info->stats_file_handle, "StructureFunctionMagFluxAbs", D3, dims3D, H5T_NATIVE_DOUBLE, tmp_mag_str_flux)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "StructureFunctionMagFluxAbs");
+	}
+
+	// Free temp memory
+	free(tmp_mag_str_flux);
+	#endif
+	#endif
+}
+/**
+ * Wrapper function to free all of the stats objects
+ */
+void FreeStatsObjects(void) {
+
+	for (int i = 0; i < NUM_POW; ++i) {
+		#if defined(__STR_FUNC_VEL)
+		free(stats_data->vel_str_func[i]);
+		#endif
+		#if defined(__STR_FUNC_TRIP_PROD_VEL)
+		free(stats_data->vel_trip_prod_str_func[i]);
+		free(stats_data->vel_trip_prod_str_func_abs[i]);
+		#endif
+		#if defined(__STR_FUNC_VEL_FLUX)
+		for (int j = 0; j < 2; ++j) {
+			free(stats_data->vel_flux_str_func[j][i]);
+			free(stats_data->vel_flux_str_func_abs[j][i]);
+		}		
+		#endif
+		#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+		#if defined(__STR_FUNC_MAG)
+		free(stats_data->mag_str_func[i]);
+		#endif
+		#if defined(__STR_FUNC_TRIP_PROD_MAG)
+		free(stats_data->mag_trip_prod_str_func[i]);
+		free(stats_data->mag_trip_prod_str_func_abs[i]);
+		#endif
+		#if defined(__STR_FUNC_MAG_FLUX)
+		for (int j = 0; j < 2; ++j) {
+			free(stats_data->mag_flux_str_func[j][i]);
+			free(stats_data->mag_flux_str_func_abs[j][i]);
+		}
+		#endif
+		#endif
+	}
+	for (int i = 0; i < sys_vars->N; ++i) {
+		gsl_rstat_free(stats_data->real_vel_moments[i]);
+		#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+		gsl_rstat_free(stats_data->real_mag_moments[i]);
+		#endif
+		#if defined(__VEL_HIST)
+		gsl_histogram_free(stats_data->real_vel_hist[i]);
+		#endif
+		#if (defined(__MAGNETO) || defined(__ELSASSAR_MHD)) && defined(__MAG_HIST)
+		gsl_histogram_free(stats_data->real_mag_hist[i]);
+		#endif
+	}
+	free(stats_data->real_vel_moments);
+	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+	free(stats_data->real_mag_moments);
+	#endif
+	#if defined(__VEL_HIST)
+	free(stats_data->real_vel_hist);
+	#endif
+	#if (defined(__MAGNETO) || defined(__ELSASSAR_MHD)) && defined(__MAG_HIST)
+	free(stats_data->real_mag_hist);
+	#endif
+}
 // ---------------------------------------------------------------------
 //  End of File
 // ---------------------------------------------------------------------

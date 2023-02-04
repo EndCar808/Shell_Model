@@ -241,6 +241,7 @@ void Solve(void) {
 	// Clean Up 
 	// -------------------------------
 	FreeMemory(RK_data);
+
 }
 /**
  * Function to perform one step using the 4th order Runge-Kutta method
@@ -1352,7 +1353,7 @@ void InitializeForicing(const long int N, double dt) {
 				double rand2 = ((double)rand() / (double) RAND_MAX);
 
 				// Compute the forcing timescale
-				tau_0 = 1.0 / pow(run_data->k[i] / K_0, 2.0/3.0);
+				tau_0 = 1.0 / (run_data->k[i] * cabs(run_data->u[i]));
 
 				// Compute the forcing
 				run_data->forcing_u[i] = sqrt(- 2.0 * (dt / tau_0) * log10(rand1)) * cexp(I * 2.0 * M_PI * rand2);
@@ -1380,7 +1381,7 @@ void InitializeForicing(const long int N, double dt) {
 				double rand2 = ((double)rand() / (double) RAND_MAX);
 
 				// Compute the forcing timescale
-				tau_0 = 1.0 / pow(run_data->k[i] / K_0, 2.0/3.0);
+				tau_0 = 1.0 / (run_data->k[i] * cabs(run_data->u[i]));
 
 				// Compute the forcing
 				run_data->forcing_u[i] = sys_vars->force_scale_var * sqrt(-2.0 * (dt / tau_0) * log10(rand1)) * cexp(I * 2.0 * M_PI * rand2);
@@ -1438,7 +1439,7 @@ void ComputeForcing(double dt, const long int N) {
 			rand2 = ((double)rand() / (double) RAND_MAX);
 
 			// Compute the forcing timescale
-			tau_0 = 1.0 / pow(run_data->k[i] / K_0, 2.0/3.0);
+			tau_0 = 1.0 / (run_data->k[i] * cabs(run_data->u[i]));
 
 			// Compute the exponential prefactor
 			exp_fac = cexp(-dt / tau_0);
@@ -1458,7 +1459,7 @@ void ComputeForcing(double dt, const long int N) {
 			rand2 = ((double)rand() / (double) RAND_MAX);
 
 			// Compute the forcing timescale
-			tau_0 = 1.0 / pow(run_data->k[i] / K_0, 2.0/3.0);
+			tau_0 = 1.0 / (run_data->k[i] * cabs(run_data->u[i]));
 
 			// printf("|u|: %lf \t|k|: %lf \t tau: %lf\n", cabs(run_data->u[i]), cabs(run_data->k[i]), tau_0);
 
@@ -1938,139 +1939,14 @@ void FreeMemory(RK_data_struct* RK_data) {
 	// ------------------------
 	// Free System Msr Memory 
 	// ------------------------
-	#if defined(__SYS_MEASURES)
-	free(run_data->tot_energy);
-	free(run_data->tot_hel_u);
-	free(run_data->tot_diss_u);
-	free(run_data->tot_kin_enrg);
-	#if defined(__ELSASSAR_MHD)
-	free(run_data->tot_pseudo_enrg_plus);
-	free(run_data->tot_pseudo_enrg_minus);
-	#endif
-	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
-	free(run_data->tot_mag_enrg);
-	free(run_data->tot_hel_b);
-	free(run_data->tot_cross_hel);
-	free(run_data->tot_diss_b);
-	#endif
-	free(run_data->u_charact);
-	free(run_data->int_scale);
-	free(run_data->taylor_micro_scale);
-	free(run_data->reynolds_no);
-	free(run_data->kolmogorov_scale);
-	#endif
-	#if defined(__ENRG_SPECT) 
-	free(run_data->energy_spect);
-	#endif
-	#if defined(__KIN_ENRG_SPECT) 
-	free(run_data->kin_enrg_spect);
-	#endif
-	#if defined(__MAG_ENRG_SPECT) && (defined(__MAGNETO) || defined(__ELSASSAR_MHD))
-	free(run_data->mag_enrg_spect);
-	#endif
-	#if defined(__DISS_SPECT)
-	free(run_data->diss_spect);
-	#endif
-	#if defined(__ENRG_SPECT_AVG) 
-	free(run_data->energy_spect_t_avg);
-	#endif
-	#if defined(__KIN_ENRG_SPECT_AVG) 
-	free(run_data->kin_enrg_spect_t_avg);
-	#endif
-	#if defined(__MAG_ENRG_SPECT_AVG) && (defined(__MAGNETO) || defined(__ELSASSAR_MHD))
-	free(run_data->mag_enrg_spect_t_avg);
-	#endif
-	#if defined(__DISS_SPECT_AVG)
-	free(run_data->diss_spect_t_avg);
-	#endif
-	#if defined(__TIME)
-	free(run_data->time);
-	#endif
-	#if defined(__ENRG_FLUX)
-	free(run_data->energy_flux);
-	free(run_data->energy_diss_u);
-	free(run_data->energy_input_u);
-	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
-	free(run_data->energy_diss_b);
-	free(run_data->energy_input_b);
-	#endif
-	#endif
-	#if defined(__TOT_ENRG_FLUX)
-	free(run_data->tot_energy_flux);
-	free(run_data->tot_energy_diss_u);
-	free(run_data->tot_energy_input_u);
-	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
-	free(run_data->tot_energy_diss_b);
-	free(run_data->tot_energy_input_b);
-	#endif
-	#endif
-	#if defined(__ENRG_FLUX_AVG)
-	free(run_data->energy_flux_t_avg);
-	#endif
-	#if defined(__PSEUDO_ENRG_FLUX_AVG) && defined(__ELSASSAR_MHD)
-	free(run_data->pseudo_enrg_flux_plus_t_avg);
-	free(run_data->pseudo_enrg_flux_minus_t_avg);
-	#endif
-	free(run_data->forcing_u);
-	free(run_data->forcing_b);
+	FreeSystemMeasuresObjects();
 
 	// ------------------------
 	// Free Stats Objects
 	// ------------------------
 	// Free stats objects
 	#if defined(STATS)
-	for (int i = 0; i < NUM_POW; ++i) {
-		#if defined(__STR_FUNC_VEL)
-		free(stats_data->vel_str_func[i]);
-		#endif
-		#if defined(__STR_FUNC_TRIP_PROD_VEL)
-		free(stats_data->vel_trip_prod_str_func[i]);
-		free(stats_data->vel_trip_prod_str_func_abs[i]);
-		#endif
-		#if defined(__STR_FUNC_VEL_FLUX)
-		for (int j = 0; j < 2; ++j) {
-			free(stats_data->vel_flux_str_func[j][i]);
-			free(stats_data->vel_flux_str_func_abs[j][i]);
-		}		
-		#endif
-		#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
-		#if defined(__STR_FUNC_MAG)
-		free(stats_data->mag_str_func[i]);
-		#endif
-		#if defined(__STR_FUNC_TRIP_PROD_MAG)
-		free(stats_data->mag_trip_prod_str_func[i]);
-		free(stats_data->mag_trip_prod_str_func_abs[i]);
-		#endif
-		#if defined(__STR_FUNC_MAG_FLUX)
-		for (int j = 0; j < 2; ++j) {
-			free(stats_data->mag_flux_str_func[j][i]);
-			free(stats_data->mag_flux_str_func_abs[j][i]);
-		}
-		#endif
-		#endif
-	}
-	for (int i = 0; i < sys_vars->N; ++i) {
-		gsl_rstat_free(stats_data->real_vel_moments[i]);
-		#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
-		gsl_rstat_free(stats_data->real_mag_moments[i]);
-		#endif
-		#if defined(__VEL_HIST)
-		gsl_histogram_free(stats_data->real_vel_hist[i]);
-		#endif
-		#if (defined(__MAGNETO) || defined(__ELSASSAR_MHD)) && defined(__MAG_HIST)
-		gsl_histogram_free(stats_data->real_mag_hist[i]);
-		#endif
-	}
-	free(stats_data->real_vel_moments);
-	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
-	free(stats_data->real_mag_moments);
-	#endif
-	#if defined(__VEL_HIST)
-	free(stats_data->real_vel_hist);
-	#endif
-	#if (defined(__MAGNETO) || defined(__ELSASSAR_MHD)) && defined(__MAG_HIST)
-	free(stats_data->real_mag_hist);
-	#endif
+	FreeStatsObjects();
 	#endif
 
 	// ------------------------

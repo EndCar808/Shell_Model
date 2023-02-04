@@ -20,6 +20,8 @@
 // ---------------------------------------------------------------------
 void InitializeSystemMeasurables(RK_data_struct* RK_data);
 void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_data);
+void WriteSystemMeasuresToFile(void);
+void FreeSystemMeasuresObjects(void);
 // ---------------------------------------------------------------------
 //  End of File
 // ---------------------------------------------------------------------

@@ -64,6 +64,9 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
     if (iter >= (long int)round(sys_vars->TRANS_ITERS_FRAC * sys_vars->num_print_steps)) {
         run_data->num_sys_msr_steps++;
     }
+    else {
+        sys_vars->num_sys_msr_before_trans++;
+    }
 
     // ------------------------------------
     // Initialize Measurables
@@ -373,8 +376,10 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
         #endif
 
         // Eddy turnover time -> max of l / U during the transient iterations
-        if (iter < sys_vars->trans_iters) {
-            sys_vars->eddy_turnover_time = fmax(sys_vars->eddy_turnover_time, run_data->int_scale[iter] / run_data->u_charact[iter]);
+        if (iter <= 1) {            
+            // sys_vars->eddy_turnover_time = fmax(sys_vars->eddy_turnover_time, run_data->int_scale[iter] / run_data->u_charact[iter]);
+            sys_vars->tmp_eddy_turn_avg += 1.0 /(run_data->k[2] * cabs(run_data->u[2]));
+            sys_vars->eddy_turnover_time = sys_vars->tmp_eddy_turn_avg / sys_vars->num_sys_msr_before_trans;                
         }
     }
     #endif
@@ -723,6 +728,339 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
     // Get Measurables of the ICs
     // ----------------------------
     ComputeSystemMeasurables(0.0, 0, RK_data);
+}
+/**
+ * Wrapper Function to write the system measurables to file and the end of the simulation
+ */
+void WriteSystemMeasuresToFile(void) {
+
+    // Initialize variables
+    herr_t status;
+    static const hsize_t D1 = 1;
+    hsize_t dims1D[D1];
+    
+
+    // -------------------------------
+    // Write Wavenumbers
+    // -------------------------------
+    #if defined(__WAVELIST)
+    // Allocate array to gather the wavenumbers from each of the local arrays - in the x direction
+    dims1D[0] = sys_vars->N;
+    if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "k", D1, dims1D, H5T_NATIVE_DOUBLE, &(run_data->k[2]))) < 0) {
+        printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "k");
+    }
+    #endif
+
+    // -------------------------------
+    // Write System Measures
+    // -------------------------------
+    // Time
+    #if defined(__TIME)
+    dims1D[0] = sys_vars->num_print_steps;
+    if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "Time", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->time)) < 0) {
+        printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "Time");
+    }
+    #endif
+
+    ///----------------- System Measures
+    #if defined(__SYS_MEASURES)
+    dims1D[0] = sys_vars->num_print_steps;
+
+    // Energy
+    if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalEnergy", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_energy)) < 0) {
+        printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalEnergy");
+    }
+    // Total Kinetic (Velocity) Energy
+    if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalKineticEnergy", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_kin_enrg)) < 0) {
+        printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalKineticEnergy");
+    }
+    // Velocity Helicity
+    if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalVelocityHelicity", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_hel_u)) < 0) {
+        printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalVelocityHelicity");
+    }
+    // Total Dissipation
+    if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalVelocityDissipation", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_diss_u)) < 0) {
+        printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalVelocityDissipation");
+    }
+    // Characteristic Velocity
+    if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "CharacteristicVel", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->u_charact)) < 0) {
+        printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "CharacteristicVel");
+    }
+    // Integral Length Scale
+    if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "IntegralLengthScale", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->int_scale)) < 0) {
+        printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "IntegralLengthScale");
+    }
+    // Reynolds no.
+    if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "ReynoldsNo", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->reynolds_no)) < 0) {
+        printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "ReynoldsNo");
+    }
+    // Taylor Miscroscale
+    if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TaylorMicroScale", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->taylor_micro_scale)) < 0) {
+        printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TaylorMicroScale");
+    }
+    // Kolmogorov Length Scale
+    if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "KolmogorovLengthScale", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->kolmogorov_scale)) < 0) {
+        printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "KolmogorovLengthScale");
+    }
+    #if defined(__ELSASSAR_MHD)
+    // Total Pseudo Energy Plus
+    if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalPseudoEnergyPlus", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_pseudo_enrg_plus)) < 0) {
+        printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalPseudoEnergyPlus");
+    }
+    // Total Psuedo Energy Minus
+    if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalPseudoEnrgMinus", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_pseudo_enrg_minus)) < 0) {
+        printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalPseudoEnrgMinus");
+    }
+    #endif
+    #if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+    // Total Mag Energy
+    if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalMagneticEnergy", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_mag_enrg)) < 0) {
+        printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalMagneticEnergy");
+    }
+    // Magnetic Helicity
+    if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalMagneticHelicity", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_hel_b)) < 0) {
+        printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalMagneticHelicity");
+    }
+    // Cross Helicity
+    if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalCrossHelicity", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_cross_hel)) < 0) {
+        printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalCrossHelicity");
+    }
+    // Total Dissipation
+    if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalMagneticDissipation", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_diss_b)) < 0) {
+        printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalMagneticDissipation");
+    }
+    #endif
+    #endif
+
+
+    ///----------------- Time Averaged 
+    #if defined(__VEL_AMP_AVG)
+    // Time average the data
+    for (int i = 0; i < sys_vars->N; ++i) {
+        run_data->a_n_t_avg[i] /= run_data->num_sys_msr_steps;
+    }
+
+    dims1D[0] = sys_vars->N;
+    if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TimeAveragedVelocityAmplitudes", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->a_n_t_avg)) < 0) {
+        printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TimeAveragedVelocityAmplitudes");
+    }
+    #endif
+    #if defined(__MAG_AMP_AVG) && (defined(__MAGNETO) || defined(__ELSASSAR_MHD))
+    // Time average the data
+    for (int i = 0; i < sys_vars->N; ++i) {
+        run_data->b_n_t_avg[i] /= run_data->num_sys_msr_steps;
+    }
+
+    dims1D[0] = sys_vars->N;
+    if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TimeAveragedMagneticAmplitudes", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->b_n_t_avg)) < 0) {
+        printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TimeAveragedMagneticAmplitudes");
+    }
+    #endif
+
+    ///----------------- Time Averaged Energy Spectra
+    #if defined(__ENRG_SPECT_AVG)
+    // Time average the data
+    for (int i = 0; i < sys_vars->N; ++i) {
+        run_data->energy_spect_t_avg[i] /= run_data->num_sys_msr_steps;
+    }
+
+    dims1D[0] = sys_vars->N;
+    if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TimeAveragedEnergySpectrum", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->energy_spect_t_avg)) < 0) {
+        printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TimeAveragedEnergySpectrum");
+    }
+    #endif
+    #if defined(__KIN_ENRG_SPECT_AVG)
+    // Time average the data
+    for (int i = 0; i < sys_vars->N; ++i) {
+        run_data->kin_enrg_spect_t_avg[i] /= run_data->num_sys_msr_steps;
+    }
+
+    dims1D[0] = sys_vars->N;
+    if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TimeAveragedKineticEnergySpectrum", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->kin_enrg_spect_t_avg)) < 0) {
+        printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TimeAveragedKineticEnergySpectrum");
+    }
+    #endif
+    #if defined(__MAG_ENRG_SPECT_AVG) && (defined(__MAGNETO) || defined(__ELSASSAR_MHD))
+    // Time average the data
+    for (int i = 0; i < sys_vars->N; ++i) {
+        run_data->mag_enrg_spect_t_avg[i] /= run_data->num_sys_msr_steps;
+    }
+
+    dims1D[0] = sys_vars->N;
+    if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TimeAveragedMagneticEnergySpectrum", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->mag_enrg_spect_t_avg)) < 0) {
+        printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TimeAveragedMagneticEnergySpectrum");
+    }
+    #endif
+
+    ///----------------- Time Averaged Dissipation Spectrum
+    #if defined(__DISS_SPECT_AVG)
+    // Time average the data
+    for (int i = 0; i < sys_vars->N; ++i) {
+        run_data->diss_spect_t_avg[i] /= run_data->num_sys_msr_steps;
+    }
+
+    dims1D[0] = sys_vars->N;
+    if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TimeAveragedDissipationSpectrum", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->diss_spect_t_avg)) < 0) {
+        printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TimeAveragedDissipationSpectrum");
+    }
+    #endif
+
+    ///----------------- Time Averaged Energy Flux
+    #if defined(__ENRG_FLUX_AVG)
+    // Time average the data
+    for (int i = 0; i < sys_vars->N; ++i) {
+        run_data->energy_flux_t_avg[i] /= run_data->num_sys_msr_steps;
+    }
+
+    dims1D[0] = sys_vars->N;
+    if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TimeAveragedEnergyFlux", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->energy_flux_t_avg)) < 0) {
+        printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TimeAveragedEnergyFlux");
+    }
+    #endif
+
+    ///----------------- Time Averaged Pseudo Energy Flux
+    #if defined(__PSEUDO_ENRG_FLUX_AVG) && defined(__ELSASSAR_MHD)
+    // Time average the data
+    for (int i = 0; i < sys_vars->N; ++i) {
+        run_data->pseudo_enrg_flux_plus_t_avg[i] /= run_data->num_sys_msr_steps;
+        run_data->pseudo_enrg_flux_minus_t_avg[i] /= run_data->num_sys_msr_steps;
+    }
+
+    dims1D[0] = sys_vars->N;
+    if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TimeAveragedPseudoEnergyFluxPlus", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->pseudo_enrg_flux_plus_t_avg)) < 0) {
+        printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TimeAveragedPseudoEnergyFluxPlus");
+    }
+    if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TimeAveragedPseudoEnergyFluxMinus", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->pseudo_enrg_flux_minus_t_avg)) < 0) {
+        printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TimeAveragedPseudoEnergyFluxMinus");
+    }
+    #endif
+
+    ///----------------- Total Energy Variation Variables
+    #if defined(__TOT_ENRG_FLUX)
+    // Energy Flux
+    if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalEnergyFlux", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_energy_flux)) < 0) {
+        printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalEnergyFlux");
+    }
+    // Velocity Energy Dissipation
+    if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalVelEnergyDiss", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_energy_diss_u)) < 0) {
+        printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalVelEnergyDiss");
+    }
+    // Velocity Energy Input
+    if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalVelEnergyInput", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_energy_input_u)) < 0) {
+        printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalVelEnergyInput");
+    }
+    #if defined(__MAGNETO)
+    // Magnetic Energy Dissipation
+    if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalMagEnergyDiss", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_energy_diss_b)) < 0) {
+        printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalMagEnergyDiss");
+    }
+    // Magnetic Energy Input
+    if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalMagEnergyInput", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_energy_input_b)) < 0) {
+        printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalMagEnergyInput");
+    }
+    #endif
+    #endif
+
+    // -------------------------------
+    // Write Forcing
+    // -------------------------------
+    #if defined(__FORCING)
+    if((strcmp(sys_vars->forcing, "DELTA_STOC") != 0) || (strcmp(sys_vars->forcing, "EXP_STOC") != 0)) {
+        dims1D[0] = sys_vars->N;
+
+        // Velocity Forcing
+        if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "VelocityForcing", D1, dims1D, file_info->COMPLEX_DTYPE, &(run_data->forcing_u[2]))) < 0) {
+            printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelocityForcing");
+        }
+        #if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+        // Magnetic Forcing
+        if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "MagneticForcing", D1, dims1D, file_info->COMPLEX_DTYPE, &(run_data->forcing_b[2]))) < 0) {
+            printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "MagneticForcing");
+        }
+        #endif
+    }
+    #endif
+}
+/**
+ * Wrapper function for freeing all of the system measurables objects
+ */
+void FreeSystemMeasuresObjects(void) {
+
+    #if defined(__SYS_MEASURES)
+    free(run_data->tot_energy);
+    free(run_data->tot_hel_u);
+    free(run_data->tot_diss_u);
+    free(run_data->tot_kin_enrg);
+    #if defined(__ELSASSAR_MHD)
+    free(run_data->tot_pseudo_enrg_plus);
+    free(run_data->tot_pseudo_enrg_minus);
+    #endif
+    #if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+    free(run_data->tot_mag_enrg);
+    free(run_data->tot_hel_b);
+    free(run_data->tot_cross_hel);
+    free(run_data->tot_diss_b);
+    #endif
+    free(run_data->u_charact);
+    free(run_data->int_scale);
+    free(run_data->taylor_micro_scale);
+    free(run_data->reynolds_no);
+    free(run_data->kolmogorov_scale);
+    #endif
+    #if defined(__ENRG_SPECT) 
+    free(run_data->energy_spect);
+    #endif
+    #if defined(__KIN_ENRG_SPECT) 
+    free(run_data->kin_enrg_spect);
+    #endif
+    #if defined(__MAG_ENRG_SPECT) && (defined(__MAGNETO) || defined(__ELSASSAR_MHD))
+    free(run_data->mag_enrg_spect);
+    #endif
+    #if defined(__DISS_SPECT)
+    free(run_data->diss_spect);
+    #endif
+    #if defined(__ENRG_SPECT_AVG) 
+    free(run_data->energy_spect_t_avg);
+    #endif
+    #if defined(__KIN_ENRG_SPECT_AVG) 
+    free(run_data->kin_enrg_spect_t_avg);
+    #endif
+    #if defined(__MAG_ENRG_SPECT_AVG) && (defined(__MAGNETO) || defined(__ELSASSAR_MHD))
+    free(run_data->mag_enrg_spect_t_avg);
+    #endif
+    #if defined(__DISS_SPECT_AVG)
+    free(run_data->diss_spect_t_avg);
+    #endif
+    #if defined(__TIME)
+    free(run_data->time);
+    #endif
+    #if defined(__ENRG_FLUX)
+    free(run_data->energy_flux);
+    free(run_data->energy_diss_u);
+    free(run_data->energy_input_u);
+    #if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+    free(run_data->energy_diss_b);
+    free(run_data->energy_input_b);
+    #endif
+    #endif
+    #if defined(__TOT_ENRG_FLUX)
+    free(run_data->tot_energy_flux);
+    free(run_data->tot_energy_diss_u);
+    free(run_data->tot_energy_input_u);
+    #if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+    free(run_data->tot_energy_diss_b);
+    free(run_data->tot_energy_input_b);
+    #endif
+    #endif
+    #if defined(__ENRG_FLUX_AVG)
+    free(run_data->energy_flux_t_avg);
+    #endif
+    #if defined(__PSEUDO_ENRG_FLUX_AVG) && defined(__ELSASSAR_MHD)
+    free(run_data->pseudo_enrg_flux_plus_t_avg);
+    free(run_data->pseudo_enrg_flux_minus_t_avg);
+    #endif
+    free(run_data->forcing_u);
+    free(run_data->forcing_b);
 }
 // ---------------------------------------------------------------------
 //  End of File

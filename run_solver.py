@@ -379,7 +379,7 @@ if __name__ == '__main__':
             
         
         ## Generate command list
-        if "_mag_hydro" in executable:
+        if "_mag_hydro" in executable or "_elsassar_mhd" in executable:
             cmd_list = [["python3 {} -i {} {}".format(
                                                 plot_script, 
                                                 post_input_dir + "_N[{}]_T[{:1.1f},{:g},{:1.3f}]_NU[{:g}]_ETA[{:g}]_ALPHA[{:1.3f}]_BETA[{:1.3f}]_K[{:1.3f},{:1.3f}]_EPS[{:1.2f},{:1.2f}]_FORC[{},{},{:1.3f}]_u0[{}]_TAG[{}]/".format(n, t0, h, t, v, e, a, b, k0, lam, ep, ep_m, forcing, force_k, force_scale, u0, s_tag), 

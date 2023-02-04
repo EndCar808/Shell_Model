@@ -358,6 +358,154 @@ void InitializePhaseSyncObjects(void) {
 	#endif
 }
 /**
+ * Wrapper Function That Writes the Phase Sync Stats Data at the end of the simulation to file
+ */
+void WritePhaseSyncStatsToFile(void) {
+
+	const hsize_t D1 = 1;
+	hsize_t dims1D[D1];
+	const hsize_t D2 = 2;
+	hsize_t dims2D[D2];
+	#if (defined(__MAGNETO) || defined(__ELSASSAR_MHD))
+	const hsize_t D3 = 3;
+	hsize_t dims3D[D3];
+	#endif
+
+	// -------------------------------
+	// Write Velocity Triads
+	// -------------------------------
+	///--------------------- Write Velocity triads histogram
+	double* vel_triads_counts = (double* )malloc(sizeof(double) * phase_sync->num_triads * NUM_PHASE_SYNC_HIST_BINS);
+	double* vel_triads_ranges = (double* )malloc(sizeof(double) * (NUM_PHASE_SYNC_HIST_BINS + 1));
+	for (int i = 0; i < NUM_PHASE_SYNC_HIST_BINS + 1; ++i) {
+		vel_triads_ranges[i] = phase_sync->triad_u_hist[0]->range[i];
+		if (i < NUM_PHASE_SYNC_HIST_BINS) {
+			for (int n = 0; n < phase_sync->num_triads; ++n) {
+				vel_triads_counts[n * NUM_PHASE_SYNC_HIST_BINS + i] = phase_sync->triad_u_hist[n]->bin[i];
+			}
+		}
+	}
+
+	// Write Bin Count data 
+	dims2D[0] = phase_sync->num_triads;
+	dims2D[1] = NUM_PHASE_SYNC_HIST_BINS;
+	if ( (H5LTmake_dataset(file_info->phase_sync_file_handle, "VelTriads_Counts", D2, dims2D, H5T_NATIVE_DOUBLE, vel_triads_counts)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelTriads_Counts");
+	}
+	// Write Bin Range data 
+	dims1D[0] = VEL_NUM_BINS + 1;
+	if ( (H5LTmake_dataset(file_info->phase_sync_file_handle, "VelTriads_Ranges", D1, dims1D, H5T_NATIVE_DOUBLE, vel_triads_ranges)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelTriads_Ranges");
+	}
+
+	// Free temporary memory
+	free(vel_triads_counts);
+	free(vel_triads_ranges);
+
+
+	// -------------------------------
+	// Write Velocity Phase Diff
+	// -------------------------------
+	///--------------------- Write Velocity phase difference histogram
+	double* vel_phase_diff_counts = (double* )malloc(sizeof(double) * phase_sync->num_phase_diff * NUM_PHASE_SYNC_HIST_BINS);
+	double* vel_phase_diff_ranges = (double* )malloc(sizeof(double) * (NUM_PHASE_SYNC_HIST_BINS + 1));
+	for (int i = 0; i < NUM_PHASE_SYNC_HIST_BINS + 1; ++i) {
+		vel_triads_ranges[i] = phase_sync->phase_diff_u_hist[0]->range[i];
+		if (i < NUM_PHASE_SYNC_HIST_BINS) {
+			for (int n = 0; n < phase_sync->num_phase_diff; ++n) {
+				vel_phase_diff_counts[n * NUM_PHASE_SYNC_HIST_BINS + i] = phase_sync->phase_diff_u_hist[n]->bin[i];
+			}
+		}
+	}
+
+	// Write Bin Count data 
+	dims2D[0] = phase_sync->num_phase_diff;
+	dims2D[1] = NUM_PHASE_SYNC_HIST_BINS;
+	if ( (H5LTmake_dataset(file_info->phase_sync_file_handle, "VelPhaseDifference_Counts", D2, dims2D, H5T_NATIVE_DOUBLE, vel_phase_diff_counts)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelPhaseDifference_Counts");
+	}
+	// Write Bin Range data 
+	dims1D[0] = NUM_PHASE_SYNC_HIST_BINS + 1;
+	if ( (H5LTmake_dataset(file_info->phase_sync_file_handle, "VelPhaseDifference_Ranges", D1, dims1D, H5T_NATIVE_DOUBLE, vel_phase_diff_ranges)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelPhaseDifference_Ranges");
+	}
+
+	// Free temporary memory
+	free(vel_phase_diff_counts);
+	free(vel_phase_diff_ranges);
+
+
+
+
+	// -------------------------------
+	// Write Magnetic Phase Diff
+	// -------------------------------
+	#if (defined(__MAGNETO) || defined(__ELSASSAR_MHD))
+	///--------------------- Write Mag triads histogram
+	double* mag_triads_counts = (double* )malloc(sizeof(double) * phase_sync->num_triads * NUM_PHASE_SYNC_HIST_BINS * NUM_MAG_TRIAD_TYPES);
+	double* mag_triads_ranges = (double* )malloc(sizeof(double) * (NUM_PHASE_SYNC_HIST_BINS + 1));
+	for (int i = 0; i < NUM_PHASE_SYNC_HIST_BINS + 1; ++i) {
+		mag_triads_ranges[i] = phase_sync->triad_b_hist[0]->range[i];
+		if (i < NUM_PHASE_SYNC_HIST_BINS) {
+			for (int n = 0; n < phase_sync->num_triads; ++n) {
+				for (int type = 0; type < NUM_MAG_TRIAD_TYPES; ++type)	{
+					mag_triads_counts[NUM_MAG_TRIAD_TYPES * (n * NUM_PHASE_SYNC_HIST_BINS + i) + type] = phase_sync->triad_b_hist[type * phase_sync->num_triads + n]->bin[i];
+				}
+			}
+		}
+	}
+
+	// Write Bin Count data 
+	dims3D[0] = phase_sync->num_triads;
+	dims3D[1] = NUM_PHASE_SYNC_HIST_BINS;
+	dims3D[2] = NUM_MAG_TRIAD_TYPES;
+	if ( (H5LTmake_dataset(file_info->phase_sync_file_handle, "MagTriads_Counts", D3, dims3D, H5T_NATIVE_DOUBLE, mag_triads_counts)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "MagTriads_Counts");
+	}
+	// Write Bin Range data 
+	dims1D[0] = NUM_PHASE_SYNC_HIST_BINS + 1;
+	if ( (H5LTmake_dataset(file_info->phase_sync_file_handle, "MagTriads_Ranges", D1, dims1D, H5T_NATIVE_DOUBLE, mag_triads_ranges)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "MagTriads_Ranges");
+	}
+
+	// Free temporary memory
+	free(mag_triads_counts);
+	free(mag_triads_ranges);
+
+
+	// -------------------------------
+	// Write Magnetic Phase Diff
+	// -------------------------------
+	///--------------------- Write Mag phase difference histogram
+	double* mag_phase_diff_counts = (double* )malloc(sizeof(double) * phase_sync->num_phase_diff * NUM_PHASE_SYNC_HIST_BINS);
+	double* mag_phase_diff_ranges = (double* )malloc(sizeof(double) * (NUM_PHASE_SYNC_HIST_BINS + 1));
+	for (int i = 0; i < NUM_PHASE_SYNC_HIST_BINS + 1; ++i) {
+		mag_triads_ranges[i] = phase_sync->phase_diff_b_hist[0]->range[i];
+		if (i < NUM_PHASE_SYNC_HIST_BINS) {
+			for (int n = 0; n < phase_sync->num_phase_diff; ++n) {
+				mag_phase_diff_counts[n * NUM_PHASE_SYNC_HIST_BINS + i] = phase_sync->phase_diff_b_hist[n]->bin[i];
+			}
+		}
+	}
+
+	// Write Bin Count data 
+	dims2D[0] = phase_sync->num_phase_diff;
+	dims2D[1] = NUM_PHASE_SYNC_HIST_BINS;
+	if ( (H5LTmake_dataset(file_info->phase_sync_file_handle, "MagPhaseDifference_Counts", D2, dims2D, H5T_NATIVE_DOUBLE, mag_phase_diff_counts)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "MagPhaseDifference_Counts");
+	}
+	// Write Bin Range data 
+	dims1D[0] = NUM_PHASE_SYNC_HIST_BINS + 1;
+	if ( (H5LTmake_dataset(file_info->phase_sync_file_handle, "MagPhaseDifference_Ranges", D1, dims1D, H5T_NATIVE_DOUBLE, mag_phase_diff_ranges)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "MagPhaseDifference_Ranges");
+	}
+
+	// Free temporary memory
+	free(mag_phase_diff_counts);
+	free(mag_phase_diff_ranges);
+	#endif
+}
+/**
  * Wrapper function to free phase sync memory and clean up phase sync stats objects
  */
 void FreePhaseSyncObjects(void) {

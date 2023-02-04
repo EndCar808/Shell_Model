@@ -500,18 +500,18 @@ void PrintSimulationDetails(int argc, char** argv, double sim_time) {
 	#if defined(__MAGNETO) && !defined(__ELSASSAR_MHD)
 	sprintf(sys_type, "%s", "MAGHYDRO");
 	#elif defined(__ELSASSAR_MHD) && !defined(__MAGNETO)
-	sprintf(sys_type, "%s", "ELSASSAR_MHD");
+	sprintf(sys_type, "%s", "ELSASSARMHD");
 	#elif !defined(__MAGNETO) || !defined(__ELSASSAR_MHD)
 	sprintf(sys_type, "%s", "HYDRO");
 	#else
 	sprintf(sys_type, "%s", "SYS_UKN");
 	#endif
-	#if defined(__INT_FAC_RK4)
+	#if defined(INT_FAC_RK4)
 	sprintf(solv_type, "%s", "INT_FAC_RK4");
-	#elif defined(__RK5)
-	sprintf(solv_type, "%s", "RK5");
-	#elif defined(__DPRK5)
-	sprintf(solv_type, "%s", "DP5");
+	#elif defined(RK4)
+	sprintf(solv_type, "%s", "RK4");
+	#elif defined(AB4CN)
+	sprintf(solv_type, "%s", "AB4CN");
 	#else 
 	sprintf(solv_type, "%s", "SOLV_UKN");
 	#endif
