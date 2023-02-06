@@ -113,8 +113,10 @@
 // Choose whether to compute system measures
 // #define __SYS_MEASURES
 // #define __ENRG_FLUX
+// #define __KIN_HEL_FLUX
 // #define __TOT_ENRG_FLUX
 // #define __ENRG_FLUX_AVG
+// #define __KIN_HEL_FLUX_AVG
 // #define __PSEUDO_ENRG_FLUX_AVG
 // #define __VEL_AMP_AVG
 // #define __MAG_AMP_AVG
@@ -288,6 +290,8 @@ typedef struct runtime_data_struct {
 	double* pseudo_enrg_flux_plus_t_avg;	// Time averaged pseudo energ flux of z plus
 	double* pseudo_enrg_flux_minus_t_avg;	// Time averaged pseudo energ flux of z minus	
 	double* energy_flux;					// Array to hold the energy flux
+	double* kin_hel_flux;					// Array to hold the kinetic helicity flux
+	double* kin_hel_flux_t_avg;				// Array to hold the time averaged kinetic helicity flux
 	double* energy_diss_u;					// Array to hold the energy dissipation for the velocity field
 	double* energy_diss_b;					// Array to hold the energy dissipation for the magnetic field
 	double* energy_input_u;					// Array to hold the energy input for the velocity field in the flux balance computation

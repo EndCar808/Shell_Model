@@ -269,39 +269,47 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
             // #endif
 
             // Get the correct k prefactor terms for the nonlinear flux term 
-            if (i == 0) {
-                k_pre_fac_1 =  - run_data->k[n] * interact_coeff_u_1;
-                #if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
-                k_pre_fac_2 = run_data->k[n] * interact_coeff_b_2;
-                k_pre_fac_3 = run_data->k[n] * interact_coeff_u_1;
-                k_pre_fac_4 = run_data->k[n] * interact_coeff_b_2;
-                #endif
-            }
-            else {
-                k_pre_fac_1 = run_data->k[n - 1] - run_data->k[n] * interact_coeff_u_1;
-                #if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
-                k_pre_fac_2 = - run_data->k[n - 1] + run_data->k[n] * interact_coeff_b_2;
-                k_pre_fac_3 = run_data->k[n - 1] * interact_coeff_b_1 + run_data->k[n] * interact_coeff_u_1;
-                k_pre_fac_4 = run_data->k[n - 1] * interact_coeff_b_1 + run_data->k[n] * interact_coeff_b_2;
-                #endif
-            }
+            // if (i == 0) {
+            //     k_pre_fac_1 =  - run_data->k[n] * interact_coeff_u_1;
+            //     #if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+            //     k_pre_fac_2 = run_data->k[n] * interact_coeff_b_2;
+            //     k_pre_fac_3 = run_data->k[n] * interact_coeff_u_1;
+            //     k_pre_fac_4 = run_data->k[n] * interact_coeff_b_2;
+            //     #endif
+            // }
+            // else {
+            //     k_pre_fac_1 = run_data->k[n - 1] - run_data->k[n] * interact_coeff_u_1;
+            //     #if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+            //     k_pre_fac_2 = - run_data->k[n - 1] + run_data->k[n] * interact_coeff_b_2;
+            //     k_pre_fac_3 = run_data->k[n - 1] * interact_coeff_b_1 + run_data->k[n] * interact_coeff_u_1;
+            //     k_pre_fac_4 = run_data->k[n - 1] * interact_coeff_b_1 + run_data->k[n] * interact_coeff_b_2;
+            //     #endif
+            // }
 
             // Compute the energy flux
             // First term
-            run_data->energy_flux[i] = cimag(k_pre_fac_1 * run_data->u[n - 1] * run_data->u[n] * run_data->u[n + 1] + run_data->k[n] * run_data->u[n] * run_data->u[n + 1] * run_data->u[n + 2]);
+            // run_data->energy_flux[i] = cimag(k_pre_fac_1 * run_data->u[n - 1] * run_data->u[n] * run_data->u[n + 1] + run_data->k[n] * run_data->u[n] * run_data->u[n + 1] * run_data->u[n + 2]);
+            run_data->energy_flux[i] = cimag((1.0 - sys_vars->EPS) / sys_vars->Lambda * run_data->u[n - 1] * run_data->u[n] * run_data->u[n + 1] + run_data->u[n] * run_data->u[n + 1] * run_data->u[n + 2]);
             #if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
             // Second term
-            run_data->energy_flux[i] += cimag(k_pre_fac_2 * run_data->u[n - 1] * run_data->b[n] * run_data->b[n + 1] - run_data->k[n] * run_data->u[n] * run_data->b[n + 1] * run_data->b[n + 2]);
+            // run_data->energy_flux[i] += cimag(-k_pre_fac_2 * run_data->u[n - 1] * run_data->b[n] * run_data->b[n + 1] - run_data->k[n] * run_data->u[n] * run_data->b[n + 1] * run_data->b[n + 2]);
+            run_data->energy_flux[i] += cimag((sys_vars->EPS_M - 1.0) / sys_vars->Lambda * run_data->u[n - 1] * run_data->b[n] * run_data->b[n + 1] - run_data->u[n] * run_data->b[n + 1] * run_data->b[n + 2]);
             // Third term
-            run_data->energy_flux[i] += cimag(k_pre_fac_3 * run_data->b[n - 1] * run_data->u[n] * run_data->b[n + 1] + interact_coeff_b_1 * run_data->k[n] * run_data->b[n] * run_data->u[n + 1] * run_data->b[n + 2]);
+            // run_data->energy_flux[i] += cimag((1.0 - sys_vars->EPS_M) / sys_vars->Lambda * run_data->b[n - 1] * run_data->u[n] * run_data->b[n + 1] + run_data->k[n] * interact_coeff_b_1 * run_data->b[n] * run_data->u[n + 1] * run_data->b[n + 2]);
+            run_data->energy_flux[i] += cimag((1.0 - sys_vars->EPS_M) / sys_vars->Lambda * run_data->b[n - 1] * run_data->u[n] * run_data->b[n + 1] + interact_coeff_b_1 * run_data->b[n] * run_data->u[n + 1] * run_data->b[n + 2]);
             // Fourth term
-            run_data->energy_flux[i] += cimag(-k_pre_fac_4 * run_data->b[n - 1] * run_data->b[n] * run_data->u[n + 1] - interact_coeff_b_1 * run_data->k[n] * run_data->b[n] * run_data->b[n + 1] * run_data->u[n + 2]);
+            // run_data->energy_flux[i] += cimag(-k_pre_fac_4 * run_data->b[n - 1] * run_data->b[n] * run_data->u[n + 1] - run_data->k[n] * interact_coeff_b_1 * run_data->b[n] * run_data->b[n + 1] * run_data->u[n + 2]);
+            run_data->energy_flux[i] += cimag(-(1.0 - sys_vars->EPS) / sys_vars->Lambda * run_data->b[n - 1] * run_data->b[n] * run_data->u[n + 1] - interact_coeff_b_1 * run_data->b[n] * run_data->b[n + 1] * run_data->u[n + 2]);
             #endif
             #endif
 
-            //-------------- Time Averaged Energy
+            //-------------- Time Averaged Energy Flux
             #if defined(__ENRG_FLUX_AVG)
             run_data->energy_flux_t_avg[i] += run_data->energy_flux[i];
+            #endif
+            //-------------- Time Averaged Helicity Flux
+            #if defined(__ENRG_FLUX_AVG)
+            run_data->kin_hel_flux_t_avg[i] += cimag(- (sys_vars->EPS * sys_vars->Lambda - sgn(sys_vars->EPS - 1.0)) / pow(sys_vars->Lambda, 2.0) * run_data->u[n - 1] * run_data->u[n] * run_data->u[n + 1] + run_data->u[n] * run_data->u[n + 1] * run_data->u[n + 2]);
             #endif
 
             //-------------- Time Averaged Pseudo Energy Fluxes
@@ -316,7 +324,7 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
             run_data->pseudo_enrg_flux_minus_t_avg[i] += 0.25 * cimag((2.0 - sys_vars->EPS - sys_vars->EPS_M) / sys_vars->Lambda * run_data->z_plus[n - 1] * run_data->z_plus[n] * run_data->z_minus[n + 1]);
             run_data->pseudo_enrg_flux_minus_t_avg[i] += 0.25 * cimag((2.0 - sys_vars->EPS - sys_vars->EPS_M) * run_data->z_plus[n] * run_data->z_plus[n + 1] * run_data->z_minus[n + 2]);
             run_data->pseudo_enrg_flux_minus_t_avg[i] += 0.25 * cimag((sys_vars->EPS_M - sys_vars->EPS) / sys_vars->Lambda * run_data->z_plus[n - 1] * run_data->z_plus[n] * run_data->z_minus[n - 1]);
-            #endif            
+            #endif
 
             //-------------- Total Energy Flux and Dissipation
             #if defined(__TOT_ENRG_FLUX)
@@ -603,7 +611,7 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
     #endif
 
     ///----------------------------- Energy Variation by Mode
-    #if defined(__ENRG_FLUX) || defined(__TOT_ENRG_FLUX) || defined(__ENRG_FLUX_AVG)
+    #if defined(__ENRG_FLUX) || defined(__TOT_ENRG_FLUX) || defined(__ENRG_FLUX_AVG) 
     // Allocate energy flux
     run_data->energy_flux = (double* )malloc(sizeof(double) * sys_vars->N);
     if (run_data->energy_flux == NULL) {
@@ -636,8 +644,6 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
         exit(1);
     }
     #endif
-    #endif
-
 
     ///----------------------------- Energy Variation Totals
     #if defined(__TOT_ENRG_FLUX)
@@ -685,6 +691,16 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
     }
     #endif
 
+    ///----------------------------- Kinetic Helicity Flux Time Average
+    #if defined(__KIN_HEL_FLUX_AVG)
+    // Allocate kin_hel flux
+    run_data->kin_hel_flux_t_avg = (double* )malloc(sizeof(double) * sys_vars->N);
+    if (run_data->kin_hel_flux_t_avg == NULL) {
+        fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Time Average Kinetic Helicity Flux");
+        exit(1);
+    }
+    #endif
+
     ///----------------------------- Energy Variation Totals
     #if defined(__PSEUDO_ENRG_FLUX_AVG) && defined(__ELSASSAR_MHD)
     // Allocate energy flux
@@ -711,6 +727,9 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
         #endif
         #if defined(__ENRG_FLUX_AVG)
         run_data->energy_flux_t_avg[i] = 0.0;
+        #endif
+        #if defined(__KIN_HEL_FLUX_AVG)
+        run_data->kin_hel_flux_t_avg[i] = 0.0;
         #endif
         #if defined(__VEL_AMP_AVG)
         run_data->a_n_t_avg[i] = 0.0;
@@ -918,6 +937,19 @@ void WriteSystemMeasuresToFile(void) {
     }
     #endif
 
+    ///----------------- Time Averaged Helicity Flux
+    #if defined(__KIN_HEL_FLUX_AVG)
+    // Time average the data
+    for (int i = 0; i < sys_vars->N; ++i) {
+        run_data->kin_hel_flux_t_avg[i] /= run_data->num_sys_msr_steps;
+    }
+
+    dims1D[0] = sys_vars->N;
+    if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TimeAveragedKineticHelicityFlux", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->kin_hel_flux_t_avg)) < 0) {
+        printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TimeAveragedKineticHelicityFlux");
+    }
+    #endif
+
     ///----------------- Time Averaged Pseudo Energy Flux
     #if defined(__PSEUDO_ENRG_FLUX_AVG) && defined(__ELSASSAR_MHD)
     // Time average the data
@@ -1054,6 +1086,9 @@ void FreeSystemMeasuresObjects(void) {
     #endif
     #if defined(__ENRG_FLUX_AVG)
     free(run_data->energy_flux_t_avg);
+    #endif
+    #if defined(__KIN_HEL_FLUX_AVG)
+    free(run_data->kin_hel_flux_t_avg);
     #endif
     #if defined(__PSEUDO_ENRG_FLUX_AVG) && defined(__ELSASSAR_MHD)
     free(run_data->pseudo_enrg_flux_plus_t_avg);

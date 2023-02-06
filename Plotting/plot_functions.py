@@ -175,7 +175,7 @@ def plot_anomalous_exponent(outdir_path, p, zeta_p, ns_zeta_p = None, label_str 
 	ax1.plot(p, zeta_p, marker = mark_style[0], markerfacecolor = 'None', markersize = 5.0, markevery = 1, label = label_str)
 	
 	## Plot the NS structure function slopes
-	ax1.plot(p, ns_zeta_p, marker = mark_style[1], markerfacecolor = 'None', markersize = 5.0, markevery = 1, label = "Navier Stokes")
+	ax1.plot(p, ns_zeta_p[:len(zeta_p)], marker = mark_style[1], markerfacecolor = 'None', markersize = 5.0, markevery = 1, label = "Navier Stokes")
 
 	## Plot the She-Leveque prediction
 	ax1.plot(p, p/9.0 + 2.0 * (1.0 - np.power(2.0/3.0, p/3.0)), label = "She-Leveque Model; $p/9 + 2(1 - (2/3)^{p/3})$")
