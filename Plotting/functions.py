@@ -38,6 +38,68 @@ class tc:
 #################################
 ##          MISC               ##
 #################################
+def parse_cml(argv):
+
+    """
+    Parses command line arguments
+    """
+
+    ## Create arguments class
+    class cmd_args:
+
+        """
+        Class for command line arguments
+        """
+
+        def __init__(self, in_dir = None, out_dir = None, info_dir = None, plotting = False):
+            self.in_dir         = in_dir
+            self.out_dir_info   = out_dir
+            self.in_file        = out_dir
+            self.plotting       = plotting
+            self.tag = "None"
+
+
+    ## Initialize class
+    cargs = cmd_args()
+
+    try:
+        ## Gather command line arguments
+        opts, args = getopt.getopt(argv, "i:o:f:t:", ["plot"])
+    except:
+        print("[" + tc.R + "ERROR" + tc.Rst + "] ---> Incorrect Command Line Arguements.")
+        sys.exit()
+
+    ## Parse command line args
+    for opt, arg in opts:
+
+        if opt in ['-i']:
+            ## Read input directory
+            cargs.in_dir = str(arg)
+            print("\nInput Folder: " + tc.C + "{}".format(cargs.in_dir) + tc.Rst)
+
+            cargs.out_dir = str(arg)
+            print("Output Folder: " + tc.C + "{}".format(cargs.out_dir) + tc.Rst)
+
+        if opt in ['-o']:
+            ## Read output directory
+            cargs.out_dir = str(arg)
+            print("Output Folder: " + tc.C + "{}".format(cargs.out_dir) + tc.Rst)
+
+        elif opt in ['-f']:
+            ## Read input directory
+            cargs.in_file = str(arg)
+            print("Input Post Processing File: " + tc.C + "{}".format(cargs.in_file) + tc.Rst)
+
+        elif opt in ['--plot']:
+            ## Read in plotting indicator
+            cargs.plotting = True
+
+        elif opt in ['-t']:
+            cargs.tag = str(arg)
+
+    return cargs
+
+
 def compute_pdf_from_hist(counts, ranges, normed = False, remove_zeros = True):
 
     """
@@ -169,6 +231,14 @@ def sim_data(input_dir, method = "default"):
 
             ## Loop through lines and parse data
             for line in f.readlines():
+
+                ## Parse the system type
+                if line.startswith('System Type'):
+                    data.sys_type = str(line.split()[-1])
+
+                ## Parse the model type
+                if line.startswith('Model Type'):
+                    data.model_type = str(line.split()[-1])
 
                 ## Parse viscosity
                 if line.startswith('Viscosity'):
@@ -439,11 +509,11 @@ def import_stats_data(input_file, sim_data, method = "default"):
                 if 'StructureFunctionTrippleProdVel' in list(f.keys()):
                     self.vel_trip_prod_str_func = f["StructureFunctionTrippleProdVel"][:, :]
                 if 'StructureFunctionTrippleProdVelAbs' in list(f.keys()):
-                    self.vel_trip_prod_flux_str_func_abs = f["StructureFunctionTrippleProdVelAbs"][:, :]
+                    self.vel_trip_prod_str_func_abs = f["StructureFunctionTrippleProdVelAbs"][:, :]
                 if 'StructureFunctionTrippleProdMag' in list(f.keys()):
                     self.mag_trip_prod_str_func = f["StructureFunctionTrippleProdMag"][:, :]
                 if 'StructureFunctionTrippleProdMagAbs' in list(f.keys()):
-                    self.mag_trip_prod_flux_str_func_abs = f["StructureFunctionTrippleProdMagAbs"][:, :]
+                    self.mag_trip_prod_str_func_abs = f["StructureFunctionTrippleProdMagAbs"][:, :]
                 ## Read in final state of system
                 if 'VelModes' in list(f.keys()):
                     self.u_final = f["VelModes"][:]

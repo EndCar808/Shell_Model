@@ -572,6 +572,22 @@ if __name__ == '__main__':
     plot_anomalous_exponent(cmdargs.out_dir_stats + "Vel_Anonalous_Exponent_Zeta_p.png", p, zeta_p[1:], label_str = r"Velocity; Shell Modell")
 
 
+    ## --------  Velocity Tripple Product
+    print("Velocity Tripple Product Structure Func")
+    trip_prod_zeta_p, ns_zeta_p, trip_prod_zeta_p_res = plot_str_funcs_with_slope(cmdargs.out_dir_stats + "TrippleProd_VelStrFunc_Fit.png", sys_msr_data.k, stats_data.vel_trip_prod_str_func_abs, inertial_range, ax_scale)
+    with open(cmdargs.out_dir_stats + "ComputedStrFuncSlopes.txt", 'w') as f:
+        f.write("Velocity Tripple Product Structure Func\n")
+        for i in range(stats_data.vel_str_func.shape[-1]):
+            if i >= 1:
+                f.write(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f} \t{:1.3f}\n".format(i + 1, -(i + 1) / 3, trip_prod_zeta_p[i], trip_prod_zeta_p_res[i], -ns_zeta_p[i - 1]))
+            else:
+                f.write(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f}\n".format(i + 1, -(i + 1) / 3, trip_prod_zeta_p[i], trip_prod_zeta_p_res[i]))
+    
+    ## --------  Plot Anomalous Exponent
+    plot_anomalous_exponent(cmdargs.out_dir_stats + "TrippleProd_Vel_Anonalous_Exponent_Zeta_p.png", p, trip_prodzeta_p[1:], label_str = r"Tripple Prod Velocity; Shell Modell")
+
+
+
     # -----------------------------------------
     # # --------  Velocity Structure Functions w/ Fit & Anomolous Exponent
     # -----------------------------------------
@@ -631,19 +647,34 @@ if __name__ == '__main__':
     # -----------------------------------------
     # # --------  Magnetic Structure Functions w/ Fit & Anomolous Exponent
     # -----------------------------------------
-    if hasattr(stats_data, "mag_str_func"):
-        ## --------  Structure function with fit
-        print("Magnetic Structure Func")
-        mag_zeta_p, ns_zeta_p, mag_zeta_p_res = plot_str_funcs_with_slope(cmdargs.out_dir_stats + "MagStrFunc_Fit.png", sys_msr_data.k, stats_data.mag_str_func, inertial_range)
-        with open(cmdargs.out_dir_stats + "ComputedStrFuncSlopes.txt", 'a') as f:
-            f.write("Magnetic Structure Func\n")
-            for i in range(stats_data.vel_str_func.shape[-1]):
-                if i >= 1:
-                    f.write(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f} \t{:1.3f}\n".format(i + 1, -(i + 1) / 3, mag_zeta_p[i], mag_zeta_p_res[i], -ns_zeta_p[i - 1]))
-                else:
-                    f.write(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f}\n".format(i + 1, -(i + 1) / 3, mag_zeta_p[i], mag_zeta_p_res[i]))
+    if sys_vars.sys_type == "MAGHYDRO" or sys_vars.sys_type == "ELSASSARMHD":
+        if hasattr(stats_data, "mag_str_func"):
+            ## --------  Structure function with fit
+            print("Magnetic Structure Func")
+            mag_zeta_p, ns_zeta_p, mag_zeta_p_res = plot_str_funcs_with_slope(cmdargs.out_dir_stats + "MagStrFunc_Fit.png", sys_msr_data.k, stats_data.mag_str_func, inertial_range)
+            with open(cmdargs.out_dir_stats + "ComputedStrFuncSlopes.txt", 'a') as f:
+                f.write("Magnetic Structure Func\n")
+                for i in range(stats_data.vel_str_func.shape[-1]):
+                    if i >= 1:
+                        f.write(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f} \t{:1.3f}\n".format(i + 1, -(i + 1) / 3, mag_zeta_p[i], mag_zeta_p_res[i], -ns_zeta_p[i - 1]))
+                    else:
+                        f.write(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f}\n".format(i + 1, -(i + 1) / 3, mag_zeta_p[i], mag_zeta_p_res[i]))
 
+            ## --------  Plot Anomalous Exponent
+            p = np.arange(2, stats_data.vel_str_func.shape[-1] + 1)
+            plot_anomalous_exponent(cmdargs.out_dir_stats + "Mag_Anonalous_Exponent_Zeta_p.png", p, mag_zeta_p[1:])
 
-        ## --------  Plot Anomalous Exponent
-        p = np.arange(2, stats_data.vel_str_func.shape[-1] + 1)
-        plot_anomalous_exponent(cmdargs.out_dir_stats + "Mag_Anonalous_Exponent_Zeta_p.png", p, mag_zeta_p[1:])
+        if hasattr(stats_data, "mag_trip_prod_str_func_abs"):
+            ## --------  Magnetic Tripple Product
+            print("Magnetic Tripple Product Structure Func")
+            mag_trip_prod_zeta_p, ns_zeta_p, mag_trip_prod_zeta_p_res = plot_str_funcs_with_slope(cmdargs.out_dir_stats + "TrippleProd_MagStrFunc_Fit.png", sys_msr_data.k, stats_data.mag_trip_prod_str_func_abs, inertial_range, ax_scale)
+            with open(cmdargs.out_dir_stats + "ComputedStrFuncSlopes.txt", 'w') as f:
+                f.write("Magnetic Tripple Product Structure Func\n")
+                for i in range(stats_data.vel_str_func.shape[-1]):
+                    if i >= 1:
+                        f.write(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f} \t{:1.3f}\n".format(i + 1, -(i + 1) / 3, mag_trip_prod_zeta_p[i], mag_trip_prod_zeta_p_res[i], -ns_zeta_p[i - 1]))
+                    else:
+                        f.write(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f}\n".format(i + 1, -(i + 1) / 3, mag_trip_prod_zeta_p[i], mag_trip_prod_zeta_p_res[i]))
+            
+            ## --------  Plot Anomalous Exponent
+            plot_anomalous_exponent(cmdargs.out_dir_stats + "TrippleProd_Mag_Anonalous_Exponent_Zeta_p.png", p, trip_prodzeta_p[1:], label_str = r"Tripple Prod Velocity; Shell Modell")

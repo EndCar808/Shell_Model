@@ -520,7 +520,7 @@ void PrintSimulationDetails(int argc, char** argv, double sim_time) {
 	#else
 	sprintf(model_type, "%s", "FULL");
 	#endif
-	fprintf(sim_file, "Systen Type: %s\nSolver Type: %s\nModel Type: %s\n", sys_type, solv_type, model_type);
+	fprintf(sim_file, "System Type: %s\nSolver Type: %s\nModel Type: %s\n", sys_type, solv_type, model_type);
 
 	// System Params
 	fprintf(sim_file, "Viscosity: %1.10g\n", sys_vars->NU);

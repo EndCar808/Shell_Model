@@ -161,14 +161,14 @@ def plot_anomalous_exponent(outdir_path, p, zeta_p, ns_zeta_p = None, label_str 
 	ax1   = fig.add_subplot(gs[0, 0])
 
 	## Marker style list
-	mark_style = ['o','s','^','x','D','p']
+	mark_style = ['o','s','^','x','D','p', '>', '<']
 
 	## Get p range if not provided
 	if p is None:
 		p = np.arange(2, len(zeta_p) + 3)
 
 	if ns_zeta_p is None:
-		ns_zeta_p = [0.72, 1, 1.273, 1.534, 1.786]
+		ns_zeta_p    = [0.72, 1, 1.273, 1.534, 1.786, 2.11, 2.32]
 
 
 	## Plot the structure function slopes
