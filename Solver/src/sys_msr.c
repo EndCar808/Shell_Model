@@ -196,6 +196,7 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
             run_data->energy_spect[i] += cabs(run_data->b[n] * conj(run_data->b[n]));  
             #endif
             #endif
+
             #if defined(__KIN_ENRG_SPECT) 
             // Compute the kinetic energy spectrum
             run_data->kin_enrg_spect[i] = cabs(run_data->u[n] * conj(run_data->u[n])); 
@@ -211,40 +212,6 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
             #if defined(__MAGNETO) || defined(__ELSASSAR_MHD)       
             run_data->diss_spect[i] += sys_vars->ETA * run_data->k[n] * run_data->k[n] * cabs(run_data->b[n] * conj(run_data->b[n]));  
             #endif
-            #endif
-
-            //-------------- Time Averaged Energy Spectra
-            #if defined(__ENRG_SPECT_AVG) 
-            // Compute the energy spectrum
-            run_data->energy_spect_t_avg[i] += cabs(run_data->u[n] * conj(run_data->u[n]));  
-            #if defined(__MAGNETO) || defined(__ELSASSAR_MHD)      
-            run_data->energy_spect_t_avg[i] += cabs(run_data->b[n] * conj(run_data->b[n]));  
-            #endif
-            #endif
-            #if defined(__KIN_ENRG_SPECT_AVG) 
-            // Compute the kinetic energy spectrum
-            run_data->kin_enrg_spect_t_avg[i] = cabs(run_data->u[n] * conj(run_data->u[n])); 
-            #endif 
-            #if defined(__MAG_ENRG_SPECT_AVG) && (defined(__MAGNETO) || defined(__ELSASSAR_MHD))
-            // Compute the magnetic energy spectrum
-            run_data->mag_enrg_spect_t_avg[i] += cabs(run_data->b[n] * conj(run_data->b[n]));  
-            #endif
-
-
-            #if defined(__DISS_SPECT_AVG)
-            // Compute the dissipation spectrum
-            run_data->diss_spect_t_avg[i] += sys_vars->NU * run_data->k[n] * run_data->k[n] * cabs(run_data->u[n] * conj(run_data->u[n]));
-            #if defined(__MAGNETO) || defined(__ELSASSAR_MHD)        
-            run_data->diss_spect_t_avg[i] += sys_vars->ETA * run_data->k[n] * run_data->k[n] * cabs(run_data->b[n] * conj(run_data->b[n]));  
-            #endif
-            #endif
-
-            //-------------- Time Averaged Amplitudes
-            #if defined(__VEL_AMP_AVG)
-            run_data->a_n_t_avg[i] += cabs(run_data->u[n] * conj(run_data->u[n]));
-            #endif
-            #if defined(__MAG_AMP_AVG) && defined(__MAGNETO)
-            run_data->b_n_t_avg[i] += cabs(run_data->b[n] * conj(run_data->b[n]));
             #endif
 
             //-------------- Energy Flux and Dissipation
@@ -303,29 +270,6 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
             #endif
             #endif
 
-            //-------------- Time Averaged Energy Flux
-            #if defined(__ENRG_FLUX_AVG)
-            run_data->energy_flux_t_avg[i] += run_data->energy_flux[i];
-            #endif
-            //-------------- Time Averaged Helicity Flux
-            #if defined(__ENRG_FLUX_AVG)
-            run_data->kin_hel_flux_t_avg[i] += cimag(- (sys_vars->EPS * sys_vars->Lambda - sgn(sys_vars->EPS - 1.0)) / pow(sys_vars->Lambda, 2.0) * run_data->u[n - 1] * run_data->u[n] * run_data->u[n + 1] + run_data->u[n] * run_data->u[n + 1] * run_data->u[n + 2]);
-            #endif
-
-            //-------------- Time Averaged Pseudo Energy Fluxes
-            #if defined(__PSEUDO_PSEUDO_ENRG_FLUX_AVG) && defined(__ELSASSAR_MHD)
-            // Plus Terms
-            run_data->pseudo_enrg_flux_plus_t_avg[i]  += 0.25 * cimag((sys_vars->EPS + sys_vars->EPS_M) * run_data->z_plus[n] * run_data->z_plus[n + 1] * run_data->z_minus[n + 2]);
-            run_data->pseudo_enrg_flux_plus_t_avg[i]  += 0.25 * cimag((2.0 - sys_vars->EPS - sys_vars->EPS_M) / sys_vars->Lambda * run_data->z_plus[n - 1] * run_data->z_plus[n] * run_data->z_minus[n + 1]);
-            run_data->pseudo_enrg_flux_plus_t_avg[i]  += 0.25 * cimag((2.0 - sys_vars->EPS - sys_vars->EPS_M) * run_data->z_plus[n] * run_data->z_plus[n + 1] * run_data->z_minus[n + 2]);
-            run_data->pseudo_enrg_flux_plus_t_avg[i]  += 0.25 * cimag((sys_vars->EPS_M - sys_vars->EPS) / sys_vars->Lambda * run_data->z_plus[n - 1] * run_data->z_plus[n] * run_data->z_minus[n - 1]);
-            // Plus Terms
-            run_data->pseudo_enrg_flux_minus_t_avg[i] += 0.25 * cimag((sys_vars->EPS + sys_vars->EPS_M) * run_data->z_plus[n] * run_data->z_plus[n + 1] * run_data->z_minus[n + 2]);
-            run_data->pseudo_enrg_flux_minus_t_avg[i] += 0.25 * cimag((2.0 - sys_vars->EPS - sys_vars->EPS_M) / sys_vars->Lambda * run_data->z_plus[n - 1] * run_data->z_plus[n] * run_data->z_minus[n + 1]);
-            run_data->pseudo_enrg_flux_minus_t_avg[i] += 0.25 * cimag((2.0 - sys_vars->EPS - sys_vars->EPS_M) * run_data->z_plus[n] * run_data->z_plus[n + 1] * run_data->z_minus[n + 2]);
-            run_data->pseudo_enrg_flux_minus_t_avg[i] += 0.25 * cimag((sys_vars->EPS_M - sys_vars->EPS) / sys_vars->Lambda * run_data->z_plus[n - 1] * run_data->z_plus[n] * run_data->z_minus[n - 1]);
-            #endif
-
             //-------------- Total Energy Flux and Dissipation
             #if defined(__TOT_ENRG_FLUX)
             run_data->tot_energy_flux[iter]    += run_data->energy_flux[i];
@@ -336,6 +280,71 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
             run_data->tot_energy_input_b[iter] += run_data->energy_input_b[i];
             #endif
             #endif
+
+
+            // Only begin time averaging after transient integration time has passed
+            if (t >= sys_vars->trans_time) {
+                
+                //-------------- Time Averaged Energy Flux
+                #if defined(__ENRG_FLUX_AVG)
+                run_data->energy_flux_t_avg[i] += run_data->energy_flux[i];
+                #endif
+
+                //-------------- Time Averaged Helicity Flux
+                #if defined(__ENRG_FLUX_AVG)
+                run_data->kin_hel_flux_t_avg[i] += cimag(- (sys_vars->EPS * sys_vars->Lambda - sgn(sys_vars->EPS - 1.0)) / pow(sys_vars->Lambda, 2.0) * run_data->u[n - 1] * run_data->u[n] * run_data->u[n + 1] + run_data->u[n] * run_data->u[n + 1] * run_data->u[n + 2]);
+                #endif
+
+                //-------------- Time Averaged Pseudo Energy Fluxes
+                #if defined(__PSEUDO_PSEUDO_ENRG_FLUX_AVG) && defined(__ELSASSAR_MHD)
+                // Plus Terms
+                run_data->pseudo_enrg_flux_plus_t_avg[i]  += 0.25 * cimag((sys_vars->EPS + sys_vars->EPS_M) * run_data->z_plus[n] * run_data->z_plus[n + 1] * run_data->z_minus[n + 2]);
+                run_data->pseudo_enrg_flux_plus_t_avg[i]  += 0.25 * cimag((2.0 - sys_vars->EPS - sys_vars->EPS_M) / sys_vars->Lambda * run_data->z_plus[n - 1] * run_data->z_plus[n] * run_data->z_minus[n + 1]);
+                run_data->pseudo_enrg_flux_plus_t_avg[i]  += 0.25 * cimag((2.0 - sys_vars->EPS - sys_vars->EPS_M) * run_data->z_plus[n] * run_data->z_plus[n + 1] * run_data->z_minus[n + 2]);
+                run_data->pseudo_enrg_flux_plus_t_avg[i]  += 0.25 * cimag((sys_vars->EPS_M - sys_vars->EPS) / sys_vars->Lambda * run_data->z_plus[n - 1] * run_data->z_plus[n] * run_data->z_minus[n - 1]);
+                // Plus Terms
+                run_data->pseudo_enrg_flux_minus_t_avg[i] += 0.25 * cimag((sys_vars->EPS + sys_vars->EPS_M) * run_data->z_plus[n] * run_data->z_plus[n + 1] * run_data->z_minus[n + 2]);
+                run_data->pseudo_enrg_flux_minus_t_avg[i] += 0.25 * cimag((2.0 - sys_vars->EPS - sys_vars->EPS_M) / sys_vars->Lambda * run_data->z_plus[n - 1] * run_data->z_plus[n] * run_data->z_minus[n + 1]);
+                run_data->pseudo_enrg_flux_minus_t_avg[i] += 0.25 * cimag((2.0 - sys_vars->EPS - sys_vars->EPS_M) * run_data->z_plus[n] * run_data->z_plus[n + 1] * run_data->z_minus[n + 2]);
+                run_data->pseudo_enrg_flux_minus_t_avg[i] += 0.25 * cimag((sys_vars->EPS_M - sys_vars->EPS) / sys_vars->Lambda * run_data->z_plus[n - 1] * run_data->z_plus[n] * run_data->z_minus[n - 1]);
+                #endif
+
+                //-------------- Time Averaged Energy Spectra
+                #if defined(__ENRG_SPECT_AVG) 
+                // Compute the energy spectrum
+                run_data->energy_spect_t_avg[i] += cabs(run_data->u[n] * conj(run_data->u[n]));  
+                #if defined(__MAGNETO) || defined(__ELSASSAR_MHD)      
+                run_data->energy_spect_t_avg[i] += cabs(run_data->b[n] * conj(run_data->b[n]));  
+                #endif
+                #endif
+                
+                #if defined(__KIN_ENRG_SPECT_AVG) 
+                // Compute the kinetic energy spectrum
+                run_data->kin_enrg_spect_t_avg[i] = cabs(run_data->u[n] * conj(run_data->u[n])); 
+                #endif 
+                
+                #if defined(__MAG_ENRG_SPECT_AVG) && (defined(__MAGNETO) || defined(__ELSASSAR_MHD))
+                // Compute the magnetic energy spectrum
+                run_data->mag_enrg_spect_t_avg[i] += cabs(run_data->b[n] * conj(run_data->b[n]));  
+                #endif
+                
+                #if defined(__DISS_SPECT_AVG)
+                // Compute the dissipation spectrum
+                run_data->diss_spect_t_avg[i] += sys_vars->NU * run_data->k[n] * run_data->k[n] * cabs(run_data->u[n] * conj(run_data->u[n]));
+                #if defined(__MAGNETO) || defined(__ELSASSAR_MHD)        
+                run_data->diss_spect_t_avg[i] += sys_vars->ETA * run_data->k[n] * run_data->k[n] * cabs(run_data->b[n] * conj(run_data->b[n]));  
+                #endif
+                #endif
+
+                //-------------- Time Averaged Amplitudes
+                #if defined(__VEL_AMP_AVG)
+                run_data->a_n_t_avg[i] += cabs(run_data->u[n] * conj(run_data->u[n]));
+                #endif
+
+                #if defined(__MAG_AMP_AVG) && defined(__MAGNETO)
+                run_data->b_n_t_avg[i] += cabs(run_data->b[n] * conj(run_data->b[n]));
+                #endif
+            }
         }
     }    
 
@@ -644,6 +653,7 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
         exit(1);
     }
     #endif
+    #endif
 
     ///----------------------------- Energy Variation Totals
     #if defined(__TOT_ENRG_FLUX)
@@ -722,21 +732,27 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
         #if defined(__ENRG_SPECT_AVG) 
         run_data->energy_spect_t_avg[i] = 0.0;
         #endif
+
         #if defined(__DISS_SPECT_AVG)
         run_data->diss_spect_t_avg[i] = 0.0;
         #endif
+
         #if defined(__ENRG_FLUX_AVG)
         run_data->energy_flux_t_avg[i] = 0.0;
         #endif
+
         #if defined(__KIN_HEL_FLUX_AVG)
         run_data->kin_hel_flux_t_avg[i] = 0.0;
         #endif
+
         #if defined(__VEL_AMP_AVG)
         run_data->a_n_t_avg[i] = 0.0;
         #endif
+
         #if defined(__MAG_AMP_AVG) && (defined(__MAGNETO) || defined(__ELSASSAR_MHD))
         run_data->b_n_t_avg[i] = 0.0;
         #endif
+
         #if defined(__PSEUDO_ENRG_FLUX_AVG) && defined(__ELSASSAR_MHD)
         run_data->pseudo_enrg_flux_plus_t_avg[i]  = 0.0;
         run_data->pseudo_enrg_flux_minus_t_avg[i] = 0.0;

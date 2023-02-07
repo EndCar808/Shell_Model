@@ -49,10 +49,10 @@ class tc:
 ###################################
 ##          STATS PLOT           ##
 ###################################
-def plot_str_funcs_with_slope(outdir_path, k, str_funcs, inert_range, insert_fig = True, scaling = 'loge'):
+def plot_str_funcs_with_slope(outdir_path, k, str_funcs, inert_range, insert_fig = True, scaling = 'loge', fig_size = (16, 8)):
 
 	## Set up figure
-	fig   = plt.figure(figsize = (16, 8))
+	fig   = plt.figure(figsize = fig_size)
 	gs    = GridSpec(1, 1)
 	ax1   = fig.add_subplot(gs[0, 0])
 
@@ -153,10 +153,10 @@ def plot_str_funcs_with_slope(outdir_path, k, str_funcs, inert_range, insert_fig
 	return zeta_p, ns_zeta_p[:str_funcs.shape[-1]], zeta_p_resid
 
 
-def plot_anomalous_exponent(outdir_path, p, zeta_p, ns_zeta_p = None, label_str = "GOY Model"):
+def plot_anomalous_exponent(outdir_path, p, zeta_p, ns_zeta_p = None, label_str = "GOY Model", fig_size = (16, 8)):
 
 	## Setup figure
-	fig   = plt.figure(figsize = (16, 8))
+	fig   = plt.figure(figsize = fig_size)
 	gs    = GridSpec(1, 1)
 	ax1   = fig.add_subplot(gs[0, 0])
 

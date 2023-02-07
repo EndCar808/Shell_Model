@@ -137,11 +137,16 @@ if __name__ == '__main__':
 	# -----------------------------------------
 	if cmdargs.plotting is True:
 
+		fig_size = (5, 3)
+		fig_file_type = ".pdf"
+		num_pow = 6
+		# num_pow = stats_data.vel_str_func.shape[-1]
+
 
 		###################################
 		##  PDFs
 		###################################
-		fig = plt.figure(figsize = (16, 8))
+		fig = plt.figure(figsize = fig_size)
 		gs  = GridSpec(1, 1)
 		ax1 = fig.add_subplot(gs[0, 0])
 		for j, i in enumerate([6, 11, 16, 20]):
@@ -159,26 +164,24 @@ if __name__ == '__main__':
 		ax1.set_yscale('log')
 		ax1.legend()
 
-		plt.savefig(cmdargs.out_dir_HD + "VelReal_PDF_InOne.png")
+		plt.savefig(cmdargs.out_dir_HD + "VelReal_PDF_InOne" + fig_file_type)
 		plt.close()
 
 		###################################
 		##  Structure Functions
 		###################################
 		inertial_range = np.arange(2, 11 + 1)
-		p = np.arange(2, stats_data.vel_str_func.shape[-1] + 1)
+		p = np.arange(2, num_pow + 1)
 
 		ax_scale = "log2"
 
-
-
 		## --------  Structure function with fit
 		print("Velocity Structure Func")
-		zeta_p, ns_zeta_p, zeta_p_res = plot_str_funcs_with_slope(cmdargs.out_dir_HD + "VelStrFunc_Fit.png", sys_msr_data.k, stats_data.vel_str_func, inertial_range, ax_scale)
+		zeta_p, ns_zeta_p, zeta_p_res = plot_str_funcs_with_slope(cmdargs.out_dir_HD + "VelStrFunc_Fit" + fig_file_type, sys_msr_data.k, stats_data.vel_str_func[:, :num_pow], inertial_range, ax_scale, fig_size = fig_size)
 		with open(cmdargs.out_dir_HD + "ComputedStrFuncSlopes.txt", 'w') as f:
 		    f.write("Velocity Structure Func\n")
 		    f.write("Power\tp/3\t\tDNS Slope\tNS")
-		    for i in range(stats_data.vel_str_func.shape[-1]):
+		    for i in range(num_pow):
 		        if i >= 1:
 		            f.write(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f} \t{:1.3f}\n".format(i + 1, -(i + 1) / 3, zeta_p[i], zeta_p_res[i], -ns_zeta_p[i - 1]))
 		        else:
@@ -186,47 +189,47 @@ if __name__ == '__main__':
 		
 		print(len(p), len(zeta_p), len(ns_zeta_p))
 		## --------  Plot Anomalous Exponent
-		plot_anomalous_exponent(cmdargs.out_dir_HD + "Vel_Anonalous_Exponent_Zeta_p.png", p, zeta_p[1:], label_str = r"Velocity; Shell Modell")
+		plot_anomalous_exponent(cmdargs.out_dir_HD + "Vel_Anonalous_Exponent_Zeta_p" + fig_file_type, p, zeta_p[1:], label_str = r"Velocity; Shell Modell", fig_size = fig_size)
 
 
 		## --------  Velocity Tripple Product
 		if hasattr(stats_data, "vel_trip_prod_str_func_abs"):
 			print("Velocity Tripple Product Structure Func")
-			trip_prod_zeta_p, ns_zeta_p, trip_prod_zeta_p_res = plot_str_funcs_with_slope(cmdargs.out_dir_HD + "TrippleProd_VelStrFunc_Fit.png", sys_msr_data.k, stats_data.vel_trip_prod_str_func_abs, inertial_range, ax_scale)
+			trip_prod_zeta_p, ns_zeta_p, trip_prod_zeta_p_res = plot_str_funcs_with_slope(cmdargs.out_dir_HD + "TrippleProd_VelStrFunc_Fit" + fig_file_type, sys_msr_data.k, stats_data.vel_trip_prod_str_func_abs[:, :num_pow], inertial_range, ax_scale, fig_size = fig_size)
 			with open(cmdargs.out_dir_HD + "ComputedStrFuncSlopes.txt", 'a') as f:
 			    f.write("Velocity Tripple Product Structure Func\n")
 			    f.write("Power\tp/3\t\tDNS Slope\tNS")
-			    for i in range(stats_data.vel_str_func.shape[-1]):
+			    for i in range(num_pow):
 			        if i >= 1:
 			            f.write(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f} \t{:1.3f}\n".format(i + 1, -(i + 1) / 3, trip_prod_zeta_p[i], trip_prod_zeta_p_res[i], -ns_zeta_p[i - 1]))
 			        else:
 			            f.write(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f}\n".format(i + 1, -(i + 1) / 3, trip_prod_zeta_p[i], trip_prod_zeta_p_res[i]))
 			
 			## --------  Plot Anomalous Exponent
-			plot_anomalous_exponent(cmdargs.out_dir_HD + "TrippleProd_Vel_Anonalous_Exponent_Zeta_p.png", p, trip_prod_zeta_p[1:], label_str = r"Tripple Prod Velocity; Shell Modell")
+			plot_anomalous_exponent(cmdargs.out_dir_HD + "TrippleProd_Vel_Anonalous_Exponent_Zeta_p" + fig_file_type, p, trip_prod_zeta_p[1:], label_str = r"Tripple Prod Velocity; Shell Modell", fig_size = fig_size)
 
 		## --------  Structure function with fit
 		print("Velocity Energy Structure Func")
-		enrg_flux_zeta_p, ns_zeta_p, enrg_flux_zeta_p_res = plot_str_funcs_with_slope(cmdargs.out_dir_HD + "VelEnergyFluxAbsStrFunc_Fit.png", sys_msr_data.k, stats_data.vel_flux_str_func_abs[:, :, 0], inertial_range, ax_scale)
+		enrg_flux_zeta_p, ns_zeta_p, enrg_flux_zeta_p_res = plot_str_funcs_with_slope(cmdargs.out_dir_HD + "VelEnergyFluxAbsStrFunc_Fit" + fig_file_type, sys_msr_data.k, stats_data.vel_flux_str_func_abs[:, :num_pow, 0], inertial_range, ax_scale, fig_size = fig_size)
 		with open(cmdargs.out_dir_HD + "ComputedStrFuncSlopes.txt", 'a') as f:
 		    f.write("Velocity Energy Structure Func\n")
 		    f.write("Power\tp/3\t\tDNS Slope\tNS")
-		    for i in range(stats_data.vel_str_func.shape[-1]):
+		    for i in range(num_pow):
 		        if i >= 1:
 		            f.write(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f} \t{:1.3f}\n".format(i + 1, -(i + 1) / 3, enrg_flux_zeta_p[i], enrg_flux_zeta_p_res[i], -ns_zeta_p[i - 1]))
 		        else:
 		            f.write(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f}\n".format(i + 1, -(i + 1) / 3, enrg_flux_zeta_p[i], enrg_flux_zeta_p_res[i]))
 
 		## --------  Plot Anomalous Exponent
-		plot_anomalous_exponent(cmdargs.out_dir_HD + "VelEnergyFluxAbs_Anonalous_Exponent_Zeta_p.png", p, enrg_flux_zeta_p[1:], label_str = r"Velocity Energy Flux; Shell Modell")
+		plot_anomalous_exponent(cmdargs.out_dir_HD + "VelEnergyFluxAbs_Anonalous_Exponent_Zeta_p" + fig_file_type, p, enrg_flux_zeta_p[1:], label_str = r"Velocity Energy Flux; Shell Modell", fig_size = fig_size)
 
 		## --------  Structure function with fit
 		print("Velocity Helicity Structure Func")
-		hel_flux_zeta_p, ns_zeta_p, hel_flux_zeta_p_res = plot_str_funcs_with_slope(cmdargs.out_dir_HD + "VelHelicityFluxAbsStrFunc_Fit.png", sys_msr_data.k, stats_data.vel_flux_str_func_abs[:, :, 1], inertial_range, ax_scale)
+		hel_flux_zeta_p, ns_zeta_p, hel_flux_zeta_p_res = plot_str_funcs_with_slope(cmdargs.out_dir_HD + "VelHelicityFluxAbsStrFunc_Fit" + fig_file_type, sys_msr_data.k, stats_data.vel_flux_str_func_abs[:, :num_pow, 1], inertial_range, ax_scale, fig_size = fig_size)
 		with open(cmdargs.out_dir_HD + "ComputedStrFuncSlopes.txt", 'a') as f:
 		    f.write("Velocity Helicity Structure Func\n")
 		    f.write("Power\tp/3\t\tDNS Slope\tNS")
-		    for i in range(stats_data.vel_str_func.shape[-1]):
+		    for i in range(num_pow):
 		        if i >= 1:
 		            f.write(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f} \t{:1.3f}\n".format(i + 1, -(i + 1) / 3, hel_flux_zeta_p[i], hel_flux_zeta_p_res[i], -ns_zeta_p[i - 1]))
 		        else:
@@ -234,13 +237,13 @@ if __name__ == '__main__':
 
 
 		## --------  Plot Anomalous Exponent
-		plot_anomalous_exponent(cmdargs.out_dir_HD + "VelHelicityFluxAbs_Anonalous_Exponent_Zeta_p.png", p, hel_flux_zeta_p[1:], label_str = r"Velocity HelicityFlux; Shell Modell")
+		plot_anomalous_exponent(cmdargs.out_dir_HD + "VelHelicityFluxAbs_Anonalous_Exponent_Zeta_p" + fig_file_type, p, hel_flux_zeta_p[1:], label_str = r"Velocity HelicityFlux; Shell Modell", fig_size = fig_size)
 		
 
 		###################################
 		##  Anomalous Exponent
 		###################################
-		fig   = plt.figure(figsize = (16, 8))
+		fig   = plt.figure(figsize = fig_size)
 		gs    = GridSpec(1, 1)
 		ax1   = fig.add_subplot(gs[0, 0])
 		mark_style = ['o','s','^','x','D','p']
@@ -250,30 +253,30 @@ if __name__ == '__main__':
 		ax1.plot(p, enrg_flux_zeta_p[1:], marker = mark_style[2], markerfacecolor = 'None', markersize = 5.0, markevery = 1, label = "Energy Flux Shell Model")
 		ax1.plot(p, hel_flux_zeta_p[1:], marker = mark_style[3], markerfacecolor = 'None', markersize = 5.0, markevery = 1, label = "Helicity lux Shell Model")
 		ax1.plot(p, ns_zeta_p[:len(zeta_p[1:])], marker = mark_style[4], markerfacecolor = 'None', markersize = 5.0, markevery = 1, label = "Navier Stokes")
+		ax1.plot(p, p/9.0 + 2.0 * (1.0 - np.power(2.0/3.0, p/3.0)), marker = mark_style[5], label = "She-Leveque Model; $p/9 + 2(1 - (2/3)^{p/3})$")
 		ax1.plot(p, p / 3, 'k--', label = "K41")
-		# ax1.set_xlim(2.0, 6.0)
+		ax1.set_xlim(2.0, num_pow)
 		ax1.set_xlabel(r"$p$")
 		ax1.set_ylabel(r"$\zeta_p$")
 		ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
 		ax1.legend()
-		plt.savefig(cmdargs.out_dir_HD + "VelCombined_Anonalous_Exponent_Zeta_p.png", bbox_inches='tight')
+		plt.savefig(cmdargs.out_dir_HD + "VelCombined_Anonalous_Exponent_Zeta_p" + fig_file_type, bbox_inches='tight')
 		plt.close()
 
 		###################################
 		##  Time Averaged Flux Spectra
 		###################################
-		fig = plt.figure(figsize = (16, 8))
+		fig = plt.figure(figsize = fig_size)
 		gs  = GridSpec(1, 2)
 		ax1 = fig.add_subplot(gs[0, 0])
-		ax1.plot(sys_msr_data.k, np.absolute(sys_msr_data.enrg_flux_t_avg), label = "Pre-Multiplied Time Averaged Energy Flux Spectrum")
+		ax1.plot(sys_msr_data.k, np.absolute(sys_msr_data.enrg_flux_t_avg))
 		ax1.set_xlabel(r"$k_n$")
 		ax1.set_ylabel(r"$k_n \mathcal{E}_n$")
 		ax1.set_xscale("log")
 		ax1.set_yscale("log")
-		ax1.legend()
 		ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
 		ax2 = fig.add_subplot(gs[0, 1])
-		ax2.plot(sys_msr_data.k, np.absolute(sys_msr_data.enrg_flux_t_avg) / sys_msr_data.k, label = "Time Averaged Energy Flux Spectrum")
+		ax2.plot(sys_msr_data.k, np.absolute(sys_msr_data.enrg_flux_t_avg) / sys_msr_data.k)
 		ax2.plot(sys_msr_data.k, sys_msr_data.k ** (-1), 'k--', label = "$k^{-1}$")
 		ax2.set_xlabel(r"$k_n$")
 		ax2.set_ylabel(r"$\mathcal{E}_n$")
@@ -281,11 +284,11 @@ if __name__ == '__main__':
 		ax2.set_yscale("log")
 		ax2.legend()
 		ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
-		plt.savefig(cmdargs.out_dir_HD + "Time_Averaged_Energy_Flux_Spectra.png", bbox_inches='tight')
+		plt.savefig(cmdargs.out_dir_HD + "Time_Averaged_Energy_Flux_Spectra" + fig_file_type, bbox_inches='tight')
 		plt.close()
 
 		if hasattr(sys_msr_data, "kin_hel_spec_t_avg"):
-			fig = plt.figure(figsize = (16, 8))
+			fig = plt.figure(figsize = fig_size)
 			gs  = GridSpec(1, 2)
 			ax1 = fig.add_subplot(gs[0, 0])
 			ax1.plot(sys_msr_data.k, sys_msr_data.kin_hel_spec_t_avg * sys_msr_data.k, label = "Pre-Multiplied Time Averaged Kinetic Helicity Flux Spectrum")
@@ -304,14 +307,14 @@ if __name__ == '__main__':
 			ax2.set_yscale("log")
 			ax2.legend()
 			ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
-			plt.savefig(cmdargs.out_dir_HD + "Time_Averaged_Kinetic_Helicity_Flux_Spectra.png", bbox_inches='tight')
+			plt.savefig(cmdargs.out_dir_HD + "Time_Averaged_Kinetic_Helicity_Flux_Spectra" + fig_file_type, bbox_inches='tight')
 			plt.close()
 
 
 		###################################
 		##  Time Averaged Spectra
 		###################################
-		fig = plt.figure(figsize = (16, 8))
+		fig = plt.figure(figsize = fig_size)
 		gs  = GridSpec(1, 1)
 		ax1 = fig.add_subplot(gs[0, 0])
 		ax1.plot(sys_msr_data.k, sys_msr_data.enrg_spec_t_avg, label = "Time Averaged Energy Spectrum")
@@ -321,13 +324,13 @@ if __name__ == '__main__':
 		ax1.set_yscale("log")
 		ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
 		ax1.legend()
-		plt.savefig(cmdargs.out_dir_HD + "Time_Averaged_Energy_Spectra.png", bbox_inches='tight')
+		plt.savefig(cmdargs.out_dir_HD + "Time_Averaged_Energy_Spectra" + fig_file_type, bbox_inches='tight')
 		plt.close()
 
 		###################################
 		##  Time Series of Energy Dissipation
-		################	###################
-		fig = plt.figure(figsize = (16, 8))
+		###################################
+		fig = plt.figure(figsize = fig_size)
 		gs  = GridSpec(1, 1)
 		ax1 = fig.add_subplot(gs[0, 0])
 		ax1.plot(sys_msr_data.time, sys_msr_data.tot_diss_u, label = "Total Energy Dissipation")
@@ -337,5 +340,5 @@ if __name__ == '__main__':
 		ax1.set_ylabel(r"$\epsilon(t)$")
 		ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
 		ax1.legend()
-		plt.savefig(cmdargs.out_dir_HD + "Energy_Dissipation.png", bbox_inches='tight')
+		plt.savefig(cmdargs.out_dir_HD + "Energy_Dissipation" + fig_file_type, bbox_inches='tight')
 		plt.close()

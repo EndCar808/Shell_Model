@@ -584,10 +584,16 @@ void PrintSimulationDetails(int argc, char** argv, double sim_time) {
 		fprintf(sim_file, "Adaptive Stepping: NO\n");
 		fprintf(sim_file, "Total Timesteps: %ld\n", sys_vars->num_t_steps);
 	}
-	
+
 	// Printing
 	fprintf(sim_file, "Data Saved Every: %d\n", sys_vars->print_every);
 	fprintf(sim_file, "Total Saving Steps: %ld\n", sys_vars->tot_save_steps);
+	
+	// Print simulation turbulence details
+	fprintf(sim_file, "\nEddy Turnover Time: %lf\n", sys_vars->eddy_turnover_time);
+	fprintf(sim_file, "Transient Time: %lf\n", sys_vars->trans_time / sys_vars->eddy_turnover_time);
+	fprintf(sim_file, "Saving Step: %lf\n\n", ((double)sys_vars->SAVE_EVERY * sys_vars->dt)/sys_vars->eddy_turnover_time);
+	fprintf(sim_file, "Sim Time: %lf\n\n", (sys_vars->T - sys_vars->trans_time)/sys_vars->eddy_turnover_time);
 	
 	// -------------------------------
 	// Print Execution Time to File

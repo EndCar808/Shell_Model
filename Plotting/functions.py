@@ -14,6 +14,7 @@ import h5py
 import sys
 import os
 import re
+import getopt
 from numba import njit
 import pyfftw
 from collections.abc import Iterable
@@ -65,8 +66,9 @@ def parse_cml(argv):
     try:
         ## Gather command line arguments
         opts, args = getopt.getopt(argv, "i:o:f:t:", ["plot"])
-    except:
+    except Exception as e:
         print("[" + tc.R + "ERROR" + tc.Rst + "] ---> Incorrect Command Line Arguements.")
+        print(e)
         sys.exit()
 
     ## Parse command line args
@@ -99,6 +101,41 @@ def parse_cml(argv):
 
     return cargs
 
+# @njit
+def compute_u_flux(data, delta, l):
+
+    u           = np.pad(data, (2, 2), 'constant')
+    hel_flux    = np.zeros((len(data,)))
+    energy_flux = np.zeros((len(data,))) 
+
+    for i in range(len(data)):
+        n = i + 2
+        ## Helicity Flux Term
+        hel_flux[i]    = np.imag(u[n + 2] * u[n + 1] * u[n] + (delta * l + 1) / l * u[n - 1] * u[n + 1] * u[n])
+        ## Kinetic Energy Flux Term
+        energy_flux[i] = np.imag(u[n + 2] * u[n + 1] * u[n] + (1. - delta) / l * u[n - 1] * u[n + 1] * u[n])
+
+    return energy_flux, hel_flux
+
+
+# @njit
+def compute_str_func(data, num_pow, delta, l):
+
+    u = np.pad(data, (2, 2), 'constant')
+
+    str_func_u           = np.zeros((len(data), num_pow))
+    str_func_u_enrg_flux = np.zeros((len(data), num_pow))
+    str_func_u_hel_flux  = np.zeros((len(data), num_pow))
+
+    for p in range(1, num_pow + 1):
+        for i in range(len(data)):
+            n = i + 2
+            ## Velocity Field Str Func
+            str_func_u[i, p - 1]           = np.power(np.absolute(u[n]), p)
+            str_func_u_hel_flux[i, p - 1]  = np.power(np.absolute(np.imag(u[n + 2] * u[n + 1] * u[n] + (delta * l + 1) / l * u[n - 1] * u[n + 1] * u[n])), p/3.0)
+            str_func_u_enrg_flux[i, p - 1] = np.power(np.absolute(np.imag(u[n + 2] * u[n + 1] * u[n] + (1. - delta) / l * u[n - 1] * u[n + 1] * u[n])), p/3.0)
+
+    return str_func_u, str_func_u_enrg_flux, str_func_u_hel_flux
 
 def compute_pdf_from_hist(counts, ranges, normed = False, remove_zeros = True):
 
@@ -272,6 +309,14 @@ def sim_data(input_dir, method = "default"):
                 ## Parse the initial condition
                 if line.startswith('Initial Conditions'):
                     data.u0 = str(line.split()[-1])
+
+                ## Parse the velocity interaction coefficient
+                if line.startswith('Velocity Interaction Coefficient'):
+                    data.EPS = float(line.split()[-1])
+
+                ## Parse the magnetic interaction coefficient
+                if line.startswith('Magnetic Interaction Coefficient'):
+                    data.EPS_M = float(line.split()[-1])
 
                 ## Parse the timestep
                 if line.startswith('Finishing Timestep'):
