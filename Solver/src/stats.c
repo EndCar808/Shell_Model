@@ -29,7 +29,6 @@
  */
 void ComputeStats(const long int iters, const long int save_data_indx) {
 
-	printf("HERESTATS\n");
 
 	// Initialize variables
 	int n;

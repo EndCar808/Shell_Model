@@ -153,7 +153,7 @@ void Solve(void) {
 		if (iters % sys_vars->SAVE_EVERY == 0) {
 
 			// Record System Measurables
-			ComputeSystemMeasurables(t, save_data_indx, RK_data);
+			ComputeSystemMeasurables(t, iters, save_data_indx, RK_data);
 
 			// printf("Eddy Turnover: %lf\n", pow(run_data->k[2] / K_0, 2.0 / 3.0));
 
@@ -232,7 +232,7 @@ void Solve(void) {
 		WriteDataToFile(t, iters, sys_vars->num_print_steps - 1);
 	}
 	// Compute System Measures on final state
-	ComputeSystemMeasurables(t, sys_vars->num_print_steps - 1, RK_data);
+	ComputeSystemMeasurables(t, iters, sys_vars->num_print_steps - 1, RK_data);
 
 	// Write the stats and system measures to file
 	FinalWriteAndCloseOutputFile(N, iters, sys_vars->num_print_steps - 1);

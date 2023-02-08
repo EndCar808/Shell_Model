@@ -27,10 +27,11 @@
 /**
  * Function to compute the system measurables such as energy, enstrophy, palinstrophy, helicity, energy and enstrophy dissipation rates, and spectra at once on the local processes for the current timestep
  * @param t 		The current time in the simulation
- * @param iter 		The index in the system arrays for the current timestep
+ * @param iter      The current iteration of the simulation
+ * @param save_iter	The index in the system arrays for the current timestep
  * @param RK_data 	Struct containing the integration varaiables needed for the nonlinear term function
  */
-void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_data) {
+void ComputeSystemMeasurables(double t, const long int iter, const long int save_iter, RK_data_struct* RK_data) {
 
 	// Initialize variables
     const long int N = sys_vars->N; 
@@ -51,17 +52,17 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
 
     // Record the initial time
     #if defined(__TIME)
-    run_data->time[iter] = t;
+    run_data->time[save_iter] = t;
     #endif
 
     // If adaptive stepping check if within memory limits
-    if ((iter >= sys_vars->num_print_steps) && (iter % 100 == 0)) {
+    if ((save_iter >= sys_vars->num_print_steps) && (save_iter % 100 == 0)) {
         // Print warning to screen if we have exceeded the memory limits for the system measurables arrays
-        printf("\n["MAGENTA"WARNING"RESET"] --- Unable to write system measures at Indx: [%ld] t: [%lf] ---- Number of intergration steps is now greater then memory allocated\n", iter, t);
+        printf("\n["MAGENTA"WARNING"RESET"] --- Unable to write system measures at Indx: [%ld] t: [%lf] ---- Number of intergration steps is now greater then memory allocated\n", save_iter, t);
     }
 
     // Updated system measures counter for averaging over time
-    if (iter >= (long int)round(sys_vars->TRANS_ITERS_FRAC * sys_vars->num_print_steps)) {
+    if (iter >= sys_vars->trans_iters) {
         run_data->num_sys_msr_steps++;
     }
     else {
@@ -71,34 +72,34 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
     // ------------------------------------
     // Initialize Measurables
     // ------------------------------------
-    if (iter < sys_vars->num_print_steps) {
+    if (save_iter < sys_vars->num_print_steps) {
         // Initialize totals
         #if defined(__SYS_MEASURES)
-        run_data->tot_energy[iter]    = 0.0;
-        run_data->tot_hel_u[iter]     = 0.0;
-        run_data->tot_kin_enrg[iter]  = 0.0;
-        run_data->tot_diss_u[iter]    = 0.0;
+        run_data->tot_energy[save_iter]    = 0.0;
+        run_data->tot_hel_u[save_iter]     = 0.0;
+        run_data->tot_kin_enrg[save_iter]  = 0.0;
+        run_data->tot_diss_u[save_iter]    = 0.0;
         #if defined(__ELSASSAR_MHD)
-        run_data->tot_pseudo_enrg_plus[iter]  = 0.0;
-        run_data->tot_pseudo_enrg_minus[iter] = 0.0;
+        run_data->tot_pseudo_enrg_plus[save_iter]  = 0.0;
+        run_data->tot_pseudo_enrg_minus[save_iter] = 0.0;
         #endif
         #if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
-        run_data->tot_mag_enrg[iter]  = 0.0;
-        run_data->tot_hel_b[iter]     = 0.0;
-        run_data->tot_cross_hel[iter] = 0.0;
-        run_data->tot_diss_b[iter]    = 0.0;
+        run_data->tot_mag_enrg[save_iter]  = 0.0;
+        run_data->tot_hel_b[save_iter]     = 0.0;
+        run_data->tot_cross_hel[save_iter] = 0.0;
+        run_data->tot_diss_b[save_iter]    = 0.0;
         #endif
-        run_data->u_charact[iter] = 0.0;
-        run_data->int_scale[iter] = 0.0;
+        run_data->u_charact[save_iter] = 0.0;
+        run_data->int_scale[save_iter] = 0.0;
         #endif
         // Initialize the Total energy variation terms
         #if defined(__TOT_ENRG_FLUX)
-        run_data->tot_energy_flux[iter]    = 0.0;
-        run_data->tot_energy_diss_u[iter]  = 0.0;
-        run_data->tot_energy_input_u[iter] = 0.0;
+        run_data->tot_energy_flux[save_iter]    = 0.0;
+        run_data->tot_energy_diss_u[save_iter]  = 0.0;
+        run_data->tot_energy_input_u[save_iter] = 0.0;
         #if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
-        run_data->tot_energy_diss_b[iter]  = 0.0;
-        run_data->tot_energy_input_b[iter] = 0.0;
+        run_data->tot_energy_diss_b[save_iter]  = 0.0;
+        run_data->tot_energy_input_b[save_iter] = 0.0;
         #endif
         #endif
     }
@@ -158,7 +159,7 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
         // Get tmp index
         n = i + 2;
 
-        if (iter < sys_vars->num_print_steps) {
+        if (save_iter < sys_vars->num_print_steps) {
             //-------------- System Measures
             #if defined(__SYS_MEASURES)
             // Compute Velocity helicity k factors
@@ -169,21 +170,21 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
               k_fac = pow(run_data->k[n], -log_lambda(fabs(sys_vars->EPS - 1.0) / 2.0));  
             }
             // Update sum for totals
-            run_data->tot_energy[iter]    += cabs(run_data->u[n] * conj(run_data->u[n]));
-            run_data->tot_kin_enrg[iter]  += cabs(run_data->u[n] * conj(run_data->u[n]));
-            run_data->tot_hel_u[iter]     += pow(sgn(sys_vars->EPS - 1.0), i) * cabs(run_data->u[n] * conj(run_data->u[n])) * k_fac;
-            run_data->int_scale[iter]     +=  cabs(run_data->u[n] * conj(run_data->u[n])) / (i + 1);
-            run_data->tot_diss_u[iter]    += run_data->k[n] * run_data->k[n] * cabs(run_data->u[n] * run_data->u[n]);
+            run_data->tot_energy[save_iter]    += cabs(run_data->u[n] * conj(run_data->u[n]));
+            run_data->tot_kin_enrg[save_iter]  += cabs(run_data->u[n] * conj(run_data->u[n]));
+            run_data->tot_hel_u[save_iter]     += pow(sgn(sys_vars->EPS - 1.0), i) * cabs(run_data->u[n] * conj(run_data->u[n])) * k_fac;
+            run_data->int_scale[save_iter]     +=  cabs(run_data->u[n] * conj(run_data->u[n])) / (i + 1);
+            run_data->tot_diss_u[save_iter]    += run_data->k[n] * run_data->k[n] * cabs(run_data->u[n] * run_data->u[n]);
             #if defined(__ELSASSAR_MHD)
-            run_data->tot_pseudo_enrg_plus[iter]  += cabs(run_data->z_plus[n] * conj(run_data->z_plus[n]));
-            run_data->tot_pseudo_enrg_minus[iter] +=  cabs(run_data->z_minus[n] * conj(run_data->z_minus[n]));
+            run_data->tot_pseudo_enrg_plus[save_iter]  += cabs(run_data->z_plus[n] * conj(run_data->z_plus[n]));
+            run_data->tot_pseudo_enrg_minus[save_iter] +=  cabs(run_data->z_minus[n] * conj(run_data->z_minus[n]));
             #endif
             #if defined(__MAGNETO)
-            run_data->tot_energy[iter]    += cabs(run_data->b[n] * conj(run_data->b[n]));
-            run_data->tot_mag_enrg[iter]  += cabs(run_data->b[n] * conj(run_data->b[n]));
-            run_data->tot_hel_b[iter]     += pow(sgn(sys_vars->EPS - 1.0), i) * cabs(run_data->b[n] * conj(run_data->b[n])) / run_data->k[n];
-            run_data->tot_cross_hel[iter] += creal(run_data->u[n] * conj(run_data->b[n]));
-            run_data->tot_diss_b[iter]    += run_data->k[n] * run_data->k[n] * cabs(run_data->b[n] * conj(run_data->b[n]));
+            run_data->tot_energy[save_iter]    += cabs(run_data->b[n] * conj(run_data->b[n]));
+            run_data->tot_mag_enrg[save_iter]  += cabs(run_data->b[n] * conj(run_data->b[n]));
+            run_data->tot_hel_b[save_iter]     += pow(sgn(sys_vars->EPS - 1.0), i) * cabs(run_data->b[n] * conj(run_data->b[n])) / run_data->k[n];
+            run_data->tot_cross_hel[save_iter] += creal(run_data->u[n] * conj(run_data->b[n]));
+            run_data->tot_diss_b[save_iter]    += run_data->k[n] * run_data->k[n] * cabs(run_data->b[n] * conj(run_data->b[n]));
             #endif
             #endif
 
@@ -272,18 +273,18 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
 
             //-------------- Total Energy Flux and Dissipation
             #if defined(__TOT_ENRG_FLUX)
-            run_data->tot_energy_flux[iter]    += run_data->energy_flux[i];
-            run_data->tot_energy_diss_u[iter]  += run_data->energy_diss_u[i];
-            run_data->tot_energy_input_u[iter] += run_data->energy_input_u[i];
+            run_data->tot_energy_flux[save_iter]    += run_data->energy_flux[i];
+            run_data->tot_energy_diss_u[save_iter]  += run_data->energy_diss_u[i];
+            run_data->tot_energy_input_u[save_iter] += run_data->energy_input_u[i];
             #if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
-            run_data->tot_energy_diss_b[iter]  += run_data->energy_diss_b[i];
-            run_data->tot_energy_input_b[iter] += run_data->energy_input_b[i];
+            run_data->tot_energy_diss_b[save_iter]  += run_data->energy_diss_b[i];
+            run_data->tot_energy_input_b[save_iter] += run_data->energy_input_b[i];
             #endif
             #endif
 
 
             // Only begin time averaging after transient integration time has passed
-            if (t >= sys_vars->trans_time) {
+            if (iter >= sys_vars->trans_iters) {
                 
                 //-------------- Time Averaged Energy Flux
                 #if defined(__ENRG_FLUX_AVG)
@@ -291,7 +292,7 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
                 #endif
 
                 //-------------- Time Averaged Helicity Flux
-                #if defined(__ENRG_FLUX_AVG)
+                #if defined(__KIN_HEL_FLUX_AVG)
                 run_data->kin_hel_flux_t_avg[i] += cimag(- (sys_vars->EPS * sys_vars->Lambda - sgn(sys_vars->EPS - 1.0)) / pow(sys_vars->Lambda, 2.0) * run_data->u[n - 1] * run_data->u[n] * run_data->u[n + 1] + run_data->u[n] * run_data->u[n + 1] * run_data->u[n + 2]);
                 #endif
 
@@ -320,7 +321,7 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
                 
                 #if defined(__KIN_ENRG_SPECT_AVG) 
                 // Compute the kinetic energy spectrum
-                run_data->kin_enrg_spect_t_avg[i] = cabs(run_data->u[n] * conj(run_data->u[n])); 
+                run_data->kin_enrg_spect_t_avg[i] += cabs(run_data->u[n] * conj(run_data->u[n])); 
                 #endif 
                 
                 #if defined(__MAG_ENRG_SPECT_AVG) && (defined(__MAGNETO) || defined(__ELSASSAR_MHD))
@@ -341,7 +342,7 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
                 run_data->a_n_t_avg[i] += cabs(run_data->u[n] * conj(run_data->u[n]));
                 #endif
 
-                #if defined(__MAG_AMP_AVG) && defined(__MAGNETO)
+                #if defined(__MAG_AMP_AVG) && (defined(__MAGNETO) || defined(__ELSASSAR_MHD))
                 run_data->b_n_t_avg[i] += cabs(run_data->b[n] * conj(run_data->b[n]));
                 #endif
             }
@@ -353,48 +354,48 @@ void ComputeSystemMeasurables(double t, const long int iter, RK_data_struct* RK_
     // Normalize Measureables 
     // ------------------------------------ 
     #if defined(__SYS_MEASURES)
-    if (iter < sys_vars->num_print_steps) {
-        run_data->tot_energy[iter]   *= 0.5;
-        run_data->tot_kin_enrg[iter] *= 0.5;
-        run_data->tot_hel_u[iter]    *= 0.5;
+    if (save_iter < sys_vars->num_print_steps) {
+        run_data->tot_energy[save_iter]   *= 0.5;
+        run_data->tot_kin_enrg[save_iter] *= 0.5;
+        run_data->tot_hel_u[save_iter]    *= 0.5;
         #if defined(__ELSASSAR_MHD)
-        run_data->tot_pseudo_enrg_plus[iter]  *= 0.25;
-        run_data->tot_pseudo_enrg_minus[iter] *= 0.25;
+        run_data->tot_pseudo_enrg_plus[save_iter]  *= 0.25;
+        run_data->tot_pseudo_enrg_minus[save_iter] *= 0.25;
         #endif
         #if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
-        run_data->tot_mag_enrg[iter]  *= 0.5;
-        run_data->tot_hel_b[iter]     *= 0.5;
-        run_data->tot_cross_hel[iter] *= 0.5;
+        run_data->tot_mag_enrg[save_iter]  *= 0.5;
+        run_data->tot_hel_b[save_iter]     *= 0.5;
+        run_data->tot_cross_hel[save_iter] *= 0.5;
         #endif
 
         // Get the characteristic velocity
-        run_data->u_charact[iter] = sqrt(2.0 * run_data->tot_energy[iter] / 3.0);
+        run_data->u_charact[save_iter] = sqrt(2.0 * run_data->tot_energy[save_iter] / 3.0);
         
         // Compute the integral length scale
-        run_data->int_scale[iter] *= 3.0 * M_PI / (4.0 * run_data->tot_energy[iter] / (2.0 * M_PI));
+        run_data->int_scale[save_iter] *= 3.0 * M_PI / (4.0 * run_data->tot_energy[save_iter] / (2.0 * M_PI));
 
         #if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
         // Compute the Taylor Micro Scale
-        run_data->taylor_micro_scale[iter] = sqrt(10.0 * (sys_vars->NU + sys_vars->ETA) * run_data->tot_energy[iter] / (run_data->tot_diss_u[iter] + run_data->tot_diss_b[iter]));
+        run_data->taylor_micro_scale[save_iter] = sqrt(10.0 * (sys_vars->NU + sys_vars->ETA) * run_data->tot_energy[save_iter] / (run_data->tot_diss_u[save_iter] + run_data->tot_diss_b[save_iter]));
         #else 
         // Compute the Taylor Micro Scale
-        run_data->taylor_micro_scale[iter] = sqrt(10.0 * sys_vars->NU * run_data->tot_energy[iter] / run_data->tot_diss_u[iter]);
+        run_data->taylor_micro_scale[save_iter] = sqrt(10.0 * sys_vars->NU * run_data->tot_energy[save_iter] / run_data->tot_diss_u[save_iter]);
         #endif
         
         // Compute the Reynolds No.
-        run_data->reynolds_no[iter] = run_data->u_charact[iter] * run_data->int_scale[iter] / sys_vars->NU;
+        run_data->reynolds_no[save_iter] = run_data->u_charact[save_iter] * run_data->int_scale[save_iter] / sys_vars->NU;
 
         #if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
         // Compute the Kolmogorov Lenght Scale
-        run_data->kolmogorov_scale[iter] = pow((pow(sys_vars->NU, 3.0) + pow(sys_vars->NU, 3.0)) / (run_data->tot_diss_u[iter] + run_data->tot_diss_b[iter]), 1.0 / 4.0);
+        run_data->kolmogorov_scale[save_iter] = pow((pow(sys_vars->NU, 3.0) + pow(sys_vars->NU, 3.0)) / (run_data->tot_diss_u[save_iter] + run_data->tot_diss_b[save_iter]), 1.0 / 4.0);
         #else
         // Compute the Kolmogorov Lenght Scale
-        run_data->kolmogorov_scale[iter] = pow(pow(sys_vars->NU, 3.0) / run_data->tot_diss_u[iter], 1.0 / 4.0);
+        run_data->kolmogorov_scale[save_iter] = pow(pow(sys_vars->NU, 3.0) / run_data->tot_diss_u[save_iter], 1.0 / 4.0);
         #endif
 
         // Eddy turnover time -> max of l / U during the transient iterations
-        if (iter <= 1) {            
-            // sys_vars->eddy_turnover_time = fmax(sys_vars->eddy_turnover_time, run_data->int_scale[iter] / run_data->u_charact[iter]);
+        if (save_iter <= 1) {            
+            // sys_vars->eddy_turnover_time = fmax(sys_vars->eddy_turnover_time, run_data->int_scale[save_iter] / run_data->u_charact[save_iter]);
             sys_vars->tmp_eddy_turn_avg += 1.0 /(run_data->k[2] * cabs(run_data->u[2]));
             sys_vars->eddy_turnover_time = sys_vars->tmp_eddy_turn_avg / sys_vars->num_sys_msr_before_trans;                
         }
@@ -610,7 +611,7 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
         exit(1);
     }
     #endif
-    #if defined(__KIN_ENRG_SPECT_AVG) && (defined(__ELSASSAR_MHD) || defined(__MAGNETO))
+    #if defined(__MAG_ENRG_SPECT_AVG) && (defined(__ELSASSAR_MHD) || defined(__MAGNETO))
     // Allocate time averaged magnetic energy spectrum
     run_data->mag_enrg_spect_t_avg = (double* )malloc(sizeof(double) * sys_vars->N);
     if (run_data->mag_enrg_spect_t_avg == NULL) {
@@ -762,7 +763,7 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
     // ----------------------------
     // Get Measurables of the ICs
     // ----------------------------
-    ComputeSystemMeasurables(0.0, 0, RK_data);
+    ComputeSystemMeasurables(0.0, 0, 0, RK_data);
 }
 /**
  * Wrapper Function to write the system measurables to file and the end of the simulation
