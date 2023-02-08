@@ -293,7 +293,7 @@ void ComputeSystemMeasurables(double t, const long int iter, const long int save
 
                 //-------------- Time Averaged Helicity Flux
                 #if defined(__KIN_HEL_FLUX_AVG)
-                run_data->kin_hel_flux_t_avg[i] += cimag(- (sys_vars->EPS * sys_vars->Lambda - sgn(sys_vars->EPS - 1.0)) / pow(sys_vars->Lambda, 2.0) * run_data->u[n - 1] * run_data->u[n] * run_data->u[n + 1] + run_data->u[n] * run_data->u[n + 1] * run_data->u[n + 2]);
+                run_data->kin_hel_flux_t_avg[i] += cimag((sgn(sys_vars->EPS - 1.0) - sys_vars->EPS * sys_vars->Lambda) / pow(sys_vars->Lambda, 2.0) * run_data->u[n - 1] * run_data->u[n] * run_data->u[n + 1] + run_data->u[n] * run_data->u[n + 1] * run_data->u[n + 2]);
                 #endif
 
                 //-------------- Time Averaged Pseudo Energy Fluxes
@@ -339,11 +339,11 @@ void ComputeSystemMeasurables(double t, const long int iter, const long int save
 
                 //-------------- Time Averaged Amplitudes
                 #if defined(__VEL_AMP_AVG)
-                run_data->a_n_t_avg[i] += cabs(run_data->u[n] * conj(run_data->u[n]));
+                run_data->a_n_t_avg[i] += cabs(run_data->u[n]);
                 #endif
 
                 #if defined(__MAG_AMP_AVG) && (defined(__MAGNETO) || defined(__ELSASSAR_MHD))
-                run_data->b_n_t_avg[i] += cabs(run_data->b[n] * conj(run_data->b[n]));
+                run_data->b_n_t_avg[i] += cabs(run_data->b[n]);
                 #endif
             }
         }

@@ -592,7 +592,7 @@ void PrintSimulationDetails(int argc, char** argv, double sim_time) {
 	// Print simulation turbulence details
 	fprintf(sim_file, "\nEddy Turnover Time: %lf\n", sys_vars->eddy_turnover_time);
 	fprintf(sim_file, "Transient Time: %lf\n", sys_vars->trans_time / sys_vars->eddy_turnover_time);
-	fprintf(sim_file, "Saving Step: %lf\n\n", ((double)sys_vars->SAVE_EVERY * sys_vars->dt)/sys_vars->eddy_turnover_time);
+	fprintf(sim_file, "Saving Step: %lf\n", ((double)sys_vars->SAVE_EVERY * sys_vars->dt)/sys_vars->eddy_turnover_time);
 	fprintf(sim_file, "Sim Time: %lf\n\n", (sys_vars->T - sys_vars->trans_time)/sys_vars->eddy_turnover_time);
 	
 	// -------------------------------

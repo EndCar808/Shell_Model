@@ -101,41 +101,39 @@ def parse_cml(argv):
 
     return cargs
 
-# @njit
-def compute_u_flux(data, delta, l):
+@njit
+def compute_u_flux(data, N, delta, l):
 
-    u           = np.pad(data, (2, 2), 'constant')
-    hel_flux    = np.zeros((len(data,)))
-    energy_flux = np.zeros((len(data,))) 
+    hel_flux    = np.zeros((N,))
+    energy_flux = np.zeros((N,)) 
 
-    for i in range(len(data)):
+    for i in range(N):
         n = i + 2
         ## Helicity Flux Term
-        hel_flux[i]    = np.imag(u[n + 2] * u[n + 1] * u[n] + (delta * l + 1) / l * u[n - 1] * u[n + 1] * u[n])
+        hel_flux[i]    = np.imag(data[n + 2] * data[n + 1] * data[n] - (delta * l + 1) / (l**2) * data[n - 1] * data[n + 1] * data[n])
         ## Kinetic Energy Flux Term
-        energy_flux[i] = np.imag(u[n + 2] * u[n + 1] * u[n] + (1. - delta) / l * u[n - 1] * u[n + 1] * u[n])
+        energy_flux[i] = np.imag(data[n + 2] * data[n + 1] * data[n] + (1. - delta) / l * data[n - 1] * data[n + 1] * data[n])
 
     return energy_flux, hel_flux
 
 
-# @njit
-def compute_str_func(data, num_pow, delta, l):
+@njit
+def compute_str_func(data, N, num_pow, delta, l):
 
-    u = np.pad(data, (2, 2), 'constant')
-
-    str_func_u           = np.zeros((len(data), num_pow))
-    str_func_u_enrg_flux = np.zeros((len(data), num_pow))
-    str_func_u_hel_flux  = np.zeros((len(data), num_pow))
+    str_func_u           = np.zeros((N, num_pow))
+    str_func_u_enrg_flux = np.zeros((N, num_pow))
+    str_func_u_hel_flux  = np.zeros((N, num_pow))
 
     for p in range(1, num_pow + 1):
-        for i in range(len(data)):
+        for i in range(N):
             n = i + 2
             ## Velocity Field Str Func
-            str_func_u[i, p - 1]           = np.power(np.absolute(u[n]), p)
-            str_func_u_hel_flux[i, p - 1]  = np.power(np.absolute(np.imag(u[n + 2] * u[n + 1] * u[n] + (delta * l + 1) / l * u[n - 1] * u[n + 1] * u[n])), p/3.0)
-            str_func_u_enrg_flux[i, p - 1] = np.power(np.absolute(np.imag(u[n + 2] * u[n + 1] * u[n] + (1. - delta) / l * u[n - 1] * u[n + 1] * u[n])), p/3.0)
+            str_func_u[i, p - 1]           = np.power(np.absolute(data[n]), p)
+            str_func_u_hel_flux[i, p - 1]  = np.power(np.absolute(np.imag(data[n + 2] * data[n + 1] * data[n] - (delta * l + 1) / (l**2) * data[n - 1] * data[n + 1] * data[n])), p/3.0)
+            str_func_u_enrg_flux[i, p - 1] = np.power(np.absolute(np.imag(data[n + 2] * data[n + 1] * data[n] + (1. - delta) / l * data[n - 1] * data[n + 1] * data[n])), p/3.0)
 
     return str_func_u, str_func_u_enrg_flux, str_func_u_hel_flux
+
 
 def compute_pdf_from_hist(counts, ranges, normed = False, remove_zeros = True):
 
@@ -674,6 +672,8 @@ def import_sys_msr_data(input_file, sim_data, method = "default"):
                     self.mag_enrg_spec_t_avg = f["TimeAveragedMagneticEnergySpectrum"][:]
                 if 'TimeAveragedEnergyFlux' in list(f.keys()):
                     self.enrg_flux_t_avg = f["TimeAveragedEnergyFlux"][:]
+                if 'TimeAveragedKineticHelicityFlux' in list(f.keys()):
+                    self.hel_flux_t_avg = f["TimeAveragedKineticHelicityFlux"][:]
                 if 'TimeAveragedPseudoEnergyFluxPlus' in list(f.keys()):
                     self.pseudo_enrg_flux_plus_t_avg = f["TimeAveragedPseudoEnergyFluxPlus"][:]
                 if 'TimeAveragedPseudoEnergyFluxMinus' in list(f.keys()):
