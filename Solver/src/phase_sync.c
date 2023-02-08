@@ -24,6 +24,8 @@
 // ---------------------------------------------------------------------
 void ComputePhaseSyncData(const long int iter) {
 
+	printf("HEREREERREERERE\n");
+
 	// Initialize variables
 	int n;
 	int N              = sys_vars->N;

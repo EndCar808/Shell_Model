@@ -16,7 +16,7 @@ ifeq ($(OS), Ubuntu)
 	ifeq ($(MACH_NAME), DESKTOP-SS58OJO)
 		# LAPTOPL: WSL 2
 		GCC := gcc
-		CCFLAG := -O3 -W -Wall -g
+		CCFLAG := -O3
 		LIBFLAG := -lm -lhdf5 -lhdf5_hl
 		GSLFLAG := -lgsl -lgslcblas
 		# LAPACKFLAG := -llapacke -llapack -lblas -lgfortran
@@ -25,7 +25,7 @@ ifeq ($(OS), Ubuntu)
 	else ifeq ($(MACH_NAME), turbo)
 		# TURBO
 		GCC := gcc
-		CCFLAG := -O3 -W -Wall -g
+		CCFLAG := -O3
 		LIBFLAG := -lm -lhdf5 -lhdf5_hl
 		GSLFLAG := -lgsl -lgslcblas
 		# LAPACKFLAG := -llapacke -llapack -lblas -lgfortran
@@ -34,7 +34,7 @@ ifeq ($(OS), Ubuntu)
 	else
 		# CHIRP
 		GCC := gcc
-		CCFLAG := -O3 -W -Wall -g
+		CCFLAG := -O3
 		LIBFLAG := -lm -lhdf5 -lhdf5_hl
 		GSLFLAG := -lgsl -lgslcblas
 		# LAPACKFLAG := -llapacke -llapack -lblas -lgfortran
@@ -85,14 +85,14 @@ PHASE_ONLY_FXD_AMP_FLAGS := -D__PHASE_ONLY_FXD_AMP -D__RK4 -D__VEL_AMP -D__VEL_P
 
 # Dataset Flags to be passed to the solver
 DSET_FLAGS = -D__SYS_MEASURES 
-DSET_FLAGS += -D__CONSERVED_PHASES -D__PHASE_SYNC -D__PHASE_SYNC_STATS 
-DSET_FLAGS += -D__STATS 
-DSET_FLAGS += -D__ENRG_SPECT_AVG -D__DISS_SPECT_AVG -D__TOT_ENRG_FLUX -D__ENRG_FLUX_AVG -D__VEL_AMP_AVG -D__MAG_AMP_AVG
-DSET_FLAGS += -D__KIN_ENRG_SPECT_AVG -D__MAG_ENRG_SPECT_AVG -D__PSEUDO_ENRG_FLUX_AVG
-DSET_FLAGS += -D__ENRG_SPECT -D__DISS_SPECT -D__ENRG_FLUX -D__KIN_ENRG_SPECT -D__MAG_ENRG_SPECT
-DSET_FLAGS += -D__FORCING
-DSET_FLAGS += -D__VEL 
-DSET_FLAGS += -D__MAG
+# DSET_FLAGS += -D__CONSERVED_PHASES -D__PHASE_SYNC -D__PHASE_SYNC_STATS 
+# DSET_FLAGS += -D__STATS 
+# DSET_FLAGS += -D__ENRG_SPECT_AVG -D__DISS_SPECT_AVG -D__TOT_ENRG_FLUX -D__ENRG_FLUX_AVG -D__VEL_AMP_AVG -D__MAG_AMP_AVG
+# DSET_FLAGS += -D__KIN_ENRG_SPECT_AVG -D__MAG_ENRG_SPECT_AVG -D__PSEUDO_ENRG_FLUX_AVG
+# DSET_FLAGS += -D__ENRG_SPECT -D__DISS_SPECT -D__ENRG_FLUX -D__KIN_ENRG_SPECT -D__MAG_ENRG_SPECT
+# DSET_FLAGS += -D__FORCING
+# DSET_FLAGS += -D__VEL 
+# DSET_FLAGS += -D__MAG
  
 # Flags to be passed to the solver for testing
 TEST_FLAGS    := -D__MAGNETO -D__TESTING -D__DEBUG #-D__ADAPTIVE_STEP -D__CFL_STEP -D__TRANSIENTS

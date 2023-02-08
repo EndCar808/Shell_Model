@@ -93,7 +93,8 @@ if __name__ == '__main__':
 		plt.close()
 
 		## Create average amp field
-		u_avg_amp = avg_amp * np.exp(1j * np.angle(run_data.u))
+		u_avg_amp_all = sys_msr_data.a_n_t_avg * np.exp(1j * np.angle(run_data.u))
+		u_avg_amp     = avg_amp * np.exp(1j * np.angle(run_data.u))
 		print(u_avg_amp.shape)
 
 		## Compute PDFs
@@ -101,11 +102,14 @@ if __name__ == '__main__':
 		gs  = GridSpec(1, 1)
 		ax1 = fig.add_subplot(gs[0, 0])
 		for j, i in enumerate([5 - 1, 10 - 1, 15 - 1, 20 - 1]):
-			pdf, centres = compute_pdf(np.real(u_avg_amp[:, i]), nbins = 500, normed = False)
+			pdf, centres 		 = compute_pdf(np.real(u_avg_amp[:, i]), nbins = 500, normed = False)
+			pdf_all, centres_all = compute_pdf(np.real(u_avg_amp_all[:, i]), nbins = 500, normed = False)
 			if i == -1:
 				ax1.plot(centres, pdf, label = "$n = {}$".format(sys_vars.N))    
+				ax1.plot(centres_all, pdf_all, label = "All; $n = {}$".format(sys_vars.N))    
 			else:
 				ax1.plot(centres, pdf, label = "$n = {}$".format(i + 1))    
+				ax1.plot(centres_all, pdf_all, label = "All; $n = {}$".format(i + 1))    
 		ax1.set_xlabel(r"$\Re u_n / \langle (\Re u_n)^2 \rangle^{1/2}$")
 		ax1.set_ylabel(r"PDF")
 		ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
@@ -120,20 +124,32 @@ if __name__ == '__main__':
 		str_func_avg_u           = np.zeros((sys_vars.N, stats_data.vel_str_func.shape[-1]))
 		str_func_avg_u_enrg_flux = np.zeros((sys_vars.N, stats_data.vel_str_func.shape[-1]))
 		str_func_avg_u_hel_flux  = np.zeros((sys_vars.N, stats_data.vel_str_func.shape[-1]))
+		avg_u_enrg_flux_all          = np.zeros((sys_vars.N,))
+		avg_u_hel_flux_all           = np.zeros((sys_vars.N,))
+		str_func_avg_u_all           = np.zeros((sys_vars.N, stats_data.vel_str_func.shape[-1]))
+		str_func_avg_u_enrg_flux_all = np.zeros((sys_vars.N, stats_data.vel_str_func.shape[-1]))
+		str_func_avg_u_hel_flux_all  = np.zeros((sys_vars.N, stats_data.vel_str_func.shape[-1]))
 		num_t_data = sys_vars.ndata
 		for t in range(num_t_data):
 			print(t)
 
 			## Get fluxes
 			tmp_enrg, tmp_hel = compute_u_flux(u_avg_amp[t, :], sys_vars.EPS, sys_vars.Lambda)
-			avg_u_enrg_flux += tmp_enrg
-			avg_u_hel_flux += tmp_hel
+			avg_u_enrg_flux   += tmp_enrg
+			avg_u_hel_flux    += tmp_hel
+			tmp_enrg, tmp_hel   = compute_u_flux(u_avg_amp_all[t, :], sys_vars.EPS, sys_vars.Lambda)
+			avg_u_enrg_flux_all += tmp_enrg
+			avg_u_hel_flux_all  += tmp_hel
 
 			## Get Structure Functions
 			tmp_u, tmp_enrg_flux, tmp_hel_flux = compute_str_func(u_avg_amp[t, :], stats_data.vel_str_func.shape[-1], sys_vars.EPS, sys_vars.Lambda)
-			str_func_avg_u += tmp_u
-			str_func_avg_u_enrg_flux += tmp_enrg_flux
-			str_func_avg_u_hel_flux += tmp_hel_flux
+			str_func_avg_u                     += tmp_u
+			str_func_avg_u_enrg_flux           += tmp_enrg_flux
+			str_func_avg_u_hel_flux            += tmp_hel_flux
+			tmp_u, tmp_enrg_flux, tmp_hel_flux = compute_str_func(u_avg_amp_all[t, :], stats_data.vel_str_func.shape[-1], sys_vars.EPS, sys_vars.Lambda)
+			str_func_avg_u_all                 += tmp_u
+			str_func_avg_u_enrg_flux_all       += tmp_enrg_flux
+			str_func_avg_u_hel_flux_all        += tmp_hel_flux
 
 		## Average
 		avg_u_enrg_flux          /= num_t_data
@@ -141,7 +157,11 @@ if __name__ == '__main__':
 		str_func_avg_u           /= num_t_data
 		str_func_avg_u_enrg_flux /= num_t_data
 		str_func_avg_u_hel_flux  /= num_t_data
-
+		avg_u_enrg_flux_all          /= num_t_data
+		avg_u_hel_flux_all           /= num_t_data
+		str_func_avg_u_all           /= num_t_data
+		str_func_avg_u_enrg_flux_all /= num_t_data
+		str_func_avg_u_hel_flux_all  /= num_t_data
 		mark_style = ['o','s','^','x','D','p', '>', '<']
 
 		## Plot Time Averaged Flux Scaling
@@ -150,6 +170,7 @@ if __name__ == '__main__':
 		ax1 = fig.add_subplot(gs[0, 0])
 		ax1.plot(sys_msr_data.k, np.absolute(sys_msr_data.enrg_flux_t_avg), label = "Pre-Multiplied Time Averaged Energy Flux Spectrum")
 		ax1.plot(sys_msr_data.k, sys_msr_data.k * np.absolute(avg_u_enrg_flux), marker = mark_style[1], label = "Averaged Amps")
+		ax1.plot(sys_msr_data.k, sys_msr_data.k * np.absolute(avg_u_enrg_flux_all), marker = mark_style[1], label = "All Averaged Amps")
 		ax1.set_xlabel(r"$k_n$")
 		ax1.set_ylabel(r"$k_n \mathcal{E}_n$")
 		ax1.set_xscale("log")
@@ -159,6 +180,7 @@ if __name__ == '__main__':
 		ax2 = fig.add_subplot(gs[0, 1])
 		ax2.plot(sys_msr_data.k, np.absolute(sys_msr_data.enrg_flux_t_avg) / sys_msr_data.k, label = "Time Averaged Energy Flux Spectrum")
 		ax2.plot(sys_msr_data.k, np.absolute(avg_u_enrg_flux), marker = mark_style[1], label = "Averaged Amps")
+		ax2.plot(sys_msr_data.k, np.absolute(avg_u_enrg_flux_all), marker = mark_style[1], label = "All Averaged Amps")
 		ax2.plot(sys_msr_data.k, sys_msr_data.k ** (-1), 'k--', label = "$k^{-1}$")
 		ax2.set_xlabel(r"$k_n$")
 		ax2.set_ylabel(r"$\mathcal{E}_n$")
@@ -177,6 +199,7 @@ if __name__ == '__main__':
 		p = 2
 		ax1.plot(sys_msr_data.k, stats_data.vel_str_func[:, p - 1], label = "Full Field - p = {}".format(p))
 		ax1.plot(sys_msr_data.k, str_func_avg_u[:, p - 1], marker = mark_style[1], label = "Averaged Amps - p = {}".format(p))
+		ax1.plot(sys_msr_data.k, str_func_avg_u_all[:, p - 1], marker = mark_style[1], label = "All Averaged Amps - p = {}".format(p))
 		ax1.set_xlabel(r"$k_n$")
 		ax1.set_ylabel(r"$\ln \mathcal{S}_p (|u_n|)$")
 		ax1.set_xscale("log")
@@ -188,6 +211,7 @@ if __name__ == '__main__':
 		ax2 = fig.add_subplot(gs[0, 1])
 		ax2.plot(sys_msr_data.k, stats_data.vel_str_func[:, p - 1], label = "Full Field - p = {}".format(p))
 		ax2.plot(sys_msr_data.k, str_func_avg_u[:, p - 1], marker = mark_style[1], label = "Averaged Amps - p = {}".format(p))
+		ax2.plot(sys_msr_data.k, str_func_avg_u_all[:, p - 1], marker = mark_style[1], label = "All Averaged Amps - p = {}".format(p))
 		ax2.set_xlabel(r"$k_n$")
 		ax2.set_ylabel(r"$\ln \mathcal{S}_p (|u_n|)$")
 		ax2.set_xscale("log")
@@ -206,6 +230,7 @@ if __name__ == '__main__':
 		p = 2
 		ax1.plot(sys_msr_data.k, stats_data.vel_flux_str_func_abs[:, p - 1, 0], label = "Full Field - p = {}".format(p))
 		ax1.plot(sys_msr_data.k, str_func_avg_u_enrg_flux[:, p - 1], marker = mark_style[1], label = "Averaged Amps - p = {}".format(p))
+		ax1.plot(sys_msr_data.k, str_func_avg_u_enrg_flux_all[:, p - 1], marker = mark_style[1], label = "All Averaged Amps - p = {}".format(p))
 		ax1.set_xlabel(r"$k_n$")
 		ax1.set_ylabel(r"$\ln \mathcal{S}_p (\Pi)$")
 		ax1.set_xscale("log")
@@ -216,7 +241,8 @@ if __name__ == '__main__':
 		p = 6
 		ax2 = fig.add_subplot(gs[0, 1])
 		ax2.plot(sys_msr_data.k, stats_data.vel_flux_str_func_abs[:, p - 1, 0], label = "Full Field - p = {}".format(p))
-		ax2.plot(sys_msr_data.k, str_func_avg_u_enrg_flux[:, p - 1], marker = mark_style[1], label = "Averaged Amps - p = {}".format(p))
+		ax2.plot(sys_msr_data.k, str_func_avg_u_enrg_flux[:, p - 1], marker = mark_style[1], label = "All Averaged Amps - p = {}".format(p))
+		ax2.plot(sys_msr_data.k, str_func_avg_u_enrg_flux_all[:, p - 1], marker = mark_style[1], label = "All Averaged Amps - p = {}".format(p))
 		ax2.set_xlabel(r"$k_n$")
 		ax2.set_ylabel(r"$\ln \mathcal{S}_p (\Pi)$")
 		ax2.set_xscale("log")
@@ -235,6 +261,7 @@ if __name__ == '__main__':
 		p = 2
 		ax1.plot(sys_msr_data.k, stats_data.vel_flux_str_func_abs[:, p - 1, 1], label = "Full Field - p = {}".format(p))
 		ax1.plot(sys_msr_data.k, str_func_avg_u_hel_flux[:, p - 1], marker = mark_style[1], label = "Averaged Amps - p = {}".format(p))
+		ax1.plot(sys_msr_data.k, str_func_avg_u_hel_flux_all[:, p - 1], marker = mark_style[1], label = "All Averaged Amps - p = {}".format(p))
 		ax1.set_xlabel(r"$k_n$")
 		ax1.set_ylabel(r"$\ln \mathcal{S}_p (\Pi)$")
 		ax1.set_xscale("log")
@@ -246,6 +273,7 @@ if __name__ == '__main__':
 		ax2 = fig.add_subplot(gs[0, 1])
 		ax2.plot(sys_msr_data.k, stats_data.vel_flux_str_func_abs[:, p - 1, 1], label = "Full Field - p = {}".format(p))
 		ax2.plot(sys_msr_data.k, str_func_avg_u_hel_flux[:, p - 1], marker = mark_style[1], label = "Averaged Amps - p = {}".format(p))
+		ax2.plot(sys_msr_data.k, str_func_avg_u_hel_flux_all[:, p - 1], marker = mark_style[1], label = "All Averaged Amps - p = {}".format(p))
 		ax2.set_xlabel(r"$k_n$")
 		ax2.set_ylabel(r"$\ln \mathcal{S}_p (\Pi)$")
 		ax2.set_xscale("log")
