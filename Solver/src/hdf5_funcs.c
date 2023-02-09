@@ -37,8 +37,10 @@ void CreateOutputFilesWriteICs(const long int N) {
 	herr_t status;
 
 	#if defined(__VEL) || defined(__MAG) || defined(__Z_PLUS) || defined(__Z_MINUS) || defined(__FORCING) || defined(__STATS) || defined(__PHASE_SYNC)
-	// Create compound datatype for the complex datasets
-	file_info->COMPLEX_DTYPE = CreateComplexDatatype();
+	if (sys_vars->INPUT_FILE_FLAG == NO_INPUT_FILE) {
+		// Create compound datatype for the complex datasets if it has not been created yet
+		file_info->COMPLEX_DTYPE = CreateComplexDatatype();
+	}
 	#endif
 
 
@@ -888,7 +890,9 @@ void WriteDataToFile(double t, const long int iters, const long int save_indx) {
 	#endif
 }
 /**
- * Function to open and read data from an input file 
+ * Function to open and read data from an input file - In phase only model mode the function will attempt to read the amplitudes and phases, if phases don't exist, 
+ * uniformly randomly generated phases will be used. In full mode the function will try the modes first, if not it will then try the amplitudes and phases. 
+ * If no amplitudes exist in both modes the programmes exits!
  * @param N The number of shells/size of the input arrays
  */
 void ReadInputFile(const long int N) {
@@ -914,19 +918,30 @@ void ReadInputFile(const long int N) {
 	///----------------------------- Read in initial velocity amps and phases
 	// Create tmp array to read in data
 	double* tmp_u_amp = (double* )malloc(sizeof(double) * N);
-	if ( (H5LTread_dataset(file_info->stats_file_handle, "VelAmps", H5T_NATIVE_DOUBLE, tmp_u_amp)) < 0) {
-		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelAmps");
+	if ( (H5LTread_dataset(file_info->input_file_handle, "VelAmps", H5T_NATIVE_DOUBLE, tmp_u_amp)) < 0) {
+		printf("\n["RED"ERROR"RESET"] --- Input Dataset ["CYAN"%s"RESET"] does not exist\n---> Exiting!!!\n", "VelAmps");
+		exit(1);
 	}
 	double* tmp_u_phase = (double* )malloc(sizeof(double) * N);
-	if ( (H5LTread_dataset(file_info->stats_file_handle, "VelPhases", H5T_NATIVE_DOUBLE, tmp_u_phase)) < 0) {
-		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelPhases");
+	if ( (H5LTread_dataset(file_info->input_file_handle, "VelPhases", H5T_NATIVE_DOUBLE, tmp_u_phase)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to read input dataset ["CYAN"%s"RESET"] ---> Using uniformly random generated phases instead\n", "VelPhases");
+		for (int i = 0; i < N; ++i) {
+			tmp_u_phase[i] = (double)rand() / (double)RAND_MAX * 2.0 * M_PI;
+		}
 	}
 	
-	// Write tmp array to velocity modes / mode amplitudes and phases
-	for (int i = 0; i < N; ++i) {
-		n = i + 2;
-		run_data->a_n[n]   = tmp_u_amp[i];
-		run_data->phi_n[n] = tmp_u_phase[i];
+	// Write tmp arrays to velocity modes / mode amplitudes and phases
+	for (int i = 0; i < N + 4; ++i) {
+		if (i >= 2 && i < N + 2) {
+			run_data->a_n[i]   = tmp_u_amp[i - 2];
+			run_data->phi_n[i] = tmp_u_phase[i - 2];
+			run_data->u[i]     = tmp_u_amp[i - 2] * cexp(I * tmp_u_phase[i - 2]);
+		}
+		else {
+			run_data->a_n[i]   = 0.0;
+			run_data->phi_n[i] = 0.0;
+			run_data->u[i]     = 0.0  + 0.0 * I;	
+		}
 	}
 
 	// Free temp memory
@@ -937,19 +952,30 @@ void ReadInputFile(const long int N) {
 	///----------------------------- Read in initial magnetic amps and phases
 	// Create tmp array to read in data
 	double* tmp_b_amp = (double* )malloc(sizeof(double) * N);
-	if ( (H5LTread_dataset(file_info->stats_file_handle, "MagAmps", H5T_NATIVE_DOUBLE, tmp_b_amp)) < 0) {
-		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "MagAmps");
+	if ( (H5LTread_dataset(file_info->input_file_handle, "MagAmps", H5T_NATIVE_DOUBLE, tmp_b_amp)) < 0) {
+		printf("\n["RED"ERROR"RESET"] --- Input Dataset ["CYAN"%s"RESET"] does not exist\n---> Exiting!!!\n", "MagAmps");
+		exit(1);
 	}
 	double* tmp_b_phase = (double* )malloc(sizeof(double) * N);
-	if ( (H5LTread_dataset(file_info->stats_file_handle, "MagPhases", H5T_NATIVE_DOUBLE, tmp_b_phase)) < 0) {
-		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "MagPhases");
+	if ( (H5LTread_dataset(file_info->input_file_handle, "MagPhases", H5T_NATIVE_DOUBLE, tmp_b_phase)) < 0) {
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to read input dataset ["CYAN"%s"RESET"] ---> Using uniformly random generated phases instead\n", "MagPhases");
+		for (int i = 0; i < N; ++i) {
+			tmp_b_phase[i] = (double)rand() / (double)RAND_MAX * 2.0 * M_PI;
+		}
 	}
 	
 	// Write tmp array to magnetic modes / mode amplitudes and phases
-	for (int i = 0; i < N; ++i) {
-		n = i + 2;
-		run_data->b_n[n]   = tmp_b_amp[i];
-		run_data->psi_n[n] = tmp_b_phase[i];
+	for (int i = 0; i < N + 4; ++i) {
+		if (i >= 2 && i < N + 2) {
+			run_data->b_n[i]   = tmp_b_amp[i - 2];
+			run_data->psi_n[i] = tmp_b_phase[i - 2];
+			run_data->b[i]     = tmp_b_amp[i - 2] * cexp(I * tmp_b_phase[i - 2]);
+		}
+		else {
+			run_data->b_n[i]   = 0.0;
+			run_data->psi_n[i] = 0.0;
+			run_data->b[i]     = 0.0  + 0.0 * I;	
+		}
 	}
 
 	// Free temp memory
@@ -957,21 +983,60 @@ void ReadInputFile(const long int N) {
 	free(tmp_b_phase);
 	#endif
 	#else
+	// Create compound datatype for the complex datasets
+	file_info->COMPLEX_DTYPE = CreateComplexDatatype();
+
 	///----------------------------- Read in initial velocity modes
 	// Create tmp array to read in data
 	double complex* tmp_u = (double complex* )malloc(sizeof(double complex) * N);
-	if ( (H5LTread_dataset(file_info->stats_file_handle, "VelModes", H5T_NATIVE_DOUBLE, tmp_u)) < 0) {
-		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelModes");
+	// if ( (H5LTread_dataset(file_info->input_file_handle, "VelModes", file_info->COMPLEX_DTYPE, tmp_u)) < 0) {
+	// 	// Print warning to screen
+	// 	printf("\n["MAGENTA"WARNING"RESET"] --- Failed to read input dataset ["CYAN"%s"RESET"] ---> Trying Amplitude/Phase datasets\n", "VelModes");
+
+	// Attempt to read in the initial amplitudes
+	double* tmp_u_amp = (double* )malloc(sizeof(double) * N);
+	if ( (H5LTread_dataset(file_info->input_file_handle, "VelAmps", H5T_NATIVE_DOUBLE, tmp_u_amp)) < 0) {
+		printf("\n["RED"ERROR"RESET"] --- Input dataset ["CYAN"%s"RESET"]\n---> Exiting!!!", "VelAmps");
+		exit(1);
 	}
+	// Attemp to read in the intial phases if not use randomly generated ones
+	double* tmp_u_phase = (double* )malloc(sizeof(double) * N);
+	// if ( (H5LTread_dataset(file_info->input_file_handle, "VelPhases", H5T_NATIVE_DOUBLE, tmp_u_phase)) < 0) {
+	// 	// Print warning to screen
+	// 	printf("\n["MAGENTA"WARNING"RESET"] --- Failed to read input dataset ["CYAN"%s"RESET"] ---> Using uniformly random generated phases instead!\n", "VelPhases");
+
+	// Uniformly randomly generated phases
+	for (int i = 0; i < N; ++i) {
+		tmp_u_phase[i] = (double)rand()/(double)RAND_MAX * 2.0 * M_PI;
+	}			
+	// }
+		
+		// Create the modes from the phase/amplitudes
+		for (int i = 0; i < N; ++i) {
+			tmp_u[i] = tmp_u_amp[i] * cexp(I * tmp_u_phase[i]);
+		}
+
+		// Free tmp memory
+		free(tmp_u_amp);
+		free(tmp_u_phase);
+	// }
 	
 	// Write tmp_u array to velocity modes / mode amplitudes and phases
-	for (int i = 0; i < N; ++i) {
-		n = i + 2;
-		run_data->u[n] = tmp_u[i];
-		#if defined(PHASE_ONLY_FXD_AMP)
-		run_data->a_n[n]   = cabs(tmp_u[i]);
-		run_data->phi_n[n] = carg(tmp_u[i]);
-		#endif
+	for (int i = 0; i < N + 4; ++i) {
+		if (i >= 2 && i < N + 2) {
+			run_data->u[i] = tmp_u[i - 2];
+			#if defined(PHASE_ONLY_FXD_AMP)
+			run_data->a_n[i]   = cabs(tmp_u[i - 2]);
+			run_data->phi_n[i] = carg(tmp_u[i - 2]);
+			#endif
+		}
+		else {
+			run_data->u[i] = 0.0 + 0.0 * I;
+			#if defined(PHASE_ONLY_FXD_AMP)
+			run_data->a_n[i]   = 0.0 + 0.0 * I;
+			run_data->phi_n[i] = 0.0 + 0.0 * I;
+			#endif
+		}
 	}
 
 	// Free temp memory
@@ -981,18 +1046,54 @@ void ReadInputFile(const long int N) {
 	///----------------------------- Read in initial magnetic modes
 	// Create tmp array to read in data
 	double complex* tmp_b = (double complex* )malloc(sizeof(double complex) * N);
-	if ( (H5LTread_dataset(file_info->stats_file_handle, "MagModes", H5T_NATIVE_DOUBLE, tmp_b)) < 0) {
-		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "MagModes");
+	if ( (H5LTread_dataset(file_info->input_file_handle, "MagModes", file_info->COMPLEX_DTYPE, tmp_b)) < 0) {
+		// Print warning to screen
+		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to read input dataset ["CYAN"%s"RESET"] ---> Trying Amplitude/Phase datasets\n", "MagModes");
+		
+		// Attempt to read in the initial amplitudes
+		double* tmp_b_amp = (double* )malloc(sizeof(double) * N);
+		if ( (H5LTread_dataset(file_info->input_file_handle, "MagAmps", H5T_NATIVE_DOUBLE, tmp_b_amp)) < 0) {
+			printf("\n["RED"ERROR"RESET"] --- Input dataset ["CYAN"%s"RESET"]\n---> Exiting!!!", "MagAmps");
+			exit(1);
+		}
+		// Attemp to read in the intial phases if not use randomly generated ones
+		double* tmp_b_phase = (double* )malloc(sizeof(double) * N);
+		if ( (H5LTread_dataset(file_info->input_file_handle, "MagPhases", H5T_NATIVE_DOUBLE, tmp_b_phase)) < 0) {
+			// Print warning to screen
+			printf("\n["MAGENTA"WARNING"RESET"] --- Failed to read input dataset ["CYAN"%s"RESET"] ---> Using uniformly random generated phases instead!\n", "MagPhases");
+
+			// Uniformly randomly generated phases
+			for (int i = 0; i < N; ++i) {
+				tmp_b_phase[i] = (double)rand()/(double)RAND_MAX * 2.0 * M_PI;
+			}
+		}		
+		
+		// Create the modes from the phase/amplitudes
+		for (int i = 0; i < N; ++i) {
+			tmp_b[i] = tmp_b_amp[i] * cexp(I * tmp_b_phase[i]);
+		}
+
+		// Free tmp memory
+		free(tmp_b_amp);
+		free(tmp_b_phase);
 	}
 	
 	// Write tmp_b array to magnetic modes / mode amplitudes and phases
-	for (int i = 0; i < N; ++i) {
-		n = i + 2;
-		run_data->b[n] = tmp_b[i];
-		#if defined(PHASE_ONLY_FXD_AMP)
-		run_data->b_n[n]   = cabs(tmp_b[i]);
-		run_data->psi_n[n] = carg(tmp_b[i]);
-		#endif
+	for (int i = 0; i < N + 4; ++i) {
+		if (i >= 2 && i < N + 2) {
+			run_data->b[i] = tmp_b[i - 2];
+			#if defined(PHASE_ONLY_FXD_AMP)
+			run_data->b_n[i]   = cabs(tmp_b[i - 2]);
+			run_data->psi_n[i] = carg(tmp_b[i - 2]);
+			#endif
+		}
+		else {
+			run_data->b[i] = 0.0 + 0.0 * I;
+			#if defined(PHASE_ONLY_FXD_AMP)
+			run_data->b_n[i]   = 0.0 + 0.0 * I;
+			run_data->psi_n[i] = 0.0 + 0.0 * I;
+			#endif
+		}
 	}
 
 	// Free temp memory
@@ -1213,7 +1314,6 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	}
 	#endif
 
-
 	// -------------------------------
 	// Write System Measurables
 	// -------------------------------
@@ -1226,6 +1326,7 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	WritePhaseSyncStatsToFile();
 	#endif
 
+	printf("\n\nAfter Sync Before STATSS\n\n\n");
 	// -------------------------------
 	// Write Stats
 	// -------------------------------
@@ -1233,6 +1334,7 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	WriteStatsToFile();
 	#endif
 
+	printf("\n\nAfter STATS\n\n\n");
 	
 	// -----------------------------------
 	// Close Files for the final time
@@ -1257,10 +1359,18 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	}
 	#endif
 
-	#if defined(__VEL) || defined(__MAG) || defined(__Z_PLUS) || defined(__Z_MINUS) || defined(__FORCING) || defined(__STATS) || defined(__PHASE_SYNC)
-	// Close the complex datatype identifier
-	H5Tclose(file_info->COMPLEX_DTYPE);
-	#endif
+	if (sys_vars->INPUT_FILE_FLAG == INPUT_FILE) {
+		#if !defined(PHASE_ONLY)
+		// Close the complex datatype identifier
+		H5Tclose(file_info->COMPLEX_DTYPE);
+		#endif
+	}
+	else {
+		#if defined(__VEL) || defined(__MAG) || defined(__Z_PLUS) || defined(__Z_MINUS) || defined(__FORCING) || defined(__STATS) || defined(__PHASE_SYNC)
+		// Close the complex datatype identifier
+		H5Tclose(file_info->COMPLEX_DTYPE);
+		#endif
+	}
 }
 /**
  * Function to create a HDF5 datatype for complex data

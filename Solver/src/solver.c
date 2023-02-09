@@ -222,7 +222,6 @@ void Solve(void) {
 	//////////////////////////////
 	// End Integration
 	//////////////////////////////
-	
 	// ------------------------------- 
 	// Final Writes to Output File
 	// -------------------------------
@@ -230,13 +229,17 @@ void Solve(void) {
 	if (save_data_indx < sys_vars->num_print_steps) {
 		printf("\n\n...Writing Final State To File!\n\n");
 		WriteDataToFile(t, iters, sys_vars->num_print_steps - 1);
+
+		printf("\n\nAFTER FINAL CEHCK\n\n\n\n");
 	}
 	// Compute System Measures on final state
 	ComputeSystemMeasurables(t, iters, sys_vars->num_print_steps - 1, RK_data);
 
+	printf("\n\nAFTER COMPUTE MEASURE\n\n\n\n");
 	// Write the stats and system measures to file
 	FinalWriteAndCloseOutputFile(N, iters, sys_vars->num_print_steps - 1);
 
+	printf("\n\nAFTER FINAL WRITE\n\n\n\n");
 	// -------------------------------
 	// Clean Up 
 	// -------------------------------
@@ -1110,6 +1113,128 @@ void InitialConditions(const long int N) {
 					#endif
 					#endif
 				}
+				else if(!(strcmp(sys_vars->u0, "INPUT_FILE"))) {
+					if (i == 2) {
+
+					printf("HERE\n");
+
+					// -------------------------------
+					// Open Input File
+					// -------------------------------
+					// Open file with serial I/O access properties
+					file_info->input_file_handle = H5Fopen("/home/enda/PhD/Shell_Model/Data/InitialConditions/TimeAveragedAmps/InitialData_ALPHA[0.374].h5", H5F_ACC_RDWR, H5P_DEFAULT);
+					if (file_info->input_file_handle < 0) {
+						fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to open input file ["CYAN"%s"RESET"]\n-->> Exiting...\n", "/home/enda/PhD/Shell_Model/Data/InitialConditions/TimeAveragedAmps/InitialData_ALPHA[0.374].h5");
+						exit(1);
+					}
+
+					// // ------------------------------------------------
+					// // Scaling in N Initial Condition
+					// // ------------------------------------------------
+					// #if defined(PHASE_ONLY)
+					// // Create tmp array to read in data
+					// double* tmp_u_amp = (double* )malloc(sizeof(double) * N);
+					// if ( (H5LTread_dataset(file_info->input_file_handle, "VelAmps", H5T_NATIVE_DOUBLE, tmp_u_amp)) < 0) {
+					// 	printf("\n["RED"ERROR"RESET"] --- Input Dataset ["CYAN"%s"RESET"] does not exist\n---> Exiting!!!\n", "VelAmps");
+					// 	exit(1);
+					// }
+					// double* tmp_u_phase = (double* )malloc(sizeof(double) * N);
+					// if ( (H5LTread_dataset(file_info->input_file_handle, "VelPhases", H5T_NATIVE_DOUBLE, tmp_u_phase)) < 0) {
+					// 	printf("\n["MAGENTA"WARNING"RESET"] --- Failed to read input dataset ["CYAN"%s"RESET"] ---> Using uniformly random generated phases instead\n", "VelPhases");
+					// 	for (int i = 0; i < N; ++i) {
+					// 		tmp_u_phase[i] = (double)rand() / (double)RAND_MAX * 2.0 * M_PI;
+					// 	}
+					// }
+					
+					// // Write tmp arrays to velocity modes / mode amplitudes and phases
+					// for (int i = 0; i < N + 4; ++i) {
+					// 	if (i >= 2 && i < N + 2) {
+					// 		run_data->a_n[i]   = tmp_u_amp[i - 2];
+					// 		run_data->phi_n[i] = tmp_u_phase[i - 2];
+					// 		run_data->u[i]     = tmp_u_amp[i - 2] * cexp(I * tmp_u_phase[i - 2]);
+					// 	}
+					// 	else {
+					// 		run_data->a_n[i]   = 0.0;
+					// 		run_data->phi_n[i] = 0.0;
+					// 		run_data->u[i]     = 0.0  + 0.0 * I;	
+					// 	}
+					// }
+
+					// // Free temp memory
+					// free(tmp_u_amp);
+					// free(tmp_u_phase);
+					// #else
+					
+					// // Create compound datatype for the complex datasets
+					// file_info->COMPLEX_DTYPE = CreateComplexDatatype();
+
+					// // Create tmp array to read in data
+					// double complex* tmp_u = (double complex* )malloc(sizeof(double complex) * N);
+					// if ( (H5LTread_dataset(file_info->input_file_handle, "VelModes", file_info->COMPLEX_DTYPE, tmp_u)) < 0) {
+					// 	// Print warning to screen
+					// 	printf("\n["MAGENTA"WARNING"RESET"] --- Failed to read input dataset ["CYAN"%s"RESET"] ---> Trying Amplitude/Phase datasets\n", "VelModes");
+
+					// 	// Attempt to read in the initial amplitudes
+					// 	double* tmp_u_amp = (double* )malloc(sizeof(double) * N);
+					// 	if ( (H5LTread_dataset(file_info->input_file_handle, "VelAmps", H5T_NATIVE_DOUBLE, tmp_u_amp)) < 0) {
+					// 		printf("\n["RED"ERROR"RESET"] --- Input dataset ["CYAN"%s"RESET"]\n---> Exiting!!!", "VelAmps");
+					// 		exit(1);
+					// 	}
+					// 	// Attemp to read in the intial phases if not use randomly generated ones
+					// 	double* tmp_u_phase = (double* )malloc(sizeof(double) * N);
+					// 	if ( (H5LTread_dataset(file_info->input_file_handle, "VelPhases", H5T_NATIVE_DOUBLE, tmp_u_phase)) < 0) {
+					// 		// Print warning to screen
+					// 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to read input dataset ["CYAN"%s"RESET"] ---> Using uniformly random generated phases instead!\n", "VelPhases");
+
+					// 		// Uniformly randomly generated phases
+					// 		for (int i = 0; i < N; ++i) {
+					// 			tmp_u_phase[i] = (double)rand()/(double)RAND_MAX * 2.0 * M_PI;
+					// 		}			
+					// 	}
+							
+					// 		// Create the modes from the phase/amplitudes
+					// 		for (int i = 0; i < N; ++i) {
+					// 			tmp_u[i] = tmp_u_amp[i] * cexp(I * tmp_u_phase[i]);
+					// 		printf("u[%d]:\t%1.16lf\t%1.16lf i\ta[%d]:\t%1.16lf phi: %1.16lf i\n", i, creal(tmp_u[i]), cimag(tmp_u[i]),  i, tmp_u_amp[i], tmp_u_phase[i]);
+					// 		}
+
+					// 		// Free tmp memory
+					// 		free(tmp_u_amp);
+					// 		free(tmp_u_phase);
+					// // }
+					
+					// // Write tmp_u array to velocity modes / mode amplitudes and phases
+					// for (int i = 0; i < N + 4; ++i) {
+					// 	if (i >= 2 && i < N + 2) {
+					// 		run_data->u[i] = tmp_u[i - 2];
+					// 		#if defined(PHASE_ONLY_FXD_AMP)
+					// 		run_data->a_n[i]   = cabs(tmp_u[i - 2]);
+					// 		run_data->phi_n[i] = carg(tmp_u[i - 2]);
+					// 		#endif
+					// 	}
+					// 	else {
+					// 		run_data->u[i] = 0.0 + 0.0 * I;
+					// 		#if defined(PHASE_ONLY_FXD_AMP)
+					// 		run_data->a_n[i]   = 0.0 + 0.0 * I;
+					// 		run_data->phi_n[i] = 0.0 + 0.0 * I;
+					// 		#endif
+					// 	}
+					// }
+
+					// // Free temp memory
+					// free(tmp_u);
+					// // #endif
+
+					// -------------------------------
+					// Close identifiers and File
+					// -------------------------------
+					herr_t status = H5Fclose(file_info->input_file_handle);
+					if (status < 0) {
+						fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to close input file ["CYAN"%s"RESET"]\n-->> Exiting...\n", "/home/enda/PhD/Shell_Model/Data/InitialConditions/TimeAveragedAmps/InitialData_ALPHA[0.374].h5");
+						exit(1);
+					}
+					}
+				}
 				else if(!(strcmp(sys_vars->u0, "RANDOM"))) {
 					// ------------------------------------------------
 					// Default - Random Initial Conditions
@@ -1191,6 +1316,10 @@ void InitialConditions(const long int N) {
 					// ------------------------------------------------
 					// Default - Pure Random Initial Conditions
 					// ------------------------------------------------
+					if (i == 2) {
+						printf("\n\n["CYAN"NOTE"RESET"] --- No Initial Condition Match --- Using Random Field\n\n");
+					}
+
 					// Get random uniform number
 					r1 = (double)rand() / (double)RAND_MAX;
 					r3 = (double)rand() / (double)RAND_MAX;

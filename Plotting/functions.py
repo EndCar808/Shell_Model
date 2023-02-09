@@ -101,6 +101,16 @@ def parse_cml(argv):
 
     return cargs
 
+def slope_fit(x, y, low, high):
+
+    poly_output = np.polyfit(x[low:high], y[low:high], 1, full = True)
+    pfit_info   = poly_output[0]
+    poly_resid  = poly_output[1][0]
+    pfit_slope  = pfit_info[0]
+    pfit_c      = pfit_info[1]
+
+    return pfit_slope, pfit_c, poly_resid
+
 @njit
 def compute_u_flux(data, N, delta, l):
 

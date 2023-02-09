@@ -387,6 +387,7 @@ void WritePhaseSyncStatsToFile(void) {
 		}
 	}
 
+
 	// Write Bin Count data 
 	dims2D[0] = phase_sync->num_triads;
 	dims2D[1] = NUM_PHASE_SYNC_HIST_BINS;
@@ -394,7 +395,7 @@ void WritePhaseSyncStatsToFile(void) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelTriads_Counts");
 	}
 	// Write Bin Range data 
-	dims1D[0] = VEL_NUM_BINS + 1;
+	dims1D[0] = NUM_PHASE_SYNC_HIST_BINS + 1;
 	if ( (H5LTmake_dataset(file_info->phase_sync_file_handle, "VelTriads_Ranges", D1, dims1D, H5T_NATIVE_DOUBLE, vel_triads_ranges)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelTriads_Ranges");
 	}
@@ -419,6 +420,8 @@ void WritePhaseSyncStatsToFile(void) {
 		}
 	}
 
+	printf("\n\nBEFROE HERERERERE\n");
+	
 	// Write Bin Count data 
 	dims2D[0] = phase_sync->num_phase_diff;
 	dims2D[1] = NUM_PHASE_SYNC_HIST_BINS;
@@ -435,7 +438,7 @@ void WritePhaseSyncStatsToFile(void) {
 	free(vel_phase_diff_counts);
 	free(vel_phase_diff_ranges);
 
-
+	printf("\n\nHEREERE\n");
 
 
 	// -------------------------------
