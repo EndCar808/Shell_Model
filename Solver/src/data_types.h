@@ -115,6 +115,7 @@
 // #define __ENRG_FLUX
 // #define __KIN_HEL_FLUX
 // #define __TOT_ENRG_FLUX
+// #define __TOT_KIN_HEL_FLUX
 // #define __ENRG_FLUX_AVG
 // #define __KIN_HEL_FLUX_AVG
 // #define __PSEUDO_ENRG_FLUX_AVG
@@ -297,6 +298,7 @@ typedef struct runtime_data_struct {
 	double* energy_input_u;					// Array to hold the energy input for the velocity field in the flux balance computation
 	double* energy_input_b;					// Array to hold the energy input for the magnetic field in the flux balance computation
 	double* tot_energy_flux;				// Array to hold the total energy flux for the current iteration
+	double* tot_kin_hel_flux;				// Array to hold the total energy flux for the current iteration
 	double* tot_energy_diss_u;				// Array to hold the total energy dissipation for the velocity field for the current iteration
 	double* tot_energy_diss_b;				// Array to hold the total energy dissipation for the magnetic field for the current iteration
 	double* tot_energy_input_u;				// Array to hold the total energy input for the velocity field in the flux balance computation for the current iteration

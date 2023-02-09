@@ -102,6 +102,9 @@ void ComputeSystemMeasurables(double t, const long int iter, const long int save
         run_data->tot_energy_input_b[save_iter] = 0.0;
         #endif
         #endif
+        #if defined(__TOT_kin_hel_FLUX)
+        run_data->tot_kin_hel_flux[save_iter] = 0.0;
+        #endif
     }
     for (int i = 0; i < N; ++i) {
         #if defined(__ENRG_FLUX) || defined(__TOT_ENRG_FLUX) || defined(__ENRG_FLUX_AVG)
@@ -282,6 +285,10 @@ void ComputeSystemMeasurables(double t, const long int iter, const long int save
             #endif
             #endif
 
+            //-------------- Total Kinetic Energy Flux
+            #if defined(__TOT_KIN_HEL_FLUX)
+            run_data->tot_kin_hel_flux[save_iter] += cimag((sgn(sys_vars->EPS - 1.0) - sys_vars->EPS * sys_vars->Lambda) / pow(sys_vars->Lambda, 2.0) * run_data->u[n - 1] * run_data->u[n] * run_data->u[n + 1] + run_data->u[n] * run_data->u[n + 1] * run_data->u[n + 2]);
+            #endif
 
             // Only begin time averaging after transient integration time has passed
             if (iter >= sys_vars->trans_iters) {
@@ -410,11 +417,9 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
 
     // Set the size of the arrays to twice the number of printing steps to account for extra steps due to adaptive stepping
     if (sys_vars->ADAPT_STEP_FLAG == ADAPTIVE_STEP) {
-        sys_vars->num_print_steps = 2 * sys_vars->num_print_steps;
+        sys_vars->num_print_steps *= 2;
     }
-    else {
-        sys_vars->num_print_steps = sys_vars->num_print_steps;
-    }
+
     int print_steps = sys_vars->num_print_steps;
 
     // --------------------------------
@@ -690,6 +695,16 @@ void InitializeSystemMeasurables(RK_data_struct* RK_data) {
         exit(1);
     }
     #endif     
+    #endif
+
+    ///------------------------------ Total Kinetic Helicity Flux
+    #if defined(__TOT_KIN_HEL_FLUX)
+    // Allocate energy flux
+    run_data->tot_kin_hel_flux = (double* )malloc(sizeof(double) * print_steps);
+    if (run_data->tot_kin_hel_flux == NULL) {
+        fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for the ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Total Kinetic Helicity Flux");
+        exit(1);
+    }
     #endif
 
     ///----------------------------- Energy Variation Totals
@@ -986,6 +1001,7 @@ void WriteSystemMeasuresToFile(void) {
 
     ///----------------- Total Energy Variation Variables
     #if defined(__TOT_ENRG_FLUX)
+    dims1D[0] = sys_vars->num_print_steps;
     // Energy Flux
     if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalEnergyFlux", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_energy_flux)) < 0) {
         printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalEnergyFlux");
@@ -1008,6 +1024,15 @@ void WriteSystemMeasuresToFile(void) {
         printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalMagEnergyInput");
     }
     #endif
+    #endif
+
+    ///----------------- Total Kinetic Helicity Flux
+    #if defined(__TOT_ENRG_FLUX)
+    dims1D[0] = sys_vars->num_print_steps;
+    // Total Kinetic Helicity Flux
+    if ( (H5LTmake_dataset(file_info->sys_msr_file_handle, "TotalKineticHelicityFlux", D1, dims1D, H5T_NATIVE_DOUBLE, run_data->tot_kin_hel_flux)) < 0) {
+        printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "TotalKineticHelicityFlux");
+    }
     #endif
 
     // -------------------------------
@@ -1080,6 +1105,13 @@ void FreeSystemMeasuresObjects(void) {
     #if defined(__DISS_SPECT_AVG)
     free(run_data->diss_spect_t_avg);
     #endif
+    #if defined(__VEL_AMP_AVG)
+    free(run_data->a_n_t_avg);
+    #endif
+    #if defined(__MAG_AMP_AVG)  && (defined(__MAGNETO) || defined(__ELSASSAR_MHD))
+    free(run_data->b_n_t_avg);
+    #endif
+    
     #if defined(__TIME)
     free(run_data->time);
     #endif
@@ -1099,6 +1131,9 @@ void FreeSystemMeasuresObjects(void) {
     #if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
     free(run_data->tot_energy_diss_b);
     free(run_data->tot_energy_input_b);
+    #endif
+    #if defined(__TOT_KIN_HEL_FLUX)
+    free(run_data->tot_kin_hel_flux);
     #endif
     #endif
     #if defined(__ENRG_FLUX_AVG)

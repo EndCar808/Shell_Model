@@ -674,8 +674,6 @@ def import_sys_msr_data(input_file, sim_data, method = "default"):
                     self.diss_spec_t_avg = f["TimeAveragedDissipationSpectrum"][:]
                 if 'TimeAveragedEnergySpectrum' in list(f.keys()):
                     self.enrg_spec_t_avg = f["TimeAveragedEnergySpectrum"][:]
-                if 'TimeAveragedKineticHelicityFlux' in list(f.keys()):
-                    self.kin_hel_spec_t_avg = f["TimeAveragedKineticHelicityFlux"][:]
                 if 'TimeAveragedKineticEnergySpectrum' in list(f.keys()):
                     self.kin_enrg_spec_t_avg = f["TimeAveragedKineticEnergySpectrum"][:]
                 if 'TimeAveragedMagneticEnergySpectrum' in list(f.keys()):
@@ -683,7 +681,7 @@ def import_sys_msr_data(input_file, sim_data, method = "default"):
                 if 'TimeAveragedEnergyFlux' in list(f.keys()):
                     self.enrg_flux_t_avg = f["TimeAveragedEnergyFlux"][:]
                 if 'TimeAveragedKineticHelicityFlux' in list(f.keys()):
-                    self.hel_flux_t_avg = f["TimeAveragedKineticHelicityFlux"][:]
+                    self.kin_hel_flux_t_avg = f["TimeAveragedKineticHelicityFlux"][:]
                 if 'TimeAveragedPseudoEnergyFluxPlus' in list(f.keys()):
                     self.pseudo_enrg_flux_plus_t_avg = f["TimeAveragedPseudoEnergyFluxPlus"][:]
                 if 'TimeAveragedPseudoEnergyFluxMinus' in list(f.keys()):

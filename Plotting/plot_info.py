@@ -119,13 +119,13 @@ if __name__ == '__main__':
     run_data = import_data(data_file_path, sys_vars, method)
 
     # ## Read in stats data
-    # stats_data = import_stats_data(data_file_path, sys_vars, method)
+    stats_data = import_stats_data(data_file_path, sys_vars, method)
 
     ## Read in sys_msr data
     sys_msr_data = import_sys_msr_data(data_file_path, sys_vars, method)
 
     # ## Read in sys_msr data
-    # phase_sync = import_phase_sync_data(data_file_path, sys_vars, method)
+    phase_sync = import_phase_sync_data(data_file_path, sys_vars, method)
 
     ## Make output folder for Run Info plots
     cmdargs.out_dir_info = cmdargs.out_dir + "RUN_INFO_PLOTS/"
@@ -877,7 +877,7 @@ if __name__ == '__main__':
         im1 = ax1.imshow(np.rot90(np.mod(np.angle(phase_sync.vel_phase_diff_order[:, :]), 2.0 * np.pi)), extent = (1, sys_vars.ndata, 1, phase_sync.num_phase_diffs), aspect = 'auto', cmap = "hsv", vmin = 0.0, vmax = 2.0 * np.pi)
         ax1.set_xlabel(r"$t$")
         ax1.set_ylabel(r"Phase Difference $n$")
-        ax1.set_ylim(1.0, phase_sync.num_triads)
+        ax1.set_ylim(1.0, phase_sync.num_phase_diffs)
         ax1.set_title(r"Velocity Phase Difference Average Angle $\Phi$")
         ## Plot colourbar
         div1  = make_axes_locatable(ax1)

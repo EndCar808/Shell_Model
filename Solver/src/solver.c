@@ -82,10 +82,19 @@ void Solve(void) {
 	double dt;
 	double T;
 	long int trans_steps;
+	long int iters = 1;
+	long int save_data_indx;
 
 	// // Get timestep and other integration variables
 	InitializeIntegrationVariables(&t0, &t, &dt, &T, &trans_steps);
-
+	t += dt;
+	if (sys_vars->TRANS_ITERS_FLAG == TRANSIENT_ITERS) {
+		save_data_indx = 0;
+	}
+	else {
+		save_data_indx = 1;
+	}
+	
 	// -------------------------------
 	// Forcing
 	// -------------------------------
@@ -106,22 +115,13 @@ void Solve(void) {
 	// Create and open the output file - also write initial conditions to file
 	CreateOutputFilesWriteICs(N);
 
-	// Print update of the initial conditions to the terminal
-	PrintUpdateToTerminal(0, t0, dt, T, 0);
+	// // // Print update of the initial conditions to the terminal
+	PrintUpdateToTerminal(iters - 1, t0, dt, T, iters - 1);
 
 
 	//////////////////////////////
 	// Begin Integration
 	//////////////////////////////
-	t         += dt;
-	long int iters = 1;
-	long int save_data_indx;
-	if (sys_vars->TRANS_ITERS_FLAG == TRANSIENT_ITERS) {
-		save_data_indx = 0;
-	}
-	else {
-		save_data_indx = 1;
-	}
 	while (t <= T) {
 
 		// -------------------------------	
@@ -222,6 +222,7 @@ void Solve(void) {
 	//////////////////////////////
 	// End Integration
 	//////////////////////////////
+	
 	// ------------------------------- 
 	// Final Writes to Output File
 	// -------------------------------
@@ -229,17 +230,13 @@ void Solve(void) {
 	if (save_data_indx < sys_vars->num_print_steps) {
 		printf("\n\n...Writing Final State To File!\n\n");
 		WriteDataToFile(t, iters, sys_vars->num_print_steps - 1);
-
-		printf("\n\nAFTER FINAL CEHCK\n\n\n\n");
 	}
 	// Compute System Measures on final state
 	ComputeSystemMeasurables(t, iters, sys_vars->num_print_steps - 1, RK_data);
 
-	printf("\n\nAFTER COMPUTE MEASURE\n\n\n\n");
 	// Write the stats and system measures to file
 	FinalWriteAndCloseOutputFile(N, iters, sys_vars->num_print_steps - 1);
 
-	printf("\n\nAFTER FINAL WRITE\n\n\n\n");
 	// -------------------------------
 	// Clean Up 
 	// -------------------------------
@@ -1056,11 +1053,10 @@ void InitialConditions(const long int N) {
     // ------------------------------------------------
     srand(123456789);
 
-
 	// ------------------------------------------------
     // Check if Reading From Input File
     // ------------------------------------------------
-    if (sys_vars->INPUT_FILE_FLAG == INPUT_FILE) {
+    if (sys_vars->INPUT_FILE_FLAG == INPUT_FILE || !(strcmp(sys_vars->u0, "INPUT_FILE"))) {
 		// ------------------------------------------------
 	    // Read in Initial Condition From File
 	    // ------------------------------------------------
@@ -1112,128 +1108,6 @@ void InitialConditions(const long int N) {
 					run_data->psi_n[i] = cexp(I * pow(i - 1, 4.0));
 					#endif
 					#endif
-				}
-				else if(!(strcmp(sys_vars->u0, "INPUT_FILE"))) {
-					if (i == 2) {
-
-					printf("HERE\n");
-
-					// -------------------------------
-					// Open Input File
-					// -------------------------------
-					// Open file with serial I/O access properties
-					file_info->input_file_handle = H5Fopen("/home/enda/PhD/Shell_Model/Data/InitialConditions/TimeAveragedAmps/InitialData_ALPHA[0.374].h5", H5F_ACC_RDWR, H5P_DEFAULT);
-					if (file_info->input_file_handle < 0) {
-						fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to open input file ["CYAN"%s"RESET"]\n-->> Exiting...\n", "/home/enda/PhD/Shell_Model/Data/InitialConditions/TimeAveragedAmps/InitialData_ALPHA[0.374].h5");
-						exit(1);
-					}
-
-					// // ------------------------------------------------
-					// // Scaling in N Initial Condition
-					// // ------------------------------------------------
-					// #if defined(PHASE_ONLY)
-					// // Create tmp array to read in data
-					// double* tmp_u_amp = (double* )malloc(sizeof(double) * N);
-					// if ( (H5LTread_dataset(file_info->input_file_handle, "VelAmps", H5T_NATIVE_DOUBLE, tmp_u_amp)) < 0) {
-					// 	printf("\n["RED"ERROR"RESET"] --- Input Dataset ["CYAN"%s"RESET"] does not exist\n---> Exiting!!!\n", "VelAmps");
-					// 	exit(1);
-					// }
-					// double* tmp_u_phase = (double* )malloc(sizeof(double) * N);
-					// if ( (H5LTread_dataset(file_info->input_file_handle, "VelPhases", H5T_NATIVE_DOUBLE, tmp_u_phase)) < 0) {
-					// 	printf("\n["MAGENTA"WARNING"RESET"] --- Failed to read input dataset ["CYAN"%s"RESET"] ---> Using uniformly random generated phases instead\n", "VelPhases");
-					// 	for (int i = 0; i < N; ++i) {
-					// 		tmp_u_phase[i] = (double)rand() / (double)RAND_MAX * 2.0 * M_PI;
-					// 	}
-					// }
-					
-					// // Write tmp arrays to velocity modes / mode amplitudes and phases
-					// for (int i = 0; i < N + 4; ++i) {
-					// 	if (i >= 2 && i < N + 2) {
-					// 		run_data->a_n[i]   = tmp_u_amp[i - 2];
-					// 		run_data->phi_n[i] = tmp_u_phase[i - 2];
-					// 		run_data->u[i]     = tmp_u_amp[i - 2] * cexp(I * tmp_u_phase[i - 2]);
-					// 	}
-					// 	else {
-					// 		run_data->a_n[i]   = 0.0;
-					// 		run_data->phi_n[i] = 0.0;
-					// 		run_data->u[i]     = 0.0  + 0.0 * I;	
-					// 	}
-					// }
-
-					// // Free temp memory
-					// free(tmp_u_amp);
-					// free(tmp_u_phase);
-					// #else
-					
-					// // Create compound datatype for the complex datasets
-					// file_info->COMPLEX_DTYPE = CreateComplexDatatype();
-
-					// // Create tmp array to read in data
-					// double complex* tmp_u = (double complex* )malloc(sizeof(double complex) * N);
-					// if ( (H5LTread_dataset(file_info->input_file_handle, "VelModes", file_info->COMPLEX_DTYPE, tmp_u)) < 0) {
-					// 	// Print warning to screen
-					// 	printf("\n["MAGENTA"WARNING"RESET"] --- Failed to read input dataset ["CYAN"%s"RESET"] ---> Trying Amplitude/Phase datasets\n", "VelModes");
-
-					// 	// Attempt to read in the initial amplitudes
-					// 	double* tmp_u_amp = (double* )malloc(sizeof(double) * N);
-					// 	if ( (H5LTread_dataset(file_info->input_file_handle, "VelAmps", H5T_NATIVE_DOUBLE, tmp_u_amp)) < 0) {
-					// 		printf("\n["RED"ERROR"RESET"] --- Input dataset ["CYAN"%s"RESET"]\n---> Exiting!!!", "VelAmps");
-					// 		exit(1);
-					// 	}
-					// 	// Attemp to read in the intial phases if not use randomly generated ones
-					// 	double* tmp_u_phase = (double* )malloc(sizeof(double) * N);
-					// 	if ( (H5LTread_dataset(file_info->input_file_handle, "VelPhases", H5T_NATIVE_DOUBLE, tmp_u_phase)) < 0) {
-					// 		// Print warning to screen
-					// 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to read input dataset ["CYAN"%s"RESET"] ---> Using uniformly random generated phases instead!\n", "VelPhases");
-
-					// 		// Uniformly randomly generated phases
-					// 		for (int i = 0; i < N; ++i) {
-					// 			tmp_u_phase[i] = (double)rand()/(double)RAND_MAX * 2.0 * M_PI;
-					// 		}			
-					// 	}
-							
-					// 		// Create the modes from the phase/amplitudes
-					// 		for (int i = 0; i < N; ++i) {
-					// 			tmp_u[i] = tmp_u_amp[i] * cexp(I * tmp_u_phase[i]);
-					// 		printf("u[%d]:\t%1.16lf\t%1.16lf i\ta[%d]:\t%1.16lf phi: %1.16lf i\n", i, creal(tmp_u[i]), cimag(tmp_u[i]),  i, tmp_u_amp[i], tmp_u_phase[i]);
-					// 		}
-
-					// 		// Free tmp memory
-					// 		free(tmp_u_amp);
-					// 		free(tmp_u_phase);
-					// // }
-					
-					// // Write tmp_u array to velocity modes / mode amplitudes and phases
-					// for (int i = 0; i < N + 4; ++i) {
-					// 	if (i >= 2 && i < N + 2) {
-					// 		run_data->u[i] = tmp_u[i - 2];
-					// 		#if defined(PHASE_ONLY_FXD_AMP)
-					// 		run_data->a_n[i]   = cabs(tmp_u[i - 2]);
-					// 		run_data->phi_n[i] = carg(tmp_u[i - 2]);
-					// 		#endif
-					// 	}
-					// 	else {
-					// 		run_data->u[i] = 0.0 + 0.0 * I;
-					// 		#if defined(PHASE_ONLY_FXD_AMP)
-					// 		run_data->a_n[i]   = 0.0 + 0.0 * I;
-					// 		run_data->phi_n[i] = 0.0 + 0.0 * I;
-					// 		#endif
-					// 	}
-					// }
-
-					// // Free temp memory
-					// free(tmp_u);
-					// // #endif
-
-					// -------------------------------
-					// Close identifiers and File
-					// -------------------------------
-					herr_t status = H5Fclose(file_info->input_file_handle);
-					if (status < 0) {
-						fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to close input file ["CYAN"%s"RESET"]\n-->> Exiting...\n", "/home/enda/PhD/Shell_Model/Data/InitialConditions/TimeAveragedAmps/InitialData_ALPHA[0.374].h5");
-						exit(1);
-					}
-					}
 				}
 				else if(!(strcmp(sys_vars->u0, "RANDOM"))) {
 					// ------------------------------------------------
@@ -1725,16 +1599,59 @@ void PrintUpdateToTerminal(long int iters, double t, double dt, double T, long i
 	
 	if (iters < sys_vars->trans_iters) {
 		#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
-		printf("Iter: %1.3g / %1.1g\tt: %1.6lf / %1.3lf\ttau_0: %1.2lf\tdt: %1.6g\tKE: %6.6g\tDISS_U: %6.6g\tDISS_B: %6.6g\tHEL_U: %6.6g\tHEL_B: %6.6g\tX-HEL: %6.6g\n", (double)iters, (double)sys_vars->num_t_steps, t, T, sys_vars->eddy_turnover_time, dt, run_data->tot_energy[save_data_indx], run_data->tot_diss_u[save_data_indx], run_data->tot_diss_b[save_data_indx], run_data->tot_hel_u[save_data_indx], run_data->tot_hel_b[save_data_indx], run_data->tot_cross_hel[save_data_indx]);
+		printf("Iter: %1.3g / %1.1g\tt: %1.6lf / %1.3lf\ttau_0: %1.2lf\tdt: %1.6g\tKE: %6.6g\tDISS_U: %6.6g\tDISS_B: %6.6g\tHEL_U: %6.6g\tHEL_B: %6.6g\tX-HEL: %6.6g\n", 
+				(double)iters, (double)sys_vars->num_t_steps, 
+				t, 
+				T, 
+				sys_vars->eddy_turnover_time, 
+				dt, 
+				run_data->tot_energy[save_data_indx], 
+				run_data->tot_diss_u[save_data_indx], 
+				run_data->tot_diss_b[save_data_indx], 
+				run_data->tot_hel_u[save_data_indx], 
+				run_data->tot_hel_b[save_data_indx], 
+				run_data->tot_cross_hel[save_data_indx]);
 		#else
-		printf("Iter: %1.3g / %1.1g\tt: %1.6lf / %1.3lf\ttau_0: %1.2lf\tdt: %1.6g\tKE: %6.6g\tDISS: %6.6g\tHEL: %6.6g\t\n", (double)iters, (double)sys_vars->num_t_steps, t, T, sys_vars->eddy_turnover_time, dt, run_data->tot_energy[save_data_indx], run_data->tot_diss_u[save_data_indx], run_data->tot_hel_u[save_data_indx]);
+		printf("Iter: %1.3g / %1.1g\tt: %1.6lf / %1.3lf\ttau_0: %1.2lf\tdt: %1.6g\tKE: %6.6g\tDISS: %6.6g\tHEL: %6.6g\tE_FLUX: %6.6g\tH_FLUX: %6.6g\n", 
+				(double)iters, (double)sys_vars->num_t_steps, 
+				t, 
+				T, 
+				sys_vars->eddy_turnover_time, 
+				dt, 
+				run_data->tot_energy[save_data_indx], 
+				run_data->tot_diss_u[save_data_indx], 
+				run_data->tot_hel_u[save_data_indx],
+				run_data->tot_energy_flux[save_data_indx],
+				run_data->tot_kin_hel_flux[save_data_indx]);
 		#endif
 	}
 	else {
 		#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
-		printf("Iter: %1.3g / %1.1g\tt: %1.6lf / %1.3lf\ttau: %1.2lftau_0 / %1.2lftau_0\ttau_0: %1.2lf\tdt: %1.6g\tKE: %6.6g\tDISS_U: %6.6g\tDISS_B: %6.6g\tHEL_U: %6.6g\tHEL_B: %6.6g\tX-HEL: %6.6g\n", (double)iters, (double)sys_vars->num_t_steps, t, T, (t - sys_vars->trans_time)/sys_vars->eddy_turnover_time, (T - sys_vars->trans_time)/sys_vars->eddy_turnover_time, sys_vars->eddy_turnover_time, dt, run_data->tot_energy[save_data_indx], run_data->tot_diss_u[save_data_indx], run_data->tot_diss_b[save_data_indx], run_data->tot_hel_u[save_data_indx], run_data->tot_hel_b[save_data_indx], run_data->tot_cross_hel[save_data_indx]);
+		printf("Iter: %1.3g / %1.1g\tt: %1.6lf / %1.3lf\ttau: %1.2lftau_0 / %1.2lftau_0\ttau_0: %1.2lf\tdt: %1.6g\tKE: %6.6g\tDISS_U: %6.6g\tDISS_B: %6.6g\tHEL_U: %6.6g\tHEL_B: %6.6g\tX-HEL: %6.6g\n", 
+				(double)iters, (double)sys_vars->num_t_steps, 
+				t, T, 
+				(t - sys_vars->trans_time)/sys_vars->eddy_turnover_time, 
+				(T - sys_vars->trans_time)/sys_vars->eddy_turnover_time, 
+				sys_vars->eddy_turnover_time, dt, run_data->tot_energy[save_data_indx], 
+				run_data->tot_diss_u[save_data_indx], 
+				run_data->tot_diss_b[save_data_indx], 
+				run_data->tot_hel_u[save_data_indx], 
+				run_data->tot_hel_b[save_data_indx], 
+				run_data->tot_cross_hel[save_data_indx]);
 		#else
-		printf("Iter: %1.3g / %1.1g\tt: %1.6lf / %1.3lf\ttau: %1.2lftau_0 / %1.2lftau_0\ttau_0: %1.2lf\tdt: %1.6g\tKE: %6.6g\tDISS: %6.6g\tHEL: %6.6g\t\n", (double)iters, (double)sys_vars->num_t_steps, t, T, (t - sys_vars->trans_time)/sys_vars->eddy_turnover_time, (T - sys_vars->trans_time)/sys_vars->eddy_turnover_time, sys_vars->eddy_turnover_time, dt, run_data->tot_energy[save_data_indx], run_data->tot_diss_u[save_data_indx], run_data->tot_hel_u[save_data_indx]);
+		printf("Iter: %1.3g / %1.1g\tt: %1.6lf / %1.3lf\ttau: %1.2lftau_0 / %1.2lftau_0\ttau_0: %1.2lf\tdt: %1.6g\tKE: %6.6g\tDISS: %6.6g\tHEL: %6.6g\tE_FLUX: %6.6g\tH_FLUX: %6.6g\n", 
+				(double)iters, (double)sys_vars->num_t_steps, 
+				t, 
+				T, 
+				(t - sys_vars->trans_time)/sys_vars->eddy_turnover_time, 
+				(T - sys_vars->trans_time)/sys_vars->eddy_turnover_time, 
+				sys_vars->eddy_turnover_time, 
+				dt, 
+				run_data->tot_energy[save_data_indx], 
+				run_data->tot_diss_u[save_data_indx], 
+				run_data->tot_hel_u[save_data_indx],
+				run_data->tot_energy_flux[save_data_indx],
+				run_data->tot_kin_hel_flux[save_data_indx]);
 		#endif
 	}
 }
@@ -2049,7 +1966,7 @@ void FreeMemory(RK_data_struct* RK_data) {
 
 	// Free system variables
 	free(run_data->u);
-	#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
+	#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC_STATS)
 	free(run_data->a_n);
 	free(run_data->phi_n);
 	#endif
@@ -2059,7 +1976,7 @@ void FreeMemory(RK_data_struct* RK_data) {
 	free(run_data->z_plus);
 	free(run_data->z_minus);
 	#endif
-	#if defined(PHASE_ONLY_FXD_AMP)
+	#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC_STATS)
 	free(run_data->b_n);
 	free(run_data->psi_n);
 	#endif

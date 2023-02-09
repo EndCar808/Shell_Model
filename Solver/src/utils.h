@@ -26,6 +26,7 @@ void PrintSimulationDetails(int argc, char** argv, double sim_time);
 double sgn(double x);
 double log_lambda(double x);
 double my_delta(double i, double j);
+double my_mod_2pi(double phase);
 // ---------------------------------------------------------------------
 //  End of File
 // ---------------------------------------------------------------------

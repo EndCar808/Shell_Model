@@ -653,6 +653,19 @@ double my_delta(double i, double j) {
 
 	return ans;
 }
+/**
+ * Function to take phases modulo 2pi
+ * @param  phase Input phase
+ * @return       phase that is between 0 and 2pi
+ */
+double my_mod_2pi(double phase) {
+
+	double tmp_phase = fmod(phase, 2.0 * M_PI);
+	if (tmp_phase < 0) {
+		tmp_phase += 2.0 * M_PI;
+	}
+	return tmp_phase;
+}
 // ---------------------------------------------------------------------
 //  End of File
 // ---------------------------------------------------------------------

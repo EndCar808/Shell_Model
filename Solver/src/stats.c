@@ -265,7 +265,7 @@ void ComputeStats(const long int iters, const long int save_data_indx) {
 	    		#if defined(__STR_FUNC_MAG) || defined(__STR_FUNC_VEL)
 				stats_data->vel_str_func[p - 1][i] += pow(cabs(run_data->u[n]), p);
 				#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
-				stats_data->mag_str_func[p - 1][i] += pow(cabs(run_data->b[n]), p);
+				stats_data->mag_str_func[p - 1][i] += pow(cabs(run_data->b[n]), p); 
 	    		#endif
 	    		#endif
 

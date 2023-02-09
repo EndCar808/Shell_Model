@@ -54,9 +54,9 @@ void ComputePhaseSyncData(const long int iter) {
 		#endif
 
 		// Get the phases
-		run_data->phi_n[n] = fmod(carg(run_data->u[n]) + 2.0 * M_PI, 2.0 * M_PI);	
+		run_data->phi_n[n] = carg(run_data->u[n]); 	
 		#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
-		run_data->psi_n[n] = fmod(carg(run_data->b[n]) + 2.0 * M_PI, 2.0 * M_PI);
+		run_data->psi_n[n] = carg(run_data->b[n]);
 		#endif
 	}
 	#endif
@@ -72,14 +72,14 @@ void ComputePhaseSyncData(const long int iter) {
 		if (i < num_triads) {
 
 			// Get the triad phase
-			phase_u_1 = fmod(run_data->phi_n[n] + 2.0 * M_PI, 2.0 * M_PI);
-			phase_u_2 = fmod(run_data->phi_n[n + 1] + 2.0 * M_PI, 2.0 * M_PI);
-			phase_u_3 = fmod(run_data->phi_n[n + 2] + 2.0 * M_PI, 2.0 * M_PI);
-			phase_u   = fmod(phase_u_1 + phase_u_2 + phase_u_3 + 2.0 * M_PI, 2.0 * M_PI);
+			phase_u_1 = run_data->phi_n[n];
+			phase_u_2 = run_data->phi_n[n + 1];
+			phase_u_3 = run_data->phi_n[n + 2];
+			phase_u   = my_mod_2pi(phase_u_1 + phase_u_2 + phase_u_3);
 			#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
-			phase_b_type1 = fmod(run_data->phi_n[n] + run_data->psi_n[n + 1] + run_data->psi_n[n + 2] + 2.0 * M_PI, 2.0 * M_PI);
-			phase_b_type2 = fmod(run_data->psi_n[n] + run_data->phi_n[n + 1] + run_data->psi_n[n + 2] + 2.0 * M_PI, 2.0 * M_PI);
-			phase_b_type3 = fmod(run_data->psi_n[n] + run_data->psi_n[n + 1] + run_data->phi_n[n + 2] + 2.0 * M_PI, 2.0 * M_PI);
+			phase_b_type1 = my_mod_2pi(run_data->phi_n[n] + run_data->psi_n[n + 1] + run_data->psi_n[n + 2]);
+			phase_b_type2 = my_mod_2pi(run_data->psi_n[n] + run_data->phi_n[n + 1] + run_data->psi_n[n + 2]);
+			phase_b_type3 = my_mod_2pi(run_data->psi_n[n] + run_data->psi_n[n + 1] + run_data->phi_n[n + 2]);
 			#endif
 			
 			
@@ -132,13 +132,13 @@ void ComputePhaseSyncData(const long int iter) {
 		if (i < num_phase_diff) {
 
 			// Get the phase differences
-			phase_u_1 = fmod(run_data->phi_n[n] + 2.0 * M_PI, 2.0 * M_PI);
-			phase_u_2 = fmod(run_data->phi_n[n + 3] + 2.0 * M_PI, 2.0 * M_PI);
-			phase_u   = fmod((phase_u_1 - phase_u_2) + 2.0 * M_PI, 2.0 * M_PI);			
+			phase_u_1 = run_data->phi_n[n];
+			phase_u_2 = run_data->phi_n[n + 3];
+			phase_u   = my_mod_2pi(phase_u_1 - phase_u_2);	
 			#if defined(__MAGNETO)
-			phase_b_1     = fmod(run_data->psi_n[n] + 2.0 * M_PI, 2.0 * M_PI);
-			phase_b_2     = fmod(run_data->psi_n[n + 3] + 2.0 * M_PI, 2.0 * M_PI);
-			phase_b_type1 = fmod((phase_b_1 - phase_b_2) + 2.0 * M_PI, 2.0 * M_PI);
+			phase_b_1     = run_data->psi_n[n];
+			phase_b_2     = run_data->psi_n[n + 3];
+			phase_b_type1 = my_mod_2pi(phase_b_1 - phase_b_2);
 			#endif
 			
 			
@@ -160,6 +160,7 @@ void ComputePhaseSyncData(const long int iter) {
 			#if defined(__PHASE_SYNC_STATS)
 			gsl_status = gsl_histogram_increment(phase_sync->phase_diff_u_hist[i], phase_u);
 			if (gsl_status != 0) {
+				printf("phi_n: %lf(%lf) \t phi_n3: %lf(%lf) \t phi-phi3: %lf(%lf) \n", run_data->phi_n[n], phase_u_1, run_data->phi_n[n + 3], phase_u_2, phase_u_1 - phase_u_2, phase_u);
 				fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to update bin count for ["CYAN"%s"RESET"] for Iter ["CYAN"%ld"RESET"] -- GSL Exit Status [Err:"CYAN" %d"RESET" - Val:"CYAN" %lf"RESET"]\n-->> Exiting!!!\n", "Velocity Phase Difference Histogram", iter, gsl_status, phase_u);
 				exit(1);
 			}
@@ -412,7 +413,7 @@ void WritePhaseSyncStatsToFile(void) {
 	double* vel_phase_diff_counts = (double* )malloc(sizeof(double) * phase_sync->num_phase_diff * NUM_PHASE_SYNC_HIST_BINS);
 	double* vel_phase_diff_ranges = (double* )malloc(sizeof(double) * (NUM_PHASE_SYNC_HIST_BINS + 1));
 	for (int i = 0; i < NUM_PHASE_SYNC_HIST_BINS + 1; ++i) {
-		vel_triads_ranges[i] = phase_sync->phase_diff_u_hist[0]->range[i];
+		vel_phase_diff_ranges[i] = phase_sync->phase_diff_u_hist[0]->range[i];
 		if (i < NUM_PHASE_SYNC_HIST_BINS) {
 			for (int n = 0; n < phase_sync->num_phase_diff; ++n) {
 				vel_phase_diff_counts[n * NUM_PHASE_SYNC_HIST_BINS + i] = phase_sync->phase_diff_u_hist[n]->bin[i];
@@ -420,8 +421,6 @@ void WritePhaseSyncStatsToFile(void) {
 		}
 	}
 
-	printf("\n\nBEFROE HERERERERE\n");
-	
 	// Write Bin Count data 
 	dims2D[0] = phase_sync->num_phase_diff;
 	dims2D[1] = NUM_PHASE_SYNC_HIST_BINS;
@@ -437,8 +436,6 @@ void WritePhaseSyncStatsToFile(void) {
 	// Free temporary memory
 	free(vel_phase_diff_counts);
 	free(vel_phase_diff_ranges);
-
-	printf("\n\nHEREERE\n");
 
 
 	// -------------------------------
@@ -484,7 +481,7 @@ void WritePhaseSyncStatsToFile(void) {
 	double* mag_phase_diff_counts = (double* )malloc(sizeof(double) * phase_sync->num_phase_diff * NUM_PHASE_SYNC_HIST_BINS);
 	double* mag_phase_diff_ranges = (double* )malloc(sizeof(double) * (NUM_PHASE_SYNC_HIST_BINS + 1));
 	for (int i = 0; i < NUM_PHASE_SYNC_HIST_BINS + 1; ++i) {
-		mag_triads_ranges[i] = phase_sync->phase_diff_b_hist[0]->range[i];
+		mag_phase_diff_ranges[i] = phase_sync->phase_diff_b_hist[0]->range[i];
 		if (i < NUM_PHASE_SYNC_HIST_BINS) {
 			for (int n = 0; n < phase_sync->num_phase_diff; ++n) {
 				mag_phase_diff_counts[n * NUM_PHASE_SYNC_HIST_BINS + i] = phase_sync->phase_diff_b_hist[n]->bin[i];
@@ -518,18 +515,22 @@ void FreePhaseSyncObjects(void) {
 	// Free Phase Memory
 	// -------------------------------
 	free(phase_sync->triads_u);
-	free(phase_sync->triads_b);
 	free(phase_sync->phase_diff_u);
+	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+	free(phase_sync->triads_b);
 	free(phase_sync->phase_diff_b);
+	#endif
 
 	// -------------------------------
 	// Free Order Parameter Memory
 	// -------------------------------
 	#if defined(__PHASE_SYNC)
 	free(phase_sync->triad_u_order);
-	free(phase_sync->triad_b_order);
 	free(phase_sync->phase_diff_u_order);
+	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+	free(phase_sync->triad_b_order);
 	free(phase_sync->phase_diff_b_order);
+	#endif
 	#endif
 
 	// -------------------------------
@@ -550,6 +551,12 @@ void FreePhaseSyncObjects(void) {
 			#endif
 		}
 	}
+	free(phase_sync->triad_u_hist);
+	free(phase_sync->phase_diff_u_hist);
+	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+	free(phase_sync->triad_b_hist);
+	free(phase_sync->phase_diff_b_hist);
+	#endif
 	#endif
 }
 // ---------------------------------------------------------------------

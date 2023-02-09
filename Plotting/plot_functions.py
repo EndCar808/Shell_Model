@@ -143,7 +143,7 @@ def plot_str_funcs_with_slope(outdir_path, k, str_funcs, inert_range, insert_fig
 		ax1in.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
 
 	## Turn on axes
-	ax1.legend()
+	ax1.legend(loc = 'upper right')
 
 	## Save figure
 	plt.savefig(outdir_path, bbox_inches='tight')
@@ -188,7 +188,47 @@ def plot_anomalous_exponent(outdir_path, p, zeta_p, ns_zeta_p = None, label_str 
 	ax1.set_xlabel(r"$p$")
 	ax1.set_ylabel(r"$\zeta_p$")
 	ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
-	ax1.legend()
+	ax1.legend(loc = 'upper left')
+
+	## Save figure
+	plt.savefig(outdir_path, bbox_inches='tight')
+	plt.close()
+
+
+def phase_only_space_time(outdir_path, phases, time, n, label):
+
+	N = n
+	num_t_steps = phases.shape[0]
+
+	fig = plt.figure(figsize = (30, 10))
+	gs  = GridSpec(2, 1)
+	ax1 = fig.add_subplot(gs[0, 0])
+	im1 = ax1.imshow(np.rot90(np.mod(phases, 2.0 * np.pi)), extent = (1, num_t_steps, 1, N), aspect = 'auto', cmap = "hsv", vmin = 0.0, vmax = 2.0 * np.pi)
+	ax1.set_xlabel(r"$t$")
+	ax1.set_ylabel(r"$n$")
+	ax1.set_ylim(1.0, N)
+	ax1.set_title(label)
+	## Plot colourbar
+	div1  = make_axes_locatable(ax1)
+	cbax1 = div1.append_axes("right", size = "5%", pad = 0.05)
+	cb1   = plt.colorbar(im1, cax = cbax1)
+	cb1.set_label(label)
+
+	ax2 = fig.add_subplot(gs[1, 0])
+	div2   = make_axes_locatable(ax2)
+	axtop2 = div2.append_axes("top", size = "100%", pad = 0.2)
+	for i in range(N//2):
+		ax2.plot(time, phases[:, i], label = r"$i = {}$".format(i + 1))
+	ax2.set_xlabel(r"$t$")
+	ax2.set_ylabel(label)
+	ax2.set_xlim(time[0], time[-1])
+	ax2.legend()
+	for i in range(N//2, N):
+		axtop2.plot(time, phases[:, i], label = r"$i = {}$".format(i + 1))
+	axtop2.set_xlabel(r"$t$")
+	axtop2.set_ylabel(label)
+	axtop2.set_xlim(time[0], time[-1])
+	axtop2.legend(loc = 'upper right')
 
 	## Save figure
 	plt.savefig(outdir_path, bbox_inches='tight')

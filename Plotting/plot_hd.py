@@ -28,8 +28,8 @@ import multiprocessing as mprocs
 import time as TIME
 from subprocess import Popen, PIPE, run
 from matplotlib.pyplot import cm
-from functions import tc, sim_data, import_data, compute_pdf, import_stats_data, import_sys_msr_data, import_phase_sync_data, compute_pdf_from_hist, compute_pdf, parse_cml
-from plot_functions import plot_anomalous_exponent, plot_str_funcs_with_slope
+from functions import tc, sim_data, import_data, compute_pdf, import_stats_data, import_sys_msr_data, import_phase_sync_data, compute_pdf_from_hist, compute_pdf, parse_cml, slope_fit
+from plot_functions import plot_anomalous_exponent, plot_str_funcs_with_slope, phase_only_space_time
 ###############################
 ##       FUNCTION DEFS       ##
 ###############################
@@ -137,11 +137,26 @@ if __name__ == '__main__':
 	# -----------------------------------------
 	if cmdargs.plotting is True:
 
-		fig_size = (5, 3)
-		fig_file_type = ".pdf"
+		fig_size = (10, 8)
+		fig_file_type = ".png"
 		num_pow = 6
 		# num_pow = stats_data.vel_str_func.shape[-1]
 
+		###################################
+		##  PO Model Dynamics Diagnostic
+		###################################
+		if sys_vars.model_type == "PHASEONLY":
+			## Individual phases
+			phase_only_space_time(cmdargs.out_dir_HD + "PO_SpaceTime_Dynamics_Diagnostic_Phases" + fig_file_type, run_data.phi_n, sys_msr_data.time, sys_vars.N, r"$\phi_n$")
+
+			# ## Read in sys_msr data
+			phase_sync = import_phase_sync_data(data_file_path, sys_vars, method)
+			
+			## Triads
+			phase_only_space_time(cmdargs.out_dir_HD + "PO_SpaceTime_Dynamics_Diagnostic_Vel_Triads" + fig_file_type, phase_sync.vel_triads, sys_msr_data.time, phase_sync.num_triads, r"$\varphi_{n ,n + 1}^{n + 2}$")
+
+			## Phase Differences
+			phase_only_space_time(cmdargs.out_dir_HD + "PO_SpaceTime_Dynamics_Diagnostic_Vel_PhaseDiffs" + fig_file_type, phase_sync.vel_phase_diffs, sys_msr_data.time, phase_sync.num_phase_diffs, r"$\phi_n - \phi_{n + 3}$")
 
 		###################################
 		##  PDFs
@@ -153,7 +168,10 @@ if __name__ == '__main__':
 			if hasattr(stats_data, "vel_hist_counts"):
 				pdf, centres = compute_pdf_from_hist(stats_data.vel_hist_counts[i, :], stats_data.vel_hist_ranges[i, :], normed = True)
 			else:
-				pdf, centres = compute_pdf(np.real(run_data.u[:, i]), nbins = 500, normed = True)
+				if sys_vars.model_type == "PHASEONLY":
+					pdf, centres = compute_pdf(np.real(run_data.a_n[:, i] * np.exp(1j * run_data.phi_n[:, i])), nbins = 500, normed = True)					
+				else:
+					pdf, centres = compute_pdf(np.real(run_data.u[:, i]), nbins = 500, normed = True)
 			if i == -1:
 				ax1.plot(centres, pdf, label = "$n = {}$".format(sys_vars.N))    
 			else:
@@ -162,6 +180,7 @@ if __name__ == '__main__':
 		ax1.set_ylabel(r"PDF")
 		ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
 		ax1.set_yscale('log')
+		ax1.set_title(sys_vars.model_type)
 		ax1.legend()
 
 		plt.savefig(cmdargs.out_dir_HD + "VelReal_PDF_InOne" + fig_file_type)
@@ -276,7 +295,9 @@ if __name__ == '__main__':
 		ax1.set_yscale("log")
 		ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
 		ax2 = fig.add_subplot(gs[0, 1])
-		ax2.plot(sys_msr_data.k, np.absolute(sys_msr_data.enrg_flux_t_avg) )
+		p, = ax2.plot(sys_msr_data.k, np.absolute(sys_msr_data.enrg_flux_t_avg))
+		slope, c, _ = slope_fit(np.log(sys_msr_data.k), np.log(np.absolute(sys_msr_data.enrg_flux_t_avg)), inertial_range[0], inertial_range[-1])
+		ax2.plot(sys_msr_data.k, sys_msr_data.k ** (slope) * np.exp(c), '--', label = "$slope = {}$".format(np.around(slope, 3)), color = p.get_color())
 		ax2.plot(sys_msr_data.k, sys_msr_data.k ** (-1), 'k--', label = "$k^{-1}$")
 		ax2.set_xlabel(r"$k_n$")
 		ax2.set_ylabel(r"$\mathcal{E}_n$")
@@ -287,20 +308,27 @@ if __name__ == '__main__':
 		plt.savefig(cmdargs.out_dir_HD + "Time_Averaged_Energy_Flux_Spectra" + fig_file_type, bbox_inches='tight')
 		plt.close()
 
-		if hasattr(sys_msr_data, "kin_hel_spec_t_avg"):
+
+		if hasattr(sys_msr_data, "kin_hel_flux_t_avg"):
+			tmp1 = np.copy(sys_msr_data.kin_hel_flux_t_avg)
+			tmp2 = np.copy(sys_msr_data.kin_hel_flux_t_avg)
+			tmp1[tmp1 < 0] = 0.0
+			tmp2[tmp2 > 0] = 0.0
 			fig = plt.figure(figsize = fig_size)
 			gs  = GridSpec(1, 2)
 			ax1 = fig.add_subplot(gs[0, 0])
-			ax1.plot(sys_msr_data.k, sys_msr_data.kin_hel_spec_t_avg * sys_msr_data.k, label = "Pre-Multiplied Time Averaged Kinetic Helicity Flux Spectrum")
+			ax1.plot(sys_msr_data.k, tmp1 * sys_msr_data.k**2, '.')
+			ax1.plot(sys_msr_data.k, np.absolute(tmp2) * sys_msr_data.k**2, '.')
 			ax1.set_xlabel(r"$k_n$")
 			ax1.set_ylabel(r"$k_n \mathcal{E}_n$")
 			ax1.set_xscale("log")
 			ax1.set_yscale("log")
-			ax1.legend()
 			ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
 			ax2 = fig.add_subplot(gs[0, 1])
-			ax2.plot(sys_msr_data.k, sys_msr_data.kin_hel_spec_t_avg , label = "Time Averaged Kinetic Helicity Flux Spectrum")
-			ax2.plot(sys_msr_data.k, sys_msr_data.k ** (-1), 'k--', label = "$k^{-1}$")
+			p, = ax2.plot(sys_msr_data.k, np.absolute(sys_msr_data.kin_hel_flux_t_avg))
+			slope, c, _ = slope_fit(np.log(sys_msr_data.k), np.log(np.absolute(sys_msr_data.kin_hel_flux_t_avg)), inertial_range[0], inertial_range[-1])
+			ax2.plot(sys_msr_data.k, sys_msr_data.k ** (slope) * np.exp(c), '--', label = "$slope = {}$".format(np.around(slope, 3)), color = p.get_color())
+			ax2.plot(sys_msr_data.k, sys_msr_data.k ** (-2), 'k--', label = "$k^{-2}$")
 			ax2.set_xlabel(r"$k_n$")
 			ax2.set_ylabel(r"$\mathcal{E}_n$")
 			ax2.set_xscale("log")

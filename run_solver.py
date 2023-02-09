@@ -158,6 +158,7 @@ if __name__ == '__main__':
     eps_m      = []
     cfl        = []
     save_every = []
+    input_file = []
 
     ## Parse input parameters
     for section in parser.sections():
@@ -230,7 +231,8 @@ if __name__ == '__main__':
                 step_type = int(parser[section]['adaptive_step_type'] == 'True')
         if section in ['DIRECTORIES']:
             if 'solver_input_dir' in parser[section]:
-                input_file = str(parser[section]['solver_input_dir'])
+                for n in parser[section]['solver_input_dir'].lstrip('[').rstrip(']').split(', '):
+                    input_file.append(str(n))
             if 'solver_output_dir' in parser[section]:
                 output_dir = str(parser[section]['solver_output_dir'])
             if 'solver_tag' in parser[section]:
@@ -283,6 +285,7 @@ if __name__ == '__main__':
     ##      RUN SOLVER     ##
     #########################
     if solver:
+        
 
         ## Get the number of processes to launch
         proc_limit = num_solver_job_threads
@@ -310,7 +313,7 @@ if __name__ == '__main__':
                                                                                                                                                     u0, 
                                                                                                                                                     s_tag, 
                                                                                                                                                     forcing, force_k, force_scale, 
-                                                                                                                                                    save, input_file)] for n in N for t in T for h, save in zip(dt, save_every) for u0 in ic for v in nu for et in eta for ep in eps for a in alpha for b in beta for ep_m in eps_m for c in cfl for s_tag in solver_tag]
+                                                                                                                                                    save, in_file)] for n in N for t in T for h, save in zip(dt, save_every) for u0 in ic for v in nu for et in eta for ep in eps for a in alpha for b in beta for ep_m in eps_m for c in cfl for s_tag in solver_tag for in_file in input_file]
 
         if cmdargs.cmd_only:
             print(tc.C + "\nSolver Commands:\n" + tc.Rst)
@@ -341,7 +344,9 @@ if __name__ == '__main__':
                         solver_error.append(run_CodeErr)
                     
                     ## Print both to screen
+                    print("Output:\n\n\t")
                     print(run_CodeOutput)
+                    print("Error:\n\n\t")
                     print(run_CodeErr)
 
                     ## Wait until all finished
