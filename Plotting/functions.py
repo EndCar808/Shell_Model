@@ -669,6 +669,9 @@ def import_sys_msr_data(input_file, sim_data, method = "default"):
                     self.tot_vel_enrg_diss = f["TotalVelEnergyDiss"][:]
                 if 'TotalVelEnergyInput' in list(f.keys()):
                     self.tot_vel_enrg_input   = f["TotalVelEnergyInput"][:]
+                ## Total Kinetic Helicity Flux
+                if 'TotalKineticHelicityFlux' in list(f.keys()):
+                    self.tot_kin_hel_flux   = f["TotalKineticHelicityFlux"][:]                    
                 ## Time Averaged Data
                 if 'TimeAveragedDissipationSpectrum' in list(f.keys()):
                     self.diss_spec_t_avg = f["TimeAveragedDissipationSpectrum"][:]

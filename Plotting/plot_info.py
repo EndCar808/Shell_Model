@@ -12,7 +12,6 @@ import numpy as np
 import h5py
 import sys
 import os
-from numba import njit
 import matplotlib as mpl
 # mpl.use('TkAgg') # Use this backend for displaying plots in window
 mpl.use('Agg') # Use this backend for writing plots to file
@@ -23,10 +22,6 @@ import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import getopt
-from itertools import zip_longest
-import multiprocessing as mprocs
-import time as TIME
-from subprocess import Popen, PIPE, run
 from matplotlib.pyplot import cm
 from functions import tc, sim_data, import_data, compute_pdf, import_stats_data, import_sys_msr_data, import_phase_sync_data, compute_pdf_from_hist, compute_pdf
 
@@ -141,6 +136,8 @@ if __name__ == '__main__':
         print("Making folder:" + tc.C + " PHASE_SYNC/" + tc.Rst)
         os.mkdir(cmdargs.out_dir_sync)
     print()
+    
+    
     # -----------------------------------------
     # # --------  Compute Post data
     # -----------------------------------------

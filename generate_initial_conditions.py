@@ -4,8 +4,6 @@
 import numpy as np
 import h5py
 import sys
-import os
-from numba import njit
 import matplotlib as mpl
 # mpl.use('TkAgg') # Use this backend for displaying plots in window
 # mpl.use('Agg') # Use this backend for writing plots to file
@@ -14,14 +12,7 @@ mpl.rcParams['font.family'] = 'serif'
 mpl.rcParams['font.serif']  = 'Computer Modern Roman'
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-import getopt
-from itertools import zip_longest
-import multiprocessing as mprocs
-import time as TIME
-from subprocess import Popen, PIPE, run
-from matplotlib.pyplot import cm
-from Plotting.functions import tc, parse_cml, slope_fit
+from Plotting.functions import parse_cml, slope_fit
 ######################
 ##       MAIN       ##
 ######################
@@ -82,3 +73,37 @@ if __name__ == '__main__':
 		a_n_adjust = a_n_t_avg * (k ** (np.absolute(a_n_slope) - a))
 		with h5py.File(cmdargs.out_dir + "InitialData_ALPHA[{:1.3f}].h5".format(a), 'w') as out_file:
 			out_file.create_dataset("VelAmps", data = a_n_adjust)
+
+
+	step = 0.1 
+	alpha_slopes = np.arange(0.0, 3 + step, step)
+	min_shell = np.zeros((2, len(alpha_slopes)))
+	for j, beta in enumerate(alpha_slopes):
+		a_n_adjust = a_n_t_avg * (k ** (np.absolute(a_n_slope) - beta))
+		a_n_pad = np.pad(a_n_adjust, 2, 'constant')
+		k_pad  = np.pad(k, 2, 'constant')
+		a_timescale = np.empty_like(a_n_adjust)
+		for i in range(len(a_n_pad)):
+			if i >= 2 and i < len(a_timescale) + 2:
+				a_timescale[i - 2] = a_n_adjust[i - 2] / (k[i - 2] * (a_n_pad[i + 2] * a_n_pad[i + 1] + a_n_pad[i - 1] * a_n_pad[i + 1] + a_n_pad[i - 2] * a_n_pad[i - 1]))
+		min_shell[0, j] = np.argmin(a_timescale)
+		min_shell[1, j] = np.min(a_timescale)
+		print(beta, np.min(a_timescale))
+
+	fig = plt.figure(figsize = (16, 8))
+	gs  = GridSpec(1, 2)
+	ax1 = fig.add_subplot(gs[0, 0])
+	ax1.plot(alpha_slopes, min_shell[0, :] + 1, marker = '.', label = "indx")
+	ax1.set_ylim(1, 25)
+	ax1.set_xlabel(r"$\alpha$")
+	ax1.set_ylabel(r"Shell of smallest timestep")
+	ax1.legend()
+	ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+	ax2 = fig.add_subplot(gs[0, 1])
+	ax2.plot(alpha_slopes, min_shell[1, :], marker = '.', label = "val")
+	ax2.set_xlabel(r"$\alpha$")
+	ax2.set_ylabel(r"$a_n / (k_n (a_{n + 2} a_{n + 1} + a_{n + 1} a_{n - 1} + a_{n - 2} a_{n - 1}))$")
+	ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+	ax2.legend()
+	plt.savefig(cmdargs.out_dir + "Timescale.png", bbox_inches='tight')
+	plt.close()

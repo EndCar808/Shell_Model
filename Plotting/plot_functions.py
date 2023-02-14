@@ -213,18 +213,20 @@ def phase_only_space_time(outdir_path, phases, time, n, label):
 	cbax1 = div1.append_axes("right", size = "5%", pad = 0.05)
 	cb1   = plt.colorbar(im1, cax = cbax1)
 	cb1.set_label(label)
+	cb1.ax.set_ylim(0, 2.0*np.pi)
+	cb1.ax.set_yticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
 
 	ax2 = fig.add_subplot(gs[1, 0])
 	div2   = make_axes_locatable(ax2)
 	axtop2 = div2.append_axes("top", size = "100%", pad = 0.2)
 	for i in range(N//2):
-		ax2.plot(time, phases[:, i], label = r"$i = {}$".format(i + 1))
+		ax2.plot(time, np.unwrap(phases[:, i]), label = r"$i = {}$".format(i + 1))
 	ax2.set_xlabel(r"$t$")
 	ax2.set_ylabel(label)
 	ax2.set_xlim(time[0], time[-1])
 	ax2.legend()
 	for i in range(N//2, N):
-		axtop2.plot(time, phases[:, i], label = r"$i = {}$".format(i + 1))
+		axtop2.plot(time, np.unwrap(phases[:, i]), label = r"$i = {}$".format(i + 1))
 	axtop2.set_xlabel(r"$t$")
 	axtop2.set_ylabel(label)
 	axtop2.set_xlim(time[0], time[-1])

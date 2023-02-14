@@ -275,7 +275,9 @@ if __name__ == '__main__':
                 num_plotting_job_threads = int(parser[section]['num_plotting_job_threads'])
 
     ## Get the path to the runs output directory
+
     par_runs_output_dir = os.path.split(output_dir)[0]
+    print(par_runs_output_dir)
     par_runs_output_dir += '/ParallelRunsDump/'
     if os.path.isdir(par_runs_output_dir) != True:
         print("Making folder:" + tc.C + " ParallelRunsDump/" + tc.Rst)

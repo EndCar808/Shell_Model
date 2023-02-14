@@ -43,6 +43,7 @@ void AddForcing(double complex* u_nonlin, double complex* b_nonlin);
 void InitializeShellWavenumbers(double* k, const long int N);
 void InitialConditions(const long int N);
 void InitializeIntegrationVariables(double* t0, double* t, double* dt, double* T, long int* trans_steps);
+double GetTimesetp(void);
 void InitializeForicing(const long int N, double dt);
 // Forcing Functions
 void ComputeForcing(double dt, const long int N);

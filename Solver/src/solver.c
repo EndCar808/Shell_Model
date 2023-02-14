@@ -72,7 +72,7 @@ void Solve(void) {
 	// If input file is selected the function to read input file is called from here
 	InitialConditions(N);
 
-
+	
 	// -------------------------------
 	// Integration Variables
 	// -------------------------------
@@ -115,7 +115,7 @@ void Solve(void) {
 	// Create and open the output file - also write initial conditions to file
 	CreateOutputFilesWriteICs(N);
 
-	// // // Print update of the initial conditions to the terminal
+	// Print update of the initial conditions to the terminal
 	PrintUpdateToTerminal(iters - 1, t0, dt, T, iters - 1);
 
 
@@ -154,8 +154,6 @@ void Solve(void) {
 
 			// Record System Measurables
 			ComputeSystemMeasurables(t, iters, save_data_indx, RK_data);
-
-			// printf("Eddy Turnover: %lf\n", pow(run_data->k[2] / K_0, 2.0 / 3.0));
 
 			// Compute the conserved phases and phase order parameters
 			#if defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC_STATS)
@@ -1313,14 +1311,14 @@ void InitializeForicing(const long int N, double dt) {
 				#if defined(PHASE_ONLY)
 				amp_u_1                = run_data->a_n[i];
 				run_data->forcing_u[i] = run_data->a_n[i] * cexp(I * run_data->phi_n[i]);
-				#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+				#if defined(__MAGNETO)
 				amp_b_1                = run_data->b_n[i];
 				run_data->forcing_b[i] = run_data->b_n[i] * cexp(I * run_data->psi_n[i]);
 				#endif				
 				#else
 				amp_u_1                = cabs(run_data->u[i]);
 				run_data->forcing_u[i] = run_data->u[i];
-				#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+				#if defined(__MAGNETO)
 				amp_b_1                = cabs(run_data->b[i]);
 				run_data->forcing_b[i] = run_data->b[i];
 				#endif				
@@ -1331,15 +1329,15 @@ void InitializeForicing(const long int N, double dt) {
 				#if defined(PHASE_ONLY)
 				run_data->a_n[i]       = amp_u_1;
 				run_data->forcing_u[i] = run_data->a_n[i] * cexp(I * run_data->phi_n[i]);
-				#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+				#if defined(__MAGNETO)
 				run_data->b_n[i]       = amp_b_1;
 				run_data->forcing_b[i] = run_data->b_n[i] * cexp(I * run_data->psi_n[i]);
 				#endif				
 				#else
-				run_data->u[i]         = amp_u_1;
+				run_data->u[i]         *= (amp_u_1 / cabs(run_data->u[i]));
 				run_data->forcing_u[i] = run_data->u[i];
-				#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
-				run_data->b[i]         = amp_b_1;
+				#if defined(__MAGNETO)
+				run_data->b[i]         *= (amp_b_1 / cabs(run_data->b[i]));
 				run_data->forcing_b[i] = run_data->b[i];
 				#endif		
 				#endif	
@@ -1494,6 +1492,7 @@ void AddForcing(double complex* u_nonlin, double complex* b_nonlin) {
 		// ------------------------------------------------
 		//------------------------------------------------------- Fixed First k Amplitude Forcing
 		if(!(strcmp(sys_vars->forcing, "FXD_AMP"))) {
+			#if !defined(PHASE_ONLY)
 			// If fixed amplitude forcing reset the amplitudes to the forced modes
 			if (i >= 2 && i <= sys_vars->force_k + 1) {
 				u_nonlin[i] *= cabs(run_data->forcing_u[i]) / cabs(u_nonlin[i]);
@@ -1502,6 +1501,7 @@ void AddForcing(double complex* u_nonlin, double complex* b_nonlin) {
 				b_nonlin[i] *= cabs(run_data->forcing_b[i]) / cabs(b_nonlin[i]); 
 				#endif
 			}
+			#endif
 		}
 		//------------------------------------------------------- Add Stochastic forcing and also update the forcing for the next iteration
 		else if(!(strcmp(sys_vars->forcing, "EXP_STOC")) || !(strcmp(sys_vars->forcing, "DELTA_STOC"))) {
@@ -1547,11 +1547,15 @@ void InitializeIntegrationVariables(double* t0, double* t, double* dt, double* T
 	// Compute integration time variables
 	(*t0) = sys_vars->t0;
 	(*t ) = sys_vars->t0;
-	(*dt) = sys_vars->dt;
 	(*T ) = sys_vars->T;
+	(*dt) = sys_vars->dt;
 	sys_vars->min_dt = MIN_STEP_SIZE;
 	sys_vars->max_dt = 10;
 	double tmp_num_t_steps;
+	#if defined(PHASE_ONLY)
+	double tmp_dt = GetTimesetp();
+	(*dt)         = fmin(tmp_dt, sys_vars->dt);
+	#endif
 
 	// -------------------------------
 	// Integration Counters
@@ -1584,6 +1588,29 @@ void InitializeIntegrationVariables(double* t0, double* t, double* dt, double* T
 
 	// Variable to control how ofter to print to screen -> set it to half the saving to file steps
 	sys_vars->print_every = (sys_vars->num_t_steps >= 10 ) ? (int)sys_vars->SAVE_EVERY : 1;
+}
+/**
+ * Function to get the timestep for the phase only model
+ * @return  Returns the timetep which is set the minimum of the RHS
+ */
+double GetTimesetp(void) {
+
+	double min_delta_t = 1e10;
+	double delta_t;
+
+	for (int i = 0; i < sys_vars->N + 4; ++i) {
+		if (i >= 2 && i < sys_vars->N + 2) {
+			// Compute the timescale
+			delta_t = run_data->a_n[i] / (run_data->k[i] * (run_data->a_n[i + 2] * run_data->a_n[i + 1] + run_data->a_n[i - 1] * run_data->a_n[i + 1] + run_data->a_n[i - 2] * run_data->a_n[i - 1]));
+
+			// Recrod the minimum
+			if (delta_t < min_delta_t) {
+				min_delta_t = delta_t;
+			}
+		}
+	}
+
+	return delta_t;
 }
 /**
  * Used to print update to screen
