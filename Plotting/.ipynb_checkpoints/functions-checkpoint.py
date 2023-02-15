@@ -101,7 +101,6 @@ def parse_cml(argv):
 
     return cargs
 
-
 def slope_fit(x, y, low, high):
 
     poly_output = np.polyfit(x[low:high], y[low:high], 1, full = True)
@@ -113,36 +112,6 @@ def slope_fit(x, y, low, high):
     return pfit_slope, pfit_c, poly_resid
 
 @njit
-def compute_field_values(data, N, delta, l):
-
-    trip_prod     = np.ones((N,)) * 1j
-    trip_prod_alt = np.ones((N,)) * 1j
-    double_prod   = np.ones((N - 1,)) * 1j
-    hel_flux      = np.ones((N,)) * 1j
-    energy_flux   = np.ones((N,)) * 1j
-
-    for i in range(N):
-        n = i + 2
-
-        # Helicity Flux Term
-        hel_flux[i]    = data[n + 2] * data[n + 1] * data[n] - (delta * l + 1.) / (l**2) * data[n - 1] * data[n + 1] * data[n]
-
-        # Kinetic Energy Flux Term
-        energy_flux[i] = data[n + 2] * data[n + 1] * data[n] + (1. - delta) / l * data[n - 1] * data[n + 1] * data[n]
-
-        # Tripple product term
-        trip_prod[i] = data[n + 2] * data[n + 1] * data[n]
-
-        # Tripple product alt term
-        trip_prod_alt[i] = (1. - delta) / l * data[n - 1] * data[n + 1] * data[n]
-
-        # Double product
-        if n + 3 < N + 2: 
-            double_prod[i] = data[n] * np.conjugate(data[n + 3])
-
-    return trip_prod, trip_prod_alt, double_prod, hel_flux, energy_flux
-
-@njit
 def compute_u_flux(data, N, delta, l):
 
     hel_flux    = np.zeros((N,))
@@ -151,7 +120,7 @@ def compute_u_flux(data, N, delta, l):
     for i in range(N):
         n = i + 2
         ## Helicity Flux Term
-        hel_flux[i]    = np.imag(data[n + 2] * data[n + 1] * data[n] - (delta * l + 1.) / (l**2) * data[n - 1] * data[n + 1] * data[n])
+        hel_flux[i]    = np.imag(data[n + 2] * data[n + 1] * data[n] - (delta * l + 1) / (l**2) * data[n - 1] * data[n + 1] * data[n])
         ## Kinetic Energy Flux Term
         energy_flux[i] = np.imag(data[n + 2] * data[n + 1] * data[n] + (1. - delta) / l * data[n - 1] * data[n + 1] * data[n])
 

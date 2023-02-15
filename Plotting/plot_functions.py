@@ -29,7 +29,7 @@ import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib.pyplot import cm
-
+np.seterr(divide = 'ignore') 
 #################################
 ## Colour Printing to Terminal ##
 #################################
@@ -215,6 +215,7 @@ def phase_only_space_time(outdir_path, phases, time, n, label):
 	cb1.set_label(label)
 	cb1.ax.set_ylim(0, 2.0*np.pi)
 	cb1.ax.set_yticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
+	cb1.ax.set_yticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2.0\pi$"])
 
 	ax2 = fig.add_subplot(gs[1, 0])
 	div2   = make_axes_locatable(ax2)
@@ -235,3 +236,35 @@ def phase_only_space_time(outdir_path, phases, time, n, label):
 	## Save figure
 	plt.savefig(outdir_path, bbox_inches='tight')
 	plt.close()
+
+
+def plot_spectrum(figure_obj, ax_obj, data, xdata, xlabel, ylabel, scale_func = np.log, fit = True, inert_range = None, save_fig = False, fig_path = None):
+
+	# Plot the data
+	ax_obj.plot(scale_func(xdata), scale_func(data), marker = '.', markevery = 1)
+	
+	# Plot slope fit
+	if fit:
+		# Set the inertial range
+		if inert_range is None:
+			inert_range = [5 + 1, 15 + 1]
+
+		# Fit the slope
+		poly_output = np.polyfit(scale_func(xdata[inert_range[0]:inert_range[-1]]), scale_func(data[inert_range[0]:inert_range[-1]]), 1, full = True)
+		pfit_info = poly_output[0]
+		poly_resid = poly_output[1][0]
+		pfit_slope = pfit_info[0]
+		pfit_c = pfit_info[1]
+
+		# Plot fitted slope
+		ax_obj.plot(scale_func(xdata[inert_range[0]:inert_range[-1]]), scale_func(xdata[inert_range[0]:inert_range[-1]])*pfit_slope + pfit_c, 'k--', label = "$k^{}$".format(np.around(pfit_slope, 4)))
+	
+	# Plot labelling and detailing
+	ax_obj.set_ylabel(ylabel)
+	ax_obj.set_xlabel(xlabel)
+	ax_obj.legend()
+	ax_obj.grid(which="both", axis="both", color='k', linestyle=":", linewidth=0.5)
+
+	if save_fig:
+		figure_obj.savefig(fig_path, bbox_inches='tight')
+		figure_obj.close()
