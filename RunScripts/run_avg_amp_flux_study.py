@@ -106,9 +106,9 @@ if __name__ == '__main__':
 	fig_format = ".png"
 
 	# Data
-	input_data = [trip_prod, trip_prod_alt, doub_prod, enrg_flux, hel_flux]
-	figure_names = ["TripProd", "TripProdAlt", "DoubleProd", "EnrgFlux", "HelFlux"]
-	data_labels = [r"u_{n + 2}u_{n + 1}u_{n}", r"(1 - \delta) / \lambda u_{n + 2}u_{n + 1}u_{n}", r"u_{n}u_{n + 3}^{*}", r"\Pi_n^{\mathcal{E}}", r"\Pi_n^{\mathcal{H}}"]
+	input_data = [k * trip_prod, trip_prod, trip_prod_alt, doub_prod, enrg_flux, hel_flux]
+	figure_names = ["kTripProd", "TripProd", "TripProdAlt", "DoubleProd", "EnrgFlux", "HelFlux"]
+	data_labels = [r"k_n u_{n + 2}u_{n + 1}u_{n}", r"u_{n + 2}u_{n + 1}u_{n}", r"(1 - \delta) / \lambda u_{n + 2}u_{n + 1}u_{n}", r"u_{n}u_{n + 3}^{*}", r"\Pi_n^{\mathcal{E}}", r"\Pi_n^{\mathcal{H}}"]
 
 	# Loop through data
 	for in_data, fig_name, data_labs in zip(input_data, figure_names, data_labels):
@@ -154,7 +154,17 @@ if __name__ == '__main__':
 		fig.savefig(cmdargs.out_dir_AVGFLUX + fig_name + "_Time_Averaged_Spectrum" + fig_format, bbox_inches='tight')
 		plt.close()
 
+		fig = plt.figure(figsize=fig_size)
+		gs = GridSpec(1, 1, hspace=0.4, wspace=0.5)
+		ax1 = fig.add_subplot(gs[0, 0])
+		ax1.scatter(np.absolute(in_data).flatten(), np.sin(np.angle(in_data).flatten()))
+		ax2.set_xlabel(r"$\left|" + data_labs + r"\right|$")
+		ax2.set_ylabel(r"$\sin \arg \left\{ " + data_labs + r" \right\}$")
+		plt.suptitle(fig_name)
+		fig.savefig(cmdargs.out_dir_AVGFLUX + fig_name + "_Scatter" + fig_format, bbox_inches='tight')
+		plt.close()
 
+		
 		#----------------------
 		# 2D Histogram
 		#----------------------
@@ -168,11 +178,16 @@ if __name__ == '__main__':
 		ax1.set_xlabel(r"$\Re \left\{" + data_labs + r"\right\}$")
 		ax1.set_ylabel(r"$\Im \left\{" + data_labs + r"\right\}$")
 		ax1.set_title(r"Real vs Imaginary")
-		im1 = ax1.imshow(hist.T, extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect="auto", cmap=mpl.colors.ListedColormap(cm.magma.colors), norm=mpl.colors.LogNorm())
+		im1 = ax1.imshow(np.rot90(hist), extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect="auto", cmap=mpl.colors.ListedColormap(cm.magma.colors), norm=mpl.colors.LogNorm())
 		div1  = make_axes_locatable(ax1)
+		ax1.set_xlim(-10, 10)
+		ax1.set_ylim(-10, 10)
 		cbax1 = div1.append_axes("right", size = "5%", pad = 0.05)
 		cb1   = plt.colorbar(im1, cax = cbax1)
 		cb1.set_label("PDF")
+
+		print("Case: {} \t Real: {} Imag: {}".format(fig_name, np.mean(np.real(in_data).flatten()), np.mean(np.imag(in_data).flatten())))
+		print("Case: {} \t Corr: {}".format(fig_name, np.corrcoef(np.absolute(in_data).flatten(), np.sin(np.angle(in_data).flatten()) )))
 
 		# Abs vs arg 
 		ax2 = fig.add_subplot(gs[0, 1])
@@ -237,11 +252,14 @@ if __name__ == '__main__':
 		plt.close()
 
 
+
+
+
 		#----------------------
 		# 1D Histograms
 		#----------------------
-		num_bins = 250
-		norm_hist = False
+		num_bins = 500
+		norm_hist = True
 		shells = [1 - 1, 5 - 1, 20 - 1]
 		fig = plt.figure(figsize=(10, 6))
 		gs = GridSpec(1, 2, hspace=0.4, wspace=0.3)
@@ -281,7 +299,7 @@ if __name__ == '__main__':
 		plt.savefig(cmdargs.out_dir_AVGFLUX + fig_name + "_1DHist_RealImag" + fig_format, bbox_inches='tight')
 		plt.close()
 		
-		num_bins = 250
+		num_bins = 500
 		norm_hist = True
 		shells = [1 - 1, 5 - 1, 20 - 1]
 		fig = plt.figure(figsize=(10, 6))
@@ -323,7 +341,7 @@ if __name__ == '__main__':
 		# Sin (Angle) Part
 		ax4 = fig.add_subplot(gs[0, 2])
 		for j, i in enumerate(shells):
-		    pdf, centres = compute_pdf(np.sin(np.mod(np.angle(in_data[:, i]) + 2.0 * np.pi, 2.0*np.pi)), nbins=num_bins, normed=False, bin_lims=[-1, 1])
+		    pdf, centres = compute_pdf(np.sin(np.angle(in_data[:, i])), nbins=num_bins, normed=False)
 		    if i == -1:
 		        p, = ax4.plot(centres, pdf, label="$n = {}$".format(sys_vars.N))    
 		    else:
@@ -339,6 +357,62 @@ if __name__ == '__main__':
 		plt.suptitle(fig_name)
 		plt.savefig(cmdargs.out_dir_AVGFLUX + fig_name + "_1DHist_AbsAngle" + fig_format, bbox_inches='tight')
 		plt.close()
+
+
+
+		#----------------------
+		# 2D Histogram VS 1d
+		#----------------------
+		num_bins = 100
+
+		n = 1 - 1
+		for n in [1 - 1, 5 - 1, 10 - 1, 15 - 1, 20 - 1]:
+			fig = plt.figure(figsize=fig_size)
+			gs = GridSpec(1, 2, hspace=0.4, wspace=0.5)
+
+			print(n)
+			# Abs vs arg 
+			ax1 = fig.add_subplot(gs[0, 0])
+			hist, xedges, yedges = np.histogram2d(np.absolute(in_data[:, n]), np.mod(np.angle(in_data[:, n]) + 2.0 * np.pi, 2.0 * np.pi), bins=num_bins, density=True)
+			ax1.set_xlabel(r"$\left|" + data_labs + r"\right|$")
+			ax1.set_ylabel(r"$\arg \left\{ " + data_labs + r" \right\}$")
+			ax1.set_title(r"Abs vs Arg")
+			im1 = ax1.imshow(np.rot90(hist, k=1), extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect="auto", cmap=mpl.colors.ListedColormap(cm.magma.colors), norm=mpl.colors.LogNorm())
+			ax1.set_ylim(0, 2.0 * np.pi)
+			ax1.set_yticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
+			ax1.set_yticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2\pi$"])
+			div1  = make_axes_locatable(ax1)
+			cbax1 = div1.append_axes("right", size = "5%", pad = 0.05)
+			cb2   = plt.colorbar(im1, cax = cbax1)
+			cb2.set_label("PDF")
+
+			ax2 = fig.add_subplot(gs[0, 1])
+			ax2.set_xlabel(r"$\left|" + data_labs + r"\right|$")
+			ax2.set_ylabel(r"$\arg \left\{ " + data_labs + r" \right\}$")
+			ax2.set_title(r"Abs * Arg")
+			
+			abs_pdf, centres = compute_pdf(np.absolute(in_data[:, n]), nbins=num_bins, normed=norm_hist)
+			angle_pdf, centres = compute_pdf(np.mod(np.angle(in_data[:, n]) + 2.0 * np.pi, 2.0*np.pi), nbins=num_bins, normed=False, bin_lims=[0.0, 2.0 * np.pi])
+			x_centres = (xedges[1:] + xedges[:-1]) * 0.5
+			y_centres = (yedges[1:] + yedges[:-1]) * 0.5
+			im2 = ax2.contour(x_centres, y_centres, np.outer(angle_pdf, abs_pdf), extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]])
+			# ax2.set_ylim(0, 2.0 * np.pi)
+			# ax2.set_yticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
+			# ax2.set_yticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2\pi$"])
+			div2  = make_axes_locatable(ax2)
+			cbax2 = div2.append_axes("right", size = "5%", pad = 0.05)
+			cb2   = plt.colorbar(im2, cax = cbax2)
+			cb2.set_label("PDF")
+
+
+			# Save figure
+			plt.suptitle(fig_name + "n = {}".format(n))
+			fig.savefig(cmdargs.out_dir_AVGFLUX + fig_name + "_2DHist_Comparison_n{}".format(n) + fig_format, bbox_inches='tight')
+			plt.close()
+
+
+
+
 
 
 

@@ -215,7 +215,7 @@ def phase_only_space_time(outdir_path, phases, time, n, label):
 	cb1.set_label(label)
 	cb1.ax.set_ylim(0, 2.0*np.pi)
 	cb1.ax.set_yticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
-	cb1.ax.set_yticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2.0\pi$"])
+	cb1.ax.set_yticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2\pi$"])
 
 	ax2 = fig.add_subplot(gs[1, 0])
 	div2   = make_axes_locatable(ax2)

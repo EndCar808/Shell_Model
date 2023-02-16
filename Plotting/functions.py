@@ -143,6 +143,12 @@ def compute_field_values(data, N, delta, l):
     return trip_prod, trip_prod_alt, double_prod, hel_flux, energy_flux
 
 @njit
+def compute_str_func_field_values(data, N, num_pow, pow_fac):
+
+    3
+    return str_func
+
+@njit
 def compute_u_flux(data, N, delta, l):
 
     hel_flux    = np.zeros((N,))
