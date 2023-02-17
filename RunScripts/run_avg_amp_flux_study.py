@@ -12,6 +12,7 @@ import numpy as np
 import h5py
 import sys
 import os
+import seaborn as sb
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 import matplotlib as mpl
@@ -106,12 +107,17 @@ if __name__ == '__main__':
 	fig_format = ".png"
 
 	# Data
-	input_data = [k * trip_prod, trip_prod, trip_prod_alt, doub_prod, enrg_flux, hel_flux]
-	figure_names = ["kTripProd", "TripProd", "TripProdAlt", "DoubleProd", "EnrgFlux", "HelFlux"]
-	data_labels = [r"k_n u_{n + 2}u_{n + 1}u_{n}", r"u_{n + 2}u_{n + 1}u_{n}", r"(1 - \delta) / \lambda u_{n + 2}u_{n + 1}u_{n}", r"u_{n}u_{n + 3}^{*}", r"\Pi_n^{\mathcal{E}}", r"\Pi_n^{\mathcal{H}}"]
+	input_data = [trip_prod, k * trip_prod] # , trip_prod_alt, doub_prod, enrg_flux, hel_flux]
+	figure_names = ["TripProd", "kTripProd"] # , "TripProdAlt", "DoubleProd", "EnrgFlux", "HelFlux"]
+	data_labels = [r"u_{n + 2}u_{n + 1}u_{n}", r"k_n u_{n + 2}u_{n + 1}u_{n}"] # , r"(1 - \delta) / \lambda u_{n + 2}u_{n + 1}u_{n}", r"u_{n}u_{n + 3}^{*}", r"\Pi_n^{\mathcal{E}}", r"\Pi_n^{\mathcal{H}}"]
 
 	# Loop through data
 	for in_data, fig_name, data_labs in zip(input_data, figure_names, data_labels):
+
+		cmdargs.out_dir_AVGFLUX = cmdargs.out_dir + "AVGFLUX_PLOTS/" + fig_name + "/"
+		if os.path.isdir(cmdargs.out_dir_AVGFLUX) != True:
+		    print("Making folder:" + tc.C + " AVGFLUX_PLOTS/" + tc.Rst)
+		    os.mkdir(cmdargs.out_dir_AVGFLUX)
 		
 		#----------------------
 		# Time Averaged Spectra
@@ -163,7 +169,6 @@ if __name__ == '__main__':
 		plt.suptitle(fig_name)
 		fig.savefig(cmdargs.out_dir_AVGFLUX + fig_name + "_Scatter" + fig_format, bbox_inches='tight')
 		plt.close()
-
 		
 		#----------------------
 		# 2D Histogram
@@ -186,9 +191,6 @@ if __name__ == '__main__':
 		cb1   = plt.colorbar(im1, cax = cbax1)
 		cb1.set_label("PDF")
 
-		print("Case: {} \t Real: {} Imag: {}".format(fig_name, np.mean(np.real(in_data).flatten()), np.mean(np.imag(in_data).flatten())))
-		print("Case: {} \t Corr: {}".format(fig_name, np.corrcoef(np.absolute(in_data).flatten(), np.sin(np.angle(in_data).flatten()) )))
-
 		# Abs vs arg 
 		ax2 = fig.add_subplot(gs[0, 1])
 		hist, xedges, yedges = np.histogram2d(np.absolute(in_data).flatten(), np.mod(np.angle(in_data) + 2.0 * np.pi, 2.0 * np.pi).flatten(), bins=num_bins, density=True)
@@ -208,7 +210,6 @@ if __name__ == '__main__':
 		plt.suptitle(fig_name)
 		fig.savefig(cmdargs.out_dir_AVGFLUX + fig_name + "_2DHist" + fig_format, bbox_inches='tight')
 		plt.close()
-
 
 		#----------------------------------------
 		# 2D Histogram - k_n Pre multiplied Data
@@ -251,16 +252,13 @@ if __name__ == '__main__':
 		fig.savefig(cmdargs.out_dir_AVGFLUX + fig_name + "_2DHist_knPreMult" + fig_format, bbox_inches='tight')
 		plt.close()
 
-
-
-
-
 		#----------------------
-		# 1D Histograms
+		# 1D Histograms Im and Re
 		#----------------------
 		num_bins = 500
 		norm_hist = True
 		shells = [1 - 1, 5 - 1, 20 - 1]
+		
 		fig = plt.figure(figsize=(10, 6))
 		gs = GridSpec(1, 2, hspace=0.4, wspace=0.3)
 
@@ -299,6 +297,10 @@ if __name__ == '__main__':
 		plt.savefig(cmdargs.out_dir_AVGFLUX + fig_name + "_1DHist_RealImag" + fig_format, bbox_inches='tight')
 		plt.close()
 		
+
+		#----------------------
+		# 1D Histograms Abs, Arg and sin(Arg)
+		#----------------------
 		num_bins = 500
 		norm_hist = True
 		shells = [1 - 1, 5 - 1, 20 - 1]
@@ -358,111 +360,236 @@ if __name__ == '__main__':
 		plt.savefig(cmdargs.out_dir_AVGFLUX + fig_name + "_1DHist_AbsAngle" + fig_format, bbox_inches='tight')
 		plt.close()
 
-
+		#----------------------
+		# PDF of Arg
+		#----------------------
+		bin_limits = [0.0 - 2.0 * np.pi / num_bins, 2.0 * np.pi + 2.0 * np.pi/num_bins]
+		fig = plt.figure(figsize=(10, 6))
+		gs  = GridSpec(1, 1, hspace=0.4, wspace=0.3)
+		ax1 = fig.add_subplot(gs[0, 0])
+		pdf, centres = compute_pdf(np.mod(np.angle(in_data[:, :].flatten()) + 2.0 * np.pi, 2.0*np.pi), nbins=num_bins, normed=False, bin_lims=bin_limits)
+		p,           = ax1.plot(centres, pdf)
+		# ax1.set_xlim(0, 2.0*np.pi)
+		ax1.set_xticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
+		ax1.set_xticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2\pi$"])
+		ax1.set_xlabel(r"$\arg \left\{" + data_labs + r" \right\} $")
+		ax1.set_ylabel(r"PDF")
+		ax1.set_yscale('log')
+		ax1.set_title(r"Phase Part")
+		ax1.grid(which="both", axis="both", color='k', linestyle=":", linewidth=0.5)
+		plt.savefig(cmdargs.out_dir_AVGFLUX + fig_name + "_Test_PDF_PhasesAll" + fig_format, bbox_inches='tight')
+		plt.close()
 
 		#----------------------
-		# 2D Histogram VS 1d
+		# Time Average of Abs and sin(Arg)
 		#----------------------
-		num_bins = 100
+		fig = plt.figure(figsize=(10, 6))
+		gs  = GridSpec(1, 1, hspace=0.4, wspace=0.3)
+		ax1 = fig.add_subplot(gs[0, 0])
+		ax1.plot(np.mean(np.absolute(in_data), axis=0), label=r"$Abs$")
+		ax1.plot(np.mean(np.sin(np.angle(in_data)), axis=0), label=r"$\sin \arg $")
+		ax1.grid(which="both", axis="both", color='k', linestyle=":", linewidth=0.5)
+		ax1.legend()
+		plt.savefig(cmdargs.out_dir_AVGFLUX + fig_name + "_Test_Average" + fig_format, bbox_inches='tight')
+		plt.close()
 
-		n = 1 - 1
-		for n in [1 - 1, 5 - 1, 10 - 1, 15 - 1, 20 - 1]:
-			fig = plt.figure(figsize=fig_size)
-			gs = GridSpec(1, 2, hspace=0.4, wspace=0.5)
+		#----------------------
+		# Independence of Abs and Angle
+		#----------------------
+		num_bins = 250
+		
+		shells = np.arange(in_data.shape[-1])
+		# shells = [1 - 1, 5 - 1, 10 - 1, 15 - 1, 20 - 1]
 
-			print(n)
-			# Abs vs arg 
+		density_flag = True
+		aspect_flag = "auto"
+		c_map = mpl.colors.ListedColormap(cm.magma.colors)
+		c_map_norm = None #mpl.colors.LogNorm()
+
+		for n in shells:
+			
+			## Comparison of 2D Distributions
+			fig = plt.figure(figsize=(32, 8))
+			gs = GridSpec(1, 3, hspace=0.4, wspace=0.5)
+
+			print(fig_name, n)
+
+			# Abs vs arg 2D (joint) distribution
 			ax1 = fig.add_subplot(gs[0, 0])
-			hist, xedges, yedges = np.histogram2d(np.absolute(in_data[:, n]), np.mod(np.angle(in_data[:, n]) + 2.0 * np.pi, 2.0 * np.pi), bins=num_bins, density=True)
+			x = np.absolute(in_data[:, n])
+			y = np.mod(np.angle(in_data[:, n]) + 2.0 * np.pi, 2.0 * np.pi)
+			hist, xedges, yedges = np.histogram2d(x, y, bins=(np.linspace(x.min(), x.max(), num_bins + 1), np.linspace(0.0, 2.0 * np.pi, num_bins + 1)), density=density_flag)
 			ax1.set_xlabel(r"$\left|" + data_labs + r"\right|$")
 			ax1.set_ylabel(r"$\arg \left\{ " + data_labs + r" \right\}$")
-			ax1.set_title(r"Abs vs Arg")
-			im1 = ax1.imshow(np.rot90(hist, k=1), extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect="auto", cmap=mpl.colors.ListedColormap(cm.magma.colors), norm=mpl.colors.LogNorm())
+			ax1.set_title(r"Abs and Arg")
+			im1 = ax1.imshow(np.rot90(hist, k=1), extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect=aspect_flag, cmap=c_map, norm=c_map_norm)
 			ax1.set_ylim(0, 2.0 * np.pi)
 			ax1.set_yticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
 			ax1.set_yticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2\pi$"])
 			div1  = make_axes_locatable(ax1)
+			margaxr = div1.append_axes("right", size = "15%", pad = 0.05)
+			pdf, centres = compute_pdf(np.mod(np.angle(in_data[:, n]) + 2.0 * np.pi, 2.0*np.pi), nbins=num_bins, normed=False, bin_lims=bin_limits)
+			p,           = margaxr.plot(pdf, centres, label="$n = {}$".format(n + 1))
+			margaxr.set_xscale('log')
+			margaxr.set_ylim(centres[0], centres[-1])
+			margaxr.set_xticks([])
+			margaxr.set_xticklabels([])
+			margaxr.set_yticks([])
+			margaxr.set_yticklabels([])
+			margaxr.spines['bottom'].set_visible(False)
+			margaxr.spines['top'].set_visible(False)
+			margaxr.spines['right'].set_visible(False)
 			cbax1 = div1.append_axes("right", size = "5%", pad = 0.05)
 			cb2   = plt.colorbar(im1, cax = cbax1)
 			cb2.set_label("PDF")
-
+			margaxt = div1.append_axes("top", size = "15%", pad = 0.05)
+			pdf, centres = compute_pdf(np.absolute(in_data[:, n]), nbins=num_bins, normed=False)
+			p,           = margaxt.plot(centres, pdf, label="$n = {}$".format(n + 1))
+			margaxt.set_yscale('log')
+			margaxt.set_xlim(centres[0], centres[-1])
+			margaxt.set_xticks([])
+			margaxt.set_xticklabels([])
+			margaxt.set_yticks([])
+			margaxt.set_yticklabels([])
+			margaxt.spines['left'].set_visible(False)
+			margaxt.spines['top'].set_visible(False)
+			margaxt.spines['right'].set_visible(False)
+			
+			# Product of the marginal 1d distributions
 			ax2 = fig.add_subplot(gs[0, 1])
 			ax2.set_xlabel(r"$\left|" + data_labs + r"\right|$")
 			ax2.set_ylabel(r"$\arg \left\{ " + data_labs + r" \right\}$")
 			ax2.set_title(r"Abs * Arg")
-			
-			abs_pdf, centres = compute_pdf(np.absolute(in_data[:, n]), nbins=num_bins, normed=norm_hist)
-			angle_pdf, centres = compute_pdf(np.mod(np.angle(in_data[:, n]) + 2.0 * np.pi, 2.0*np.pi), nbins=num_bins, normed=False, bin_lims=[0.0, 2.0 * np.pi])
-			x_centres = (xedges[1:] + xedges[:-1]) * 0.5
-			y_centres = (yedges[1:] + yedges[:-1]) * 0.5
-			im2 = ax2.contour(x_centres, y_centres, np.outer(angle_pdf, abs_pdf), extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]])
-			# ax2.set_ylim(0, 2.0 * np.pi)
-			# ax2.set_yticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
-			# ax2.set_yticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2\pi$"])
+			abs_pdf, abs_edges     = np.histogram(x, bins=num_bins, density=density_flag)
+			angle_pdf, angle_edges = np.histogram(y, bins=num_bins, density=density_flag, range=(0.0, 2.0 * np.pi))			
+			pdf_prod_data = np.outer(angle_pdf, abs_pdf)
+			im2 = ax2.imshow(np.flipud(pdf_prod_data), extent=[abs_edges[0], abs_edges[-1], angle_edges[0], angle_edges[-1]], aspect=aspect_flag, cmap=c_map, norm=c_map_norm)
+			ax2.set_ylim(0, 2.0 * np.pi)
+			ax2.set_yticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
+			ax2.set_yticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2\pi$"])
 			div2  = make_axes_locatable(ax2)
 			cbax2 = div2.append_axes("right", size = "5%", pad = 0.05)
 			cb2   = plt.colorbar(im2, cax = cbax2)
 			cb2.set_label("PDF")
 
+			# Error between the two
+			ax3 = fig.add_subplot(gs[0, 2])
+			ax3.set_xlabel(r"$\left|" + data_labs + r"\right|$")
+			ax3.set_ylabel(r"$\arg \left\{ " + data_labs + r" \right\}$")
+			ax3.set_title(r"Marginal Abs * Marginal Arg")
+			im3 = ax3.imshow(np.absolute(np.rot90(hist, k=1) - np.flipud(pdf_prod_data)), extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect=aspect_flag)
+			ax3.set_ylim(0, 2.0 * np.pi)
+			ax3.set_yticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
+			ax3.set_yticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2\pi$"])
+			div3  = make_axes_locatable(ax3)
+			cbax3 = div3.append_axes("right", size = "5%", pad = 0.05)
+			cb3   = plt.colorbar(im3, cax = cbax3)
+			cb3.set_label(r"$|p(R,\Theta) - p(R)p(\Theta)|$")
 
 			# Save figure
-			plt.suptitle(fig_name + "n = {}".format(n))
+			plt.suptitle(fig_name + " $n = {}$".format(n + 1))
 			fig.savefig(cmdargs.out_dir_AVGFLUX + fig_name + "_2DHist_Comparison_n{}".format(n) + fig_format, bbox_inches='tight')
 			plt.close()
 
 
+			## Comparison of 2D Distributions
+			fig = plt.figure(figsize=(32, 8))
+			gs = GridSpec(1, 3, hspace=0.4, wspace=0.5)
+
+			print(fig_name, n)
+
+			# Abs vs arg 2D (joint) distribution
+			ax1 = fig.add_subplot(gs[0, 0])
+			x = np.absolute(in_data[:, n])
+			y = np.sin(np.angle(in_data[:, n]))
+			hist, xedges, yedges = np.histogram2d(x, y, bins=(np.linspace(x.min(), x.max(), num_bins + 1), np.linspace(-1.0, 1.0, num_bins + 1)), density=density_flag)
+			ax1.set_xlabel(r"$\left|" + data_labs + r"\right|$")
+			ax1.set_ylabel(r"$\sin \arg \left\{ " + data_labs + r" \right\}$")
+			ax1.set_title(r"Abs and sinArg")
+			im1 = ax1.imshow(np.rot90(hist, k=1), extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect=aspect_flag, cmap=c_map, norm=c_map_norm)
+			ax1.set_ylim(-1.0, 1.0)
+			div1  = make_axes_locatable(ax1)
+			margaxr = div1.append_axes("right", size = "15%", pad = 0.05)
+			pdf, centres = compute_pdf(np.sin(np.angle(in_data[:, n])), nbins=num_bins, normed=False, bin_lims=[-1.0, 1.0])
+			p,           = margaxr.plot(pdf, centres, label="$n = {}$".format(n + 1))
+			margaxr.set_xscale('log')
+			margaxr.set_ylim(centres[0], centres[-1])
+			margaxr.set_xticks([])
+			margaxr.set_xticklabels([])
+			margaxr.set_yticks([])
+			margaxr.set_yticklabels([])
+			margaxr.spines['bottom'].set_visible(False)
+			margaxr.spines['top'].set_visible(False)
+			margaxr.spines['right'].set_visible(False)
+			cbax1 = div1.append_axes("right", size = "5%", pad = 0.05)
+			cb2   = plt.colorbar(im1, cax = cbax1)
+			cb2.set_label("PDF")
+			margaxt = div1.append_axes("top", size = "15%", pad = 0.05)
+			pdf, centres = compute_pdf(np.absolute(in_data[:, n]), nbins=num_bins, normed=False)
+			p,           = margaxt.plot(centres, pdf, label="$n = {}$".format(n + 1))
+			margaxt.set_yscale('log')
+			margaxt.set_xlim(centres[0], centres[-1])
+			margaxt.set_xticks([])
+			margaxt.set_xticklabels([])
+			margaxt.set_yticks([])
+			margaxt.set_yticklabels([])
+			margaxt.spines['left'].set_visible(False)
+			margaxt.spines['top'].set_visible(False)
+			margaxt.spines['right'].set_visible(False)
+			
+			# Product of the marginal 1d distributions
+			ax2 = fig.add_subplot(gs[0, 1])
+			ax2.set_xlabel(r"$\left|" + data_labs + r"\right|$")
+			ax2.set_ylabel(r"$\arg \left\{ " + data_labs + r" \right\}$")
+			ax2.set_title(r"Abs * Arg")
+			abs_pdf, abs_edges     = np.histogram(x, bins=num_bins, density=density_flag)
+			angle_pdf, angle_edges = np.histogram(y, bins=num_bins, density=density_flag, range=(-1.0, 1.0))			
+			pdf_prod_data = np.outer(angle_pdf, abs_pdf)
+			im2 = ax2.imshow(np.flipud(pdf_prod_data), extent=[abs_edges[0], abs_edges[-1], angle_edges[0], angle_edges[-1]], aspect=aspect_flag, cmap=c_map, norm=c_map_norm)
+			ax2.set_ylim(-1.0, 1.0)
+			div2  = make_axes_locatable(ax2)
+			cbax2 = div2.append_axes("right", size = "5%", pad = 0.05)
+			cb2   = plt.colorbar(im2, cax = cbax2)
+			cb2.set_label("PDF")
+
+			# Error between the two
+			ax3 = fig.add_subplot(gs[0, 2])
+			ax3.set_xlabel(r"$\left|" + data_labs + r"\right|$")
+			ax3.set_ylabel(r"$\arg \left\{ " + data_labs + r" \right\}$")
+			ax3.set_title(r"Marginal Abs * Marginal Arg")
+			im3 = ax3.imshow(np.absolute(np.rot90(hist, k=1) - np.flipud(pdf_prod_data)), extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect=aspect_flag)
+			ax3.set_ylim(-1.0, 1.0)
+			div3  = make_axes_locatable(ax3)
+			cbax3 = div3.append_axes("right", size = "5%", pad = 0.05)
+			cb3   = plt.colorbar(im3, cax = cbax3)
+			cb3.set_label(r"$|p(R,\Theta) - p(R)p(\Theta)|$")
+
+			# Save figure
+			plt.suptitle(fig_name + " $n = {}$".format(n + 1))
+			fig.savefig(cmdargs.out_dir_AVGFLUX + fig_name + "_2DHist_ComparisonSinArg_n{}".format(n) + fig_format, bbox_inches='tight')
+			plt.close()
 
 
+		## 1D Tseries
+		fig = plt.figure(figsize=(32, 32))
+		gs = GridSpec(5, 5, hspace=0.4, wspace=0.5)
+		for i in range(5):
+			for j in range(5):
+				indx = i * 5 + j
+				if indx < in_data.shape[-1]:
+					ax1 = fig.add_subplot(gs[i, j])
+					ax1.plot(np.absolute(in_data[:, indx]))
+		fig.savefig(cmdargs.out_dir_AVGFLUX + fig_name + "_1DTSeries_Abs" + fig_format, bbox_inches='tight')
+		plt.close()
 
-
-
-fig = plt.figure(figsize=(10, 6))
-gs = GridSpec(1, 1, hspace=0.4, wspace=0.3)
-ax1 = fig.add_subplot(gs[0, 0])
-
-# Plot the time averaged tripple product
-data = np.absolute(np.mean(np.imag(trip_prod), axis=0))
-xlab = r"$\log k_n$"
-ylab = r"$\log \left|\Im \left\{" + data_labels[0] + r"\right\}\right|$"
-plot_spectrum(fig, ax1, data, k, xlab, ylab)
-data = np.mean(np.absolute(trip_prod), axis=0) * np.absolute(np.mean(np.sin(np.angle(trip_prod)), axis=0))
-xlab = r"$\log k_n$"
-ylab = r"$\log \langle \left|" + data_labels[0] + r"\right| \rangle \langle \sin \arg\left\{" + data_labels[0] + r"\right\}\rangle$"
-plot_spectrum(fig, ax1, data, k, xlab, ylab)
-plt.suptitle(figure_names[0])
-plt.savefig(cmdargs.out_dir_AVGFLUX + figure_names[0] + "_Test_TimeAverage_Indepence" + fig_format, bbox_inches='tight')
-plt.close()
-
-
-fig = plt.figure(figsize=(10, 6))
-gs = GridSpec(1, 1, hspace=0.4, wspace=0.3)
-ax1 = fig.add_subplot(gs[0, 0])
-
-# Plot the time averaged tripple product
-data = np.mean(np.imag(enrg_flux), axis=0)
-ax1.plot(data, label=r"Full")
-data = np.mean(np.absolute(enrg_flux), axis=0) * np.mean(np.sin(np.angle(enrg_flux)), axis=0)
-ax1.plot(data, label=r"Prod")
-plt.suptitle(figure_names[-2])
-plt.savefig(cmdargs.out_dir_AVGFLUX + figure_names[-2] + "_Test_TimeAverage_Indepence" + fig_format, bbox_inches='tight')
-plt.close()
-
-
-
-
-fig = plt.figure(figsize=(10, 6))
-gs = GridSpec(1, 1, hspace=0.4, wspace=0.3)
-ax1 = fig.add_subplot(gs[0, 0])
-pdf, centres = compute_pdf(np.mod(np.angle(enrg_flux[:, :].flatten()) + 2.0 * np.pi, 2.0*np.pi), nbins=num_bins, normed=False, bin_lims=[0.0 - 2.0 * np.pi / num_bins, 2.0 * np.pi + 2.0 * np.pi/num_bins])
-p, = ax1.plot(centres, pdf, label="$n = {}$".format(i + 1))
-# ax1.set_xlim(0, 2.0*np.pi)
-ax1.set_xticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
-ax1.set_xticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2\pi$"])
-ax1.set_xlabel(r"$\arg \left\{" + data_labels[0] + r" \right\} $")
-ax1.set_ylabel(r"PDF")
-ax1.set_yscale('log')
-ax1.legend()
-ax1.set_title(r"Phase Part")
-ax1.grid(which="both", axis="both", color='k', linestyle=":", linewidth=0.5)
-plt.savefig(cmdargs.out_dir_AVGFLUX + figure_names[0] + "_Test_PDF_TriadsAll" + fig_format, bbox_inches='tight')
-plt.close()
+		## 1D Tseries
+		fig = plt.figure(figsize=(32, 32))
+		gs = GridSpec(5, 5, hspace=0.4, wspace=0.5)
+		for i in range(5):
+			for j in range(5):
+				indx = i * 5 + j
+				if indx < in_data.shape[-1]:
+					ax1 = fig.add_subplot(gs[i, j])
+					ax1.plot(np.mod(np.angle(in_data[:, indx]) + 2.0 * np.pi, 2.0 * np.pi))
+		fig.savefig(cmdargs.out_dir_AVGFLUX + fig_name + "_1DTSeries_Arg" + fig_format, bbox_inches='tight')
+		plt.close()
