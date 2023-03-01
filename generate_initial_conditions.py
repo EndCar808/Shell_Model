@@ -13,6 +13,17 @@ mpl.rcParams['font.serif']  = 'Computer Modern Roman'
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 from Plotting.functions import parse_cml, slope_fit
+from scipy.optimize import curve_fit, least_squares
+
+def spec_func(k, a, b, c):
+    return a * k**(-b) * np.exp(-2.0 * c * k)
+def spec_func_log(k, a, b, c):
+    return np.log(a) -b * np.log(k) - 2.0 * c * k
+
+def spec_func_theta(theta, x):
+	return theta[0] * x**(-theta[1]) * np.exp(-2.0 * theta[2] * x)
+def spec_func_log_theta(theta, x):
+	return np.log(theta[0]) -theta[1] * np.log(x) -2.0 * theta[2] * x
 ######################
 ##       MAIN       ##
 ######################
@@ -60,6 +71,31 @@ if __name__ == '__main__':
 	plt.savefig(cmdargs.out_dir + "AvgAmps_All_Slopes.png", bbox_inches='tight')
 	plt.close()
 
+	# Plot fit to amplitudes
+	fig = plt.figure(figsize=(16, 8))
+	gs = GridSpec(1, 2)
+	ax1 = fig.add_subplot(gs[0, 0])
+	popt, pcov = curve_fit(spec_func, k, a_n_t_avg, maxfev=50000)
+	ax1.plot(k, a_n_t_avg, '.', label="C")
+	ax1.plot(k, spec_func(k, *popt), label=r"$a k^{-b}e^{-c k} + d$;" + r"$ a = {}, b = {}, c = {}$".format(np.around(popt[0], 6), np.around(popt[1], 6), np.around(popt[2], 6))) # , np.around(popt[3], 6)
+	ax1.set_xscale('log')
+	ax1.set_yscale('log')
+	ax1.legend()
+	ax1.grid(which="both", axis="both", color='k', linestyle=":", linewidth=0.5)
+
+	ax1 = fig.add_subplot(gs[0, 1])
+	def myfunc(theta):
+		return spec_func_theta(theta, k) - a_n_t_avg
+	res = least_squares(myfunc, [0.5, 0.3, 1e-4, 0])
+	ax1.plot(k, a_n_t_avg, '.', label="C")
+	ax1.plot(k, spec_func_theta(res.x, k), label=r"$a k^{-b}e^{-c k} + d$;" + r"$ a = {}, b = {}, c = {}$".format(np.around(res.x[0], 6), np.around(res.x[1], 6), np.around(res.x[2], 6)))
+	ax1.plot(k, res.x[0] * k**(-res.x[1]) * np.exp(-(2e-5) * k), label="powerlaw")
+	ax1.set_xscale('log')
+	ax1.set_yscale('log')
+	ax1.legend()
+	ax1.grid(which="both", axis="both", color='k', linestyle=":", linewidth=0.5)
+	plt.savefig(cmdargs.out_dir + "Fit.png", bbox_inches='tight')
+	plt.close()
 	# -------------------------------------
 	# # --------- Write Data to Output Directory
 	# -------------------------------------
@@ -75,6 +111,9 @@ if __name__ == '__main__':
 			out_file.create_dataset("VelAmps", data = a_n_adjust)
 
 
+	# -------------------------------------
+	# # --------- Plot Data
+	# -------------------------------------
 	step = 0.1 
 	alpha_slopes = np.arange(0.0, 3 + step, step)
 	min_shell = np.zeros((2, len(alpha_slopes)))
