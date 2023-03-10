@@ -23,6 +23,7 @@
 #include "solver.h"
 #include "sys_msr.h"
 #include "phase_sync.h"
+#include "mt64.h"
 // ---------------------------------------------------------------------
 //  Global Variables
 // ---------------------------------------------------------------------
@@ -507,6 +508,10 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 	#endif
 	#endif
 
+	double* tmp_a_n = (double* )malloc(sizeof(double) * (N + 4));
+	double max = 0.1;
+	double min = -max;
+
 	///----------------------- Forcing
 	// Compute the forcing for the current iteration
 	ComputeForcing(dt, N);
@@ -520,7 +525,8 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		// Get the input fields
 		#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
 		// Get the Fourier velocity from the Fourier phases and amplitudes
-		RK_data->RK_u_tmp[n] = run_data->a_n[n] * cexp(I * run_data->phi_n[n]);
+		tmp_a_n[n] = run_data->a_n[n] + (genrand64_real1() * (max-min+1) + min) * run_data->a_n[n];
+		RK_data->RK_u_tmp[n] = tmp_a_n[n] * cexp(I * run_data->phi_n[n]);
 		#if defined(__MAGNETO)
 		RK_data->RK_b_tmp[n] = run_data->b_n[n] * cexp(I * run_data->psi_n[n]);
 		#endif
@@ -549,9 +555,9 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 
 		// Update temporary input for nonlinear term
 		#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
-		RK_data->RK_u_tmp[n] = run_data->a_n[n] * cexp(I * (run_data->phi_n[n] + dt * RK4_A21 * RK_data->RK1_u[n]));
+		RK_data->RK_u_tmp[n] = tmp_a_n[n] * cexp(I * (run_data->phi_n[n] + dt * RK4_A21 * RK_data->RK1_u[n]));
 		#if defined(__MAGNETO)
-		RK_data->RK_b_tmp[n] = run_data->a_n[n] * cexp(I * (run_data->psi_n[n] + dt * RK4_A21 * RK_data->RK1_b[n]));
+		RK_data->RK_b_tmp[n] = run_data->b_n[n] * cexp(I * (run_data->psi_n[n] + dt * RK4_A21 * RK_data->RK1_b[n]));
 		#endif
 		#elif defined(__ELSASSAR_MHD)
 		// Add dissipative terms
@@ -581,7 +587,7 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 
 		// Update temporary input for nonlinear term
 		#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
-		RK_data->RK_u_tmp[n] = run_data->a_n[n] * cexp(I * (run_data->phi_n[n] + dt * RK4_A32 * RK_data->RK2_u[n]));
+		RK_data->RK_u_tmp[n] = tmp_a_n[n] * cexp(I * (run_data->phi_n[n] + dt * RK4_A32 * RK_data->RK2_u[n]));
 		#if defined(__MAGNETO)
 		RK_data->RK_b_tmp[n] = run_data->b_n[n] * cexp(I * (run_data->psi_n[n] + dt * RK4_A32 * RK_data->RK2_b[n]));
 		#endif
@@ -612,7 +618,7 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		n = i + 2;
 
 		#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
-		RK_data->RK_u_tmp[n] = run_data->a_n[n] * cexp(I * (run_data->phi_n[n] + dt * RK4_A43 * RK_data->RK3_u[n]));
+		RK_data->RK_u_tmp[n] = tmp_a_n[n] * cexp(I * (run_data->phi_n[n] + dt * RK4_A43 * RK_data->RK3_u[n]));
 		#if defined(__MAGNETO)
 		RK_data->RK_b_tmp[n] = run_data->b_n[n] * cexp(I * (run_data->psi_n[n] + dt * RK4_A43 * RK_data->RK3_b[n]));
 		#endif
@@ -1049,7 +1055,8 @@ void InitialConditions(const long int N) {
 	// ------------------------------------------------
     // Set Seed for RNG
     // ------------------------------------------------
-    srand(123456789);
+    double init_seed = 123654789;
+  	init_genrand64(init_seed);
 
 	// ------------------------------------------------
     // Check if Reading From Input File
@@ -1112,9 +1119,9 @@ void InitialConditions(const long int N) {
 					// Default - Random Initial Conditions
 					// ------------------------------------------------	
 					// Get random uniform number
-					r1 = (double)rand() / (double)RAND_MAX;
+					r1 = genrand64_real1();
 					#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
-					r2 = (double)rand() / (double)RAND_MAX;
+					r2 = genrand64_real1();
 					#endif
 
 					// Initialize the velocity field
@@ -1132,6 +1139,35 @@ void InitialConditions(const long int N) {
 					// Record the phases and amplitudes
 					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
 					run_data->b_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->BETA); // *1e-3
+					run_data->psi_n[i] = r2 * 2.0 * M_PI;
+					#endif
+					#endif
+				}
+				else if(!(strcmp(sys_vars->u0, "RANDOM_EXP"))) {
+					// ------------------------------------------------
+					// Default - Random Initial Conditions
+					// ------------------------------------------------	
+					// Get random uniform number
+					r1 = genrand64_real1();
+					#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+					r2 = genrand64_real1();
+					#endif
+
+					// Initialize the velocity field
+					run_data->u[i] = RAND_EXP_C / pow(run_data->k[i], sys_vars->ALPHA) * cexp(-RAND_EXP_B * run_data->k[i]) * cexp(I * r1 * 2.0 * M_PI); // *1e-3
+					// Record the phases and amplitudes
+					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
+					run_data->a_n[i]   = RAND_EXP_C / pow(run_data->k[i], sys_vars->ALPHA) * cexp(-RAND_EXP_B * run_data->k[i]); // *1e-3
+					run_data->phi_n[i] = r1 * 2.0 * M_PI;
+					#endif
+
+					// Initialize the magnetic field
+					#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+					run_data->b[i] = RAND_EXP_C / pow(run_data->k[i], sys_vars->BETA) * cexp(-RAND_EXP_B * run_data->k[i]) * cexp(I * r2 * 2.0 * M_PI); // *1e-3
+
+					// Record the phases and amplitudes
+					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
+					run_data->b_n[i]   = RAND_EXP_C / pow(run_data->k[i], sys_vars->BETA) * cexp(-RAND_EXP_B * run_data->k[i]); // *1e-3
 					run_data->psi_n[i] = r2 * 2.0 * M_PI;
 					#endif
 					#endif
@@ -1193,11 +1229,11 @@ void InitialConditions(const long int N) {
 					}
 
 					// Get random uniform number
-					r1 = (double)rand() / (double)RAND_MAX;
-					r3 = (double)rand() / (double)RAND_MAX;
+					r1 = genrand64_real1();
+					r3 = genrand64_real1();
 					#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
-					r2 = (double)rand() / (double)RAND_MAX;
-					r4 = (double)rand() / (double)RAND_MAX;
+					r2 = genrand64_real1();
+					r4 = genrand64_real1();
 					#endif
 
 					// Initialize the velocity field
@@ -1350,8 +1386,8 @@ void InitializeForicing(const long int N, double dt) {
 			// Loop over the forced modes and compute the intial forcing forcing
 			if (i >= 2 && i <= sys_vars->force_k + 1){
 				// Generate uniform random numbers
-				double rand1 = ((double)rand() / (double) RAND_MAX);
-				double rand2 = ((double)rand() / (double) RAND_MAX);
+				double rand1 = genrand64_real1();
+				double rand2 = genrand64_real1();
 
 				// Compute the forcing timescale
 				tau_0 = 1.0 / (run_data->k[i] * cabs(run_data->u[i]));
@@ -1378,8 +1414,8 @@ void InitializeForicing(const long int N, double dt) {
 			// Loop over the forced modes and compute the intial forcing forcing
 			if (i >= 2 && i <= sys_vars->force_k + 1){
 				// Generate uniform random numbers
-				double rand1 = ((double)rand() / (double) RAND_MAX);
-				double rand2 = ((double)rand() / (double) RAND_MAX);
+				double rand1 = genrand64_real1();
+				double rand2 = genrand64_real1();
 
 				// Compute the forcing timescale
 				tau_0 = 1.0 / (run_data->k[i] * cabs(run_data->u[i]));
@@ -1436,8 +1472,8 @@ void ComputeForcing(double dt, const long int N) {
 		// Loop over the forced modes and compute the forcing -> note shell n = 1 is at index 2
 		for (int i = 2; i <= sys_vars->force_k + 1; ++i) {
  			// Generate two uniform random numbers
-			rand1 = ((double)rand() / (double) RAND_MAX);
-			rand2 = ((double)rand() / (double) RAND_MAX);
+			rand1 = genrand64_real1();
+			rand2 = genrand64_real1();
 
 			// Compute the forcing timescale
 			tau_0 = 1.0 / (run_data->k[i] * cabs(run_data->u[i]));
@@ -1456,8 +1492,8 @@ void ComputeForcing(double dt, const long int N) {
 		// Loop over the forced modes and compute the forcing -> note shell n = 1 is at index 2
 		for (int i = 2; i <= sys_vars->force_k + 1; ++i) {
  			// Generate two uniform random numbers
-			rand1 = ((double)rand() / (double) RAND_MAX);
-			rand2 = ((double)rand() / (double) RAND_MAX);
+			rand1 = genrand64_real1();
+			rand2 = genrand64_real1();
 
 			// Compute the forcing timescale
 			tau_0 = 1.0 / (run_data->k[i] * cabs(run_data->u[i]));

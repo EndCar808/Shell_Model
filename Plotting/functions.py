@@ -102,8 +102,10 @@ def parse_cml(argv):
     return cargs
 
 
-def slope_fit(x, y, low, high):
+def she_leveque(p):
+    return p/9.0 + 2.0 * (1.0 - np.power(2.0/3.0, p/3.0))
 
+def slope_fit(x, y, low, high):
     poly_output = np.polyfit(x[low:high], y[low:high], 1, full = True)
     pfit_info   = poly_output[0]
     poly_resid  = poly_output[1][0]
@@ -143,10 +145,26 @@ def compute_field_values(data, N, delta, l):
     return trip_prod, trip_prod_alt, double_prod, hel_flux, energy_flux
 
 @njit
-def compute_str_func_field_values(data, N, num_pow, pow_fac):
+def compute_str_func_field_values(u, trip_prod, dub_prod, enrg_flux, hel_flux, N, num_pow):
 
-    3
-    return str_func
+    sf_u         = np.zeros((N, num_pow))
+    sf_enrg_flux = np.zeros((N, num_pow))
+    sf_hel_flux  = np.zeros((N, num_pow))
+    sf_trip_prod = np.zeros((N, num_pow))
+    sf_dub_prod  = np.zeros((N - 1, num_pow))
+    
+    for p in range(1, num_pow + 1):
+        for i in range(N):
+            n = i + 2
+
+            sf_u[i, p - 1]         = np.power(np.absolute(u[n]), p)
+            sf_hel_flux[i, p - 1]  = np.power(np.absolute(np.imag(hel_flux[i])), p / 3.0)
+            sf_enrg_flux[i, p - 1] = np.power(np.absolute(np.imag(enrg_flux[i])), p / 3.0)
+            sf_trip_prod[i, p - 1] = np.power(np.absolute(np.imag(trip_prod[i])), p / 3.0)
+            if i < N-1:
+                sf_dub_prod[i, p - 1] = np.power(np.absolute(np.imag(dub_prod[i])), p / 2.0)
+
+    return sf_u, sf_trip_prod, sf_dub_prod, sf_enrg_flux, sf_hel_flux 
 
 @njit
 def compute_u_flux(data, N, delta, l):

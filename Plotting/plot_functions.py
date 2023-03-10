@@ -66,7 +66,7 @@ def plot_str_funcs_with_slope(outdir_path, k, str_funcs, inert_range, insert_fig
 		ax1in = fig.add_axes([x0, y0, width, height])
 
 	## Slopes of structure functions
-	ns_zeta_p    = [0.72, 1, 1.273, 1.534, 1.786, 2.11, 2.32]
+	ns_zeta_p    = [0.72, 1, 1.273, 1.534, 1.786]
 	zeta_p       = []
 	zeta_p_resid = []
 
@@ -97,7 +97,7 @@ def plot_str_funcs_with_slope(outdir_path, k, str_funcs, inert_range, insert_fig
 	for i in range(str_funcs.shape[-1]):
 	    
 		## Plot strucure function
-		p, = ax1.plot(log_func(k), log_func(str_funcs[:, i]), label = "$p = {}$".format(i + 1), marker = mark_style[i], markerfacecolor = 'None', markersize = 5.0, markevery = 1)
+		p, = ax1.plot(log_func(k[:str_funcs.shape[0]]), log_func(str_funcs[:, i]), label = "$p = {}$".format(i + 1), marker = mark_style[i], markerfacecolor = 'None', markersize = 5.0, markevery = 1)
 
 		## Find polynomial fit and plot
 		poly_output = np.polyfit(log_func(k[inert_lim_low:inert_lim_high]), log_func(str_funcs[inert_lim_low:inert_lim_high, i]), 1, full = True)
@@ -109,7 +109,7 @@ def plot_str_funcs_with_slope(outdir_path, k, str_funcs, inert_range, insert_fig
 		zeta_p_resid.append(poly_resid)
 
 		## Plot slope ddata to screen
-		if i >= 1:
+		if i >= 1 and i <= len(ns_zeta_p):
 			print(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f} \t{:1.3f}".format(i + 1, -(i + 1) / 3, pfit_slope, poly_resid, -ns_zeta_p[i - 1]))
 		else:
 			print(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f}".format(i + 1, -(i + 1) / 3, pfit_slope, poly_resid))
@@ -129,7 +129,7 @@ def plot_str_funcs_with_slope(outdir_path, k, str_funcs, inert_range, insert_fig
 			# print()
 			local_deriv = np.gradient(log_func(str_funcs[:, i]))
 			## Plot local slopes
-			ax1in.plot(log_func(k), local_deriv, color = p.get_color(), marker = mark_style[i], markerfacecolor = 'None', markersize = 5.0, markevery = 2)
+			ax1in.plot(log_func(k[:len(local_deriv)]), local_deriv, color = p.get_color(), marker = mark_style[i], markerfacecolor = 'None', markersize = 5.0, markevery = 2)
 			ax1in.set_ylabel(r"$\zeta_p$", labelpad = -40)
 			ax1in.set_xlabel(xlabel_Str, labelpad = -30)
 
@@ -150,7 +150,7 @@ def plot_str_funcs_with_slope(outdir_path, k, str_funcs, inert_range, insert_fig
 	plt.close()
 
 
-	return zeta_p, ns_zeta_p[:str_funcs.shape[-1]], zeta_p_resid
+	return zeta_p, ns_zeta_p, zeta_p_resid
 
 
 def plot_anomalous_exponent(outdir_path, p, zeta_p, ns_zeta_p = None, label_str = "GOY Model", fig_size = (16, 8)):
@@ -168,14 +168,14 @@ def plot_anomalous_exponent(outdir_path, p, zeta_p, ns_zeta_p = None, label_str 
 		p = np.arange(2, len(zeta_p) + 3)
 
 	if ns_zeta_p is None:
-		ns_zeta_p    = [0.72, 1, 1.273, 1.534, 1.786, 2.11, 2.32]
+		ns_zeta_p    = [0.72, 1, 1.273, 1.534, 1.786]
 
 
 	## Plot the structure function slopes
 	ax1.plot(p, zeta_p, marker = mark_style[0], markerfacecolor = 'None', markersize = 5.0, markevery = 1, label = label_str)
 	
 	## Plot the NS structure function slopes
-	ax1.plot(p, ns_zeta_p[:len(zeta_p)], marker = mark_style[1], markerfacecolor = 'None', markersize = 5.0, markevery = 1, label = "Navier Stokes")
+	ax1.plot(np.arange(2, 6 + 1), ns_zeta_p, marker = mark_style[1], markerfacecolor = 'None', markersize = 5.0, markevery = 1, label = "Navier Stokes")
 
 	## Plot the She-Leveque prediction
 	ax1.plot(p, p/9.0 + 2.0 * (1.0 - np.power(2.0/3.0, p/3.0)), label = "She-Leveque Model; $p/9 + 2(1 - (2/3)^{p/3})$")

@@ -24,7 +24,7 @@
 #include "stats.h"
 #include "phase_sync.h"
 #include "sys_msr.h"
-
+#include "mt64.h"
 // ---------------------------------------------------------------------
 //  Function Definitions
 // ---------------------------------------------------------------------
@@ -48,7 +48,7 @@ void CreateOutputFilesWriteICs(const long int N) {
 	///////////////////////////
 	// -----------------------------------
 	// Create Output Directory and Path
-	// -----------------------------------
+	// -----------------------------------	
 	GetOutputDirPath();
 
 	// ---------------------------------
@@ -937,7 +937,7 @@ void ReadInputFile(const long int N) {
 	if ( (H5LTread_dataset(file_info->input_file_handle, "VelPhases", H5T_NATIVE_DOUBLE, tmp_u_phase)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to read input dataset ["CYAN"%s"RESET"] ---> Using uniformly random generated phases instead\n\n", "VelPhases");
 		for (int i = 0; i < N; ++i) {
-			tmp_u_phase[i] = (double)rand() / (double)RAND_MAX * 2.0 * M_PI;
+			tmp_u_phase[i] = genrand64_real1() * 2.0 * M_PI;
 		}
 	}
 	
@@ -971,7 +971,7 @@ void ReadInputFile(const long int N) {
 	if ( (H5LTread_dataset(file_info->input_file_handle, "MagPhases", H5T_NATIVE_DOUBLE, tmp_b_phase)) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to read input dataset ["CYAN"%s"RESET"] ---> Using uniformly random generated phases instead\n\n", "MagPhases");
 		for (int i = 0; i < N; ++i) {
-			tmp_b_phase[i] = (double)rand() / (double)RAND_MAX * 2.0 * M_PI;
+			tmp_b_phase[i] = genrand64_real1() * 2.0 * M_PI;
 		}
 	}
 	
@@ -1015,7 +1015,7 @@ void ReadInputFile(const long int N) {
 
 	// Uniformly randomly generated phases
 	for (int i = 0; i < N; ++i) {
-		tmp_u_phase[i] = (double)rand()/(double)RAND_MAX * 2.0 * M_PI;
+		tmp_u_phase[i] = genrand64_real1() * 2.0 * M_PI;
 	}			
 	}
 		
@@ -1072,7 +1072,7 @@ void ReadInputFile(const long int N) {
 
 			// Uniformly randomly generated phases
 			for (int i = 0; i < N; ++i) {
-				tmp_b_phase[i] = (double)rand()/(double)RAND_MAX * 2.0 * M_PI;
+				tmp_b_phase[i] = genrand64_real1() * 2.0 * M_PI;
 			}
 		}		
 		

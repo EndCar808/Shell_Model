@@ -202,6 +202,8 @@
 // Initial Condtion parameters
 #define NO_INPUT_FILE 0 				// Indicates if system is to staart by generating initial conditions
 #define INPUT_FILE 1 					// Indicates if system is to staart from an input file
+#define RAND_EXP_C 0.745472
+#define RAND_EXP_B 4e-6
 // Phase sync parameters
 #define NUM_MAG_TRIAD_TYPES 3 			// The number of extra triad types under the magnetic field
 #define NUM_PHASE_SYNC_HIST_BINS 1000	// The number of histogram bins for the phase sync stats data

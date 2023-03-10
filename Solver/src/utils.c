@@ -324,8 +324,13 @@ int GetCMLArgs(int argc, char** argv) {
 					break;
 				}
 				else if (!(strcmp(optarg,"RANDOM"))) {
-					// Random Initial Conditions
+					// Random Initial Conditions - Power Law k^-a
 					strncpy(sys_vars->u0, "RANDOM", 64);
+					break;
+				}
+				else if (!(strcmp(optarg,"RANDOM_EXP"))) {
+					// Random Initial Conditions - Power Law k^-a - W/ Exponential Cuttoff
+					strncpy(sys_vars->u0, "RANDOM_EXP", 64);
 					break;
 				}
 				else if (!(strcmp(optarg,"ZERO_PHASE"))) {

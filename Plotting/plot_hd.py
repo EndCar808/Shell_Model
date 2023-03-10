@@ -243,16 +243,17 @@ if __name__ == '__main__':
 		## --------  Structure function with fit
 		print("Velocity Structure Func")
 		zeta_p, ns_zeta_p, zeta_p_res = plot_str_funcs_with_slope(cmdargs.out_dir_HD + "VelStrFunc_Fit" + fig_file_type, sys_msr_data.k, stats_data.vel_str_func[:, :num_pow], inertial_range, ax_scale, fig_size = fig_size)
+		print(len(p), len(zeta_p), len(ns_zeta_p))
+
 		with open(cmdargs.out_dir_HD + "ComputedStrFuncSlopes.txt", 'w') as f:
 			f.write("Velocity Structure Func\n")
 			f.write("Power\tp/3\t\tDNS Slope\tNS\n")
 			for i in range(num_pow):
-				if i >= 1:
+				if i >= 1 and i < len(ns_zeta_p):
 					f.write(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f} \t{:1.3f}\n".format(i + 1, -(i + 1) / 3, zeta_p[i], zeta_p_res[i], -ns_zeta_p[i - 1]))
 				else:
 					f.write(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f}\n".format(i + 1, -(i + 1) / 3, zeta_p[i], zeta_p_res[i]))
 
-		print(len(p), len(zeta_p), len(ns_zeta_p))
 		## --------  Plot Anomalous Exponent
 		plot_anomalous_exponent(cmdargs.out_dir_HD + "Vel_Anonalous_Exponent_Zeta_p" + fig_file_type, p, zeta_p[1:], label_str = r"Velocity; Shell Modell", fig_size = fig_size)
 
@@ -265,7 +266,7 @@ if __name__ == '__main__':
 				f.write("Velocity Tripple Product Structure Func\n")
 				f.write("Power\tp/3\t\tDNS Slope\tNS\n")
 				for i in range(num_pow):
-					if i >= 1:
+					if i >= 1 and i < len(ns_zeta_p):
 						f.write(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f} \t{:1.3f}\n".format(i + 1, -(i + 1) / 3, trip_prod_zeta_p[i], trip_prod_zeta_p_res[i], -ns_zeta_p[i - 1]))
 					else:
 						f.write(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f}\n".format(i + 1, -(i + 1) / 3, trip_prod_zeta_p[i], trip_prod_zeta_p_res[i]))
@@ -280,7 +281,7 @@ if __name__ == '__main__':
 			f.write("Velocity Energy Structure Func\n")
 			f.write("Power\tp/3\t\tDNS Slope\tNS\n")
 			for i in range(num_pow):
-				if i >= 1:
+				if i >= 1 and i < len(ns_zeta_p):
 					f.write(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f} \t{:1.3f}\n".format(i + 1, -(i + 1) / 3, enrg_flux_zeta_p[i], enrg_flux_zeta_p_res[i], -ns_zeta_p[i - 1]))
 				else:
 					f.write(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f}\n".format(i + 1, -(i + 1) / 3, enrg_flux_zeta_p[i], enrg_flux_zeta_p_res[i]))
@@ -295,7 +296,7 @@ if __name__ == '__main__':
 			f.write("Velocity Helicity Structure Func\n")
 			f.write("Power\tp/3\t\tDNS Slope\tNS\n")
 			for i in range(num_pow):
-				if i >= 1:
+				if i >= 1 and i < len(ns_zeta_p):
 					f.write(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f} \t{:1.3f}\n".format(i + 1, -(i + 1) / 3, hel_flux_zeta_p[i], hel_flux_zeta_p_res[i], -ns_zeta_p[i - 1]))
 				else:
 					f.write(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f}\n".format(i + 1, -(i + 1) / 3, hel_flux_zeta_p[i], hel_flux_zeta_p_res[i]))
@@ -305,9 +306,138 @@ if __name__ == '__main__':
 		plot_anomalous_exponent(cmdargs.out_dir_HD + "VelHelicityFluxAbs_Anonalous_Exponent_Zeta_p" + fig_file_type, p, hel_flux_zeta_p[1:], label_str = r"Velocity HelicityFlux; Shell Modell", fig_size = fig_size)
 
 
+		# Plotting variables
+		fig_size = (10, 6)
+		fig_format = ".png"
+
+		## Normal Structure Functions
+		str_funcs = [stats_data.vel_str_func[:, :num_pow], stats_data.vel_trip_prod_str_func_abs[:, :num_pow], stats_data.vel_flux_str_func_abs[:, :num_pow, 0], stats_data.vel_flux_str_func_abs[:, :num_pow, 1]]
+		msg = ["Velocity Modes", "Tripple Product", "Energy Flux", "Helicity Flux"]
+		filename = ["Vel", "Trip_Prod", "Enrg_Flux", "Hel_Flux"]
+		for sf, m, name in zip(str_funcs, msg, filename):
+
+			## Pre Multiplied Str Funcs 
+			log_func    = np.log2
+			k_n         = sys_msr_data.k[:sf.shape[0]]
+			outdir_path = cmdargs.out_dir_HD + name + "_PreMult_SF" + fig_format
+
+			fig = plt.figure(figsize=fig_size)
+			gs  = GridSpec(1, 1)
+			ax1 = fig.add_subplot(gs[0, 0])
+			for i in range(sf.shape[1]):
+			    p, = ax1.plot(log_func(k_n), log_func((k_n**((i + 1) / 3.0)) * sf[:, i]) + i * 10, label = "$p = {}$".format(i + 1))
+			    ax1.plot(log_func(k_n), log_func(k_n**0) + i * 10, '--', color = p.get_color())
+			ax1.set_xlabel(r"$\ln (k_n)$")
+			ax1.set_ylabel(r"$\ln (k_n^{p / 3}|S_p(k_n)|)$")
+			ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+			ax1.set_title("Pre Multiplied " + m)
+			ax1.legend()
+			plt.savefig(outdir_path, bbox_inches='tight')
+			plt.close()
+
+			## ESS Plots Combined
+			log_func    = np.log2
+			outdir_path = cmdargs.out_dir_HD + name + "_ESS_SF" + fig_format
+			fig = plt.figure(figsize=fig_size)
+			gs  = GridSpec(1, 1)
+			ax1 = fig.add_subplot(gs[0, 0])
+			for i in range(sf.shape[1]):
+				if i == 2: 
+					continue
+				p, = ax1.plot(log_func(sf[:, 2]), log_func(sf[:, i]), label = "$p = {}$".format(i + 1))
+				# ax1.plot(log_func(sf[:, 2]), log_func(she_leveque(sf[:, i])), ':', color=p.get_color())
+			ax1.set_xlabel(r"$|S_3(k_n)|$")
+			ax1.set_ylabel(r"$|S_p(k_n)|)$")
+			ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+			ax1.set_title("ESS " + m)
+			ax1.legend()
+			plt.savefig(outdir_path, bbox_inches='tight')
+			plt.close()
+
+			## Local Slopes
+			log_func    = np.log2
+			outdir_path = cmdargs.out_dir_HD + name + "_LocalSlope_SF" + fig_format
+			fig      = plt.figure(figsize=fig_size)
+			gs       = GridSpec(1, 2)
+			ax1    = fig.add_subplot(gs[0, 0])
+			for i in range(sf.shape[1]):
+				x      = log_func(sys_msr_data.k[:len(sf[:, i])])
+				y      = log_func(sf[:, i])
+				d_str_func = np.diff(y, n = 1)
+				d_k        = np.diff(x, n = 1)
+				derivs     = d_str_func / d_k
+				# z1     = np.hstack((y[0], y[:-1]))
+				# z2     = np.hstack((y[1:], y[-1]))
+				# dx1    = np.hstack((0, np.diff(x)))
+				# dx2    = np.hstack((np.diff(x), 0))
+				# derivs = (z2-z1) / (dx2+dx1)
+				ax1.plot(log_func(sys_msr_data.k[:len(derivs)]), derivs, label=r"$p = {}$".format(i + 1))
+			ax1.set_xlabel(r"$k_n$")
+			ax1.set_ylabel(r"$\zeta_p$")
+			ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+			ax1.set_title("Local Slope " + m)
+			ax1.legend()
+			ax1    = fig.add_subplot(gs[0, 1])
+			for i in range(sf.shape[1]):
+				if i == 2: 
+					continue
+				x      = log_func(sf[:, 2])
+				y      = log_func(sf[:, i])
+				d_str_func = np.diff(y, n = 1)
+				d_k        = np.diff(x, n = 1)
+				derivs     = d_str_func / d_k
+				# z1     = np.hstack((y[0], y[:-1]))
+				# z2     = np.hstack((y[1:], y[-1]))
+				# dx1    = np.hstack((0, np.diff(x)))
+				# dx2    = np.hstack((np.diff(x), 0))
+				# derivs = (z2-z1) / (dx2+dx1)
+				ax1.plot(log_func(sf[:len(derivs), 2]), derivs, label=r"$p = {}$".format(i + 1))
+			ax1.set_xlabel(r"$k_n$")
+			ax1.set_ylabel(r"$\zeta_p$")
+			ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+			ax1.set_title("ESS Local Slope " + m)
+			ax1.legend()
+			plt.savefig(outdir_path, bbox_inches='tight')
+			plt.close()
+
+		###################################
+		##  Structure Function Contribution Breakdown
+		###################################
+		fig = plt.figure(figsize=(15, 6))
+		gs  = GridSpec(1, 3, hspace=0.4, wspace=0.3)
+		ax1 = fig.add_subplot(gs[0, 0])
+		for p in range(1, 6 + 1):
+			ax1.plot(sys_msr_data.k[:-2], np.mean(np.power(np.absolute(run_data.enrg_flux[:, :-2]), p/3.), axis=0), label=r"$Abs$; $p = {}$".format(p))
+		ax1.grid(which="both", axis="both", color='k', linestyle=":", linewidth=0.5)
+		ax1.set_yscale('log')
+		ax1.set_xscale('log')
+		ax1.legend()
+		ax1 = fig.add_subplot(gs[0, 1])
+		for p in range(1, 6 + 1):
+			ax1.plot(sys_msr_data.k[:-2], np.mean(np.power(np.sign(np.sin(np.angle(run_data.enrg_flux[:, :-2]))), p) * np.power(np.absolute(np.sin(np.angle(run_data.enrg_flux[:, :-2]))), p/3.), axis=0), label=r"$\sin \arg$; $p = {}$".format(p))
+		ax1.grid(which="both", axis="both", color='k', linestyle=":", linewidth=0.5)
+		ax1.set_xscale('log')
+		ax1.set_yscale('log')
+		ax1.legend()
+		ax1 = fig.add_subplot(gs[0, 2])
+		print(run_data.enrg_flux[:, :-2])
+		for p in range(1, 6 + 1):
+			func = np.mean(np.power(np.absolute(np.sin(np.angle(run_data.enrg_flux[:, :-2]))), p/3.), axis=0)
+			ax1.plot(sys_msr_data.k[:-2], func / func[0], label=r"$\arg $; $p = {}$".format(p))
+			# ax1.plot(k, np.mean( np.power(np.sign(np.angle(run_data.enrg_flux[:, :])), p) * np.power(np.absolute(np.angle(run_data.enrg_flux[:, :])), p/3.), axis=0), label=r"$\arg $; $p = {}$".format(p))
+		ax1.grid(which="both", axis="both", color='k', linestyle=":", linewidth=0.5)
+		ax1.set_xscale('log')
+		ax1.set_yscale('log')
+		ax1.legend()
+		plt.savefig(cmdargs.out_dir_HD + "EnrgyFlux" + "_Test_Independence_SF" + ".png", bbox_inches='tight')
+		plt.close()
+
 		###################################
 		##  Anomalous Exponent
 		###################################
+		inertial_range = np.arange(7, 13 + 1)
+		p = np.arange(2, num_pow + 1)
+
 		fig   = plt.figure(figsize = fig_size)
 		gs    = GridSpec(1, 1)
 		ax1   = fig.add_subplot(gs[0, 0])
