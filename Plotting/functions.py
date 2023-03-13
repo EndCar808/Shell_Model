@@ -244,7 +244,7 @@ def compute_pdf_from_hist(counts, ranges, normed = False, remove_zeros = True):
     return pdf, bin_centres
 
 
-def compute_pdf(data, bin_lims = None, nbins = 1000, normed = False):
+def compute_pdf(data, bin_lims = None, nbins = 1000, normed = False, remove_zeros=False):
 
     """
     Computes the PDF of input data from a histogram of that data
@@ -264,6 +264,13 @@ def compute_pdf(data, bin_lims = None, nbins = 1000, normed = False):
     ## Compute the bin info for plotting the pdf
     bin_centres = (edges[1:] + edges[:-1]) * 0.5
     bin_width   = edges[1] - edges[0]
+
+    if remove_zeros:
+        ## Get only non_zero counts
+        non_zero_indx = np.argwhere(hist != 0)
+
+        bin_centres = bin_centres[non_zero_indx]
+        hist        = hist[non_zero_indx]
 
     ## Compute the PDF
     pdf = hist / (np.sum(hist) * bin_width)
