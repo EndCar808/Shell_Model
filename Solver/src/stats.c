@@ -43,6 +43,7 @@ void ComputeStats(const long int iters, const long int save_data_indx) {
 	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	double mag_enrg_flux_term, mag_hel_flux_term, mag_trip_prod_term;
 	#endif
+	double p_pow;
 
 	// ------------------------------------
     // Get Fourier Fields
@@ -260,36 +261,39 @@ void ComputeStats(const long int iters, const long int save_data_indx) {
 
 	    	// Compute the moments for the structure functions
 	    	for (int p = 1; p <= NUM_POW; ++p) {
-	    		
+
+	    		// Get the power 
+	    		p_pow = p; //stats_data->powers[p - 1];
+
 	    		// Compute the moments of the fields
 	    		#if defined(__STR_FUNC_MAG) || defined(__STR_FUNC_VEL)
-				stats_data->vel_str_func[p - 1][i] += pow(cabs(run_data->u[n]), p);
+				stats_data->vel_str_func[p - 1][i] += pow(cabs(run_data->u[n]), p_pow);
 				#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
-				stats_data->mag_str_func[p - 1][i] += pow(cabs(run_data->b[n]), p); 
+				stats_data->mag_str_func[p - 1][i] += pow(cabs(run_data->b[n]), p_pow); 
 	    		#endif
 	    		#endif
 
 				// Compute the moments of the fluxes
 				#if defined(__STR_FUNC_VEL_FLUX) || defined(__STR_FUNC_MAG_FLUX)
 				// Tripple product str func
-				stats_data->vel_trip_prod_str_func[p - 1][i] += pow(sgn(vel_trip_prod_term), p) * pow(fabs(vel_trip_prod_term), p / 3.0);
-				stats_data->vel_trip_prod_str_func_abs[p - 1][i] += pow(fabs(vel_trip_prod_term), p / 3.0);
+				stats_data->vel_trip_prod_str_func[p - 1][i] += pow(sgn(vel_trip_prod_term), p) * pow(fabs(vel_trip_prod_term), p_pow / 3.0);
+				stats_data->vel_trip_prod_str_func_abs[p - 1][i] += pow(fabs(vel_trip_prod_term), p_pow / 3.0);
 
 				// Flux term str func
-				stats_data->vel_flux_str_func[0][p - 1][i] += pow(sgn(vel_enrg_flux_term), p) * pow(fabs(vel_enrg_flux_term), p / 3.0);
-				stats_data->vel_flux_str_func[1][p - 1][i] += pow(sgn(vel_hel_flux_term), p) * pow(fabs(vel_hel_flux_term), p / 3.0);
-				stats_data->vel_flux_str_func_abs[0][p - 1][i] += pow(fabs(vel_enrg_flux_term), p / 3.0);
-				stats_data->vel_flux_str_func_abs[1][p - 1][i] += pow(fabs(vel_hel_flux_term), p / 3.0);
+				stats_data->vel_flux_str_func[0][p - 1][i] += pow(sgn(vel_enrg_flux_term), p) * pow(fabs(vel_enrg_flux_term), p_pow / 3.0);
+				stats_data->vel_flux_str_func[1][p - 1][i] += pow(sgn(vel_hel_flux_term), p) * pow(fabs(vel_hel_flux_term), p_pow / 3.0);
+				stats_data->vel_flux_str_func_abs[0][p - 1][i] += pow(fabs(vel_enrg_flux_term), p_pow / 3.0);
+				stats_data->vel_flux_str_func_abs[1][p - 1][i] += pow(fabs(vel_hel_flux_term), p_pow / 3.0);
 	    		#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	    		// Tripple product str func
-				stats_data->mag_trip_prod_str_func[p - 1][i] += pow(sgn(mag_trip_prod_term), p) * pow(fabs(mag_trip_prod_term), p / 3.0);
-				stats_data->mag_trip_prod_str_func_abs[p - 1][i] += pow(fabs(mag_trip_prod_term), p / 3.0);
+				stats_data->mag_trip_prod_str_func[p - 1][i] += pow(sgn(mag_trip_prod_term), p) * pow(fabs(mag_trip_prod_term), p_pow / 3.0);
+				stats_data->mag_trip_prod_str_func_abs[p - 1][i] += pow(fabs(mag_trip_prod_term), p_pow / 3.0);
 
 				// Flux term str func
-				stats_data->mag_flux_str_func[0][p - 1][i] += pow(sgn(mag_enrg_flux_term), p) * pow(fabs(mag_enrg_flux_term), p / 3.0);
-				stats_data->mag_flux_str_func[1][p - 1][i] += pow(sgn(mag_hel_flux_term), p) * pow(fabs(mag_hel_flux_term), p / 3.0);
-				stats_data->mag_flux_str_func_abs[0][p - 1][i] += pow(fabs(mag_enrg_flux_term), p / 3.0);
-				stats_data->mag_flux_str_func_abs[1][p - 1][i] += pow(fabs(mag_hel_flux_term), p / 3.0);
+				stats_data->mag_flux_str_func[0][p - 1][i] += pow(sgn(mag_enrg_flux_term), p) * pow(fabs(mag_enrg_flux_term), p_pow / 3.0);
+				stats_data->mag_flux_str_func[1][p - 1][i] += pow(sgn(mag_hel_flux_term), p) * pow(fabs(mag_hel_flux_term), p_pow / 3.0);
+				stats_data->mag_flux_str_func_abs[0][p - 1][i] += pow(fabs(mag_enrg_flux_term), p_pow / 3.0);
+				stats_data->mag_flux_str_func_abs[1][p - 1][i] += pow(fabs(mag_hel_flux_term), p_pow / 3.0);
 	    		#endif
 	    		#endif
 	    	}
@@ -317,6 +321,9 @@ void InitializeStats(void) {
     // Allocate & Initialize Stats Objects
     // ------------------------------------
 	///--------------------------------- Structure Functions
+	// Allocate memory for the powers
+	stats_data->powers = (double* )malloc(sizeof(double) * NUM_POW);
+
 	// Allocate memory for the structure functions
 	for (int i = 0; i < NUM_POW; ++i) {
 		#if defined(__STR_FUNC_VEL)
@@ -387,6 +394,10 @@ void InitializeStats(void) {
 		}		
 		#endif
 		#endif
+
+		// Initialize the powers
+		stats_data->powers[i] = 1.0 + i * (POW_HIGH - 1.0) / (NUM_POW - 1);
+		printf("%lf", stats_data->powers[i]);
 	}
 
 
@@ -469,6 +480,14 @@ void WriteStatsToFile(void) {
 	if ( (H5LTmake_dataset(file_info->stats_file_handle, "NumStatsSteps", D1, dims1D, H5T_NATIVE_LONG, &(stats_data->num_stats_steps))) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "NumStatsSteps");
 	}
+
+	// ------------------------------------
+    // Write Powers of Str Functions
+    // ------------------------------------
+	// dims1D[0] = NUM_POW;
+	// if ( (H5LTmake_dataset(file_info->stats_file_handle, "StrFuncPowers", D1, dims1D, H5T_NATIVE_DOUBLE, stats_data->powers)) < 0) {
+	// 	printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "StrFuncPowers");
+	// }
 
 	// ------------------------------------
     // Write Velocity Field Data
@@ -870,6 +889,7 @@ void FreeStatsObjects(void) {
 		#endif
 		#endif
 	}
+	// free(stats_data->powers);
 	for (int i = 0; i < sys_vars->N; ++i) {
 		gsl_rstat_free(stats_data->real_vel_moments[i]);
 		#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)

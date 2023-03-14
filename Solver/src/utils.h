@@ -27,6 +27,7 @@ double sgn(double x);
 double log_lambda(double x);
 double my_delta(double i, double j);
 double my_mod_2pi(double phase);
+void rng_amps(void);
 // ---------------------------------------------------------------------
 //  End of File
 // ---------------------------------------------------------------------

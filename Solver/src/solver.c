@@ -119,11 +119,37 @@ void Solve(void) {
 	// Print update of the initial conditions to the terminal
 	PrintUpdateToTerminal(iters - 1, t0, dt, T, iters - 1);
 
+	int change_amp = 1e3;
+	int amp_indx   = 1;
 
 	//////////////////////////////
 	// Begin Integration
 	//////////////////////////////
 	while (t <= T) {
+
+		#if defined(PHASE_ONLY)
+		if (!(strcmp(sys_vars->u0, "PO_RAND_AMPS"))) {
+			int indx = 0;
+			for (int n = 0; n < sys_vars->N; ++n) {
+				// Generate a unifrorm random value
+				double r1 = genrand64_real1();
+
+				for (int s = 0; s < run_data->num_bin_vals[n]; ++s) {
+					if (run_data->a_n_cdf_vals[n][s] > r1) {
+						indx = s;
+						break;
+					}
+				}
+
+				// Get the sample from the amplitude data
+				run_data->a_n[n + 2] = run_data->a_n_pdf_bin_vals[n][indx];
+			}
+		}
+		else if (!(strcmp(sys_vars->u0, "PO_AMP_INPUT")) && (iters % change_amp == 0)) {
+			ReadAmpInputFIle(amp_indx);
+			amp_indx+=1;
+		}
+		#endif
 
 		// -------------------------------	
 		// Integration Step
@@ -508,7 +534,7 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 	#endif
 	#endif
 
-	double* tmp_a_n = (double* )malloc(sizeof(double) * (N + 4));
+	double* a_n_tmp = (double* )malloc(sizeof(double) * (N + 4));
 	double max = 0.1;
 	double min = -max;
 
@@ -525,8 +551,8 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		// Get the input fields
 		#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
 		// Get the Fourier velocity from the Fourier phases and amplitudes
-		tmp_a_n[n] = run_data->a_n[n] + (genrand64_real1() * (max-min+1) + min) * run_data->a_n[n];
-		RK_data->RK_u_tmp[n] = tmp_a_n[n] * cexp(I * run_data->phi_n[n]);
+		a_n_tmp[n] = run_data->a_n[n]; // + (genrand64_real1() * (max-min+1) + min) * run_data->a_n[n];
+		RK_data->RK_u_tmp[n] = a_n_tmp[n] * cexp(I * run_data->phi_n[n]);
 		#if defined(__MAGNETO)
 		RK_data->RK_b_tmp[n] = run_data->b_n[n] * cexp(I * run_data->psi_n[n]);
 		#endif
@@ -555,7 +581,7 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 
 		// Update temporary input for nonlinear term
 		#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
-		RK_data->RK_u_tmp[n] = tmp_a_n[n] * cexp(I * (run_data->phi_n[n] + dt * RK4_A21 * RK_data->RK1_u[n]));
+		RK_data->RK_u_tmp[n] = a_n_tmp[n] * cexp(I * (run_data->phi_n[n] + dt * RK4_A21 * RK_data->RK1_u[n]));
 		#if defined(__MAGNETO)
 		RK_data->RK_b_tmp[n] = run_data->b_n[n] * cexp(I * (run_data->psi_n[n] + dt * RK4_A21 * RK_data->RK1_b[n]));
 		#endif
@@ -587,7 +613,7 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 
 		// Update temporary input for nonlinear term
 		#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
-		RK_data->RK_u_tmp[n] = tmp_a_n[n] * cexp(I * (run_data->phi_n[n] + dt * RK4_A32 * RK_data->RK2_u[n]));
+		RK_data->RK_u_tmp[n] = a_n_tmp[n] * cexp(I * (run_data->phi_n[n] + dt * RK4_A32 * RK_data->RK2_u[n]));
 		#if defined(__MAGNETO)
 		RK_data->RK_b_tmp[n] = run_data->b_n[n] * cexp(I * (run_data->psi_n[n] + dt * RK4_A32 * RK_data->RK2_b[n]));
 		#endif
@@ -618,7 +644,7 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		n = i + 2;
 
 		#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
-		RK_data->RK_u_tmp[n] = tmp_a_n[n] * cexp(I * (run_data->phi_n[n] + dt * RK4_A43 * RK_data->RK3_u[n]));
+		RK_data->RK_u_tmp[n] = a_n_tmp[n] * cexp(I * (run_data->phi_n[n] + dt * RK4_A43 * RK_data->RK3_u[n]));
 		#if defined(__MAGNETO)
 		RK_data->RK_b_tmp[n] = run_data->b_n[n] * cexp(I * (run_data->psi_n[n] + dt * RK4_A43 * RK_data->RK3_b[n]));
 		#endif
@@ -721,6 +747,7 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 	// 	printf("u[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]));		
 	// 	#endif
 	// }	
+	free(a_n_tmp);
 }
 #endif
 #if defined(AB4CN)
@@ -1067,6 +1094,82 @@ void InitialConditions(const long int N) {
 	    // ------------------------------------------------
 	    ReadInputFile(N);
     }	
+    else if (!(strcmp(sys_vars->u0, "PO_RAND_AMPS"))) {
+		// ------------------------------------------------
+	    // Randomly generate amplitudes from File
+	    // ------------------------------------------------
+	    herr_t status;
+	    hid_t dset, dspace;
+	    char dset_name[64];
+	    hsize_t Dims[1];
+
+	    // Generate the input filename
+	    sprintf(file_info->input_file_name, "/home/enda/PhD/Shell_Model/Data/RandomAmplitudes/Amp_CDF_Data_N[%ld].h5", sys_vars->N);
+
+	    // Open file
+	    file_info->input_file_handle = H5Fopen(file_info->input_file_name, H5F_ACC_RDONLY, H5P_DEFAULT);
+	    if (file_info->input_file_handle < 0) {
+	    	fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to open input file ["CYAN"%s"RESET"]\n-->> Exiting...\n", file_info->input_file_name);
+	    	exit(1);
+	    }
+
+	    // Get the size of the datasets
+	    run_data->num_bin_vals = (int* )malloc(sizeof(int) * sys_vars->N);
+	    for (int i = 0; i < sys_vars->N; ++i) {
+	    	// Open Dataset X values
+	    	sprintf(dset_name, "X_values_%d", i);
+	    	dset = H5Dopen(file_info->input_file_handle, dset_name, H5P_DEFAULT);
+
+	    	// Get dataspace handle
+	    	dspace = H5Dget_space(dset);
+
+	    	// Get dataset dimensions
+	    	H5Sget_simple_extent_dims(dspace, Dims, NULL);
+	    	run_data->num_bin_vals[i] = Dims[0];
+	    }
+
+	    // Alocate memory for the data
+	    run_data->a_n_pdf_bin_vals = (double** )malloc(sizeof(double*) * sys_vars->N);
+	    run_data->a_n_cdf_vals = (double** )malloc(sizeof(double*) * sys_vars->N);
+	    for (int i = 0; i < sys_vars->N; ++i) {
+			run_data->a_n_pdf_bin_vals[i] = (double* )malloc(sizeof(double) * run_data->num_bin_vals[i]);
+			run_data->a_n_cdf_vals[i]     = (double* )malloc(sizeof(double) * run_data->num_bin_vals[i]);
+	    }
+
+	    // Read in data
+	    for (int i = 0; i < sys_vars->N; ++i) {
+	    	sprintf(dset_name, "X_values_%d", i);
+	    	H5LTread_dataset(file_info->input_file_handle, dset_name, H5T_NATIVE_DOUBLE, run_data->a_n_pdf_bin_vals[i]);
+	    	sprintf(dset_name, "CDF_values_%d", i);
+	    	H5LTread_dataset(file_info->input_file_handle, dset_name, H5T_NATIVE_DOUBLE, run_data->a_n_cdf_vals[i]);
+	    }
+
+	    // Close identifiers
+	    status = H5Dclose(dset);
+	    status = H5Sclose(dspace);
+	    
+	    status = H5Fclose(file_info->input_file_handle);
+	    if (status < 0) {
+	    	fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to close input file ["CYAN"%s"RESET"] at: Snap = ["CYAN"%s"RESET"]\n-->> Exiting...\n", file_info->input_file_name, "initial");
+	    	exit(1);		
+	    }
+    } 
+    else if (!(strcmp(sys_vars->u0, "PO_AMP_INPUT"))) {
+		// ------------------------------------------------
+	    // Randomly generate amplitudes from File
+	    // ------------------------------------------------
+	    ReadAmpInputFIle(0);
+	    for (int i = 0; i < sys_vars->N + 4; ++i) {
+	    	if(i >= 2 && i < sys_vars->N + 2) {
+				run_data->phi_n[i] = 2.0 * M_PI * genrand64_real1();
+				run_data->u[i]     = run_data->a_n[i] * cexp(I * run_data->phi_n[i]);
+	    	}
+	    	else {
+				run_data->phi_n[i] = 0.0;
+				run_data->u[i]     = 0.0 + 0.0 * I;
+	    	}
+	    }
+	}
     else {
 		for (int i = 0; i < N + 4; ++i) {
 
@@ -1589,7 +1692,7 @@ void InitializeIntegrationVariables(double* t0, double* t, double* dt, double* T
 	sys_vars->max_dt = 10;
 	double tmp_num_t_steps;
 	#if defined(PHASE_ONLY)
-	double tmp_dt = GetTimesetp();
+	double tmp_dt = 1.0; //, GetTimesetp();
 	(*dt)         = fmin(tmp_dt, sys_vars->dt);
 	#endif
 

@@ -348,6 +348,16 @@ int GetCMLArgs(int argc, char** argv) {
 					strncpy(sys_vars->u0, "INPUT_FILE", 64);
 					break;
 				}
+				else if (!(strcmp(optarg,"PO_RAND_AMPS"))) {
+					// Input File Initial Conditions - PO randomly generated phases
+					strncpy(sys_vars->u0, "PO_RAND_AMPS", 64);
+					break;
+				}
+				else if (!(strcmp(optarg,"PO_AMP_INPUT"))) {
+					// Input File Initial Conditions - PO randomly generated phases
+					strncpy(sys_vars->u0, "PO_AMP_INPUT", 64);
+					break;
+				}
 				else {
 					// No initial conditions specified -> this will default to random initial conditions
 					strncpy(sys_vars->u0, "NONE", 64);
@@ -670,6 +680,38 @@ double my_mod_2pi(double phase) {
 		tmp_phase += 2.0 * M_PI;
 	}
 	return tmp_phase;
+}
+/**
+ * Function to randomly draw the amplitudes from their CDF
+ */
+void rng_amps(void) {
+	
+	// Initialize variables
+	int indx = 0;
+
+	// Loop over shells and draw randomly from amplitude data
+	for (int n = 0; n < sys_vars->N + 4; ++n) {
+
+		if (n >= 2 && n < sys_vars->N + 2) {
+			// Generate a unifrorm random value
+			double r1 = genrand64_real1();
+
+			// Get corresponding index value from cdf
+			for (int s = 0; s < run_data->num_bin_vals[n - 2]; ++s) {
+				if (run_data->a_n_cdf_vals[n - 2][s] > r1) {
+					indx = s;
+					break;
+				}
+			}
+
+			// Get the sample from the amplitude data
+			run_data->a_n[n] = run_data->a_n_pdf_bin_vals[n - 2][indx];	
+		}
+		else {
+			run_data->a_n[n] = 0.0;
+		}
+		
+	}
 }
 // ---------------------------------------------------------------------
 //  End of File

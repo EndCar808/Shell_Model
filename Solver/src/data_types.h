@@ -195,7 +195,8 @@
 #define MAX_ITERS 1e+20					// The maximum iterations to perform
 #define MAX_FIELD_LIM 1e+100    		// The maximum allowed velocity &/or magnetic
 // Stats parameters
-#define NUM_POW 8 						// The highest moment to compute for the structure function
+#define NUM_POW 6 						// The highest moment to compute for the structure function
+#define POW_HIGH 6 						// The highest moment to compute for the structure function
 #define NUM_RUN_STATS 7 				// The number of running stats moments to record
 #define VEL_BIN_LIM	40					// The bin limits (in units of standard deviations) for the velocity histogram
 #define VEL_NUM_BINS 1000				// The number of bins to use for the velocity histograms
@@ -321,6 +322,9 @@ typedef struct runtime_data_struct {
 	int* forcing_indx;		  				// Array to hold the indices of the forced modes
 	int* forcing_k;			  				// Array containg the wavenumbers for the forced modes
 	long int num_sys_msr_steps;				// Counts the number of times system measures have been computed, for time averaging.
+	int* num_bin_vals;
+	double** a_n_pdf_bin_vals;
+	double** a_n_cdf_vals;
 } runtime_data_struct;
 
 // Runge-Kutta Integration struct
@@ -406,6 +410,7 @@ typedef struct stats_data_struct {
 	gsl_histogram** real_mag_hist;					// Struct to hold the histogram info for the magnetic field
 	long int num_stats_steps;						// Counter for the number of steps statistics have been computed
 	int set_stats_flag;								// Flag to indicate if the stats objects such as running stats and histogram limits need to be set
+	double* powers;
 } stats_data_struct;
 
 

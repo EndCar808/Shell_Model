@@ -1119,6 +1119,44 @@ void ReadInputFile(const long int N) {
 	}
 }
 /**
+ * Function to read in the amplitudes from a datafile
+ * @param i The snapshot to read in either random or sequential
+ */
+void ReadAmpInputFIle(int i) {
+	herr_t status;
+	hid_t dset, dspace;
+	char dset_name[64];
+	hsize_t Dims[1];
+	double* a_n_tmp =(double* )malloc(sizeof(double) * sys_vars->N);
+
+	// Generate the input filename
+	sprintf(file_info->input_file_name, "/home/enda/PhD/Shell_Model/Data/InputAmplitudes/Amp_Data_N[%ld].h5", sys_vars->N);
+
+	// Open file
+	file_info->input_file_handle = H5Fopen(file_info->input_file_name, H5F_ACC_RDONLY, H5P_DEFAULT);
+	if (file_info->input_file_handle < 0) {
+		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to open input file ["CYAN"%s"RESET"]\n-->> Exiting...\n", file_info->input_file_name);
+		exit(1);
+	}
+
+	sprintf(dset_name, "Amp_t%d", i);
+	H5LTread_dataset(file_info->input_file_handle, dset_name, H5T_NATIVE_DOUBLE, a_n_tmp);
+	for (int i = 0; i < sys_vars->N + 4; ++i) {
+		if(i >= 2 && i < sys_vars->N + 2) {
+			run_data->a_n[i] = a_n_tmp[i - 2];
+		}
+		else {
+			run_data->a_n[i] = 0.0;
+		}
+	}
+
+	status = H5Fclose(file_info->input_file_handle);
+	if (status < 0) {
+		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to close input file ["CYAN"%s"RESET"] at: Snap = ["CYAN"%s"RESET"]\n-->> Exiting...\n", file_info->input_file_name, "initial");
+		exit(1);		
+	}
+}
+/**
  * Wrapper function for creating a slabbed dataset in the ouput file
  * @param t     		  Current time of the simulation
  * @param iters       	  Current iteration

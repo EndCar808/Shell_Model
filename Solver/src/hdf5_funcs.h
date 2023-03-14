@@ -24,6 +24,7 @@ void WriteSlabbedDataReal(double t, int iters, hid_t file_space, hid_t data_set,
 void WriteSlabbedDataFourier(double t, int iters, hid_t file_space, hid_t data_set, hid_t mem_space, hid_t dtype, double complex* data, char* dset_name, hsize_t* count, hsize_t* index);
 void WriteDataToFile(double t, const long int iters, const long int save_indx);
 void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_indx);
+void ReadAmpInputFIle(int i);
 // ---------------------------------------------------------------------
 //  End of File
 // ---------------------------------------------------------------------

@@ -76,7 +76,7 @@ def plot_str_funcs_with_slope(outdir_path, k, str_funcs, inert_range, insert_fig
 	print("Inertial Range Shell No.s: {} = {}".format(inert_lim_low + 1, inert_lim_high + 1))
 
 	## Marker style list
-	mark_style = ['o','s','^','x','D','p', '>', '<']
+	mark_style = ['o','s','^','x','D','p', '>', '<', '.', '^', '1', '2', '3', '4', '8', 'd']
 
 	## Get the scaling of the axes
 	if scaling == 'log2':
@@ -161,7 +161,7 @@ def plot_anomalous_exponent(outdir_path, p, zeta_p, ns_zeta_p = None, label_str 
 	ax1   = fig.add_subplot(gs[0, 0])
 
 	## Marker style list
-	mark_style = ['o','s','^','x','D','p', '>', '<']
+	mark_style = ['o','s','^','x','D','p', '>', '<', '.', '^', '1', '2', '3', '4', '8', 'd']
 
 	## Get p range if not provided
 	if p is None:
@@ -182,6 +182,8 @@ def plot_anomalous_exponent(outdir_path, p, zeta_p, ns_zeta_p = None, label_str 
 
 	## Plot the slopes according to K41 theory
 	ax1.plot(p, p / 3, 'k--', label = "K41")
+	
+	ax1.plot([p[0], p[-1]], [zeta_p[0], zeta_p[-1]], 'r--', alpha = 0.4, label = "Straightline")
 
 	## Plot formatting
 	# ax1.set_xlim(2.0, 6.0)

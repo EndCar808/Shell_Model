@@ -141,8 +141,8 @@ if __name__ == '__main__':
 
 		fig_size = (10, 8)
 		fig_file_type = ".png"
-		num_pow = 6
-		# num_pow = stats_data.vel_str_func.shape[-1]
+		# num_pow = 6
+		num_pow = stats_data.vel_str_func.shape[-1]
 
 		###################################
 		##  PO Model Dynamics Diagnostic
@@ -206,6 +206,7 @@ if __name__ == '__main__':
 		###################################
 		##  PDFs
 		###################################
+		nbins = 100
 		fig = plt.figure(figsize = fig_size)
 		gs  = GridSpec(1, 1)
 		ax1 = fig.add_subplot(gs[0, 0])
@@ -215,9 +216,9 @@ if __name__ == '__main__':
 				ax1.set_title("C Data")
 			else:
 				if sys_vars.model_type == "PHASEONLY":
-					pdf, centres = compute_pdf(np.real(run_data.a_n[:, i] * np.exp(1j * run_data.phi_n[:, i])), nbins = 500, normed = True)					
+					pdf, centres = compute_pdf(np.real(run_data.a_n[:, i] * np.exp(1j * run_data.phi_n[:, i])), nbins = nbins, normed = True)					
 				else:
-					pdf, centres = compute_pdf(np.real(run_data.u[:, i]), nbins = 500, normed = True)
+					pdf, centres = compute_pdf(np.real(run_data.u[:, i]), nbins = nbins, normed = True)
 			if i == -1:
 				ax1.plot(centres, pdf, label = "$n = {}$".format(sys_vars.N))    
 			else:
@@ -232,6 +233,30 @@ if __name__ == '__main__':
 		plt.savefig(cmdargs.out_dir_HD + "VelReal_PDF_InOne" + fig_file_type)
 		plt.close()
 
+		fig = plt.figure(figsize = (16, 16))
+		gs  = GridSpec(5, 5, wspace = 0.25, hspace = 0.25)
+		for i in range(5):
+			for j in range(5):
+				indx = i * 5 + j
+				if indx < phase_sync.num_phase_diffs:
+					ax1 = fig.add_subplot(gs[i, j])
+					if hasattr(stats_data, "vel_hist_counts"):
+						pdf, centres = compute_pdf_from_hist(stats_data.vel_hist_counts[indx, :], stats_data.vel_hist_ranges[indx, :], normed = True)
+						ax1.set_title("C Data")
+					else:
+						if sys_vars.model_type == "PHASEONLY":
+							pdf, centres = compute_pdf(np.real(run_data.a_n[:, indx] * np.exp(1j * run_data.phi_n[:, indx])), nbins = nbins, normed = True)					
+						else:
+							pdf, centres = compute_pdf(np.real(run_data.u[:, indx]), nbins = nbins, normed = True)
+					ax1.plot(centres, pdf, label = "$n = {}$".format(indx + 1)) 
+					ax1.set_xlabel(r"$\Re u_n / \langle (\Re u_n)^2 \rangle^{1/2}$")
+					ax1.set_ylabel(r"PDF")
+					ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+					ax1.set_yscale('log')
+					ax1.legend()
+
+		plt.savefig(cmdargs.out_dir_HD + "VelReal_PDF_All" + fig_file_type, bbox_inches = 'tight')
+		plt.close()
 		###################################
 		##  Structure Functions
 		###################################
