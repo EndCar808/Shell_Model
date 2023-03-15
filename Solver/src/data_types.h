@@ -77,6 +77,13 @@
 #if defined(__PHASE_ONLY) // Turn on phase only direct mode if called for at compilation
 #define PHASE_ONLY
 #endif
+// Allow for Amp Only mode
+#if defined(__AMP_ONLY_FXD_PHASE) // Turn on phase only mode if called for at compilation
+#define AMP_ONLY_FXD_PHASE
+#endif
+#if defined(__AMP_ONLY) // Turn on phase only direct mode if called for at compilation
+#define AMP_ONLY
+#endif
 // Computing stats will be decided at compilation time
 #if defined(__STATS)
 #define STATS

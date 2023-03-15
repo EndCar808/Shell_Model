@@ -291,6 +291,12 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 	double po_norm_fac_b;
 	#endif
 	#endif
+	#if defined(AMP_ONLY_FXD_PHASE) && !defined(__ELSASSAR_MHD)
+	double ao_reset_phase_u;
+	#if defined(__MAGNETO)
+	double ao_reset_phase_b;
+	#endif
+	#endif
 
 	///----------------------- Forcing
 	// Compute the forcing for the current iteration
@@ -447,11 +453,18 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		// Get temporary index
 		n = i + 2;
 
-		// Pre-record the amplitudes for resetting after update step
+		// Pre-record the amplitudes for resetting after update step if in fxd amp mode
 		#if defined(PHASE_ONLY_FXD_AMP) && !defined(__ELSASSAR_MHD)
 		po_norm_fac_u = cabs(run_data->u[n]);
 		#if defined(__MAGNETO)
 		po_norm_fac_b = cabs(run_data->b[n]);
+		#endif
+		#endif
+		// Pre-record the phases for resetting after update step if in fxd phase mode
+		#if defined(AMP_ONLY_FXD_PHASE) && !defined(__ELSASSAR_MHD)
+		ao_reset_phase_u = carg(run_data->u[n]);
+		#if defined(__MAGNETO)
+		ao_reset_phase_b = carg(run_data->b[n]);
 		#endif
 		#endif
 
@@ -490,7 +503,7 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		#endif
 
 
-		///-------------------- Phase Only resetting
+		///-------------------- Phase Only resetting in fixed amp mode
 		#if defined(PHASE_ONLY_FXD_AMP) && !defined(__ELSASSAR_MHD)
 		// Reset the amplitudes 
 		run_data->u[n] *= (po_norm_fac_u / cabs(run_data->u[n]));
@@ -502,6 +515,21 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		#if defined(__MAGNETO)
 		run_data->b[n] *= (po_norm_fac_b / cabs(run_data->b[n]));
 		
+		// Record the phases and amplitudes
+		run_data->b_n[n]   = cabs(run_data->b[n]);
+		run_data->psi_n[n] = carg(run_data->b[n]);
+		#endif
+		#endif
+		///-------------------- Amp Only resetting in fixed phase mode
+		#if defined(AMP_ONLY_FXD_PHASE) && !defined(__ELSASSAR_MHD)
+		run_data->u[n] = cabs(run_data->u[n]) * cexp(I * ao_reset_phase_u);
+
+		// Record the phases and amplitudes
+		run_data->a_n[n]   = cabs(run_data->u[n]);
+		run_data->phi_n[n] = carg(run_data->u[n]);
+		#if defined(__MAGNETO)
+		run_data->b[n] = cabs(run_data->b[n]) * cexp(I * ao_reset_phase_b);
+
 		// Record the phases and amplitudes
 		run_data->b_n[n]   = cabs(run_data->b[n]);
 		run_data->psi_n[n] = carg(run_data->b[n]);
@@ -533,10 +561,12 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 	double po_norm_fac_b;
 	#endif
 	#endif
-
-	double* a_n_tmp = (double* )malloc(sizeof(double) * (N + 4));
-	double max = 0.1;
-	double min = -max;
+	#if defined(AMP_ONLY_FXD_PHASE) && !defined(__ELSASSAR_MHD)
+	double ao_reset_phase_u;
+	#if defined(__MAGNETO)
+	double ao_reset_phase_b;
+	#endif
+	#endif
 
 	///----------------------- Forcing
 	// Compute the forcing for the current iteration
@@ -551,8 +581,7 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		// Get the input fields
 		#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
 		// Get the Fourier velocity from the Fourier phases and amplitudes
-		a_n_tmp[n] = run_data->a_n[n]; // + (genrand64_real1() * (max-min+1) + min) * run_data->a_n[n];
-		RK_data->RK_u_tmp[n] = a_n_tmp[n] * cexp(I * run_data->phi_n[n]);
+		RK_data->RK_u_tmp[n] = run_data->a_n[n] * cexp(I * run_data->phi_n[n]);
 		#if defined(__MAGNETO)
 		RK_data->RK_b_tmp[n] = run_data->b_n[n] * cexp(I * run_data->psi_n[n]);
 		#endif
@@ -581,7 +610,7 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 
 		// Update temporary input for nonlinear term
 		#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
-		RK_data->RK_u_tmp[n] = a_n_tmp[n] * cexp(I * (run_data->phi_n[n] + dt * RK4_A21 * RK_data->RK1_u[n]));
+		RK_data->RK_u_tmp[n] = run_data->a_n[n] * cexp(I * (run_data->phi_n[n] + dt * RK4_A21 * RK_data->RK1_u[n]));
 		#if defined(__MAGNETO)
 		RK_data->RK_b_tmp[n] = run_data->b_n[n] * cexp(I * (run_data->psi_n[n] + dt * RK4_A21 * RK_data->RK1_b[n]));
 		#endif
@@ -613,7 +642,7 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 
 		// Update temporary input for nonlinear term
 		#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
-		RK_data->RK_u_tmp[n] = a_n_tmp[n] * cexp(I * (run_data->phi_n[n] + dt * RK4_A32 * RK_data->RK2_u[n]));
+		RK_data->RK_u_tmp[n] = run_data->a_n[n] * cexp(I * (run_data->phi_n[n] + dt * RK4_A32 * RK_data->RK2_u[n]));
 		#if defined(__MAGNETO)
 		RK_data->RK_b_tmp[n] = run_data->b_n[n] * cexp(I * (run_data->psi_n[n] + dt * RK4_A32 * RK_data->RK2_b[n]));
 		#endif
@@ -644,7 +673,7 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		n = i + 2;
 
 		#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
-		RK_data->RK_u_tmp[n] = a_n_tmp[n] * cexp(I * (run_data->phi_n[n] + dt * RK4_A43 * RK_data->RK3_u[n]));
+		RK_data->RK_u_tmp[n] = run_data->a_n[n] * cexp(I * (run_data->phi_n[n] + dt * RK4_A43 * RK_data->RK3_u[n]));
 		#if defined(__MAGNETO)
 		RK_data->RK_b_tmp[n] = run_data->b_n[n] * cexp(I * (run_data->psi_n[n] + dt * RK4_A43 * RK_data->RK3_b[n]));
 		#endif
@@ -693,11 +722,18 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		// Get tmp index
 		n = i + 2;
 
+		// Pre-record the amplitudes for resetting after update step if in fixed amp mode
 		#if defined(PHASE_ONLY_FXD_AMP) && !defined(__ELSASSAR_MHD)
-		// Pre-record the amplitudes for resetting after update step
 		po_norm_fac_u = cabs(run_data->u[n]);
 		#if defined(__MAGNETO)
 		po_norm_fac_b = cabs(run_data->b[n]);
+		#endif
+		#endif
+		// Pre-record the phases for resetting after update step if in fxd phase mode
+		#if defined(AMP_ONLY_FXD_PHASE) && !defined(__ELSASSAR_MHD)
+		ao_reset_phase_u = carg(run_data->u[n]);
+		#if defined(__MAGNETO)
+		ao_reset_phase_b = carg(run_data->b[n]);
 		#endif
 		#endif
 
@@ -722,8 +758,8 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		#endif
 		#endif
 
+		// Reset the amplitudes if in phase only amp fixed mode
 		#if defined(PHASE_ONLY_FXD_AMP) && !defined(__ELSASSAR_MHD)
-		// Reset the amplitudes 
 		run_data->u[n] *= (po_norm_fac_u / cabs(run_data->u[n]));
 
 		// Record the phases and amplitudes
@@ -731,6 +767,22 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		run_data->phi_n[n] = carg(run_data->u[n]);
 		#if defined(__MAGNETO)
 		run_data->b[n] *= (po_norm_fac_b / cabs(run_data->b[n]));
+
+		// Record the phases and amplitudes
+		run_data->b_n[n]   = cabs(run_data->b[n]);
+		run_data->psi_n[n] = carg(run_data->b[n]);
+		#endif
+		#endif
+
+		// Reset the phases if in amp only fixed phase mode
+		#if defined(AMP_ONLY_FXD_PHASE) && !defined(__ELSASSAR_MHD)
+		run_data->u[n] = cabs(run_data->u[n]) * cexp(I * ao_reset_phase_u);
+
+		// Record the phases and amplitudes
+		run_data->a_n[n]   = cabs(run_data->u[n]);
+		run_data->phi_n[n] = carg(run_data->u[n]);
+		#if defined(__MAGNETO)
+		run_data->b[n] = cabs(run_data->b[n]) * cexp(I * ao_reset_phase_b);
 
 		// Record the phases and amplitudes
 		run_data->b_n[n]   = cabs(run_data->b[n]);
@@ -747,7 +799,7 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 	// 	printf("u[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]));		
 	// 	#endif
 	// }	
-	free(a_n_tmp);
+
 }
 #endif
 #if defined(AB4CN)
@@ -770,6 +822,12 @@ void AB4CNStep(const double dt, const long iters, const long int N, RK_data_stru
 	double po_norm_fac_u;
 	#if defined(__MAGNETO)
 	double po_norm_fac_b;
+	#endif
+	#endif
+	#if defined(AMP_ONLY_FXD_PHASE) && !defined(__ELSASSAR_MHD)
+	double ao_reset_phase_u;
+	#if defined(__MAGNETO)
+	double ao_reset_phase_b;
 	#endif
 	#endif
 
@@ -836,6 +894,7 @@ void AB4CNStep(const double dt, const long iters, const long int N, RK_data_stru
 			// Get tmp index
 			n = i + 2;
 
+			//--------------------------------- Prerecord if in fixed amp/phase mode
 			// Pre-record the amplitudes for resetting after update step
 			#if defined(PHASE_ONLY_FXD_AMP) && !defined(__ELSASSAR_MHD)
 			po_norm_fac_u = cabs(run_data->u[n]);
@@ -843,7 +902,15 @@ void AB4CNStep(const double dt, const long iters, const long int N, RK_data_stru
 			po_norm_fac_b = cabs(run_data->b[n]);
 			#endif
 			#endif
+			// Pre-record the phases for resetting after update step if in fxd phase mode
+			#if defined(AMP_ONLY_FXD_PHASE) && !defined(__ELSASSAR_MHD)
+			ao_reset_phase_u = carg(run_data->u[n]);
+			#if defined(__MAGNETO)
+			ao_reset_phase_b = carg(run_data->b[n]);
+			#endif
+			#endif
 
+			//---------------------------------- Update step
 			#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
 			run_data->phi_n[n] = run_data->phi_n[n] + dt * (AB4_1 * RK_data->AB_tmp_u[n] + AB4_2 * RK_data->AB_tmp_nonlin_u[2][n] + AB4_3 * RK_data->AB_tmp_nonlin_u[1][n] + AB4_4 * RK_data->AB_tmp_nonlin_u[0][n]);
 			#if defined(__MAGNETO)
@@ -872,7 +939,8 @@ void AB4CNStep(const double dt, const long iters, const long int N, RK_data_stru
 			#endif
 			#endif
 
-			// Reset the amplitudes 
+			//--------------------------------- Reset if in fixed amp/phase mode
+			// Reset the amplitudes if in fixed amp mode
 			#if defined(PHASE_ONLY_FXD_AMP) && !defined(__ELSASSAR_MHD)
 			run_data->u[n] *= (po_norm_fac_u / cabs(run_data->u[n]));
 
@@ -881,6 +949,21 @@ void AB4CNStep(const double dt, const long iters, const long int N, RK_data_stru
 			run_data->phi_n[n] = carg(run_data->u[n]);
 			#if defined(__MAGNETO)
 			run_data->b[n] *= (po_norm_fac_b / cabs(run_data->b[n]));
+
+			// Record the phases and amplitudes
+			run_data->b_n[n]   = cabs(run_data->b[n]);
+			run_data->psi_n[n] = carg(run_data->b[n]);
+			#endif
+			#endif			
+			// Reset the phases if in amp only fixed phase mode
+			#if defined(AMP_ONLY_FXD_PHASE) && !defined(__ELSASSAR_MHD)
+			run_data->u[n] = cabs(run_data->u[n]) * cexp(I * ao_reset_phase_u);
+
+			// Record the phases and amplitudes
+			run_data->a_n[n]   = cabs(run_data->u[n]);
+			run_data->phi_n[n] = carg(run_data->u[n]);
+			#if defined(__MAGNETO)
+			run_data->b[n] = cabs(run_data->b[n]) * cexp(I * ao_reset_phase_b);
 
 			// Record the phases and amplitudes
 			run_data->b_n[n]   = cabs(run_data->b[n]);
@@ -1078,6 +1161,18 @@ void InitialConditions(const long int N) {
 	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	double r2, r4;
 	#endif
+	if(!(strcmp(sys_vars->u0, "AO_ALGND_PHASE"))) {
+		// Set phi_1 = to forcing phase pi/4
+		run_data->phi_n[2] = M_PI / 4.0;
+		run_data->a_n[2]   = genrand64_real1();
+		run_data->u[2]     = run_data->a_n[2] * cexp(I * run_data->phi_n[2]);
+
+		// Set phi_2 = random as this is free variable
+		run_data->phi_n[3] = genrand64_real1();
+		run_data->a_n[3]   = genrand64_real1();
+		run_data->u[3]     = run_data->a_n[3] * cexp(I * run_data->phi_n[3]);
+		// The rest of the phases are found from the triad conditions and the aligned triad values of 3pi/2
+	}
 
 	// ------------------------------------------------
     // Set Seed for RNG
@@ -1178,7 +1273,7 @@ void InitialConditions(const long int N) {
 				// Initialize the velocity field
 				run_data->u[i] = 0.0 + 0.0 * I;
 				// Initialize the phases and amplitudes
-				#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) 
+				#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY) 
 				run_data->a_n[i]   = 0.0;
 				run_data->phi_n[i] = 0.0;
 				#endif
@@ -1187,7 +1282,7 @@ void InitialConditions(const long int N) {
 				#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 				run_data->b[i] = 0.0 + 0.0 * I;
 				// Initialize the phases and amplitudes
-				#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) 
+				#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY) 
 				run_data->b_n[i]   = 0.0;
 				run_data->psi_n[i] = 0.0;
 				#endif
@@ -1211,7 +1306,7 @@ void InitialConditions(const long int N) {
 					#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 					run_data->b[i] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * cexp(I * pow(i - 1, 4.0)) * 1e-2 / sqrt(75);
 					// Record the phases and amplitudes
-					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
+					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY)
 					run_data->b_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-2;
 					run_data->psi_n[i] = cexp(I * pow(i - 1, 4.0));
 					#endif
@@ -1230,7 +1325,7 @@ void InitialConditions(const long int N) {
 					// Initialize the velocity field
 					run_data->u[i] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) * cexp(I * r1 * 2.0 * M_PI); // *1e-3
 					// Record the phases and amplitudes
-					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
+					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY)
 					run_data->a_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->ALPHA); // *1e-3
 					run_data->phi_n[i] = r1 * 2.0 * M_PI;
 					#endif
@@ -1240,7 +1335,7 @@ void InitialConditions(const long int N) {
 					run_data->b[i] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * cexp(I * r2 * 2.0 * M_PI); // *1e-3
 
 					// Record the phases and amplitudes
-					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
+					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY)
 					run_data->b_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->BETA); // *1e-3
 					run_data->psi_n[i] = r2 * 2.0 * M_PI;
 					#endif
@@ -1259,7 +1354,7 @@ void InitialConditions(const long int N) {
 					// Initialize the velocity field
 					run_data->u[i] = RAND_EXP_C / pow(run_data->k[i], sys_vars->ALPHA) * cexp(-RAND_EXP_B * run_data->k[i]) * cexp(I * r1 * 2.0 * M_PI); // *1e-3
 					// Record the phases and amplitudes
-					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
+					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY)
 					run_data->a_n[i]   = RAND_EXP_C / pow(run_data->k[i], sys_vars->ALPHA) * cexp(-RAND_EXP_B * run_data->k[i]); // *1e-3
 					run_data->phi_n[i] = r1 * 2.0 * M_PI;
 					#endif
@@ -1269,11 +1364,76 @@ void InitialConditions(const long int N) {
 					run_data->b[i] = RAND_EXP_C / pow(run_data->k[i], sys_vars->BETA) * cexp(-RAND_EXP_B * run_data->k[i]) * cexp(I * r2 * 2.0 * M_PI); // *1e-3
 
 					// Record the phases and amplitudes
-					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
+					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY)
 					run_data->b_n[i]   = RAND_EXP_C / pow(run_data->k[i], sys_vars->BETA) * cexp(-RAND_EXP_B * run_data->k[i]); // *1e-3
 					run_data->psi_n[i] = r2 * 2.0 * M_PI;
 					#endif
 					#endif
+				}
+				else if(!(strcmp(sys_vars->u0, "AO_RAND_PHASE"))) {
+					// ------------------------------------------------
+					// Default - Random Initial Conditions
+					// ------------------------------------------------	
+					// Get random uniform number
+					r1        = genrand64_real1();
+					double a1 = genrand64_real1();
+					#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+					r2        = genrand64_real1();
+					double b1 = genrand64_real1();
+					#endif
+
+					// Initialize the velocity field
+					run_data->u[i] = a1 * cexp(I * r1 * 2.0 * M_PI); 
+					// Record the phases and amplitudes
+					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY)
+					run_data->a_n[i]   = a1; 
+					run_data->phi_n[i] = r1 * 2.0 * M_PI;
+					#endif
+
+					// Initialize the magnetic field
+					#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+					run_data->b[i] = b1 * cexp(I * r2 * 2.0 * M_PI);
+
+					// Record the phases and amplitudes
+					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY)
+					run_data->b_n[i]   = b1;
+					run_data->psi_n[i] = r2 * 2.0 * M_PI;
+					#endif
+					#endif
+				}
+				else if(!(strcmp(sys_vars->u0, "AO_ALGND_PHASE"))) {
+					// ------------------------------------------------
+					// Default - Random Initial Conditions
+					// ------------------------------------------------	
+					if (i > 3) {
+						// Get random uniform number
+						double a1 = genrand64_real1();
+						#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+						double b1 = genrand64_real1();
+						#endif
+
+						// Get the phase from the triad condition 
+						run_data->phi_n[i] = 3.0 * M_PI / 2.0 - run_data->phi_n[i - 1] - run_data->phi_n[i - 2]; 
+
+						// Initialize the velocity field
+						run_data->u[i] = a1 * cexp(I * run_data->phi_n[i]); 
+						// Record the phases and amplitudes
+						#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY)
+						run_data->a_n[i]   = a1; 
+						run_data->phi_n[i] = run_data->phi_n[i];
+						#endif
+
+						// Initialize the magnetic field
+						#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+						run_data->b[i] = b1 * cexp(I * r2 * 2.0 * M_PI);
+
+						// Record the phases and amplitudes
+						#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY)
+						run_data->b_n[i]   = b1;
+						run_data->psi_n[i] = r2 * 2.0 * M_PI;
+						#endif
+						#endif
+					}
 				}
 				else if(!(strcmp(sys_vars->u0, "ZERO_PHASE"))) {
 					// ------------------------------------------------
@@ -1283,7 +1443,7 @@ void InitialConditions(const long int N) {
 					run_data->u[i] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA);
 
 					// Record the phases and amplitudes
-					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
+					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY)
 					run_data->a_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->ALPHA);
 					run_data->phi_n[i] = 0.0;
 					#endif
@@ -1293,7 +1453,7 @@ void InitialConditions(const long int N) {
 					run_data->b[i] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-4;
 
 					// Record the phases and amplitudes
-					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
+					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY)
 					run_data->b_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-4;
 					run_data->psi_n[i] = 0.0;
 					#endif
@@ -1307,7 +1467,7 @@ void InitialConditions(const long int N) {
 					run_data->u[i] = 0.0 + 0.0 * I;
 
 					// Record the phases and amplitudes
-					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
+					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY)
 					run_data->a_n[i]   = 0.0;
 					run_data->phi_n[i] = 0.0;
 					#endif
@@ -1317,7 +1477,7 @@ void InitialConditions(const long int N) {
 					run_data->b[i] = 0.0 + 0.0 * I;
 
 					// Record the phases and amplitudes
-					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
+					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY)
 					run_data->b_n[i]   = 0.0;
 					run_data->psi_n[i] = 0.0;
 					#endif
@@ -1343,7 +1503,7 @@ void InitialConditions(const long int N) {
 					run_data->u[i] = r1 + r3 * I;
 
 					// Record the phases and amplitudes
-					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
+					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY)
 					run_data->a_n[i]   = r1;
 					run_data->phi_n[i] = r3;
 					#endif
@@ -1352,7 +1512,7 @@ void InitialConditions(const long int N) {
 					#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 					run_data->b[i] = (r2 + r4) * 1e-2;
 					// Record the phases and amplitudes
-					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
+					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY)
 					run_data->b_n[i]   = r2;
 					run_data->psi_n[i] = r4;
 					#endif
@@ -1919,7 +2079,7 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to allocate memory for ["CYAN"%s"RESET"]\n-->> Exiting!!!\n", "Velocity Field");
 		exit(1);
 	}
-	#if defined(PHASE_ONLY_FXD_AMP)	|| defined(PHASE_ONLY) || defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC_STATS)
+	#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY) || defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC_STATS)
 	// The Fourier amplitudes
 	run_data->a_n = (double* ) malloc(sizeof(double) * (N + 4));
 	if (run_data->a_n == NULL) {
@@ -1957,7 +2117,7 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 		exit(1);
 	}	
 	#endif
-	#if defined(PHASE_ONLY_FXD_AMP)	|| defined(PHASE_ONLY) || defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC_STATS)
+	#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY) || defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC_STATS)
 	// The Fourier amplitudes
 	run_data->b_n = (double* ) malloc(sizeof(double) * (N + 4));
 	if (run_data->b_n == NULL) {
@@ -2090,7 +2250,7 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 			RK_data->AB_tmp_nonlin_u[j][i] = 0.0 + 0.0 * I;
 		}
 		#endif
-		#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC_STATS)
+		#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY) || defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC_STATS)
 		run_data->a_n[i]   = 0.0;
 		run_data->phi_n[i] = 0.0;
 		#endif
@@ -2111,7 +2271,7 @@ void AllocateMemory(const long int N, RK_data_struct* RK_data) {
 			RK_data->AB_tmp_nonlin_b[j][i] = 0.0 + 0.0 * I;
 		}
 		#endif
-		#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC_STATS)
+		#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY) || defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC_STATS)
 		run_data->b_n[i]   = 0.0;
 		run_data->psi_n[i] = 0.0;
 		#endif
@@ -2132,7 +2292,7 @@ void FreeMemory(RK_data_struct* RK_data) {
 
 	// Free system variables
 	free(run_data->u);
-	#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC_STATS)
+	#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY) || defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC_STATS)
 	free(run_data->a_n);
 	free(run_data->phi_n);
 	#endif
@@ -2142,7 +2302,7 @@ void FreeMemory(RK_data_struct* RK_data) {
 	free(run_data->z_plus);
 	free(run_data->z_minus);
 	#endif
-	#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC_STATS)
+	#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY) || defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC_STATS)
 	free(run_data->b_n);
 	free(run_data->psi_n);
 	#endif

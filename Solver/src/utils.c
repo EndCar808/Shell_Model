@@ -358,6 +358,16 @@ int GetCMLArgs(int argc, char** argv) {
 					strncpy(sys_vars->u0, "PO_AMP_INPUT", 64);
 					break;
 				}
+				else if (!(strcmp(optarg,"AO_RAND_PHASE"))) {
+					// Amp Only - Random initial phases
+					strncpy(sys_vars->u0, "AO_RAND_PHASE", 64);
+					break;
+				}
+				else if (!(strcmp(optarg,"AO_ALGND_PHASE"))) {
+					// Amp Only - Phases configured to produce aligned triad phases at 3pi/2
+					strncpy(sys_vars->u0, "AO_ALGND_PHASE", 64);
+					break;
+				}
 				else {
 					// No initial conditions specified -> this will default to random initial conditions
 					strncpy(sys_vars->u0, "NONE", 64);
@@ -538,7 +548,9 @@ void PrintSimulationDetails(int argc, char** argv, double sim_time) {
 	sprintf(solv_type, "%s", "SOLV_UKN");
 	#endif
 	#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)
-	sprintf(model_type, "%s", "PHASEONLY");
+	sprintf(model_type, "%s", "PO");
+	#elif defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY)
+	sprintf(model_type, "%s", "AO");
 	#else
 	sprintf(model_type, "%s", "FULL");
 	#endif

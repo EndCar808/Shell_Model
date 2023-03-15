@@ -105,11 +105,11 @@ void CreateOutputFilesWriteICs(const long int N) {
 	#endif
 
 	///--------------------------------------- Velocity Amplitudes
-	#if defined(__VEL_AMP) && (defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY))
+	#if defined(__VEL_AMP) && (defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY))
 	CreateSlabbedDSet(0.0, 0, file_info->output_file_handle, "VelAmps", &(file_info->file_space[DSET_VEL_AMP]), &(file_info->data_set[DSET_VEL_AMP]), &(file_info->mem_space[DSET_VEL_AMP]), H5T_NATIVE_DOUBLE, dims2D, maxdims2D, chunkdims2D, Dim2D);
 	#endif
 	///--------------------------------------- Velocity Phases
-	#if defined(__VEL_PHI) && (defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY))
+	#if defined(__VEL_PHI) && (defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY))
 	CreateSlabbedDSet(0.0, 0, file_info->output_file_handle, "VelPhases", &(file_info->file_space[DSET_VEL_PHI]), &(file_info->data_set[DSET_VEL_PHI]), &(file_info->mem_space[DSET_VEL_PHI]), H5T_NATIVE_DOUBLE, dims2D, maxdims2D, chunkdims2D, Dim2D);
 	#endif
 
@@ -131,11 +131,11 @@ void CreateOutputFilesWriteICs(const long int N) {
 	#endif
 
 	///--------------------------------------- Magnetic Amplitudes
-	#if defined(__MAG_AMP) && (defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY))
+	#if defined(__MAG_AMP) && (defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY))
 	CreateSlabbedDSet(0.0, 0, file_info->output_file_handle, "MagAmps", &(file_info->file_space[DSET_MAG_AMP]), &(file_info->data_set[DSET_MAG_AMP]), &(file_info->mem_space[DSET_MAG_AMP]), H5T_NATIVE_DOUBLE, dims2D, maxdims2D, chunkdims2D, Dim2D);
 	#endif
 	///--------------------------------------- Magnetic Phases
-	#if defined(__MAG_PSI) && (defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY))
+	#if defined(__MAG_PSI) && (defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY))
 	CreateSlabbedDSet(0.0, 0, file_info->output_file_handle, "MagPhases", &(file_info->file_space[DSET_MAG_PSI]), &(file_info->data_set[DSET_MAG_PSI]), &(file_info->mem_space[DSET_MAG_PSI]), H5T_NATIVE_DOUBLE, dims2D, maxdims2D, chunkdims2D, Dim2D);
 	#endif
 	#endif
@@ -262,11 +262,11 @@ void CreateOutputFilesWriteICs(const long int N) {
 		#endif
 
 		///--------------------------------------- Velocity Amplitudes
-		#if defined(__VEL_AMP) && (defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY))
+		#if defined(__VEL_AMP) && (defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY))
 		WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_VEL_AMP], file_info->data_set[DSET_VEL_AMP], file_info->mem_space[DSET_VEL_AMP], H5T_NATIVE_DOUBLE, &(run_data->a_n[2]), "VelAmps", count2D, index2D);
 		#endif
 		///--------------------------------------- Velocity Phases
-		#if defined(__VEL_PHI) && (defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)) 
+		#if defined(__VEL_PHI) && (defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY)) 
 		WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_VEL_PHI], file_info->data_set[DSET_VEL_PHI], file_info->mem_space[DSET_VEL_PHI], H5T_NATIVE_DOUBLE, &(run_data->phi_n[2]), "VelPhases", count2D, index2D);
 		#endif
 
@@ -288,11 +288,11 @@ void CreateOutputFilesWriteICs(const long int N) {
 		#endif
 
 		///--------------------------------------- Magnetic Amplitudes
-		#if defined(__MAG_AMP) && (defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY))
+		#if defined(__MAG_AMP) && (defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY))
 		WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_MAG_AMP], file_info->data_set[DSET_MAG_AMP], file_info->mem_space[DSET_MAG_AMP], H5T_NATIVE_DOUBLE, &(run_data->b_n[2]), "MagAmps", count2D, index2D);
 		#endif
 		///--------------------------------------- Magnetic Phases
-		#if defined(__MAG_PSI) && (defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY))
+		#if defined(__MAG_PSI) && (defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY))
 		WriteSlabbedDataReal(0.0, 0, file_info->file_space[DSET_MAG_PSI], file_info->data_set[DSET_MAG_PSI], file_info->mem_space[DSET_MAG_PSI], H5T_NATIVE_DOUBLE, &(run_data->psi_n[2]), "MagPhases", count2D, index2D);
 		#endif
 		#endif
@@ -494,6 +494,10 @@ void GetOutputDirPath(void) {
 		sprintf(model_type, "%s", "POFXDAMP");
 		#elif defined(PHASE_ONLY)
 		sprintf(model_type, "%s", "PO");
+		#elif defined(AMP_ONLY_FXD_PHASE)
+		sprintf(model_type, "%s", "AOFXDPHASE");
+		#elif defined(AMP_ONLY)
+		sprintf(model_type, "%s", "AO");
 		#else
 		sprintf(model_type, "%s", "FULL");
 		#endif
@@ -564,6 +568,10 @@ void GetOutputDirPath(void) {
 		sprintf(model_type, "%s", "POFXDAMP");
 		#elif defined(PHASE_ONLY)
 		sprintf(model_type, "%s", "PO");
+		#elif defined(AMP_ONLY_FXD_PHASE)
+		sprintf(model_type, "%s", "AOFXDPHASE");
+		#elif defined(AMP_ONLY)
+		sprintf(model_type, "%s", "AO");
 		#else
 		sprintf(model_type, "%s", "FULL");
 		#endif
@@ -710,11 +718,11 @@ void WriteDataToFile(double t, const long int iters, const long int save_indx) {
 	#endif
 
 	///--------------------------------------- Velocity Amplitudes
-	#if defined(__VEL_AMP) && (defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY))
+	#if defined(__VEL_AMP) && (defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY))
 	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_VEL_AMP], file_info->data_set[DSET_VEL_AMP], file_info->mem_space[DSET_VEL_AMP], H5T_NATIVE_DOUBLE, &(run_data->a_n[2]), "VelAmps", count2D, index2D);
 	#endif
 	///--------------------------------------- Velocity Phases
-	#if defined(__VEL_PHI) && (defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY))
+	#if defined(__VEL_PHI) && (defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY))
 	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_VEL_PHI], file_info->data_set[DSET_VEL_PHI], file_info->mem_space[DSET_VEL_PHI], H5T_NATIVE_DOUBLE, &(run_data->phi_n[2]), "VelPhases", count2D, index2D);
 	#endif
 
@@ -736,11 +744,11 @@ void WriteDataToFile(double t, const long int iters, const long int save_indx) {
 	#endif
 
 	///--------------------------------------- Magnetic Amplitudes
-	#if defined(__MAG_AMP) && (defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY))
+	#if defined(__MAG_AMP) && (defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY))
 	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_MAG_AMP], file_info->data_set[DSET_MAG_AMP], file_info->mem_space[DSET_MAG_AMP], H5T_NATIVE_DOUBLE, &(run_data->b_n[2]), "MagAmps", count2D, index2D);
 	#endif
 	///--------------------------------------- Magnetic Phases
-	#if defined(__MAG_PSI) && (defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY))
+	#if defined(__MAG_PSI) && (defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY))
 	WriteSlabbedDataReal(t, iters, file_info->file_space[DSET_MAG_PSI], file_info->data_set[DSET_MAG_PSI], file_info->mem_space[DSET_MAG_PSI], H5T_NATIVE_DOUBLE, &(run_data->psi_n[2]), "MagPhases", count2D, index2D);
 	#endif
 	#endif
@@ -1033,14 +1041,14 @@ void ReadInputFile(const long int N) {
 	for (int i = 0; i < N + 4; ++i) {
 		if (i >= 2 && i < N + 2) {
 			run_data->u[i] = tmp_u[i - 2];
-			#if defined(PHASE_ONLY_FXD_AMP)
+			#if defined(PHASE_ONLY_FXD_AMP) || defined (AMP_ONLY_FXD_PHASE)
 			run_data->a_n[i]   = cabs(tmp_u[i - 2]);
 			run_data->phi_n[i] = carg(tmp_u[i - 2]);
 			#endif
 		}
 		else {
 			run_data->u[i] = 0.0 + 0.0 * I;
-			#if defined(PHASE_ONLY_FXD_AMP)
+			#if defined(PHASE_ONLY_FXD_AMP) || defined (AMP_ONLY_FXD_PHASE)
 			run_data->a_n[i]   = 0.0 + 0.0 * I;
 			run_data->phi_n[i] = 0.0 + 0.0 * I;
 			#endif
@@ -1090,14 +1098,14 @@ void ReadInputFile(const long int N) {
 	for (int i = 0; i < N + 4; ++i) {
 		if (i >= 2 && i < N + 2) {
 			run_data->b[i] = tmp_b[i - 2];
-			#if defined(PHASE_ONLY_FXD_AMP)
+			#if defined(PHASE_ONLY_FXD_AMP) || defined (AMP_ONLY_FXD_PHASE)
 			run_data->b_n[i]   = cabs(tmp_b[i - 2]);
 			run_data->psi_n[i] = carg(tmp_b[i - 2]);
 			#endif
 		}
 		else {
 			run_data->b[i] = 0.0 + 0.0 * I;
-			#if defined(PHASE_ONLY_FXD_AMP)
+			#if defined(PHASE_ONLY_FXD_AMP) || defined (AMP_ONLY_FXD_PHASE)
 			run_data->b_n[i]   = 0.0 + 0.0 * I;
 			run_data->psi_n[i] = 0.0 + 0.0 * I;
 			#endif

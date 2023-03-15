@@ -147,61 +147,63 @@ if __name__ == '__main__':
 		###################################
 		##  PO Model Dynamics Diagnostic
 		###################################
-		if sys_vars.model_type == "PHASEONLY":
+		if sys_vars.model_type == "PO" or sys_vars.model_type == "AO":
 			phases = run_data.phi_n
 		else:
 			phases = np.mod(np.angle(run_data.u) + 2.0*np.pi, 2.0*np.pi)
-		# Individual phases
-		phase_only_space_time(cmdargs.out_dir_HD + "Phases_SpaceTime_Dynamics_Diagnostic_Phases" + fig_file_type, phases, sys_msr_data.time, sys_vars.N, r"$\phi_n$")
 
-		# ## Read in sys_msr data
-		phase_sync = import_phase_sync_data(data_file_path, sys_vars, method)
-		
-		## Triads
-		phase_only_space_time(cmdargs.out_dir_HD + "Phases_SpaceTime_Dynamics_Diagnostic_Vel_Triads" + fig_file_type, phase_sync.vel_triads, sys_msr_data.time, phase_sync.num_triads, r"$\varphi_{n ,n + 1}^{n + 2}$")
+		if sys_vars.model_type == "PO" or sys_vars.model_type == "FULL":
+			# Individual phases
+			phase_only_space_time(cmdargs.out_dir_HD + "Phases_SpaceTime_Dynamics_Diagnostic_Phases" + fig_file_type, phases, sys_msr_data.time, sys_vars.N, r"$\phi_n$")
 
-		## Phase Differences
-		phase_only_space_time(cmdargs.out_dir_HD + "Phases_SpaceTime_Dynamics_Diagnostic_Vel_PhaseDiffs" + fig_file_type, phase_sync.vel_phase_diffs, sys_msr_data.time, phase_sync.num_phase_diffs, r"$\phi_n - \phi_{n + 3}$")
+			# ## Read in sys_msr data
+			phase_sync = import_phase_sync_data(data_file_path, sys_vars, method)
+			
+			## Triads
+			phase_only_space_time(cmdargs.out_dir_HD + "Phases_SpaceTime_Dynamics_Diagnostic_Vel_Triads" + fig_file_type, phase_sync.vel_triads, sys_msr_data.time, phase_sync.num_triads, r"$\varphi_{n ,n + 1}^{n + 2}$")
 
-		## Plot the velocity triad pdfs
-		fig = plt.figure(figsize = (16, 16))
-		gs  = GridSpec(5, 5, wspace = 0.25, hspace = 0.25)
-		for i in range(5):
-			for j in range(5):
-				if i * 5 + j < phase_sync.num_triads:
-					ax1 = fig.add_subplot(gs[i, j])
-					pdf, centres = compute_pdf_from_hist(phase_sync.vel_triad_hist_counts[i * 5 + j, :], phase_sync.vel_triad_hist_ranges[:], remove_zeros = False)
-					ax1.plot(centres, pdf, label = "$Tppp({})$".format(i * 5 + j + 1))
-					ax1.set_xlabel("$\phi_n + \phi_{n + 1} + \phi_{n + 2}$")
-					ax1.set_ylabel("PDF")
-					ax1.set_yscale("log")
-					ax1.legend()
-					ax1.set_xlim(0, 2.0*np.pi)
-					ax1.set_xticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
-					ax1.set_xticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
+			## Phase Differences
+			phase_only_space_time(cmdargs.out_dir_HD + "Phases_SpaceTime_Dynamics_Diagnostic_Vel_PhaseDiffs" + fig_file_type, phase_sync.vel_phase_diffs, sys_msr_data.time, phase_sync.num_phase_diffs, r"$\phi_n - \phi_{n + 3}$")
 
-		plt.savefig(cmdargs.out_dir_HD + "Phases_Vel_Triad_PDF.png", bbox_inches='tight')
-		plt.close()
+			## Plot the velocity triad pdfs
+			fig = plt.figure(figsize = (16, 16))
+			gs  = GridSpec(5, 5, wspace = 0.25, hspace = 0.25)
+			for i in range(5):
+				for j in range(5):
+					if i * 5 + j < phase_sync.num_triads:
+						ax1 = fig.add_subplot(gs[i, j])
+						pdf, centres = compute_pdf_from_hist(phase_sync.vel_triad_hist_counts[i * 5 + j, :], phase_sync.vel_triad_hist_ranges[:], remove_zeros = False)
+						ax1.plot(centres, pdf, label = "$Tppp({})$".format(i * 5 + j + 1))
+						ax1.set_xlabel("$\phi_n + \phi_{n + 1} + \phi_{n + 2}$")
+						ax1.set_ylabel("PDF")
+						ax1.set_yscale("log")
+						ax1.legend()
+						ax1.set_xlim(0, 2.0*np.pi)
+						ax1.set_xticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
+						ax1.set_xticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
 
-		## Plot the velocity triad phase differences
-		fig = plt.figure(figsize = (16, 16))
-		gs  = GridSpec(5, 5, wspace = 0.25, hspace = 0.25)
-		for i in range(5):
-			for j in range(5):
-				if i * 5 + j < phase_sync.num_phase_diffs:
-					ax1 = fig.add_subplot(gs[i, j])
-					pdf, centres = compute_pdf_from_hist(phase_sync.vel_phase_diff_hist_counts[i * 5 + j, :], phase_sync.vel_phase_diff_hist_ranges[:], remove_zeros = False)
-					ax1.plot(centres, pdf, label = "$Tppp({})$".format(i * 5 + j + 1))
-					ax1.set_xlabel("$\phi_n - \phi_{n + 3}$")
-					ax1.set_ylabel("PDF")
-					ax1.set_yscale("log")
-					ax1.legend()
-					ax1.set_xlim(0, 2.0*np.pi)
-					ax1.set_xticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
-					ax1.set_xticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
+			plt.savefig(cmdargs.out_dir_HD + "Phases_Vel_Triad_PDF.png", bbox_inches='tight')
+			plt.close()
 
-		plt.savefig(cmdargs.out_dir_HD + "Phases_Vel_PhaseDifferences_PDF.png", bbox_inches='tight')
-		plt.close()
+			## Plot the velocity triad phase differences
+			fig = plt.figure(figsize = (16, 16))
+			gs  = GridSpec(5, 5, wspace = 0.25, hspace = 0.25)
+			for i in range(5):
+				for j in range(5):
+					if i * 5 + j < phase_sync.num_phase_diffs:
+						ax1 = fig.add_subplot(gs[i, j])
+						pdf, centres = compute_pdf_from_hist(phase_sync.vel_phase_diff_hist_counts[i * 5 + j, :], phase_sync.vel_phase_diff_hist_ranges[:], remove_zeros = False)
+						ax1.plot(centres, pdf, label = "$Tppp({})$".format(i * 5 + j + 1))
+						ax1.set_xlabel("$\phi_n - \phi_{n + 3}$")
+						ax1.set_ylabel("PDF")
+						ax1.set_yscale("log")
+						ax1.legend()
+						ax1.set_xlim(0, 2.0*np.pi)
+						ax1.set_xticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
+						ax1.set_xticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
+
+			plt.savefig(cmdargs.out_dir_HD + "Phases_Vel_PhaseDifferences_PDF.png", bbox_inches='tight')
+			plt.close()
 
 		###################################
 		##  PDFs
@@ -215,7 +217,7 @@ if __name__ == '__main__':
 				pdf, centres = compute_pdf_from_hist(stats_data.vel_hist_counts[i, :], stats_data.vel_hist_ranges[i, :], normed = True)
 				ax1.set_title("C Data")
 			else:
-				if sys_vars.model_type == "PHASEONLY":
+				if sys_vars.model_type == "PO" or sys_vars.model_type == "AO":
 					pdf, centres = compute_pdf(np.real(run_data.a_n[:, i] * np.exp(1j * run_data.phi_n[:, i])), nbins = nbins, normed = True)					
 				else:
 					pdf, centres = compute_pdf(np.real(run_data.u[:, i]), nbins = nbins, normed = True)
@@ -238,13 +240,13 @@ if __name__ == '__main__':
 		for i in range(5):
 			for j in range(5):
 				indx = i * 5 + j
-				if indx < phase_sync.num_phase_diffs:
+				if indx < sys_vars.N:
 					ax1 = fig.add_subplot(gs[i, j])
 					if hasattr(stats_data, "vel_hist_counts"):
 						pdf, centres = compute_pdf_from_hist(stats_data.vel_hist_counts[indx, :], stats_data.vel_hist_ranges[indx, :], normed = True)
 						ax1.set_title("C Data")
 					else:
-						if sys_vars.model_type == "PHASEONLY":
+						if sys_vars.model_type == "PO" or sys_vars.model_type == "AO":
 							pdf, centres = compute_pdf(np.real(run_data.a_n[:, indx] * np.exp(1j * run_data.phi_n[:, indx])), nbins = nbins, normed = True)					
 						else:
 							pdf, centres = compute_pdf(np.real(run_data.u[:, indx]), nbins = nbins, normed = True)
