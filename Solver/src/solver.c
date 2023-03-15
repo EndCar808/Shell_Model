@@ -119,7 +119,7 @@ void Solve(void) {
 	// Print update of the initial conditions to the terminal
 	PrintUpdateToTerminal(iters - 1, t0, dt, T, iters - 1);
 
-	int change_amp = 1e3;
+	int change_amp = 1e2;
 	int amp_indx   = 1;
 
 	//////////////////////////////

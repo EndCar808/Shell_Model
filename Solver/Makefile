@@ -80,6 +80,9 @@ ELSASSAR_MHD_SOLVER_AB4CN_FLAGS := -D__AB4CN -D__ELSASSAR_MHD -D__Z_PLUS -D__Z_M
 # Phase only flags to be passed to solver
 PHASE_ONLY_FLAGS := -D__PHASE_ONLY -D__RK4 -D__VEL_AMP -D__VEL_PHI #-D__MAGNETO -D__HYPER -D__TRANSIENTS
 
+# Amplitude only flags to be passed to solver
+PHASE_ONLY_FLAGS := -D__AMP_ONLY -D__RK4 -D__VEL_AMP -D__VEL_PHI #-D__MAGNETO -D__HYPER -D__TRANSIENTS
+
 # Phase only flags to be passed to solver
 PHASE_ONLY_FXD_AMP_FLAGS := -D__PHASE_ONLY_FXD_AMP -D__RK4 -D__VEL_AMP -D__VEL_PHI #-D__MAGNETO -D__HYPER -D__TRANSIENTS
 
@@ -235,6 +238,26 @@ $(BIN)/solver_phase_only_fxd_amp: $(SRCOBJ_PO_D) $(DEPS)
 
 $(OBJBIN)/%_phase_only_fxd_amp.o: $(SRCDIR)/%.c $(DEPS) 
 	$(GCC) $(CCFLAG) $(PHASE_ONLY_FXD_AMP_FLAGS) $(DSET_FLAGS) -c $^ -o $@ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+
+
+####-----------
+#  Phase Only 
+####-----------
+solver_amp_only: $(BIN)/solver_amp_only 
+
+$(BIN)/solver_amp_only: $(SRCOBJ_PO) $(DEPS) 
+	$(GCC) $(CCFLAG) $(AMP_ONLY_FLAGS) $(DSET_FLAGS) -o $@ $^ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+
+$(OBJBIN)/%_amp_only.o: $(SRCDIR)/%.c $(DEPS) 
+	$(GCC) $(CCFLAG) $(AMP_ONLY_FLAGS) $(DSET_FLAGS) -c $^ -o $@ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+
+solver_amp_only_fxd_phase: $(BIN)/solver_amp_only_fxd_phase 
+
+$(BIN)/solver_amp_only_fxd_phase: $(SRCOBJ_PO_D) $(DEPS) 
+	$(GCC) $(CCFLAG) $(amp_ONLY_FXD_AMP_FLAGS) $(DSET_FLAGS) -o $@ $^ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+
+$(OBJBIN)/%_amp_only_fxd_amp.o: $(SRCDIR)/%.c $(DEPS) 
+	$(GCC) $(CCFLAG) $(amp_ONLY_FXD_AMP_FLAGS) $(DSET_FLAGS) -c $^ -o $@ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
 
 ####--------
 #  Testing

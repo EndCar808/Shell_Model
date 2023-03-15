@@ -953,168 +953,337 @@ if __name__ == '__main__':
 		# 		plt.close()
 
 
-		if fig_name == "u":
-			num_bins   = 250
-			separation = 4
-			shells     = np.arange(in_data.shape[-1] - separation)
-			# shells = [1 - 1, 5 - 1, 10 - 1, 15 - 1, 20 - 1]
+		# if fig_name == "u":
+		# 	num_bins   = 250
+		# 	separation = 4
+		# 	shells     = np.arange(in_data.shape[-1] - separation)
+		# 	# shells = [1 - 1, 5 - 1, 10 - 1, 15 - 1, 20 - 1]
 
-			density_flag = True
-			aspect_flag = "auto"
-			c_map = mpl.colors.ListedColormap(cm.magma.colors)
-			c_map_norm = mpl.colors.LogNorm()
+		# 	density_flag = True
+		# 	aspect_flag = "auto"
+		# 	c_map = mpl.colors.ListedColormap(cm.magma.colors)
+		# 	c_map_norm = mpl.colors.LogNorm()
 
-			# Norms
-			diff_sqr_error_msr = np.zeros((len(shells), ))
-			hellinger_msr      = np.zeros((len(shells), ))
-			q_2norm_msr        = np.zeros((len(shells), ))
-			q_1norm_msr        = np.zeros((len(shells), ))
-			kl_div_msr         = np.zeros((len(shells), ))
-			for s, n in enumerate(shells):
-				# if not np.all(np.imag(in_data[:, n])):
-				# 	print(np.all(np.imag(in_data[:, n])), np.imag(in_data[:, n]))
-				if np.all(np.imag(in_data[:, n])):
-					## Comparison of 2D Distributions
-					fig = plt.figure(figsize=(16, 22))
-					gs = GridSpec(3, 2, hspace=0.4, wspace=0.5)
+		# 	# Norms
+		# 	diff_sqr_error_msr = np.zeros((len(shells), ))
+		# 	hellinger_msr      = np.zeros((len(shells), ))
+		# 	q_2norm_msr        = np.zeros((len(shells), ))
+		# 	q_1norm_msr        = np.zeros((len(shells), ))
+		# 	kl_div_msr         = np.zeros((len(shells), ))
+		# 	for s, n in enumerate(shells):
+		# 		# if not np.all(np.imag(in_data[:, n])):
+		# 		# 	print(np.all(np.imag(in_data[:, n])), np.imag(in_data[:, n]))
+		# 		if np.all(np.imag(in_data[:, n])):
+		# 			## Comparison of 2D Distributions
+		# 			fig = plt.figure(figsize=(16, 22))
+		# 			gs = GridSpec(3, 2, hspace=0.4, wspace=0.5)
 
-					print(fig_name, n)
+		# 			print(fig_name, n)
 
-					# Abs vs arg 2D (joint) distribution
-					ax1 = fig.add_subplot(gs[0, 0])
-					x = np.absolute(in_data[:, n])
-					y = np.absolute(in_data[:, n + 2])
-					hist, xedges, yedges = np.histogram2d(x, y, bins=(np.linspace(x.min(), x.max(), num_bins + 1), np.linspace(y.min(), y.max(), num_bins + 1)), density=density_flag)
-					ax1.set_xlabel(r"$\left|" + data_labs + r"\right|$")
-					ax1.set_ylabel(r"$\left|" + data_labs + r"\right|$")
-					ax1.set_title(r"Abs $u_{n}$ and Abs $u_{n + 1}$")
-					im1 = ax1.imshow(np.rot90(hist, k=1), extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect=aspect_flag, cmap=c_map, norm=c_map_norm)
-					div1  = make_axes_locatable(ax1)
-					margaxr = div1.append_axes("right", size = "15%", pad = 0.05)
-					pdf, centres = compute_pdf(y, nbins=num_bins, normed=False)
-					p,           = margaxr.plot(pdf, centres, label="$n = {}$".format(n + 1))
-					margaxr.set_xscale('log')
-					# margaxr.set_ylim(centres[0], centres[-1])
-					margaxr.set_xticks([])
-					margaxr.set_xticklabels([])
-					margaxr.set_yticks([])
-					margaxr.set_yticklabels([])
-					margaxr.spines['bottom'].set_visible(False)
-					margaxr.spines['top'].set_visible(False)
-					margaxr.spines['right'].set_visible(False)
-					cbax1 = div1.append_axes("right", size = "5%", pad = 0.05)
-					cb2   = plt.colorbar(im1, cax = cbax1)
-					cb2.set_label("PDF")
-					margaxt = div1.append_axes("top", size = "15%", pad = 0.05)
-					pdf, centres = compute_pdf(x, nbins=num_bins, normed=False)
-					p,           = margaxt.plot(centres, pdf, label="$n = {}$".format(n + 1))
-					margaxt.set_yscale('log')
-					margaxt.set_xticks([])
-					margaxt.set_xticklabels([])
-					margaxt.set_yticks([])
-					margaxt.set_yticklabels([])
-					margaxt.spines['left'].set_visible(False)
-					margaxt.spines['top'].set_visible(False)
-					margaxt.spines['right'].set_visible(False)
+		# 			# Abs vs arg 2D (joint) distribution
+		# 			ax1 = fig.add_subplot(gs[0, 0])
+		# 			x = np.absolute(in_data[:, n])
+		# 			y = np.absolute(in_data[:, n + 2])
+		# 			hist, xedges, yedges = np.histogram2d(x, y, bins=(np.linspace(x.min(), x.max(), num_bins + 1), np.linspace(y.min(), y.max(), num_bins + 1)), density=density_flag)
+		# 			ax1.set_xlabel(r"$\left|" + data_labs + r"\right|$")
+		# 			ax1.set_ylabel(r"$\left|" + data_labs + r"\right|$")
+		# 			ax1.set_title(r"Abs $u_{n}$ and Abs $u_{n + 1}$")
+		# 			im1 = ax1.imshow(np.rot90(hist, k=1), extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect=aspect_flag, cmap=c_map, norm=c_map_norm)
+		# 			div1  = make_axes_locatable(ax1)
+		# 			margaxr = div1.append_axes("right", size = "15%", pad = 0.05)
+		# 			pdf, centres = compute_pdf(y, nbins=num_bins, normed=False)
+		# 			p,           = margaxr.plot(pdf, centres, label="$n = {}$".format(n + 1))
+		# 			margaxr.set_xscale('log')
+		# 			# margaxr.set_ylim(centres[0], centres[-1])
+		# 			margaxr.set_xticks([])
+		# 			margaxr.set_xticklabels([])
+		# 			margaxr.set_yticks([])
+		# 			margaxr.set_yticklabels([])
+		# 			margaxr.spines['bottom'].set_visible(False)
+		# 			margaxr.spines['top'].set_visible(False)
+		# 			margaxr.spines['right'].set_visible(False)
+		# 			cbax1 = div1.append_axes("right", size = "5%", pad = 0.05)
+		# 			cb2   = plt.colorbar(im1, cax = cbax1)
+		# 			cb2.set_label("PDF")
+		# 			margaxt = div1.append_axes("top", size = "15%", pad = 0.05)
+		# 			pdf, centres = compute_pdf(x, nbins=num_bins, normed=False)
+		# 			p,           = margaxt.plot(centres, pdf, label="$n = {}$".format(n + 1))
+		# 			margaxt.set_yscale('log')
+		# 			margaxt.set_xticks([])
+		# 			margaxt.set_xticklabels([])
+		# 			margaxt.set_yticks([])
+		# 			margaxt.set_yticklabels([])
+		# 			margaxt.spines['left'].set_visible(False)
+		# 			margaxt.spines['top'].set_visible(False)
+		# 			margaxt.spines['right'].set_visible(False)
 					
-					# Product of the marginal 1d distributions
-					ax2 = fig.add_subplot(gs[0, 1])
-					ax1.set_xlabel(r"$\left|" + data_labs + r"\right|$")
-					ax1.set_ylabel(r"$\left|" + data_labs + r"\right|$")
-					ax2.set_title(r"Marginal Abs $u_n$ * Marginal Abs $u_{n + 1}$")
-					marg_abs_pdf = np.sum(hist, axis=0)	* (yedges[1] - yedges[0])
-					marg_angle_pdf = np.sum(hist, axis=1) * (xedges[1] - xedges[0])
-					pdf_prod_data = np.outer(marg_angle_pdf, marg_abs_pdf)
-					im2 = ax2.imshow(np.rot90(pdf_prod_data), extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect=aspect_flag, cmap=c_map, norm=c_map_norm)
-					div2  = make_axes_locatable(ax2)
-					cbax2 = div2.append_axes("right", size = "5%", pad = 0.05)
-					cb2   = plt.colorbar(im2, cax = cbax2)
-					cb2.set_label("PDF")
+		# 			# Product of the marginal 1d distributions
+		# 			ax2 = fig.add_subplot(gs[0, 1])
+		# 			ax1.set_xlabel(r"$\left|" + data_labs + r"\right|$")
+		# 			ax1.set_ylabel(r"$\left|" + data_labs + r"\right|$")
+		# 			ax2.set_title(r"Marginal Abs $u_n$ * Marginal Abs $u_{n + 1}$")
+		# 			marg_abs_pdf = np.sum(hist, axis=0)	* (yedges[1] - yedges[0])
+		# 			marg_angle_pdf = np.sum(hist, axis=1) * (xedges[1] - xedges[0])
+		# 			pdf_prod_data = np.outer(marg_angle_pdf, marg_abs_pdf)
+		# 			im2 = ax2.imshow(np.rot90(pdf_prod_data), extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect=aspect_flag, cmap=c_map, norm=c_map_norm)
+		# 			div2  = make_axes_locatable(ax2)
+		# 			cbax2 = div2.append_axes("right", size = "5%", pad = 0.05)
+		# 			cb2   = plt.colorbar(im2, cax = cbax2)
+		# 			cb2.set_label("PDF")
 
-					# Error between the two
-					dx = xedges[1] - xedges[0]
-					dy = yedges[1] - yedges[0]
-					hist_2d = np.rot90(hist, k=1) 
-					marg_data = np.rot90(pdf_prod_data)
+		# 			# Error between the two
+		# 			dx = xedges[1] - xedges[0]
+		# 			dy = yedges[1] - yedges[0]
+		# 			hist_2d = np.rot90(hist, k=1) 
+		# 			marg_data = np.rot90(pdf_prod_data)
 
-					# Compute 2d distances
-					nx, ny = hist_2d.shape
-					diff_sqr_error_dist = np.zeros((nx, ny))
-					hellinger_dist      = np.zeros((nx, ny))
-					q_dist              = np.zeros((nx, ny))
-					kl_div_dist         = np.zeros((nx, ny))
-					for i in range(nx):
-						for j in range(ny):
-							diff_sqr_error_dist[i, j] = (hist_2d[i, j] - marg_data[i, j])**2
+		# 			# Compute 2d distances
+		# 			nx, ny = hist_2d.shape
+		# 			diff_sqr_error_dist = np.zeros((nx, ny))
+		# 			hellinger_dist      = np.zeros((nx, ny))
+		# 			q_dist              = np.zeros((nx, ny))
+		# 			kl_div_dist         = np.zeros((nx, ny))
+		# 			for i in range(nx):
+		# 				for j in range(ny):
+		# 					diff_sqr_error_dist[i, j] = (hist_2d[i, j] - marg_data[i, j])**2
 
-							hellinger_dist[i, j]      = (np.sqrt(hist_2d[i, j]) - np.sqrt(marg_data[i, j]))**2
+		# 					hellinger_dist[i, j]      = (np.sqrt(hist_2d[i, j]) - np.sqrt(marg_data[i, j]))**2
 
-							if (hist_2d[i, j] + marg_data[i, j]) == 0.0:
-								q_dist[i, j] = 0.0
-							else:
-								q_dist[i, j] = (hist_2d[i, j] - marg_data[i, j]) / (hist_2d[i, j] + marg_data[i, j])
+		# 					if (hist_2d[i, j] + marg_data[i, j]) == 0.0:
+		# 						q_dist[i, j] = 0.0
+		# 					else:
+		# 						q_dist[i, j] = (hist_2d[i, j] - marg_data[i, j]) / (hist_2d[i, j] + marg_data[i, j])
 
-							if marg_data[i, j] == 0.0 or hist_2d[i, j] / marg_data[i, j] == 0.0:
-								kl_div_dist[i, j] = 0.0
-							else:
-								kl_div_dist[i, j] = hist_2d[i, j] * np.log(hist_2d[i, j] / marg_data[i, j])
+		# 					if marg_data[i, j] == 0.0 or hist_2d[i, j] / marg_data[i, j] == 0.0:
+		# 						kl_div_dist[i, j] = 0.0
+		# 					else:
+		# 						kl_div_dist[i, j] = hist_2d[i, j] * np.log(hist_2d[i, j] / marg_data[i, j])
 
-					# Compute measures
-					diff_sqr_error_msr[s] = np.sum(diff_sqr_error_dist) * dy * dx
-					hellinger_msr[s]      = np.sqrt(0.5 * np.sum(hellinger_dist)* dx * dy)
-					q_2norm_msr[s]        = np.linalg.norm(hist_2d - marg_data) / (np.linalg.norm(hist_2d) + np.linalg.norm(marg_data))
-					q_1norm_msr[s]        = np.linalg.norm(hist_2d - marg_data, ord=1) / (np.linalg.norm(hist_2d, ord=1) + np.linalg.norm(marg_data, ord=1))
-					kl_div_msr[s]         = np.sum(kl_div_dist) * dx * dy
+		# 			# Compute measures
+		# 			diff_sqr_error_msr[s] = np.sum(diff_sqr_error_dist) * dy * dx
+		# 			hellinger_msr[s]      = np.sqrt(0.5 * np.sum(hellinger_dist)* dx * dy)
+		# 			q_2norm_msr[s]        = np.linalg.norm(hist_2d - marg_data) / (np.linalg.norm(hist_2d) + np.linalg.norm(marg_data))
+		# 			q_1norm_msr[s]        = np.linalg.norm(hist_2d - marg_data, ord=1) / (np.linalg.norm(hist_2d, ord=1) + np.linalg.norm(marg_data, ord=1))
+		# 			kl_div_msr[s]         = np.sum(kl_div_dist) * dx * dy
 
 
-					ax3 = fig.add_subplot(gs[1, 0])
-					ax3.set_xlabel(r"$\left|" + data_labs + r"\right|$")
-					ax3.set_ylabel(r"$\left|" + data_labs + r"\right|$")
-					im3 = ax3.imshow(hellinger_dist, extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect=aspect_flag, cmap=c_map, norm=c_map_norm)
-					div3  = make_axes_locatable(ax3)
-					ax3.set_title(r"Helling Distance: {:1.6f}".format(hellinger_msr[s]))
-					cbax3 = div3.append_axes("right", size = "5%", pad = 0.05)
-					cb3   = plt.colorbar(im3, cax = cbax3)
-					cb3.set_label(r"Hellinger Distance")
+		# 			ax3 = fig.add_subplot(gs[1, 0])
+		# 			ax3.set_xlabel(r"$\left|" + data_labs + r"\right|$")
+		# 			ax3.set_ylabel(r"$\left|" + data_labs + r"\right|$")
+		# 			im3 = ax3.imshow(hellinger_dist, extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect=aspect_flag, cmap=c_map, norm=c_map_norm)
+		# 			div3  = make_axes_locatable(ax3)
+		# 			ax3.set_title(r"Helling Distance: {:1.6f}".format(hellinger_msr[s]))
+		# 			cbax3 = div3.append_axes("right", size = "5%", pad = 0.05)
+		# 			cb3   = plt.colorbar(im3, cax = cbax3)
+		# 			cb3.set_label(r"Hellinger Distance")
 
-					ax3 = fig.add_subplot(gs[1, 1])
-					ax3.set_xlabel(r"$\left|" + data_labs + r"\right|$")
-					ax3.set_ylabel(r"$\left|" + data_labs + r"\right|$")
-					im3 = ax3.imshow(q_dist, extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect=aspect_flag, cmap=c_map, norm=c_map_norm)
-					div3  = make_axes_locatable(ax3)
-					ax3.set_title(r"Q: 1norm {:1.6f} - 2norm {:1.6f}".format(q_1norm_msr[s], q_2norm_msr[s]))
-					cbax3 = div3.append_axes("right", size = "5%", pad = 0.05)
-					cb3   = plt.colorbar(im3, cax = cbax3)
-					cb3.set_label(r"Q")
+		# 			ax3 = fig.add_subplot(gs[1, 1])
+		# 			ax3.set_xlabel(r"$\left|" + data_labs + r"\right|$")
+		# 			ax3.set_ylabel(r"$\left|" + data_labs + r"\right|$")
+		# 			im3 = ax3.imshow(q_dist, extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect=aspect_flag, cmap=c_map, norm=c_map_norm)
+		# 			div3  = make_axes_locatable(ax3)
+		# 			ax3.set_title(r"Q: 1norm {:1.6f} - 2norm {:1.6f}".format(q_1norm_msr[s], q_2norm_msr[s]))
+		# 			cbax3 = div3.append_axes("right", size = "5%", pad = 0.05)
+		# 			cb3   = plt.colorbar(im3, cax = cbax3)
+		# 			cb3.set_label(r"Q")
 
-					ax3 = fig.add_subplot(gs[2, 0])
-					ax3.set_xlabel(r"$\left|" + data_labs + r"\right|$")
-					ax3.set_ylabel(r"$\left|" + data_labs + r"\right|$")
-					im3 = ax3.imshow(kl_div_dist, extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect=aspect_flag, cmap=c_map, norm=c_map_norm)
-					div3  = make_axes_locatable(ax3)
-					ax3.set_title(r"KL Divergence: {:1.6f}".format(kl_div_msr[s]))
-					cbax3 = div3.append_axes("right", size = "5%", pad = 0.05)
-					cb3   = plt.colorbar(im3, cax = cbax3)
-					cb3.set_label(r"KL Divergence")
+		# 			ax3 = fig.add_subplot(gs[2, 0])
+		# 			ax3.set_xlabel(r"$\left|" + data_labs + r"\right|$")
+		# 			ax3.set_ylabel(r"$\left|" + data_labs + r"\right|$")
+		# 			im3 = ax3.imshow(kl_div_dist, extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect=aspect_flag, cmap=c_map, norm=c_map_norm)
+		# 			div3  = make_axes_locatable(ax3)
+		# 			ax3.set_title(r"KL Divergence: {:1.6f}".format(kl_div_msr[s]))
+		# 			cbax3 = div3.append_axes("right", size = "5%", pad = 0.05)
+		# 			cb3   = plt.colorbar(im3, cax = cbax3)
+		# 			cb3.set_label(r"KL Divergence")
 
-					ax3 = fig.add_subplot(gs[2, 1])
-					ax3.set_xlabel(r"$\left|" + data_labs + r"\right|$")
-					ax3.set_ylabel(r"$\left|" + data_labs + r"\right|$")
-					im3 = ax3.imshow(diff_sqr_error_dist, extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect=aspect_flag, cmap=c_map, norm=c_map_norm)
-					div3  = make_axes_locatable(ax3)
-					ax3.set_title(r"Diff Sqrd Error: {:1.6f}".format(diff_sqr_error_msr[s]))
-					cbax3 = div3.append_axes("right", size = "5%", pad = 0.05)
-					cb3   = plt.colorbar(im3, cax = cbax3)
-					cb3.set_label(r"Diff Sqrd Error")
+		# 			ax3 = fig.add_subplot(gs[2, 1])
+		# 			ax3.set_xlabel(r"$\left|" + data_labs + r"\right|$")
+		# 			ax3.set_ylabel(r"$\left|" + data_labs + r"\right|$")
+		# 			im3 = ax3.imshow(diff_sqr_error_dist, extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect=aspect_flag, cmap=c_map, norm=c_map_norm)
+		# 			div3  = make_axes_locatable(ax3)
+		# 			ax3.set_title(r"Diff Sqrd Error: {:1.6f}".format(diff_sqr_error_msr[s]))
+		# 			cbax3 = div3.append_axes("right", size = "5%", pad = 0.05)
+		# 			cb3   = plt.colorbar(im3, cax = cbax3)
+		# 			cb3.set_label(r"Diff Sqrd Error")
 
-					print("Amp - Phase -- Diff Sqr Error:\t{:1.6f}".format(diff_sqr_error_msr[s]))
-					print("Amp - Phase -- Hellinger Measure:\t{:1.6f}".format(hellinger_msr[s]))	
-					print("Amp - Phase -- Qoutient Error 1norm:\t{:1.6f}".format(q_1norm_msr[s]))	
-					print("Amp - Phase -- Qoutient Error 2norm:\t{:1.6f}".format(q_2norm_msr[s]))	
-					print("Amp - Phase -- KL Divergence:\t{:1.6f}".format(kl_div_msr[s]))
+		# 			print("Amp - Phase -- Diff Sqr Error:\t{:1.6f}".format(diff_sqr_error_msr[s]))
+		# 			print("Amp - Phase -- Hellinger Measure:\t{:1.6f}".format(hellinger_msr[s]))	
+		# 			print("Amp - Phase -- Qoutient Error 1norm:\t{:1.6f}".format(q_1norm_msr[s]))	
+		# 			print("Amp - Phase -- Qoutient Error 2norm:\t{:1.6f}".format(q_2norm_msr[s]))	
+		# 			print("Amp - Phase -- KL Divergence:\t{:1.6f}".format(kl_div_msr[s]))
 
-					# Save figure
-					plt.suptitle(fig_name + " $n = {} $".format(n + 1))
-					fig.savefig(cmdargs.out_dir_AVGFLUX + fig_name + "_2DHist_Comparison_Un{}_n{}".format(separation, n) + fig_format, bbox_inches='tight')
-					plt.close()
+		# 			# Save figure
+		# 			plt.suptitle(fig_name + " $n = {} $".format(n + 1))
+		# 			fig.savefig(cmdargs.out_dir_AVGFLUX + fig_name + "_2DHist_Comparison_Un{}_n{}".format(separation, n) + fig_format, bbox_inches='tight')
+		# 			plt.close()
+
+
+		if fig_name == "TripProd":
+			for sep in range(2, 4):
+				separation = sep
+				shells     = np.arange(in_data.shape[-1] - separation)
+				num_bins   = 250
+				# shells = [1 - 1, 5 - 1, 10 - 1, 15 - 1, 20 - 1]
+
+				density_flag = True
+				aspect_flag = "auto"
+				c_map = mpl.colors.ListedColormap(cm.magma.colors)
+				c_map_norm = mpl.colors.LogNorm()
+
+				# Norms
+				diff_sqr_error_msr = np.zeros((len(shells), ))
+				hellinger_msr      = np.zeros((len(shells), ))
+				q_2norm_msr        = np.zeros((len(shells), ))
+				q_1norm_msr        = np.zeros((len(shells), ))
+				kl_div_msr         = np.zeros((len(shells), ))
+				for s, n in enumerate(shells):
+					# if not np.all(np.imag(in_data[:, n])):
+					# 	print(np.all(np.imag(in_data[:, n])), np.imag(in_data[:, n]))
+					if np.all(np.imag(in_data[:, n])):
+						## Comparison of 2D Distributions
+						fig = plt.figure(figsize=(16, 22))
+						gs = GridSpec(3, 2, hspace=0.4, wspace=0.5)
+
+						print(fig_name, n)
+
+						# Abs vs arg 2D (joint) distribution
+						ax1 = fig.add_subplot(gs[0, 0])
+						x = np.angle(in_data[:, n])
+						y = np.angle(in_data[:, n + separation])
+						hist, xedges, yedges = np.histogram2d(x, y, bins=(np.linspace(x.min(), x.max(), num_bins + 1), np.linspace(y.min(), y.max(), num_bins + 1)), density=density_flag)
+						ax1.set_xlabel(r"$\left|" + data_labs + r"\right|$")
+						ax1.set_ylabel(r"$\left|" + data_labs + r"\right|$")
+						ax1.set_title(r"Abs $u_{n}$ and Abs $u_{n + 1}$")
+						im1 = ax1.imshow(np.rot90(hist, k=1), extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect=aspect_flag, cmap=c_map, norm=c_map_norm)
+						div1  = make_axes_locatable(ax1)
+						margaxr = div1.append_axes("right", size = "15%", pad = 0.05)
+						pdf, centres = compute_pdf(y, nbins=num_bins, normed=False)
+						p,           = margaxr.plot(pdf, centres, label="$n = {}$".format(n + 1))
+						margaxr.set_xscale('log')
+						# margaxr.set_ylim(centres[0], centres[-1])
+						margaxr.set_xticks([])
+						margaxr.set_xticklabels([])
+						margaxr.set_yticks([])
+						margaxr.set_yticklabels([])
+						margaxr.spines['bottom'].set_visible(False)
+						margaxr.spines['top'].set_visible(False)
+						margaxr.spines['right'].set_visible(False)
+						cbax1 = div1.append_axes("right", size = "5%", pad = 0.05)
+						cb2   = plt.colorbar(im1, cax = cbax1)
+						cb2.set_label("PDF")
+						margaxt = div1.append_axes("top", size = "15%", pad = 0.05)
+						pdf, centres = compute_pdf(x, nbins=num_bins, normed=False)
+						p,           = margaxt.plot(centres, pdf, label="$n = {}$".format(n + 1))
+						margaxt.set_yscale('log')
+						margaxt.set_xticks([])
+						margaxt.set_xticklabels([])
+						margaxt.set_yticks([])
+						margaxt.set_yticklabels([])
+						margaxt.spines['left'].set_visible(False)
+						margaxt.spines['top'].set_visible(False)
+						margaxt.spines['right'].set_visible(False)
+						
+						# Product of the marginal 1d distributions
+						ax2 = fig.add_subplot(gs[0, 1])
+						ax1.set_xlabel(r"$\left|" + data_labs + r"\right|$")
+						ax1.set_ylabel(r"$\left|" + data_labs + r"\right|$")
+						ax2.set_title(r"Marginal Abs $u_n$ * Marginal Abs $u_{n + 1}$")
+						marg_abs_pdf = np.sum(hist, axis=0)	* (yedges[1] - yedges[0])
+						marg_angle_pdf = np.sum(hist, axis=1) * (xedges[1] - xedges[0])
+						pdf_prod_data = np.outer(marg_angle_pdf, marg_abs_pdf)
+						im2 = ax2.imshow(np.rot90(pdf_prod_data), extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect=aspect_flag, cmap=c_map, norm=c_map_norm)
+						div2  = make_axes_locatable(ax2)
+						cbax2 = div2.append_axes("right", size = "5%", pad = 0.05)
+						cb2   = plt.colorbar(im2, cax = cbax2)
+						cb2.set_label("PDF")
+
+						# Error between the two
+						dx = xedges[1] - xedges[0]
+						dy = yedges[1] - yedges[0]
+						hist_2d = np.rot90(hist, k=1) 
+						marg_data = np.rot90(pdf_prod_data)
+
+						# Compute 2d distances
+						nx, ny = hist_2d.shape
+						diff_sqr_error_dist = np.zeros((nx, ny))
+						hellinger_dist      = np.zeros((nx, ny))
+						q_dist              = np.zeros((nx, ny))
+						kl_div_dist         = np.zeros((nx, ny))
+						for i in range(nx):
+							for j in range(ny):
+								diff_sqr_error_dist[i, j] = (hist_2d[i, j] - marg_data[i, j])**2
+
+								hellinger_dist[i, j]      = (np.sqrt(hist_2d[i, j]) - np.sqrt(marg_data[i, j]))**2
+
+								if (hist_2d[i, j] + marg_data[i, j]) == 0.0:
+									q_dist[i, j] = 0.0
+								else:
+									q_dist[i, j] = (hist_2d[i, j] - marg_data[i, j]) / (hist_2d[i, j] + marg_data[i, j])
+
+								if marg_data[i, j] == 0.0 or hist_2d[i, j] / marg_data[i, j] == 0.0:
+									kl_div_dist[i, j] = 0.0
+								else:
+									kl_div_dist[i, j] = hist_2d[i, j] * np.log(hist_2d[i, j] / marg_data[i, j])
+
+						# Compute measures
+						diff_sqr_error_msr[s] = np.sum(diff_sqr_error_dist) * dy * dx
+						hellinger_msr[s]      = np.sqrt(0.5 * np.sum(hellinger_dist)* dx * dy)
+						q_2norm_msr[s]        = np.linalg.norm(hist_2d - marg_data) / (np.linalg.norm(hist_2d) + np.linalg.norm(marg_data))
+						q_1norm_msr[s]        = np.linalg.norm(hist_2d - marg_data, ord=1) / (np.linalg.norm(hist_2d, ord=1) + np.linalg.norm(marg_data, ord=1))
+						kl_div_msr[s]         = np.sum(kl_div_dist) * dx * dy
+
+
+						ax3 = fig.add_subplot(gs[1, 0])
+						ax3.set_xlabel(r"$\left|" + data_labs + r"\right|$")
+						ax3.set_ylabel(r"$\left|" + data_labs + r"\right|$")
+						im3 = ax3.imshow(hellinger_dist, extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect=aspect_flag, cmap=c_map, norm=c_map_norm)
+						div3  = make_axes_locatable(ax3)
+						ax3.set_title(r"Helling Distance: {:1.6f}".format(hellinger_msr[s]))
+						cbax3 = div3.append_axes("right", size = "5%", pad = 0.05)
+						cb3   = plt.colorbar(im3, cax = cbax3)
+						cb3.set_label(r"Hellinger Distance")
+
+						ax3 = fig.add_subplot(gs[1, 1])
+						ax3.set_xlabel(r"$\left|" + data_labs + r"\right|$")
+						ax3.set_ylabel(r"$\left|" + data_labs + r"\right|$")
+						im3 = ax3.imshow(q_dist, extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect=aspect_flag, cmap=c_map, norm=c_map_norm)
+						div3  = make_axes_locatable(ax3)
+						ax3.set_title(r"Q: 1norm {:1.6f} - 2norm {:1.6f}".format(q_1norm_msr[s], q_2norm_msr[s]))
+						cbax3 = div3.append_axes("right", size = "5%", pad = 0.05)
+						cb3   = plt.colorbar(im3, cax = cbax3)
+						cb3.set_label(r"Q")
+
+						ax3 = fig.add_subplot(gs[2, 0])
+						ax3.set_xlabel(r"$\left|" + data_labs + r"\right|$")
+						ax3.set_ylabel(r"$\left|" + data_labs + r"\right|$")
+						im3 = ax3.imshow(kl_div_dist, extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect=aspect_flag, cmap=c_map, norm=c_map_norm)
+						div3  = make_axes_locatable(ax3)
+						ax3.set_title(r"KL Divergence: {:1.6f}".format(kl_div_msr[s]))
+						cbax3 = div3.append_axes("right", size = "5%", pad = 0.05)
+						cb3   = plt.colorbar(im3, cax = cbax3)
+						cb3.set_label(r"KL Divergence")
+
+						ax3 = fig.add_subplot(gs[2, 1])
+						ax3.set_xlabel(r"$\left|" + data_labs + r"\right|$")
+						ax3.set_ylabel(r"$\left|" + data_labs + r"\right|$")
+						im3 = ax3.imshow(diff_sqr_error_dist, extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect=aspect_flag, cmap=c_map, norm=c_map_norm)
+						div3  = make_axes_locatable(ax3)
+						ax3.set_title(r"Diff Sqrd Error: {:1.6f}".format(diff_sqr_error_msr[s]))
+						cbax3 = div3.append_axes("right", size = "5%", pad = 0.05)
+						cb3   = plt.colorbar(im3, cax = cbax3)
+						cb3.set_label(r"Diff Sqrd Error")
+
+						print("Amp - Phase -- Diff Sqr Error:\t{:1.6f}".format(diff_sqr_error_msr[s]))
+						print("Amp - Phase -- Hellinger Measure:\t{:1.6f}".format(hellinger_msr[s]))	
+						print("Amp - Phase -- Qoutient Error 1norm:\t{:1.6f}".format(q_1norm_msr[s]))	
+						print("Amp - Phase -- Qoutient Error 2norm:\t{:1.6f}".format(q_2norm_msr[s]))	
+						print("Amp - Phase -- KL Divergence:\t{:1.6f}".format(kl_div_msr[s]))
+
+						# Save figure
+						plt.suptitle(fig_name + " $n = {} $".format(n + 1))
+						fig.savefig(cmdargs.out_dir_AVGFLUX + fig_name + "_2DHist_Comparison_Angle(Triad)n{}_n{}".format(separation, n) + fig_format, bbox_inches='tight')
+						plt.close()
+
+
 
