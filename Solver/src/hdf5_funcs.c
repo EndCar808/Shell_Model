@@ -473,11 +473,11 @@ void GetOutputDirPath(void) {
 		// Get Simulation Details
 		// ----------------------------------
 		#if defined(__MAGNETO) && !defined(__ELSASSAR_MHD)
-		sprintf(sys_type, "%s", "MAGHYDRO");
+		sprintf(sys_type, "%s", "MHD");
 		#elif defined(__ELSASSAR_MHD) && !defined(__MAGNETO)
-		sprintf(sys_type, "%s", "ELSASSARMHD");
+		sprintf(sys_type, "%s", "ELS");
 		#elif !defined(__MAGNETO) || !defined(__ELSASSAR_MHD)
-		sprintf(sys_type, "%s", "HYDRO");
+		sprintf(sys_type, "%s", "HD");
 		#else
 		sprintf(sys_type, "%s", "UKN");
 		#endif
@@ -507,7 +507,7 @@ void GetOutputDirPath(void) {
 		// -------------------------------------
 		#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 		// Construct file label from simulation data
-		sprintf(file_data, "_SIM_DATA_[%s-%s-%s]_N[%ld]_T[%1.1lf,%g,%1.3lf]_NU[%g]_ETA[%g]_ALPHA[%1.3lf]_BETA[%1.3lf]_K[%1.3lf,%1.3lf]_EPS[%1.2lf,%1.2lf]_FORC[%s,%d,%1.3lf]_u0[%s].h5", 
+		sprintf(file_data, "_%s-%s-%s_N[%ld]_T[%1.1lf,%g,%1.3lf]_NU[%g]_ETA[%g]_ALPHA[%1.3lf]_BETA[%1.3lf]_K[%1.3lf,%1.3lf]_EPS[%1.2lf,%1.2lf]_FORC[%s,%d,%1.3lf]_u0[%s].h5", 
 							sys_type, solv_type, model_type, 
 							sys_vars->N, 
 							sys_vars->t0, sys_vars->dt, sys_vars->T, 
@@ -520,7 +520,7 @@ void GetOutputDirPath(void) {
 							sys_vars->forcing, sys_vars->force_k, sys_vars->force_scale_var, 
 							sys_vars->u0);
 		#else
-		sprintf(file_data, "_SIM_DATA_[%s-%s-%s]_N[%ld]_T[%1.1lf,%g,%1.3lf]_NU[%g]_ALPHA[%1.3lf]_K[%1.3lf,%1.3lf]_EPS[%1.2lf]_FORC[%s,%d,%1.3lf]_u0[%s].h5", 
+		sprintf(file_data, "_%s-%s-%s_N[%ld]_T[%1.1lf,%g,%1.3lf]_NU[%g]_ALPHA[%1.3lf]_K[%1.3lf,%1.3lf]_EPS[%1.2lf]_FORC[%s,%d,%1.3lf]_u0[%s].h5", 
 							sys_type, solv_type, model_type, 
 							sys_vars->N, 
 							sys_vars->t0, sys_vars->dt, sys_vars->T, 
@@ -547,11 +547,11 @@ void GetOutputDirPath(void) {
 		// Get Simulation Details
 		// ----------------------------------
 		#if defined(__MAGNETO) && !defined(__ELSASSAR_MHD)
-		sprintf(sys_type, "%s", "MAGHYDRO");
+		sprintf(sys_type, "%s", "MHD");
 		#elif defined(__ELSASSAR_MHD) && !defined(__MAGNETO)
-		sprintf(sys_type, "%s", "ELSASSARMHD");
+		sprintf(sys_type, "%s", "ELS");
 		#elif !defined(__MAGNETO) || !defined(__ELSASSAR_MHD)
-		sprintf(sys_type, "%s", "HYDRO");
+		sprintf(sys_type, "%s", "HD");
 		#else
 		sprintf(sys_type, "%s", "UKN");
 		#endif
@@ -581,7 +581,7 @@ void GetOutputDirPath(void) {
 		// ----------------------------------
 		#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 		// Construct file label from simulation data
-		sprintf(file_data, "SIM_DATA_[%s-%s-%s]_N[%ld]_T[%1.1lf,%g,%1.3lf]_NU[%g]_ETA[%g]_ALPHA[%1.3lf]_BETA[%1.3lf]_K[%1.3lf,%1.3lf]_EPS[%1.2lf,%1.2lf]_FORC[%s,%d,%1.3lf]_u0[%s]_TAG[%s]/", 
+		sprintf(file_data, "%s-%s-%s_N[%ld]_T[%1.1lf,%g,%1.3lf]_NU[%g]_ETA[%g]_ALPHA[%1.3lf]_BETA[%1.3lf]_K[%1.3lf,%1.3lf]_EPS[%1.2lf,%1.2lf]_FORC[%s,%d,%1.3lf]_u0[%s]_TAG[%s]/", 
 							sys_type, solv_type, model_type, 
 							sys_vars->N, 
 							sys_vars->t0, sys_vars->dt, sys_vars->T, 
@@ -595,7 +595,7 @@ void GetOutputDirPath(void) {
 							sys_vars->u0, 
 							file_info->output_tag);
 		#else
-		sprintf(file_data, "SIM_DATA_[%s-%s-%s]_N[%ld]_T[%1.1lf,%g,%1.3lf]_NU[%g]_ALPHA[%1.3lf]_K[%1.3lf,%1.3lf]_EPS[%1.2lf]_FORC[%s,%d,%1.3lf]_u0[%s]_TAG[%s]/", 
+		sprintf(file_data, "%s-%s-%s_N[%ld]_T[%1.1lf,%g,%1.3lf]_NU[%g]_ALPHA[%1.3lf]_K[%1.3lf,%1.3lf]_EPS[%1.2lf]_FORC[%s,%d,%1.3lf]_u0[%s]_TAG[%s]/", 
 							sys_type, solv_type, model_type, 
 							sys_vars->N, 
 							sys_vars->t0, sys_vars->dt, sys_vars->T, 

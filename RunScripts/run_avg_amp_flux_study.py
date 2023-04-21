@@ -121,60 +121,101 @@ if __name__ == '__main__':
 	fig_format = ".png"
 
 	# Data
-	input_data = [doub_prod, trip_prod, u, avg_trip_prod] #, k * trip_prod, trip_prod_alt, doub_prod, enrg_flux, hel_flux] #, avg_trip_prod, k * avg_trip_prod, avg_doub_prod, avg_enrg_flux, avg_hel_flux]
-	figure_names = ["DoubleProd", "TripProd", "u", "TimeAvgTripProd"] #, "kTripProd", "TripProdAlt", "DoubleProd", "EnrgFlux", "HelFlux"] #, "TimeAvgTripProd", "TimeAvgkTripProd", "TimeAvgDoubleProd", "TimeAvgEnrgFlux", "TimeAvgHelFlux"]
-	data_labels = [r"u_{n}u_{n + 3}^{*}", r"u_{n + 2}u_{n + 1}u_{n}", r"u_{n}", r"u_{n + 2}u_{n + 1}u_{n}"] #, r"k_n u_{n + 2}u_{n + 1}u_{n}", r"(1 - \delta) / \lambda u_{n + 2}u_{n + 1}u_{n}", r"u_{n}u_{n + 3}^{*}", r"\Pi_n^{\mathcal{E}}", r"\Pi_n^{\mathcal{H}}"] #, r"u_{n + 2}u_{n + 1}u_{n}", r"k_n u_{n + 2}u_{n + 1}u_{n}", r"u_{n}u_{n + 3}^{*}", r"\Pi_n^{\mathcal{E}}", r"\Pi_n^{\mathcal{H}}"]
+	input_data = [trip_prod, u, avg_trip_prod] #, k * trip_prod, trip_prod_alt, doub_prod, enrg_flux, hel_flux] #, avg_trip_prod, k * avg_trip_prod, avg_doub_prod, avg_enrg_flux, avg_hel_flux]
+	figure_names = ["TripProd", "u", "TimeAvgTripProd"] #, "kTripProd", "TripProdAlt", "DoubleProd", "EnrgFlux", "HelFlux"] #, "TimeAvgTripProd", "TimeAvgkTripProd", "TimeAvgDoubleProd", "TimeAvgEnrgFlux", "TimeAvgHelFlux"]
+	data_labels = [r"u_{n + 2}u_{n + 1}u_{n}", r"u_{n}", r"u_{n + 2}u_{n + 1}u_{n}"] #, r"k_n u_{n + 2}u_{n + 1}u_{n}", r"(1 - \delta) / \lambda u_{n + 2}u_{n + 1}u_{n}", r"u_{n}u_{n + 3}^{*}", r"\Pi_n^{\mathcal{E}}", r"\Pi_n^{\mathcal{H}}"] #, r"u_{n + 2}u_{n + 1}u_{n}", r"k_n u_{n + 2}u_{n + 1}u_{n}", r"u_{n}u_{n + 3}^{*}", r"\Pi_n^{\mathcal{E}}", r"\Pi_n^{\mathcal{H}}"]
 
 	# Loop through data
 	for in_data, fig_name, data_labs in zip(input_data, figure_names, data_labels):
 
 		cmdargs.out_dir_AVGFLUX = cmdargs.out_dir + "AVGFLUX_PLOTS/" + fig_name + "/"
 		if os.path.isdir(cmdargs.out_dir_AVGFLUX) != True:
-		    print("Making folder:" + tc.C + " AVGFLUX_PLOTS/" + tc.Rst)
-		    os.mkdir(cmdargs.out_dir_AVGFLUX)
+			print("Making folder:" + tc.C + " AVGFLUX_PLOTS/" + tc.Rst)
+			os.mkdir(cmdargs.out_dir_AVGFLUX)
+
+		inert_lim_low = 2
+		inert_lim_high = 16
+		fig = plt.figure(figsize = fig_size)
+		gs  = GridSpec(1, 3)
+		ax2 = fig.add_subplot(gs[0, 0])
+		y = k * np.mean(np.imag(in_data), axis=0)
+		yy = y[inert_lim_low:inert_lim_high] - np.mean(y[inert_lim_low:inert_lim_high])
+		print(np.mean(y[inert_lim_low:inert_lim_high]))
+		delta_n = yy[1:]
+		delta_n1 = yy[:-1]
+		p, = ax2.plot(k[inert_lim_low:inert_lim_high-1], k[inert_lim_low:inert_lim_high-1] * (delta_n - delta_n1), label = "Time Averaged Energy Flux")
+		slope, c, resid = slope_fit(np.log(k), np.log(np.absolute(y)), inert_lim_low, inert_lim_high)
+		# ax2.plot(k, sys_msr_data.k ** (slope), '--', label = "$k^{}$".format(np.around(slope, 3)), color = p1.get_color())
+		print(slope, c, resid)
+		ax2.set_ylim(-0.05, 0.05)
+		ax2.set_xlabel(r"$k_n$")
+		ax2.set_ylabel(r"$\mathcal{E}_n$")
+		ax2.set_xscale("log")
+		# ax2.set_yscale("log")
+		ax2.legend()
+		ax299 = fig.add_subplot(gs[0, 1])
+		p, = ax299.plot(k, np.absolute(np.mean(np.imag(in_data), axis=0)), label = "Time Averaged Energy Flux")
+		slope, c, resid = slope_fit(np.log(k), np.log(np.absolute(np.mean(np.imag(in_data), axis=0))), inert_lim_low, inert_lim_high)
+		ax299.plot(k, k ** (slope), '--', label = "$k^{}$".format(np.around(slope, 3)), color = p.get_color())
+		ax299.set_xlabel(r"$k_n$")
+		ax299.set_ylabel(r"$\mathcal{E}_n$")
+		ax299.set_xscale("log")
+		ax299.set_yscale("log")
+		ax299.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+		ax33 = fig.add_subplot(gs[0, 2])
+		p, = ax33.plot(k[inert_lim_low:inert_lim_high-1], delta_n, label = "$\delta_n$")
+		p, = ax33.plot(k[inert_lim_low:inert_lim_high-1], delta_n + 0.5 * delta_n1, label = "$\delta_n + 1/2\delta_{n-1}$")
+		ax33.set_xlabel(r"$k_n$")
+		ax33.set_ylabel(r"$\mathcal{E}_n$")
+		ax33.set_xscale("log")
+		# ax33.set_yscale("log")
+		ax33.legend()
+		ax33.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+		fig.savefig(cmdargs.out_dir_AVGFLUX + fig_name + "_TimeAveraged_knSpec" + fig_format, bbox_inches='tight')
+		plt.close()
 
 		#----------------------
 		# 1D PDF
 		#----------------------
 		## 1D - PDF - Angle
-		num_bins = 100
-		norm_hist = False
-		fig = plt.figure(figsize=(24, 24))
-		gs = GridSpec(5, 5, hspace=0.4, wspace=0.5)
-		pdf_angles = []
-		for i in range(5):
-			for j in range(5):
-				indx = i * 5 + j
-				if indx < in_data.shape[-1]:
-					ax1 = fig.add_subplot(gs[i, j])
-					pdf, centres = compute_pdf(np.mod(np.angle(in_data[:, indx]) + 2.0 * np.pi, 2.0 * np.pi), nbins=num_bins, normed=norm_hist)
-					pdf_angles.append(pdf)
-					p, = ax1.plot(centres, pdf, label="$n = {}$".format(indx + 1))    
-					ax1.set_xlabel(r"$ \arg \left\{" +  data_labs + r" \right\}$")
-					ax1.set_xlim(0, 2.0 * np.pi)
-					ax1.set_ylabel(r"PDF")
-					ax1.set_yscale('log')
-					ax1.set_title("n = {}".format(indx + 1))
-		fig.savefig(cmdargs.out_dir_AVGFLUX + fig_name + "_1D_PDF_Angles" + fig_format, bbox_inches='tight')
-		plt.close()
+		# num_bins = 100
+		# norm_hist = False
+		# fig = plt.figure(figsize=(24, 24))
+		# gs = GridSpec(5, 5, hspace=0.4, wspace=0.5)
+		# pdf_angles = []
+		# for i in range(5):
+		# 	for j in range(5):
+		# 		indx = i * 5 + j
+		# 		if indx < in_data.shape[-1]:
+		# 			ax1 = fig.add_subplot(gs[i, j])
+		# 			pdf, centres = compute_pdf(np.mod(np.angle(in_data[:, indx]) + 2.0 * np.pi, 2.0 * np.pi), nbins=num_bins, normed=norm_hist)
+		# 			pdf_angles.append(pdf)
+		# 			p, = ax1.plot(centres, pdf, label="$n = {}$".format(indx + 1))    
+		# 			ax1.set_xlabel(r"$ \arg \left\{" +  data_labs + r" \right\}$")
+		# 			ax1.set_xlim(0, 2.0 * np.pi)
+		# 			ax1.set_ylabel(r"PDF")
+		# 			ax1.set_yscale('log')
+		# 			ax1.set_title("n = {}".format(indx + 1))
+		# fig.savefig(cmdargs.out_dir_AVGFLUX + fig_name + "_1D_PDF_Angles" + fig_format, bbox_inches='tight')
+		# plt.close()
 
-		num_bins = 100
-		norm_hist = False
-		fig = plt.figure(figsize=(24, 24))
-		gs = GridSpec(5, 5, hspace=0.4, wspace=0.5)
-		for i in range(5):
-			for j in range(5):
-				indx = i * 5 + j
-				if indx < in_data.shape[-1] - 1:
-					ax1 = fig.add_subplot(gs[i, j])
-					p, = ax1.plot(centres, pdf_angles[indx] - 2.0 * pdf_angles[indx + 1], label="$n = {}$".format(indx + 1))    
-					ax1.set_xlabel(r"$ \arg \left\{" +  data_labs + r" \right\}$")
-					ax1.set_xlim(0, 2.0 * np.pi)
-					ax1.set_ylabel(r"PDF")
-					# ax1.set_yscale('log')
-					ax1.set_title("n = {}".format(indx + 1))
-		fig.savefig(cmdargs.out_dir_AVGFLUX + fig_name + "_1D_PDF_Angles_Diff" + fig_format, bbox_inches='tight')
-		plt.close()
+		# num_bins = 100
+		# norm_hist = False
+		# fig = plt.figure(figsize=(24, 24))
+		# gs = GridSpec(5, 5, hspace=0.4, wspace=0.5)
+		# for i in range(5):
+		# 	for j in range(5):
+		# 		indx = i * 5 + j
+		# 		if indx < in_data.shape[-1] - 1:
+		# 			ax1 = fig.add_subplot(gs[i, j])
+		# 			p, = ax1.plot(centres, pdf_angles[indx] - 2.0 * pdf_angles[indx + 1], label="$n = {}$".format(indx + 1))    
+		# 			ax1.set_xlabel(r"$ \arg \left\{" +  data_labs + r" \right\}$")
+		# 			ax1.set_xlim(0, 2.0 * np.pi)
+		# 			ax1.set_ylabel(r"PDF")
+		# 			# ax1.set_yscale('log')
+		# 			ax1.set_title("n = {}".format(indx + 1))
+		# fig.savefig(cmdargs.out_dir_AVGFLUX + fig_name + "_1D_PDF_Angles_Diff" + fig_format, bbox_inches='tight')
+		# plt.close()
 
 		# ## 1D - PDF - Amp
 		# fig = plt.figure(figsize=(24, 24))

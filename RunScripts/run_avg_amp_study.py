@@ -360,6 +360,26 @@ if __name__ == '__main__':
         plt.savefig(cmdargs.out_dir_AVGAMP + "AvgAmps_Time_Averaged_Energy_Flux.png", bbox_inches='tight')
         plt.close()
 
+        fig = plt.figure(figsize = fig_size)
+        gs  = GridSpec(1, 1)
+        ax2 = fig.add_subplot(gs[0, 0])
+        y = sys_msr_data.k * np.absolute(sys_msr_data.enrg_flux_t_avg)
+        yy = y[inert_lim_low:inert_lim_high] - np.mean(y[inert_lim_low:inert_lim_high])
+        delta_n = yy[1:]
+        delta_n1 = yy[:-1]
+        p, = ax2.plot(sys_msr_data.k[inert_lim_low:inert_lim_high-1], delta_n - delta_n1, label = "Time Averaged Energy Flux")
+        slope, c, resid = slope_fit(np.log(sys_msr_data.k), np.log(np.absolute(sys_msr_data.enrg_flux_t_avg)), inert_lim_low, inert_lim_high)
+        # ax2.plot(sys_msr_data.k, sys_msr_data.k ** (slope), '--', label = "$k^{}$".format(np.around(slope, 3)), color = p1.get_color())
+        print(slope, c, resid)
+        ax2.set_xlabel(r"$k_n$")
+        ax2.set_ylabel(r"$\mathcal{E}_n$")
+        ax2.set_xscale("log")
+        # ax2.set_yscale("log")
+        ax2.legend()
+        ax2.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        plt.savefig(cmdargs.out_dir_AVGAMP + "AvgAmps_Time_Averaged_kn_Energy_Flux.png", bbox_inches='tight')
+        plt.close()
+
         # Plot Time Averaged Helicity Flux Scaling
         fig = plt.figure(figsize = fig_size)
         gs  = GridSpec(1, 2)
