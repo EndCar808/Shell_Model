@@ -49,6 +49,110 @@ class tc:
 ###################################
 ##          STATS PLOT           ##
 ###################################
+def plot_str_func_with_anom_scaling(outdir_path, k, str_funcs, inert_range, insert_fig = True, scaling = 'loge', fig_size = (21, 12)):
+
+	## Set up figure
+	fig   = plt.figure(figsize = fig_size)
+	gs    = GridSpec(1, 2)
+	ax1   = fig.add_subplot(gs[0, 0])
+	if insert_fig:
+		## Set up for insert figure
+		x0     = 0.15 
+		y0     = 0.15
+		width  = 0.3
+		height = 0.2
+		## Add insert
+		ax1in = fig.add_axes([x0, y0, width, height])
+
+	## Slopes of structure functions
+	ns_zeta_p    = [0.72, 1, 1.273, 1.534, 1.786]
+	zeta_p       = []
+	zeta_p_resid = []
+
+	## Get inertial range limits
+	inert_lim_low  = inert_range[0]
+	inert_lim_high = inert_range[-1]
+	print("Inertial Range Shell No.s: {} = {}".format(inert_lim_low + 1, inert_lim_high + 1))
+
+	## Get the scaling of the axes
+	if scaling == 'log2':
+		log_func = np.log2
+		xlabel_Str = r"$\log_2 k_n $"
+		ylabel_Str = r"$\log_2 S_p(k_n) $"
+	elif scaling == 'log10':
+		log_func = np.log10
+		xlabel_Str = r"$\log_10 k_n $"
+		ylabel_Str = r"$\log_10 S_p(k_n) $"
+	else:
+		log_func = np.log
+		xlabel_Str = r"$\ln k_n$"
+		ylabel_Str = r"$\ln S_p(k_n) $"
+
+	## Loop over structure functions and plot
+	print("Power\tp/3\t\tDNS Slope\tNS")
+	for i in range(str_funcs.shape[-1]):	    
+		## Plot strucure function
+		p, = ax1.plot(log_func(k[:str_funcs.shape[0]]), log_func(str_funcs[:, i]), label = "$p = {}$".format(i + 1))
+		
+		## Find polynomial fit and plot
+		poly_output = np.polyfit(log_func(k[inert_lim_low:inert_lim_high]), log_func(str_funcs[inert_lim_low:inert_lim_high, i]), 1, full = True)
+		pfit_info   = poly_output[0]
+		poly_resid  = poly_output[1][0]
+		pfit_slope  = pfit_info[0]
+		pfit_c      = pfit_info[1]
+		zeta_p.append(np.absolute(pfit_slope))
+		zeta_p_resid.append(poly_resid)
+		## Plot slopes computed from llinear fit    
+		ax1.plot(log_func(k[inert_lim_low:inert_lim_high]), log_func(k[inert_lim_low:inert_lim_high])*pfit_slope + pfit_c, '--', color = p.get_color())
+
+		if insert_fig:
+			# ## Compute the local derivative and plot in insert
+			# d_str_func  = np.diff(log_func(str_funcs[:, i]), n = 2)
+			# d_k         = np.diff(log_func(k), n = 2)
+			# print(d_str_func)
+			# print(d_k)
+			# local_deriv = d_str_func / d_k
+			# print(local_deriv)
+			# local_deriv = np.concatenate((local_deriv, [(log_func(str_funcs[-1, i]) - 2.0 * log_func(str_funcs[-2, i]) + log_func(str_funcs[-3, i])) / (log_func(k[-1]) - log_func(k[-2]))**2, (log_func(str_funcs[-1, i]) - 2.0 * log_func(str_funcs[-2, i]) + log_func(str_funcs[-3, i])) / (log_func(k[-1]) - log_func(k[-2]))**2]))
+			# print()
+			local_deriv = np.gradient(log_func(str_funcs[:, i]))
+			## Plot local slopes
+			ax1in.plot(log_func(k[:len(local_deriv)]), local_deriv, color = p.get_color())
+			ax1in.set_ylabel(r"$\zeta_p$", labelpad = -40)
+			ax1in.set_xlabel(xlabel_Str, labelpad = -30)
+
+		## Plot slope ddata to screen
+		if i >= 1 and i <= len(ns_zeta_p):
+			print(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f} \t{:1.3f}".format(i + 1, -(i + 1) / 3, pfit_slope, poly_resid, -ns_zeta_p[i - 1]))
+		else:
+			print(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f}".format(i + 1, -(i + 1) / 3, pfit_slope, poly_resid))
+	ax1.set_xlabel(xlabel_Str)
+	ax1.set_ylabel(ylabel_Str)
+	ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+	if insert_fig:
+		ax1in.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+	ax1.legend(loc = 'upper right')
+
+
+	ax1 = fig.add_subplot(gs[0, 1])
+	p = np.arange(1, 6 + 1)
+	ax1.plot(p, zeta_p, marker = 'o', markerfacecolor = 'None', markersize = 5.0, markevery = 1, label = "GOY")
+	ax1.plot(np.arange(2, 6 + 1), ns_zeta_p, marker = '.', markerfacecolor = 'None', markersize = 5.0, markevery = 1, label = "Navier Stokes")
+	ax1.plot(p, p / 3, 'k--', label = "K41")
+	ax1.set_xlabel(r"$p$")
+	ax1.set_ylabel(r"$\zeta_p$")
+	ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+	ax1.legend(loc = 'upper left')
+
+	## Save figure
+	plt.savefig(outdir_path, bbox_inches='tight')
+	plt.close()
+
+	return zeta_p, ns_zeta_p, zeta_p_resid
+
+
+
+
 def plot_str_funcs_with_slope(outdir_path, k, str_funcs, inert_range, insert_fig = True, scaling = 'loge', fig_size = (16, 8)):
 
 	## Set up figure
@@ -81,16 +185,16 @@ def plot_str_funcs_with_slope(outdir_path, k, str_funcs, inert_range, insert_fig
 	## Get the scaling of the axes
 	if scaling == 'log2':
 		log_func = np.log2
-		xlabel_Str = r"$\log_2(k_n)$"
-		ylabel_Str = r"$\log_2\left(S_p(k_n)\right)$"
+		xlabel_Str = r"$\log_2 k_n $"
+		ylabel_Str = r"$\log_2 S_p(k_n) $"
 	elif scaling == 'log10':
 		log_func = np.log10
-		xlabel_Str = r"$\log_10(k_n)$"
-		ylabel_Str = r"$\log_10\left(S_p(k_n)\right)$"
+		xlabel_Str = r"$\log_10 k_n $"
+		ylabel_Str = r"$\log_10 S_p(k_n) $"
 	else:
 		log_func = np.log
-		xlabel_Str = r"$\ln(k_n)$"
-		ylabel_Str = r"$\ln\left(S_p(k_n)\right)$"
+		xlabel_Str = r"$\ln k_n$"
+		ylabel_Str = r"$\ln S_p(k_n) $"
 
 	## Loop over structure functions and plot
 	print("Power\tp/3\t\tDNS Slope\tNS")

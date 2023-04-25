@@ -144,6 +144,28 @@ def compute_field_values(data, N, delta, l):
 
     return trip_prod, trip_prod_alt, double_prod, hel_flux, energy_flux
 
+@njit 
+def get_elsassar_sf(zp, zm, tp, tm):
+    s = zp.shape
+    num_t, num_shell = s[0], s[1]
+
+    num_pow = 6
+
+    zp_sf = np.zeros((num_shell, num_pow))
+    zm_sf = np.zeros((num_shell, num_pow))
+    tp_sf = np.zeros((num_shell, num_pow))
+    tm_sf = np.zeros((num_shell, num_pow))
+
+    for t in range(num_t):
+        for n in range(num_shell):
+            for p in range(num_pow):
+                zp_sf[n, p] += np.power(np.absolute(zp[t, n]), p + 1)
+                zm_sf[n, p] += np.power(np.absolute(zm[t, n]), p + 1)
+                tp_sf[n, p] += np.power(np.absolute(tp[t, n]), (p + 1)/3)
+                tm_sf[n, p] += np.power(np.absolute(tm[t, n]), (p + 1)/3)
+
+    return zp_sf/num_t, zm_sf/num_t, tp_sf/num_t, tm_sf/num_t
+
 @njit
 def compute_str_func_field_values(u, trip_prod, dub_prod, enrg_flux, hel_flux, N, num_pow):
 
@@ -198,6 +220,45 @@ def compute_str_func(data, N, num_pow, delta, l):
             str_func_u_enrg_flux[i, p - 1] = np.power(np.absolute(np.imag(data[n + 2] * data[n + 1] * data[n] + (1. - delta) / l * data[n - 1] * data[n + 1] * data[n])), p/3.0)
 
     return str_func_u, str_func_u_enrg_flux, str_func_u_hel_flux
+
+@njit
+def get_els_flux_field(zp, zm, delta, delta_m, lam):
+
+    s = zp.shape
+    num_t, num_shell = s[0], s[1]
+
+    t_plus  = np.zeros(s, dtype=np.float64)
+    t_minus = np.zeros(s, dtype=np.float64)
+    zp_pad  = np.zeros((num_shell + 4), dtype=np.complex128)
+    zm_pad  = np.zeros((num_shell + 4), dtype=np.complex128)
+    
+    for t in range(num_t):
+        ## Get padded fields
+        for i in range(num_shell):
+            n = i + 2
+            zp_pad[n] = zp[t, i]
+            zm_pad[n] = zm[t, i]
+
+        ## Get transfer field
+        t_plus[t, :], t_minus[t, :] = get_els_trans_flux(zp_pad, zm_pad, num_shell, delta, delta_m, lam)
+
+    return t_plus, t_minus
+
+@njit
+def get_els_trans_flux(zp, zm, N, delta, delta_m, lam):
+
+    num_shell = N
+
+    t_plus  = np.zeros((N, ), dtype=np.float64)
+    t_minus = np.zeros((N, ), dtype=np.float64)
+    for i in range(num_shell):
+        n = i + 2
+
+        t_plus[i] = 0.25 * np.imag( (delta + delta_m)*(zp[n] * zp[n + 1] * zm[n + 2]) + ((2.0 - delta - delta_m)/lam)*(zp[n - 1] * zm[n] * zp[n + 1]) + (2.0 - delta - delta_m)*(zp[n] * zm[n + 1] * zp[n + 2]) + ((delta_m - delta)/lam)*(zm[n - 1] * zp[n] * zp[n + 1]) )
+
+        t_minus[i] = 0.25 * np.imag( (delta + delta_m)*(zm[n] * zm[n + 1] * zp[n + 2]) + ((2.0 - delta - delta_m)/lam)*(zm[n - 1] * zp[n] * zm[n + 1]) + (2.0 - delta - delta_m)*(zm[n] * zp[n + 1] * zm[n + 2]) + ((delta_m - delta)/lam)*(zp[n - 1] * zm[n] * zm[n + 1]) )
+
+    return t_plus, t_minus
 
 
 def compute_pdf_from_hist(counts, ranges, normed = False, remove_zeros = True):
@@ -646,8 +707,9 @@ def import_stats_data(input_file, sim_data, method = "default"):
                     self.z_plus_final = f["ZPlus"][:]
                 if 'ZMinus' in list(f.keys()):
                     self.z_minus_final = f["ZMinus"][:]
-
-
+                ## Num stats steps
+                if 'NumStatsSteps' in list(f.keys()):
+                   self.num_stats_steps = f["NumStatsSteps"][:]
 
     ## Create instance of data class
     data = SolverData()

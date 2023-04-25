@@ -186,7 +186,7 @@ void ComputeSystemMeasurables(double t, const long int iter, const long int save
             run_data->tot_energy[save_iter]    += cabs(run_data->b[n] * conj(run_data->b[n]));
             run_data->tot_mag_enrg[save_iter]  += cabs(run_data->b[n] * conj(run_data->b[n]));
             run_data->tot_hel_b[save_iter]     += pow(sgn(sys_vars->EPS - 1.0), i) * cabs(run_data->b[n] * conj(run_data->b[n])) / run_data->k[n];
-            run_data->tot_cross_hel[save_iter] += creal(run_data->u[n] * conj(run_data->b[n]));
+            run_data->tot_cross_hel[save_iter] += creal(run_data->u[n] * conj(run_data->b[n]) + conj(run_data->u[n]) * run_data->b[n]);
             run_data->tot_diss_b[save_iter]    += run_data->k[n] * run_data->k[n] * cabs(run_data->b[n] * conj(run_data->b[n]));
             #endif
             #endif

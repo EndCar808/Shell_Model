@@ -1745,9 +1745,9 @@ void ComputeForcing(double dt, const long int N) {
 			exp_fac = cexp(-dt / tau_0);
 
 			// Compute forcing
-			run_data->forcing_u[i] = sys_vars->force_scale_var * (exp_fac * run_data->forcing_u[i] + sqrt(-2.0 * (1.0 - pow(exp_fac, 2.0)) * log10(rand1)) * cexp(I * 2.0 * M_PI * rand2));
+			run_data->forcing_u[i] = sys_vars->force_scale_var * (exp_fac * run_data->forcing_u[i] + sqrt(-2.0 * (1.0 - pow(exp_fac, 2.0)) * log10(rand1) * (1.0 / tau_0)) * cexp(I * 2.0 * M_PI * rand2));
 			#if defined(__ELSASSAR_MHD)
-			run_data->forcing_b[i] = sys_vars->force_scale_var * (exp_fac * run_data->forcing_b[i] + sqrt(-2.0 * (1.0 - pow(exp_fac, 2.0)) * log10(rand1)) * cexp(I * 2.0 * M_PI * rand2));
+			run_data->forcing_b[i] = sys_vars->force_scale_var * (exp_fac * run_data->forcing_b[i] + sqrt(-2.0 * (1.0 - pow(exp_fac, 2.0)) * log10(rand1) * (1.0 / tau_0)) * cexp(I * 2.0 * M_PI * rand2));
 			#endif
 		}
 	}

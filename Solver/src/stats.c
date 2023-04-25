@@ -397,7 +397,6 @@ void InitializeStats(void) {
 
 		// Initialize the powers
 		stats_data->powers[i] = 1.0 + i * (POW_HIGH - 1.0) / (NUM_POW - 1);
-		printf("%lf", stats_data->powers[i]);
 	}
 
 
