@@ -1161,6 +1161,16 @@ void InitialConditions(const long int N) {
 	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	double r2, r4;
 	#endif
+
+	// ------------------------------------------------
+    // Set Seed for RNG
+    // ------------------------------------------------
+    unsigned long long init_seed = 123654789 + getpid();
+  	init_genrand64(init_seed);
+
+  	printf("RNG Seed: %lld", init_seed);
+
+
 	if(!(strcmp(sys_vars->u0, "AO_ALGND_PHASE"))) {
 		// Set phi_1 = to forcing phase pi/4
 		run_data->phi_n[2] = M_PI / 4.0;
@@ -1174,11 +1184,6 @@ void InitialConditions(const long int N) {
 		// The rest of the phases are found from the triad conditions and the aligned triad values of 3pi/2
 	}
 
-	// ------------------------------------------------
-    // Set Seed for RNG
-    // ------------------------------------------------
-    double init_seed = 123654789;
-  	init_genrand64(init_seed);
 
 	// ------------------------------------------------
     // Check if Reading From Input File
@@ -1295,7 +1300,7 @@ void InitialConditions(const long int N) {
 					// Scaling in N Initial Condition
 					// ------------------------------------------------
 					// Initialize the velocity field
-					run_data->u[i] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) * cexp(I * pow(i - 1, 2.0)) / sqrt(75);
+					run_data->u[i] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) * cexp(I * (pow(i - 1, 2.0) + genrand64_real1())) / sqrt(75);
 					// Record the phases and amplitudes
 					#if defined(PHASE_ONLY) || defined(PHASE_ONLY_FXD_AMP)
 					run_data->a_n[i]   = (1.0 / pow(run_data->k[i], sys_vars->ALPHA));
@@ -1304,7 +1309,7 @@ void InitialConditions(const long int N) {
 
 					// Initialize the magnetic field
 					#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
-					run_data->b[i] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * cexp(I * pow(i - 1, 4.0)) * 1e-2 / sqrt(75);
+					run_data->b[i] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * cexp(I * (pow(i - 1, 4.0) + genrand64_real1())) * 1e-2 / sqrt(75);
 					// Record the phases and amplitudes
 					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY)
 					run_data->b_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-2;

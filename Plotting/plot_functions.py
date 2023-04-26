@@ -30,6 +30,7 @@ from matplotlib.gridspec import GridSpec
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib.pyplot import cm
 np.seterr(divide = 'ignore') 
+from functions import compute_pdf
 #################################
 ## Colour Printing to Terminal ##
 #################################
@@ -126,6 +127,7 @@ def plot_str_func_with_anom_scaling(outdir_path, k, str_funcs, inert_range, inse
 			print(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f} \t{:1.3f}".format(i + 1, -(i + 1) / 3, pfit_slope, poly_resid, -ns_zeta_p[i - 1]))
 		else:
 			print(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f}".format(i + 1, -(i + 1) / 3, pfit_slope, poly_resid))
+	print()
 	ax1.set_xlabel(xlabel_Str)
 	ax1.set_ylabel(ylabel_Str)
 	ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
@@ -170,7 +172,7 @@ def plot_str_funcs_with_slope(outdir_path, k, str_funcs, inert_range, insert_fig
 		ax1in = fig.add_axes([x0, y0, width, height])
 
 	## Slopes of structure functions
-	ns_zeta_p    = [0.72, 1, 1.273, 1.534, 1.786]
+	ns_zeta_p    = [0.7, 1, 1.27, 1.53, 1.78]
 	zeta_p       = []
 	zeta_p_resid = []
 
@@ -298,6 +300,23 @@ def plot_anomalous_exponent(outdir_path, p, zeta_p, ns_zeta_p = None, label_str 
 
 	## Save figure
 	plt.savefig(outdir_path, bbox_inches='tight')
+	plt.close()
+
+
+def plot_PDF_InOne(outdir, data, lab, shell_indx=[6, 11, 16, 20], bin_lims = None, nbins = 1000, remove_zeros=False, fig_format='png', fig_size=(12.5, 0.5 * 12.5)):
+
+	fig = plt.figure(figsize = fig_size)
+	gs  = GridSpec(1, 1)
+	ax1 = fig.add_subplot(gs[0, 0])
+	for j, i in enumerate(shell_indx):
+		pdf, centres = compute_pdf(data[..., i].flatten(), bin_lims = None, nbins = 1000, normed = True, remove_zeros=False)
+		ax1.plot(centres, pdf, label = "$n = {}$".format(i - 1)) 
+	ax1.set_xlabel(r"$" + lab + " / \langle (" + lab + ")^2 \rangle^{1/2}$")
+	ax1.set_ylabel(r"PDF")
+	ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+	ax1.set_yscale('log')
+	ax1.legend()
+	plt.savefig(outdir, format=fig_format, bbox_inches='tight')
 	plt.close()
 
 

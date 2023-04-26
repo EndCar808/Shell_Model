@@ -242,7 +242,7 @@ if __name__ == '__main__':
         fig = plt.figure(figsize = fig_size)
         gs  = GridSpec(1, 2)
         ax1 = fig.add_subplot(gs[0, 0])
-        ax1.plot(sys_msr_data.k, np.mean(np.absolute(t_plus), axis = 0))
+        ax1.plot(sys_msr_data.k, np.mean(np.absolute(np.imag(t_plus)), axis = 0))
         ax1.plot(sys_msr_data.k, sys_msr_data.k ** (-1), 'k--', label = "$k^{-1}$")
         ax1.set_xlabel(r"$k$")
         ax1.set_ylabel(r"$\langle z^{+}z^{+}z^{-} \rangle$")
@@ -251,7 +251,7 @@ if __name__ == '__main__':
         ax1.grid(which="both", axis="both", color='k', linestyle=":", linewidth=0.5)
         ax1.legend()
         ax2 = fig.add_subplot(gs[0, 1])
-        ax2.plot(sys_msr_data.k, np.mean(np.absolute(t_minus), axis = 0))
+        ax2.plot(sys_msr_data.k, np.mean(np.absolute(np.imag(t_minus)), axis = 0))
         ax2.plot(sys_msr_data.k, sys_msr_data.k ** (-1), 'k--', label = "$k^{-1}$")
         ax2.set_xlabel(r"$k$")
         ax2.set_ylabel(r"$\langle z^{-}z^{-}z^{+} \rangle$")
@@ -591,67 +591,129 @@ if __name__ == '__main__':
         plt.savefig(cmdargs.out_dir_MHD + "Zminus_Real_PDF_InOne" + "." + fig_format, format=fig_format, bbox_inches='tight')
         plt.close()
 
-        # fig = plt.figure(figsize = fig_size)
-        # gs  = GridSpec(1, 1)
-        # ax1 = fig.add_subplot(gs[0, 0])
-        # for j, i in enumerate([6, 11, 16, 20]):
-        #     pdf, centres = compute_pdf(np.real(t_plus[:, i]), nbins = nbins, normed = True)
-        #     ax1.plot(centres, pdf, label = "$n = {}$".format(i - 1)) 
-        # ax1.set_xlabel(r"$\Re T_n^+ / \langle (\Re T_n^+)^2 \rangle^{1/2}$")
-        # ax1.set_ylabel(r"PDF")
-        # ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
-        # ax1.set_yscale('log')
-        # ax1.legend()
-        # plt.savefig(cmdargs.out_dir_MHD + "Tplus_Real_PDF_InOne" + "." + fig_format, format=fig_format, bbox_inches='tight')
-        # plt.close()
+        fig = plt.figure(figsize = fig_size)
+        gs  = GridSpec(1, 1)
+        ax1 = fig.add_subplot(gs[0, 0])
+        for j, i in enumerate([6, 11, 16, 20]):
+            pdf, centres = compute_pdf(np.real(t_plus[:, i]), nbins = nbins, normed = True)
+            ax1.plot(centres, pdf, label = "$n = {}$".format(i - 1)) 
+        ax1.set_xlabel(r"$\Re T_n^+ / \langle (\Re T_n^+)^2 \rangle^{1/2}$")
+        ax1.set_ylabel(r"PDF")
+        ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        ax1.set_yscale('log')
+        ax1.legend()
+        plt.savefig(cmdargs.out_dir_MHD + "Tplus_Real_PDF_InOne" + "." + fig_format, format=fig_format, bbox_inches='tight')
+        plt.close()
 
-        # fig = plt.figure(figsize = fig_size)
-        # gs  = GridSpec(1, 1)
-        # ax1 = fig.add_subplot(gs[0, 0])
-        # for j, i in enumerate([6, 11, 16, 20]):
-        #     pdf, centres = compute_pdf(np.real(t_minus[:, i]), nbins = nbins, normed = True)
-        #     ax1.plot(centres, pdf, label = "$n = {}$".format(i - 1)) 
-        # ax1.set_xlabel(r"$\Re T_n^- / \langle (\Re T_n^-)^2 \rangle^{1/2}$")
-        # ax1.set_ylabel(r"PDF")
-        # ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
-        # ax1.set_yscale('log')
-        # ax1.legend()
-        # plt.savefig(cmdargs.out_dir_MHD + "Tminus_Real_PDF_InOne" + "." + fig_format, format=fig_format, bbox_inches='tight')
-        # plt.close()
+        fig = plt.figure(figsize = fig_size)
+        gs  = GridSpec(1, 1)
+        ax1 = fig.add_subplot(gs[0, 0])
+        for j, i in enumerate([6, 11, 16, 20]):
+            pdf, centres = compute_pdf(np.real(t_minus[:, i]), nbins = nbins, normed = True)
+            ax1.plot(centres, pdf, label = "$n = {}$".format(i - 1)) 
+        ax1.set_xlabel(r"$\Re T_n^- / \langle (\Re T_n^-)^2 \rangle^{1/2}$")
+        ax1.set_ylabel(r"PDF")
+        ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        ax1.set_yscale('log')
+        ax1.legend()
+        plt.savefig(cmdargs.out_dir_MHD + "Tminus_Real_PDF_InOne" + "." + fig_format, format=fig_format, bbox_inches='tight')
+        plt.close()
 
-        # fig = plt.figure(figsize=(24, 24))
-        # gs = GridSpec(5, 5, hspace=0.4, wspace=0.5)
-        # for i in range(5):
-        #     for j in range(5):
-        #         indx = i * 5 + j
-        #         if indx < sys_vars.N:
-        #             ax1 = fig.add_subplot(gs[i, j])
-        #             pdf, centres = compute_pdf(np.real(t_plus[:, indx]), nbins = nbins, normed = True)
-        #             ax1.plot(centres, pdf, label = "$n = {}$".format(indx + 1)) 
-        #             ax1.set_xlabel(r"$\Re T_n^+ / \langle (\Re T_n^+)^2 \rangle^{1/2}$")
-        #             ax1.set_ylabel(r"PDF")
-        #             ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
-        #             ax1.set_yscale('log')
-        #             ax1.legend()
-        # plt.savefig(cmdargs.out_dir_MHD + "Tplus_Real_PDF_All" + "." + fig_format, format=fig_format, bbox_inches='tight')
-        # plt.close()
+        fig = plt.figure(figsize=(24, 24))
+        gs = GridSpec(5, 5, hspace=0.4, wspace=0.5)
+        for i in range(5):
+            for j in range(5):
+                indx = i * 5 + j
+                if indx < sys_vars.N:
+                    ax1 = fig.add_subplot(gs[i, j])
+                    pdf, centres = compute_pdf(np.real(t_plus[:, indx]), nbins = nbins, normed = True)
+                    ax1.plot(centres, pdf, label = "$n = {}$".format(indx + 1)) 
+                    ax1.set_xlabel(r"$\Re T_n^+ / \langle (\Re T_n^+)^2 \rangle^{1/2}$")
+                    ax1.set_ylabel(r"PDF")
+                    ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+                    ax1.set_yscale('log')
+                    ax1.legend()
+        plt.savefig(cmdargs.out_dir_MHD + "Tplus_Real_PDF_All" + "." + fig_format, format=fig_format, bbox_inches='tight')
+        plt.close()
 
-        # fig = plt.figure(figsize=(24, 24))
-        # gs = GridSpec(5, 5, hspace=0.4, wspace=0.5)
-        # for i in range(5):
-        #     for j in range(5):
-        #         indx = i * 5 + j
-        #         if indx < sys_vars.N:
-        #             ax1 = fig.add_subplot(gs[i, j])
-        #             pdf, centres = compute_pdf(np.real(t_minus[:, indx]), nbins = nbins, normed = True)
-        #             ax1.plot(centres, pdf, label = "$n = {}$".format(indx + 1)) 
-        #             ax1.set_xlabel(r"$\Re T_n^- / \langle (\Re T_n^-)^2 \rangle^{1/2}$")
-        #             ax1.set_ylabel(r"PDF")
-        #             ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
-        #             ax1.set_yscale('log')
-        #             ax1.legend()
-        # plt.savefig(cmdargs.out_dir_MHD + "Tminus_Real_PDF_All" + "." + fig_format, format=fig_format, bbox_inches='tight')
-        # plt.close()
+        fig = plt.figure(figsize=(24, 24))
+        gs = GridSpec(5, 5, hspace=0.4, wspace=0.5)
+        for i in range(5):
+            for j in range(5):
+                indx = i * 5 + j
+                if indx < sys_vars.N:
+                    ax1 = fig.add_subplot(gs[i, j])
+                    pdf, centres = compute_pdf(np.real(t_minus[:, indx]), nbins = nbins, normed = True)
+                    ax1.plot(centres, pdf, label = "$n = {}$".format(indx + 1)) 
+                    ax1.set_xlabel(r"$\Re T_n^- / \langle (\Re T_n^-)^2 \rangle^{1/2}$")
+                    ax1.set_ylabel(r"PDF")
+                    ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+                    ax1.set_yscale('log')
+                    ax1.legend()
+        plt.savefig(cmdargs.out_dir_MHD + "Tminus_Real_PDF_All" + "." + fig_format, format=fig_format, bbox_inches='tight')
+        plt.close()
+
+        fig = plt.figure(figsize = fig_size)
+        gs  = GridSpec(1, 1)
+        ax1 = fig.add_subplot(gs[0, 0])
+        for j, i in enumerate([6, 11, 16, 20]):
+            pdf, centres = compute_pdf(np.imag(t_plus[:, i]), nbins = nbins, normed = True)
+            ax1.plot(centres, pdf, label = "$n = {}$".format(i - 1)) 
+        ax1.set_xlabel(r"$\Im T_n^+ / \langle (\Im T_n^+)^2 \rangle^{1/2}$")
+        ax1.set_ylabel(r"PDF")
+        ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        ax1.set_yscale('log')
+        ax1.legend()
+        plt.savefig(cmdargs.out_dir_MHD + "Tplus_Imag_PDF_InOne" + "." + fig_format, format=fig_format, bbox_inches='tight')
+        plt.close()
+
+        fig = plt.figure(figsize = fig_size)
+        gs  = GridSpec(1, 1)
+        ax1 = fig.add_subplot(gs[0, 0])
+        for j, i in enumerate([6, 11, 16, 20]):
+            pdf, centres = compute_pdf(np.imag(t_minus[:, i]), nbins = nbins, normed = True)
+            ax1.plot(centres, pdf, label = "$n = {}$".format(i - 1)) 
+        ax1.set_xlabel(r"$\Im T_n^- / \langle (\Im T_n^-)^2 \rangle^{1/2}$")
+        ax1.set_ylabel(r"PDF")
+        ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+        ax1.set_yscale('log')
+        ax1.legend()
+        plt.savefig(cmdargs.out_dir_MHD + "Tminus_Imag_PDF_InOne" + "." + fig_format, format=fig_format, bbox_inches='tight')
+        plt.close()
+
+        fig = plt.figure(figsize=(24, 24))
+        gs = GridSpec(5, 5, hspace=0.4, wspace=0.5)
+        for i in range(5):
+            for j in range(5):
+                indx = i * 5 + j
+                if indx < sys_vars.N:
+                    ax1 = fig.add_subplot(gs[i, j])
+                    pdf, centres = compute_pdf(np.imag(t_plus[:, indx]), nbins = nbins, normed = True)
+                    ax1.plot(centres, pdf, label = "$n = {}$".format(indx + 1)) 
+                    ax1.set_xlabel(r"$\Im T_n^+ / \langle (\Im T_n^+)^2 \rangle^{1/2}$")
+                    ax1.set_ylabel(r"PDF")
+                    ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+                    ax1.set_yscale('log')
+                    ax1.legend()
+        plt.savefig(cmdargs.out_dir_MHD + "Tplus_Imag_PDF_All" + "." + fig_format, format=fig_format, bbox_inches='tight')
+        plt.close()
+
+        fig = plt.figure(figsize=(24, 24))
+        gs = GridSpec(5, 5, hspace=0.4, wspace=0.5)
+        for i in range(5):
+            for j in range(5):
+                indx = i * 5 + j
+                if indx < sys_vars.N:
+                    ax1 = fig.add_subplot(gs[i, j])
+                    pdf, centres = compute_pdf(np.imag(t_minus[:, indx]), nbins = nbins, normed = True)
+                    ax1.plot(centres, pdf, label = "$n = {}$".format(indx + 1)) 
+                    ax1.set_xlabel(r"$\Im T_n^- / \langle (\Im T_n^-)^2 \rangle^{1/2}$")
+                    ax1.set_ylabel(r"PDF")
+                    ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+                    ax1.set_yscale('log')
+                    ax1.legend()
+        plt.savefig(cmdargs.out_dir_MHD + "Tminus_Imag_PDF_All" + "." + fig_format, format=fig_format, bbox_inches='tight')
+        plt.close()
 
 
 
@@ -673,8 +735,8 @@ if __name__ == '__main__':
         ## Elsassar Variables
         phase_only_space_time(cmdargs.out_dir_MHD + "Zplus_SpaceTime_Phases" + ".png", np.mod(np.angle(z_plus) + 2.0*np.pi, 2.0*np.pi), sys_msr_data.time, sys_vars.N, r"$\arg Z_n^+$")
         phase_only_space_time(cmdargs.out_dir_MHD + "Zminus_SpaceTime_Phases" + ".png", np.mod(np.angle(z_minus) + 2.0*np.pi, 2.0*np.pi), sys_msr_data.time, sys_vars.N, r"$\arg Z_n^-$")
-        # phase_only_space_time(cmdargs.out_dir_MHD + "Tplus_SpaceTime_Phases" + ".png", np.mod(np.angle(t_plus) + 2.0*np.pi, 2.0*np.pi), sys_msr_data.time, sys_vars.N, r"$\arg T_n^+$")
-        # phase_only_space_time(cmdargs.out_dir_MHD + "Tminus_SpaceTime_Phases" + ".png", np.mod(np.angle(t_minus) + 2.0*np.pi, 2.0*np.pi), sys_msr_data.time, sys_vars.N, r"$\arg T_n^-$")
+        phase_only_space_time(cmdargs.out_dir_MHD + "Tplus_SpaceTime_Phases" + ".png", np.mod(np.angle(t_plus) + 2.0*np.pi, 2.0*np.pi), sys_msr_data.time, sys_vars.N, r"$\arg T_n^+$")
+        phase_only_space_time(cmdargs.out_dir_MHD + "Tminus_SpaceTime_Phases" + ".png", np.mod(np.angle(t_minus) + 2.0*np.pi, 2.0*np.pi), sys_msr_data.time, sys_vars.N, r"$\arg T_n^-$")
 
 
 
@@ -733,7 +795,7 @@ if __name__ == '__main__':
 
         ############################ Elsassar Variables
         ## Get the Elsassar Str Funcs
-        zp_sf, zm_sf, tp_sf, tm_sf = get_elsassar_sf(z_plus, z_minus, t_plus, t_minus)
+        zp_sf, zm_sf, tp_sf, tm_sf = get_elsassar_sf(z_plus, z_minus, np.imag(t_plus), np.imag(t_minus))
 
         ##----------- Zplus
         str_funcs   = zp_sf

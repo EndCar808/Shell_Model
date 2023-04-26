@@ -227,8 +227,8 @@ def get_els_flux_field(zp, zm, delta, delta_m, lam):
     s = zp.shape
     num_t, num_shell = s[0], s[1]
 
-    t_plus  = np.zeros(s, dtype=np.float64)
-    t_minus = np.zeros(s, dtype=np.float64)
+    t_plus  = np.zeros(s, dtype=np.complex128)
+    t_minus = np.zeros(s, dtype=np.complex128)
     zp_pad  = np.zeros((num_shell + 4), dtype=np.complex128)
     zm_pad  = np.zeros((num_shell + 4), dtype=np.complex128)
     
@@ -249,14 +249,14 @@ def get_els_trans_flux(zp, zm, N, delta, delta_m, lam):
 
     num_shell = N
 
-    t_plus  = np.zeros((N, ), dtype=np.float64)
-    t_minus = np.zeros((N, ), dtype=np.float64)
+    t_plus  = np.zeros((N, ), dtype=np.complex128)
+    t_minus = np.zeros((N, ), dtype=np.complex128)
     for i in range(num_shell):
         n = i + 2
 
-        t_plus[i] = 0.25 * np.imag( (delta + delta_m)*(zp[n] * zp[n + 1] * zm[n + 2]) + ((2.0 - delta - delta_m)/lam)*(zp[n - 1] * zm[n] * zp[n + 1]) + (2.0 - delta - delta_m)*(zp[n] * zm[n + 1] * zp[n + 2]) + ((delta_m - delta)/lam)*(zm[n - 1] * zp[n] * zp[n + 1]) )
+        t_plus[i] = 0.25 * (delta + delta_m)*(zp[n] * zp[n + 1] * zm[n + 2]) + ((2.0 - delta - delta_m)/lam)*(zp[n - 1] * zm[n] * zp[n + 1]) + (2.0 - delta - delta_m)*(zp[n] * zm[n + 1] * zp[n + 2]) + ((delta_m - delta)/lam)*(zm[n - 1] * zp[n] * zp[n + 1])
 
-        t_minus[i] = 0.25 * np.imag( (delta + delta_m)*(zm[n] * zm[n + 1] * zp[n + 2]) + ((2.0 - delta - delta_m)/lam)*(zm[n - 1] * zp[n] * zm[n + 1]) + (2.0 - delta - delta_m)*(zm[n] * zp[n + 1] * zm[n + 2]) + ((delta_m - delta)/lam)*(zp[n - 1] * zm[n] * zm[n + 1]) )
+        t_minus[i] = 0.25 * (delta + delta_m)*(zm[n] * zm[n + 1] * zp[n + 2]) + ((2.0 - delta - delta_m)/lam)*(zm[n - 1] * zp[n] * zm[n + 1]) + (2.0 - delta - delta_m)*(zm[n] * zp[n + 1] * zm[n + 2]) + ((delta_m - delta)/lam)*(zp[n - 1] * zm[n] * zm[n + 1])
 
     return t_plus, t_minus
 
