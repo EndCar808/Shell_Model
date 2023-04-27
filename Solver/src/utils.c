@@ -323,6 +323,12 @@ int GetCMLArgs(int argc, char** argv) {
 					strncpy(sys_vars->u0, "N_SCALING", 64);
 					break;
 				}
+				// Read in the initial conditions
+				if (!(strcmp(optarg,"N_SCALING_RAND"))) {
+					// Scaled Initial Conditions with random phases
+					strncpy(sys_vars->u0, "N_SCALING_RAND", 64);
+					break;
+				}
 				else if (!(strcmp(optarg,"RANDOM"))) {
 					// Random Initial Conditions - Power Law k^-a
 					strncpy(sys_vars->u0, "RANDOM", 64);

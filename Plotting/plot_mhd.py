@@ -160,20 +160,29 @@ if __name__ == '__main__':
 
 
         # --------------------------------------------------
+        # # --------  Plot Magnetic Structure Function
+        # ---------------------------------------------------
+        ## Plot The magnetic field structure function
+        inert_lim_low  = 3
+        inert_lim_high = 12
+        inert_range = np.arange(inert_lim_low - 1, (inert_lim_high - 1) + 1) ## -1 to get the correct shell, +1 to include that shell
+        dns_zeta_p, ns_zeta_p, dns_zetap_p_res = plot_str_funcs_with_slope(cmdargs.out_dir_MHD + "VALID_Magnetic_StrFunc.png", sys_msr_data.k, stats_data.mag_str_func[:, :3], inert_range, insert_fig = False, scaling = 'loge', fig_size = fig_size)
+
+        # --------------------------------------------------
         # # --------  Plot Time Averaged Elsassar Variables -- Kolmogorov scaling k_n^{-1/3}
         # ---------------------------------------------------     
         # This plot should show the time averaged variables over different windows are the same unlike the
         # non exponentially correlated forcing case where the Kolmogorov is a transient that dies out over long times in Z_n^-
         # but becomes more steep over time in Z_n^+
         slope = -1/3
-        intercept = 0
+        intercept = -0.5
         fig = plt.figure(figsize = fig_size)
         gs  = GridSpec(1, 2)
         ax1 = fig.add_subplot(gs[0, 0])
         ax1.plot(sys_msr_data.k, np.mean(np.absolute(z_minus[:sys_vars.ndata//3, :]) , axis = 0), label = r"$\tau = T / 3$")
         ax1.plot(sys_msr_data.k, np.mean(np.absolute(z_minus[:2*sys_vars.ndata//3, :]) , axis = 0), label = r"$\tau = 2 T / 3$")
         ax1.plot(sys_msr_data.k, np.mean(np.absolute(z_minus[:, :]) , axis = 0), label = r"$\tau = T$")
-        ax1.plot(sys_msr_data.k, sys_msr_data.k ** slope + intercept, 'k--', label = "$k^{-1/3}$")
+        ax1.plot(sys_msr_data.k[inert_lim_low:inert_lim_high + 1], sys_msr_data.k[inert_lim_low:inert_lim_high + 1] ** slope + intercept, 'k--', label = "$k^{-1/3}$")
         ax1.set_xlabel(r"$k_n$")
         ax1.set_ylabel(r"$\langle |z^{-}|\rangle_\tau$")
         ax1.set_yscale('log')
@@ -183,7 +192,7 @@ if __name__ == '__main__':
         ax2.plot(sys_msr_data.k, np.mean(np.absolute(z_plus[:sys_vars.ndata//3, :]) , axis = 0), label = r"$\tau = T / 3$")
         ax2.plot(sys_msr_data.k, np.mean(np.absolute(z_plus[:2*sys_vars.ndata//3, :]) , axis = 0), label = r"$\tau = 2 T / 3$")
         ax2.plot(sys_msr_data.k, np.mean(np.absolute(z_plus[:, :]) , axis = 0), label = r"$\tau = T$")
-        ax2.plot(sys_msr_data.k, sys_msr_data.k ** slope + intercept, 'k--', label = "$k^{-1/3}$")
+        ax2.plot(sys_msr_data.k[inert_lim_low:inert_lim_high + 1], sys_msr_data.k[inert_lim_low:inert_lim_high + 1] ** slope + intercept, 'k--', label = "$k^{-1/3}$")
         ax2.set_xlabel(r"$k_n$")
         ax2.set_ylabel(r"$\langle |z^{+}|\rangle_\tau$")
         ax2.set_yscale('log')
@@ -199,7 +208,7 @@ if __name__ == '__main__':
         gs  = GridSpec(1, 2)
         ax1 = fig.add_subplot(gs[0, 0])
         ax1.plot(sys_msr_data.k, np.mean(np.absolute(run_data.u[:, :]), axis=0))
-        ax1.plot(sys_msr_data.k, sys_msr_data.k ** slope + intercept, 'k--', label = "$k^{-1/3}$")
+        ax1.plot(sys_msr_data.k[inert_lim_low:inert_lim_high + 1], sys_msr_data.k[inert_lim_low:inert_lim_high + 1] ** slope + intercept, 'k--', label = "$k^{-1/3}$")
         ax1.set_xlabel(r"$ k_n$")
         ax1.set_ylabel(r"$ \langle |u_n| \rangle$")
         ax1.set_yscale('log')
@@ -207,7 +216,7 @@ if __name__ == '__main__':
         ax1.legend()
         ax2 = fig.add_subplot(gs[0, 1])
         ax2.plot(sys_msr_data.k, np.mean(np.absolute(run_data.b[:, :]), axis=0))
-        ax2.plot(sys_msr_data.k, sys_msr_data.k ** slope + intercept, 'k--', label = "$k^{-1/3}$")
+        ax2.plot(sys_msr_data.k[inert_lim_low:inert_lim_high + 1], sys_msr_data.k[inert_lim_low:inert_lim_high + 1] ** slope + intercept, 'k--', label = "$k^{-1/3}$")
         ax2.set_xlabel(r"$ k_n$")
         ax2.set_ylabel(r"$ \langle |b_n| \rangle$")
         ax2.set_yscale('log')
@@ -243,7 +252,7 @@ if __name__ == '__main__':
         gs  = GridSpec(1, 2)
         ax1 = fig.add_subplot(gs[0, 0])
         ax1.plot(sys_msr_data.k, np.mean(np.absolute(np.imag(t_plus)), axis = 0))
-        ax1.plot(sys_msr_data.k, sys_msr_data.k ** (-1), 'k--', label = "$k^{-1}$")
+        ax1.plot(sys_msr_data.k[inert_lim_low:inert_lim_high + 1], sys_msr_data.k[inert_lim_low:inert_lim_high + 1] ** (-1) + intercept, 'k--', label = "$k^{-1}$")
         ax1.set_xlabel(r"$k$")
         ax1.set_ylabel(r"$\langle z^{+}z^{+}z^{-} \rangle$")
         ax1.set_xscale("log")
@@ -252,7 +261,7 @@ if __name__ == '__main__':
         ax1.legend()
         ax2 = fig.add_subplot(gs[0, 1])
         ax2.plot(sys_msr_data.k, np.mean(np.absolute(np.imag(t_minus)), axis = 0))
-        ax2.plot(sys_msr_data.k, sys_msr_data.k ** (-1), 'k--', label = "$k^{-1}$")
+        ax2.plot(sys_msr_data.k[inert_lim_low:inert_lim_high + 1], sys_msr_data.k[inert_lim_low:inert_lim_high + 1] ** (-1) + intercept, 'k--', label = "$k^{-1}$")
         ax2.set_xlabel(r"$k$")
         ax2.set_ylabel(r"$\langle z^{-}z^{-}z^{+} \rangle$")
         ax2.set_xscale("log")
@@ -263,16 +272,8 @@ if __name__ == '__main__':
         plt.close()
 
 
-        print(np.mod(np.angle(t_plus) + 2.0 * np.pi, 2.0 * np.pi), np.mod(np.angle(t_minus) + 2.0 * np.pi, 2.0 * np.pi))
+        # print(np.mod(np.angle(t_plus) + 2.0 * np.pi, 2.0 * np.pi), np.mod(np.angle(t_minus) + 2.0 * np.pi, 2.0 * np.pi))
 
-        # --------------------------------------------------
-        # # --------  Plot Magnetic Structure Function
-        # ---------------------------------------------------
-        ## Plot The magnetic field structure function
-        inert_lim_low  = 3
-        inert_lim_high = 12
-        inert_range = np.arange(inert_lim_low - 1, (inert_lim_high - 1) + 1) ## -1 to get the correct shell, +1 to include that shell
-        dns_zeta_p, ns_zeta_p, dns_zetap_p_res = plot_str_funcs_with_slope(cmdargs.out_dir_MHD + "VALID_Magnetic_StrFunc.png", sys_msr_data.k, stats_data.mag_str_func[:, :3], inert_range, insert_fig = False, scaling = 'loge', fig_size = fig_size)
 
         
         # --------------------------------------------------
@@ -313,7 +314,7 @@ if __name__ == '__main__':
         # ---------------------------------------------------
         ###---------- Individual Phases
         print("Plotting --- Phases")
-        num_bins = 100
+        num_bins = 1000
         norm_hist = False
 
         input_data = [np.mod(np.angle(run_data.u) + 2.0 * np.pi, 2.0 * np.pi), np.mod(np.angle(run_data.b) + 2.0 * np.pi, 2.0 * np.pi), np.mod(np.angle(z_plus) + 2.0 * np.pi, 2.0 * np.pi), np.mod(np.angle(z_minus) + 2.0 * np.pi, 2.0 * np.pi), np.mod(np.angle(t_plus) + 2.0 * np.pi, 2.0 * np.pi), np.mod(np.angle(t_minus) + 2.0 * np.pi, 2.0 * np.pi)]
@@ -345,7 +346,7 @@ if __name__ == '__main__':
 
         ###---------- Individual Amps
         print("Plotting --- Amps")
-        num_bins = 100
+        num_bins = 1000
         norm_hist = False
 
         input_data = [np.absolute(run_data.u), np.absolute(run_data.b), np.absolute(z_plus), np.absolute(z_minus), np.absolute(t_plus), np.absolute(t_minus)]
@@ -496,13 +497,13 @@ if __name__ == '__main__':
                 if indx < sys_vars.N:
                     ax1 = fig.add_subplot(gs[i, j])
                     if hasattr(stats_data, "vel_hist_counts"):
-                        pdf, centres = compute_pdf_from_hist(stats_data.vel_hist_counts[indx, :], stats_data.vel_hist_ranges[indx, :], normed = True)
+                        pdf, centres = compute_pdf_from_hist(stats_data.vel_hist_counts[indx, :], stats_data.vel_hist_ranges[indx, :], normed = False)
                         ax1.set_title("C Data")
                     else:
                         if sys_vars.model_type == "PO" or sys_vars.model_type == "AO":
-                            pdf, centres = compute_pdf(np.real(run_data.a_n[:, indx] * np.exp(1j * run_data.phi_n[:, indx])), nbins = nbins, normed = True)                 
+                            pdf, centres = compute_pdf(np.real(run_data.a_n[:, indx] * np.exp(1j * run_data.phi_n[:, indx])), nbins = nbins, normed = False)                 
                         else:
-                            pdf, centres = compute_pdf(np.real(run_data.u[:, indx]), nbins = nbins, normed = True)
+                            pdf, centres = compute_pdf(np.real(run_data.u[:, indx]), nbins = nbins, normed = False)
                     ax1.plot(centres, pdf, label = "$n = {}$".format(indx + 1)) 
                     ax1.set_xlabel(r"$\Re u_n / \langle (\Re u_n)^2 \rangle^{1/2}$")
                     ax1.set_ylabel(r"PDF")
@@ -546,13 +547,13 @@ if __name__ == '__main__':
                 if indx < sys_vars.N:
                     ax1 = fig.add_subplot(gs[i, j])
                     if hasattr(stats_data, "mag_hist_counts"):
-                        pdf, centres = compute_pdf_from_hist(stats_data.mag_hist_counts[indx, :], stats_data.mag_hist_ranges[indx, :], normed = True)
+                        pdf, centres = compute_pdf_from_hist(stats_data.mag_hist_counts[indx, :], stats_data.mag_hist_ranges[indx, :], normed = False)
                         ax1.set_title("C Data")
                     else:
                         if sys_vars.model_type == "PO" or sys_vars.model_type == "AO":
-                            pdf, centres = compute_pdf(np.real(run_data.b_n[:, indx] * np.exp(1j * run_data.psi_n[:, indx])), nbins = nbins, normed = True)                 
+                            pdf, centres = compute_pdf(np.real(run_data.b_n[:, indx] * np.exp(1j * run_data.psi_n[:, indx])), nbins = nbins, normed = False)                 
                         else:
-                            pdf, centres = compute_pdf(np.real(run_data.b[:, indx]), nbins = nbins, normed = True)
+                            pdf, centres = compute_pdf(np.real(run_data.b[:, indx]), nbins = nbins, normed = False)
                     ax1.plot(centres, pdf, label = "$n = {}$".format(indx + 1)) 
                     ax1.set_xlabel(r"$\Re u_n / \langle (\Re u_n)^2 \rangle^{1/2}$")
                     ax1.set_ylabel(r"PDF")
@@ -626,7 +627,7 @@ if __name__ == '__main__':
                 indx = i * 5 + j
                 if indx < sys_vars.N:
                     ax1 = fig.add_subplot(gs[i, j])
-                    pdf, centres = compute_pdf(np.real(t_plus[:, indx]), nbins = nbins, normed = True)
+                    pdf, centres = compute_pdf(np.real(t_plus[:, indx]), nbins = nbins, normed = False)
                     ax1.plot(centres, pdf, label = "$n = {}$".format(indx + 1)) 
                     ax1.set_xlabel(r"$\Re T_n^+ / \langle (\Re T_n^+)^2 \rangle^{1/2}$")
                     ax1.set_ylabel(r"PDF")
@@ -643,7 +644,7 @@ if __name__ == '__main__':
                 indx = i * 5 + j
                 if indx < sys_vars.N:
                     ax1 = fig.add_subplot(gs[i, j])
-                    pdf, centres = compute_pdf(np.real(t_minus[:, indx]), nbins = nbins, normed = True)
+                    pdf, centres = compute_pdf(np.real(t_minus[:, indx]), nbins = nbins, normed = False)
                     ax1.plot(centres, pdf, label = "$n = {}$".format(indx + 1)) 
                     ax1.set_xlabel(r"$\Re T_n^- / \langle (\Re T_n^-)^2 \rangle^{1/2}$")
                     ax1.set_ylabel(r"PDF")
@@ -688,7 +689,7 @@ if __name__ == '__main__':
                 indx = i * 5 + j
                 if indx < sys_vars.N:
                     ax1 = fig.add_subplot(gs[i, j])
-                    pdf, centres = compute_pdf(np.imag(t_plus[:, indx]), nbins = nbins, normed = True)
+                    pdf, centres = compute_pdf(np.imag(t_plus[:, indx]), nbins = nbins, normed = False)
                     ax1.plot(centres, pdf, label = "$n = {}$".format(indx + 1)) 
                     ax1.set_xlabel(r"$\Im T_n^+ / \langle (\Im T_n^+)^2 \rangle^{1/2}$")
                     ax1.set_ylabel(r"PDF")
@@ -705,7 +706,7 @@ if __name__ == '__main__':
                 indx = i * 5 + j
                 if indx < sys_vars.N:
                     ax1 = fig.add_subplot(gs[i, j])
-                    pdf, centres = compute_pdf(np.imag(t_minus[:, indx]), nbins = nbins, normed = True)
+                    pdf, centres = compute_pdf(np.imag(t_minus[:, indx]), nbins = nbins, normed = False)
                     ax1.plot(centres, pdf, label = "$n = {}$".format(indx + 1)) 
                     ax1.set_xlabel(r"$\Im T_n^- / \langle (\Im T_n^-)^2 \rangle^{1/2}$")
                     ax1.set_ylabel(r"PDF")

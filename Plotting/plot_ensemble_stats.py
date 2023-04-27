@@ -35,13 +35,43 @@ for i in range(0,len(sys.argv)-1):
 		out_dir_data[data_no] = str(sys.argv[data_no+1])
 		data_no += 1
 print()
+
 ## Print directories to screen
+dud_files = []
+dud_file_indx = []
 for i in range(0, data_no):
 	print("%dth Input file: %s" % (i,out_dir_data[i]))
-	if ( not (os.path.isfile(out_dir_data[i]+"/Stats_HDF_Data.h5")) ) : 
-		print("Cannot open %d th input file, Error, will now exit!\n" % (i))
-		sys.exit()	
+	if not (os.path.isfile(out_dir_data[i]+"/Stats_HDF_Data.h5")) or not os.path.isfile(out_dir_data[i]+"/SimulationDetails.txt"): 
+		print("Cannot open %d th input file!" % (i))
+		dud_files.append(out_dir_data[i])
+		dud_file_indx.append(i)
 print()
+
+## Print and remove dud files
+for i in range(len(dud_files)):
+	print("Dud file no {}: {}".format(dud_file_indx[i], dud_files[i]))
+print()
+
+## Print true files list
+true_data_no      = data_no - len(dud_files)
+true_out_dir_data = []
+dud_file          = False
+for i in range(data_no):
+	for j in range(len(dud_files)):
+		if i == dud_file_indx[j]:
+			dud_file = True
+
+	if not dud_file:
+		true_out_dir_data.append(out_dir_data[i])
+	else:
+		dud_file = False
+	
+true_out_dir_data = np.array(true_out_dir_data)	
+for i in range(true_data_no):
+	print("True File no. {}: {}".format(i, true_out_dir_data[i]))
+
+print()
+
 
 plot_dir="/home/enda/PhD/Shell_Model/Data/Thesis/Plots/"
 
@@ -49,7 +79,7 @@ plot_dir="/home/enda/PhD/Shell_Model/Data/Thesis/Plots/"
 # # --------  Initialize Data Arrays
 # --------------------------------------------------
 ## Open first data directory to sizes of stats arrays for initialization
-with h5py.File(out_dir_data[0]+"/Stats_HDF_Data.h5",'r') as HDFfileRuntime:
+with h5py.File(true_out_dir_data[0]+"/Stats_HDF_Data.h5",'r') as HDFfileRuntime:
 	## Get the number of stats steps
 	num_stats_steps = HDFfileRuntime["NumStatsSteps"][:]
 
@@ -58,26 +88,26 @@ with h5py.File(out_dir_data[0]+"/Stats_HDF_Data.h5",'r') as HDFfileRuntime:
 	num_shell, num_pow = vel_sf.shape
 
 ## Open first data directory to sizes of field arrays for initialization
-with h5py.File(out_dir_data[0]+"/Main_HDF_Data.h5",'r') as HDFfileRuntime:
+with h5py.File(true_out_dir_data[0]+"/Main_HDF_Data.h5",'r') as HDFfileRuntime:
 	## Get the Velocity Modes
 	u = HDFfileRuntime["VelModes"][:, :]
 	num_t_steps = u.shape[0]
 
 ## Open first data directory to sizes of field arrays for initialization
-with h5py.File(out_dir_data[0]+"/System_Measure_HDF_Data.h5",'r') as HDFfileRuntime:
+with h5py.File(true_out_dir_data[0]+"/System_Measure_HDF_Data.h5",'r') as HDFfileRuntime:
 	k = HDFfileRuntime["k"][:]
 	time = HDFfileRuntime["Time"][:]
 
 ## Get sim data
-sys_vars = sim_data(out_dir_data[0] + "/", "default")
+sys_vars = sim_data(true_out_dir_data[0] + "/", "default")
 
 ## Initialize Arrays
-Tot_Enrg_all 	 = np.empty([data_no, num_t_steps], dtype=float, order='C')
-Vel_Modse_all    = np.empty([data_no, num_t_steps, num_shell], dtype=np.complex128, order='C')
-Vel_SF_all       = np.empty([data_no, num_shell, num_pow], dtype=float, order='C')
-Vel_Trip_SF_all  = np.empty([data_no, num_shell, num_pow], dtype=float, order='C')
-Vel_EFlux_SF_all = np.empty([data_no, num_shell, num_pow], dtype=float, order='C')
-Vel_HFlux_SF_all = np.empty([data_no, num_shell, num_pow], dtype=float, order='C')
+Tot_Enrg_all 	 = np.empty([true_data_no, num_t_steps], dtype=float, order='C')
+Vel_Modse_all    = np.empty([true_data_no, num_t_steps, num_shell], dtype=np.complex128, order='C')
+Vel_SF_all       = np.empty([true_data_no, num_shell, num_pow], dtype=float, order='C')
+Vel_Trip_SF_all  = np.empty([true_data_no, num_shell, num_pow], dtype=float, order='C')
+Vel_EFlux_SF_all = np.empty([true_data_no, num_shell, num_pow], dtype=float, order='C')
+Vel_HFlux_SF_all = np.empty([true_data_no, num_shell, num_pow], dtype=float, order='C')
 
 
 
@@ -85,8 +115,8 @@ Vel_HFlux_SF_all = np.empty([data_no, num_shell, num_pow], dtype=float, order='C
 # # --------  Read In Data Arrays
 # --------------------------------------------------
 print("\nReading In Data")
-for i in range(0, data_no):
-	with h5py.File(out_dir_data[0]+"/Stats_HDF_Data.h5",'r') as HDFfileRuntime:
+for i in range(0, true_data_no):
+	with h5py.File(true_out_dir_data[i]+"/Stats_HDF_Data.h5",'r') as HDFfileRuntime:
 		## Get the number of stats steps
 		num_stats_steps = HDFfileRuntime["NumStatsSteps"][:]
 
@@ -96,11 +126,11 @@ for i in range(0, data_no):
 		Vel_EFlux_SF_all[i, :, :] = HDFfileRuntime["StructureFunctionVelFluxAbs"][:, :, 0] / num_stats_steps
 		Vel_HFlux_SF_all[i, :, :] = HDFfileRuntime["StructureFunctionVelFluxAbs"][:, :, 1] / num_stats_steps
 
-	with h5py.File(out_dir_data[0]+"/Main_HDF_Data.h5",'r') as HDFfileRuntime:
+	with h5py.File(true_out_dir_data[i]+"/Main_HDF_Data.h5",'r') as HDFfileRuntime:
 		## Get the Velocity Modes
 		Vel_Modse_all[i, :, :] = HDFfileRuntime["VelModes"][:, :]
 
-	with h5py.File(out_dir_data[0]+"/System_Measure_HDF_Data.h5",'r') as HDFfileRuntime:
+	with h5py.File(true_out_dir_data[i]+"/System_Measure_HDF_Data.h5",'r') as HDFfileRuntime:
 		Tot_Enrg_all[i, :]     = HDFfileRuntime["TotalEnergy"][:]
 
 
@@ -114,7 +144,7 @@ print("Plotting Data")
 fig = plt.figure(figsize = (12, 8))
 gs  = GridSpec(1, 1, hspace = 0.35)
 ax1 = fig.add_subplot(gs[0, 0])
-for i in range(data_no):
+for i in range(true_data_no):
 	ax1.plot(time, Tot_Enrg_all[i, :], label=r"i = {}".format(i))
 ax1.set_xlabel(r"$t$")
 ax1.set_title(r"Total Energy")
