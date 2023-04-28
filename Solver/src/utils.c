@@ -364,9 +364,9 @@ int GetCMLArgs(int argc, char** argv) {
 					strncpy(sys_vars->u0, "PO_AMP_INPUT", 64);
 					break;
 				}
-				else if (!(strcmp(optarg,"AO_RAND_PHASE"))) {
+				else if (!(strcmp(optarg,"AO_RND_PHASE"))) {
 					// Amp Only - Random initial phases
-					strncpy(sys_vars->u0, "AO_RAND_PHASE", 64);
+					strncpy(sys_vars->u0, "AO_RND_PHASE", 64);
 					break;
 				}
 				else if (!(strcmp(optarg,"AO_ALGND_PHASE"))) {

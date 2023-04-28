@@ -115,6 +115,28 @@ def slope_fit(x, y, low, high):
     return pfit_slope, pfit_c, poly_resid
 
 @njit
+def get_vel_field_flux(data, N, delta, l):
+
+    s = data.shape
+    num_t, num_shell = s[0], s[1]
+
+    trip_prod   = np.zeros(s, dtype=np.complex128)
+    dub_prod    = np.zeros(s, dtype=np.complex128)
+    hel_flux    = np.zeros(s, dtype=np.complex128)
+    energy_flux = np.zeros(s, dtype=np.complex128)
+    u_pad  = np.zeros((num_shell + 4), dtype=np.complex128)
+    for t in range(num_t):
+        for i in range(num_shell):
+                n = i + 2
+                u_pad[n] = data[t, i]
+
+        ## Get field values
+        trip_prod[t, :], _, dub_prod[t, :], hel_flux[t, :], energy_flux[t, :] = compute_field_values(u_pad, N, delta, l)
+
+    return trip_prod, dub_prod, hel_flux, energy_flux
+
+
+@njit
 def compute_field_values(data, N, delta, l):
 
     trip_prod     = np.ones((N,)) * 1j

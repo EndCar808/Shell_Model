@@ -865,7 +865,6 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 	// 	printf("u[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]));		
 	// 	#endif
 	// }	
-
 }
 #endif
 #if defined(AB4CN)
@@ -1441,7 +1440,7 @@ void InitialConditions(const long int N) {
 					#endif
 					#endif
 				}
-				else if(!(strcmp(sys_vars->u0, "AO_RAND_PHASE"))) {
+				else if(!(strcmp(sys_vars->u0, "AO_RND_PHASE"))) {
 					// ------------------------------------------------
 					// Default - Random Initial Conditions
 					// ------------------------------------------------	
