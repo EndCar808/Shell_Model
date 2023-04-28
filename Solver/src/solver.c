@@ -102,22 +102,15 @@ void Solve(void) {
 	// Initialize the forcing
 	InitializeForicing(N, dt);
 	
-
-
-
-	for (int i = 0; i < N + 4; ++i)
-	{
-		printf("k[%d]: %1.2lf\tu[%d]: %1.16lf %1.16lf\ta[%d]: %1.16lf\tp[%d]: %1.16lf\n", i, run_data->k[i], i, creal(run_data->u[i]), cimag(run_data->u[i]), i, cabs(run_data->u[i]), i, carg(run_data->u[i]));
-	}
-	printf("\n\n");
-
-	NonlinearTermWithForcing(run_data->u, run_data->b, RK_data->RK1_u, RK_data->RK1_b);
-
-	for (int i = 0; i < N + 4; ++i)
-	{
-		printf("k[%d]: %1.2lf\tRK1[%d]: %1.16lf %1.16lf\ta[%d]: %1.16lf\tp[%d]: %1.16lf\n", i, run_data->k[i], i, creal(RK_data->RK1_u[i]), cimag(RK_data->RK1_u[i]), i, cabs(RK_data->RK1_u[i]), i, carg(RK_data->RK1_u[i]));
-	}
-	printf("\n\n");
+	// for (int i = 0; i < N + 4; ++i) {
+	// 	printf("k[%d]: %1.2lf\tu[%d]: %1.16lf %1.16lf\ta[%d]: %1.16lf\tp[%d]: %1.16lf\n", i, run_data->k[i], i, creal(run_data->u[i]), cimag(run_data->u[i]), i, cabs(run_data->u[i]), i, carg(run_data->u[i]));
+	// }
+	// printf("\n\n");
+	// NonlinearTermWithForcing(run_data->u, run_data->b, RK_data->RK1_u, RK_data->RK1_b);
+	// for (int i = 0; i < N + 4; ++i) {
+	// 	printf("k[%d]: %1.2lf\tRK1[%d]: %1.16lf %1.16lf\ta[%d]: %1.16lf\tp[%d]: %1.16lf\n", i, run_data->k[i], i, creal(RK_data->RK1_u[i]), cimag(RK_data->RK1_u[i]), i, cabs(RK_data->RK1_u[i]), i, carg(RK_data->RK1_u[i]));
+	// }
+	// printf("\n\n");
 
 	
 
@@ -142,13 +135,11 @@ void Solve(void) {
 	int amp_indx   = 1;
 
 
-	printf("\n\n\n\n\n");
-
 
 	//////////////////////////////
 	// Begin Integration
 	//////////////////////////////
-	while (t <= 1 * dt) {
+	while (t <= T) {
 
 		#if defined(PHASE_ONLY)
 		if (!(strcmp(sys_vars->u0, "PO_RAND_AMPS"))) {
@@ -351,10 +342,9 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		#endif
 		#endif
 
-		printf("in[%d]: %g %g\n", i, creal(RK_data->RK_u_tmp[n]), cimag(RK_data->RK_u_tmp[n]));
+		// printf("in[%d]: %1.16lf %1.16lf\n", i, creal(RK_data->RK_u_tmp[n]), cimag(RK_data->RK_u_tmp[n]));
 	}
-
-	printf("\n\n");
+	// printf("\n\n");
 
 	/////////////////////
 	/// RK STAGES
@@ -378,6 +368,8 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		// Update temorary velocity term
 		#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
 		RK_data->RK_u_tmp[n] = run_data->a_n[n] * cexp(I * (run_data->phi_n[n] * int_fac_u + dt * RK4_A21 * RK_data->RK1_u[n] * int_fac_u));
+		#elif defined(AMP_ONLY) && !defined(__ELSASSAR_MHD)
+		RK_data->RK_u_tmp[n] = (run_data->a_n[n] * int_fac_u + dt * RK4_A21 * RK_data->RK1_u[n] * int_fac_u) * cexp(I * run_data->phi_n[n]);
 		#else
 		RK_data->RK_u_tmp[n] = run_data->u[n] * int_fac_u + dt * RK4_A21 * RK_data->RK1_u[n] * int_fac_u;
 		#endif
@@ -394,10 +386,9 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		#endif
 		#endif
 
-		printf("RK1[%d]: %1.16lf %1.16lf\t\tRK_tmp[%d]: %1.16lf %1.16lf\n", i, creal(RK_data->RK1_u[n]), cimag(RK_data->RK1_u[n]), i, creal(RK_data->RK_u_tmp[n]), cimag(RK_data->RK_u_tmp[n]));
+		// printf("RK1[%d]: %1.16lf %1.16lf\ta: %1.16lf\tp: %1.16lf\tRK_tmp[%d]: %1.16lf %1.16lf\ta: %1.16lf\tp: %1.16lf\n", i, creal(RK_data->RK1_u[n]), cimag(RK_data->RK1_u[n]), cabs(RK_data->RK1_u[n]), carg(RK_data->RK1_u[n]), i, creal(RK_data->RK_u_tmp[n]), cimag(RK_data->RK_u_tmp[n]), cabs(RK_data->RK_u_tmp[n]), carg(RK_data->RK_u_tmp[n]));
 	}
-
-	printf("\n");
+	// printf("\n");
 
 	// ----------------------- Stage 2
 	NonlinearTermWithForcing(RK_data->RK_u_tmp, RK_data->RK_b_tmp, RK_data->RK2_u, RK_data->RK2_b);
@@ -418,6 +409,8 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		// Update temorary velocity term
 		#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
 		RK_data->RK_u_tmp[n] = run_data->a_n[n] * cexp(I * (run_data->phi_n[n] * int_fac_u + dt * RK4_A32 * RK_data->RK2_u[n]));
+		#elif defined(AMP_ONLY) && !defined(__ELSASSAR_MHD)
+		RK_data->RK_u_tmp[n] = (run_data->a_n[n] * int_fac_u + dt * RK4_A32 * RK_data->RK2_u[n]) * cexp(I * run_data->phi_n[n]);
 		#else
 		RK_data->RK_u_tmp[n] = run_data->u[n] * int_fac_u + dt * RK4_A32 * RK_data->RK2_u[n];
 		#endif
@@ -434,10 +427,9 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		#endif
 		#endif
 
-		printf("RK2[%d]: %1.16lf %1.16lf\t\tRK_tmp[%d]: %1.16lf %1.16lf\n", i, creal(RK_data->RK2_u[n]), cimag(RK_data->RK2_u[n]), i, creal(RK_data->RK_u_tmp[n]), cimag(RK_data->RK_u_tmp[n]));
+		// printf("RK2[%d]: %1.16lf %1.16lf\t\tRK_tmp[%d]: %1.16lf %1.16lf\n", i, creal(RK_data->RK2_u[n]), cimag(RK_data->RK2_u[n]), i, creal(RK_data->RK_u_tmp[n]), cimag(RK_data->RK_u_tmp[n]));
 	}
-
-	printf("\n");
+	// printf("\n");
 
 
 	// ----------------------- Stage 3
@@ -460,6 +452,8 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		// Update temorary velocity term
 		#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
 		RK_data->RK_u_tmp[n] = run_data->a_n[n] * cexp(I * (run_data->phi_n[n] * int_fac_u + dt * RK4_A43 * RK_data->RK3_u[n] * int_fac_u_1));
+		#elif defined(AMP_ONLY) && !defined(__ELSASSAR_MHD)
+		RK_data->RK_u_tmp[n] = (run_data->a_n[n] * int_fac_u + dt * RK4_A43 * RK_data->RK3_u[n] * int_fac_u_1) * cexp(I * run_data->phi_n[n]);
 		#else
 		RK_data->RK_u_tmp[n] = run_data->u[n] * int_fac_u + dt * RK4_A43 * RK_data->RK3_u[n] * int_fac_u_1;
 		#endif
@@ -477,19 +471,18 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		#endif
 		#endif
 
-		printf("RK3[%d]: %1.16lf %1.16lf\t\tRK_tmp[%d]: %1.16lf %1.16lf\n", i, creal(RK_data->RK3_u[n]), cimag(RK_data->RK3_u[n]), i, creal(RK_data->RK_u_tmp[n]), cimag(RK_data->RK_u_tmp[n]));
+		// printf("RK3[%d]: %1.16lf %1.16lf\t\tRK_tmp[%d]: %1.16lf %1.16lf\n", i, creal(RK_data->RK3_u[n]), cimag(RK_data->RK3_u[n]), i, creal(RK_data->RK_u_tmp[n]), cimag(RK_data->RK_u_tmp[n]));
 	}
-	printf("\n");
+	// printf("\n");
 
 	// ----------------------- Stage 4
 	NonlinearTermWithForcing(RK_data->RK_u_tmp, RK_data->RK_b_tmp, RK_data->RK4_u, RK_data->RK4_b);
-	for (int i = 0; i < N; ++i) {
-		// Get proper indx
-		n = i + 2;
-		printf("RK4[%d]: %1.16lf %1.16lf\n", i, creal(RK_data->RK4_u[n]), cimag(RK_data->RK4_u[n]));
-	}
-
-	printf("\n\n");
+	// for (int i = 0; i < N; ++i) {
+	// 	// Get proper indx
+	// 	n = i + 2;
+	// 	printf("RK4[%d]: %1.16lf %1.16lf\n", i, creal(RK_data->RK4_u[n]), cimag(RK_data->RK4_u[n]));
+	// }
+	// printf("\n\n");
 
 	/////////////////////
 	/// UPDATE STEP
@@ -530,6 +523,8 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		// Update the new velocity field
 		#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
 		run_data->phi_n[n] = int_fac_u * run_data->phi_n[n] + dt * RK4_B1 * int_fac_u * RK_data->RK1_u[n] + dt * RK4_B2 * int_fac_u_1 * RK_data->RK2_u[n] + dt * RK4_B3 * int_fac_u_1 * RK_data->RK3_u[n] + dt * RK4_B4 * RK_data->RK4_u[n];
+		#elif defined(AMP_ONLY) && !defined(__ELSASSAR_MHD)
+		run_data->a_n[n] = int_fac_u * run_data->a_n[n] + dt * RK4_B1 * int_fac_u * RK_data->RK1_u[n] + dt * RK4_B2 * int_fac_u_1 * RK_data->RK2_u[n] + dt * RK4_B3 * int_fac_u_1 * RK_data->RK3_u[n] + dt * RK4_B4 * RK_data->RK4_u[n];
 		#else
 		run_data->u[n] = int_fac_u * run_data->u[n] + dt * RK4_B1 * int_fac_u * RK_data->RK1_u[n] + dt * RK4_B2 * int_fac_u_1 * RK_data->RK2_u[n] + dt * RK4_B3 * int_fac_u_1 * RK_data->RK3_u[n] + dt * RK4_B4 * RK_data->RK4_u[n];
 		#endif
@@ -586,7 +581,11 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		// #else
 		// printf("u[%d]:\t%1.16lf\t%1.16lf i\n", i - 1, creal(run_data->u[i]), cimag(run_data->u[i]));		
 		// #endif
-		printf("INTFACunew[%d]: %1.16lf %1.16lf\n", i, creal(run_data->u[n]), cimag(run_data->u[n]));
+		// #if defined(AMP_ONLY) || defined(PHASE_ONLY)
+		// printf("INTFACunew[%d]: %1.16lf %1.16lf\ta: %1.16lf p: %1.16lf\n", i, creal(run_data->a_n[n] * cexp(I * run_data->phi_n[n])), cimag(run_data->a_n[n] * cexp(I * run_data->phi_n[n])), run_data->a_n[n], run_data->phi_n[n]);
+		// #else
+		// printf("INTFACunew[%d]: %1.16lf %1.16lf\ta: %1.16lf p: %1.16lf\n", i, creal(run_data->u[n]), cimag(run_data->u[n]), cabs(run_data->u[n]), carg(run_data->u[n]));
+		// #endif
 	}
 }
 #endif
@@ -644,10 +643,9 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		#endif
 		#endif
 		
-		printf("in[%d]: %g %g\n", i, creal(RK_data->RK_u_tmp[n]), cimag(RK_data->RK_u_tmp[n]));
+		// printf("in[%d]: %1.16lf %1.16lf\ta: %1.16lf\tp: %1.16lf\n", i, creal(RK_data->RK_u_tmp[n]), cimag(RK_data->RK_u_tmp[n]), cabs(RK_data->RK_u_tmp[n]), carg(RK_data->RK_u_tmp[n]));
 	}
-
-	printf("\n\n");
+	// printf("\n\n");
 
 	/////////////////////
 	/// RK STAGES
@@ -672,7 +670,7 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		// Update temporary field terms
 		RK_data->RK_u_tmp[n] = run_data->z_plus[n] + dt * RK4_A21 * RK_data->RK1_u[n];
 		RK_data->RK_b_tmp[n] = run_data->z_minus[n] + dt * RK4_A21 * RK_data->RK1_b[n];
-		#else
+		#elif !defined(PHASE_ONLY)
 		// Add dissipative and forcing terms & Update temorary velocity term
 		RK_data->RK1_u[n] -= sys_vars->NU * run_data->k[n] * run_data->k[n] * run_data->u[n];
 		RK_data->RK_u_tmp[n] = run_data->u[n] + dt * RK4_A21 * RK_data->RK1_u[n];
@@ -683,10 +681,9 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		#endif
 		#endif
 		
-		printf("k: %lf\tnu: %g\tRK1[%d]: %1.16lf %1.16lf\t\tRK_tmp[%d]: %1.16lf %1.16lf\n", run_data->k[n], sys_vars->NU, i, creal(RK_data->RK1_u[n]), cimag(RK_data->RK1_u[n]), i, creal(RK_data->RK_u_tmp[n]), cimag(RK_data->RK_u_tmp[n]));
+		// printf("RK1[%d]: %1.16lf %1.16lf\ta: %1.16lf\tp: %1.16lf\tRK_tmp[%d]: %1.16lf %1.16lf\ta: %1.16lf\tp: %1.16lf\n", i, creal(RK_data->RK1_u[n]), cimag(RK_data->RK1_u[n]), cabs(RK_data->RK1_u[n]), carg(RK_data->RK1_u[n]), i, creal(RK_data->RK_u_tmp[n]), cimag(RK_data->RK_u_tmp[n]), cabs(RK_data->RK_u_tmp[n]), carg(RK_data->RK_u_tmp[n]));
 	}
-
-	printf("\n");
+	// printf("\n");
 
 	// ----------------------- Stage 2
 	NonlinearTermWithForcing(RK_data->RK_u_tmp, RK_data->RK_b_tmp, RK_data->RK2_u, RK_data->RK2_b);
@@ -708,7 +705,7 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		// Update temporary field terms
 		RK_data->RK_u_tmp[n] = run_data->z_plus[n] + dt * RK4_A32 * RK_data->RK2_u[n];
 		RK_data->RK_b_tmp[n] = run_data->z_minus[n] + dt * RK4_A32 * RK_data->RK2_b[n];
-		#else
+		#elif !defined(PHASE_ONLY)
 		// Add dissipative & Update temorary velocity term
 		RK_data->RK2_u[n] -= sys_vars->NU * run_data->k[n] * run_data->k[n] * run_data->u[n];
 		RK_data->RK_u_tmp[n] = run_data->u[n] + dt * RK4_A32 * RK_data->RK2_u[n];
@@ -719,10 +716,9 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		#endif
 		#endif
 		
-		printf("RK2[%d]: %1.16lf %1.16lf\t\tRK_tmp[%d]: %1.16lf %1.16lf\n", i, creal(RK_data->RK2_u[n]), cimag(RK_data->RK2_u[n]), i, creal(RK_data->RK_u_tmp[n]), cimag(RK_data->RK_u_tmp[n]));
+		// printf("RK2[%d]: %1.16lf %1.16lf\ta: %1.16lf\tp: %1.16lf\tRK_tmp[%d]: %1.16lf %1.16lf\ta: %1.16lf\tp: %1.16lf\n", i, creal(RK_data->RK2_u[n]), cimag(RK_data->RK2_u[n]), cabs(RK_data->RK2_u[n]), carg(RK_data->RK2_u[n]), i, creal(RK_data->RK_u_tmp[n]), cimag(RK_data->RK_u_tmp[n]), cabs(RK_data->RK_u_tmp[n]), carg(RK_data->RK_u_tmp[n]));
 	}
-
-	printf("\n");
+	// printf("\n");
 
 	// ----------------------- Stage 3
 	NonlinearTermWithForcing(RK_data->RK_u_tmp, RK_data->RK_b_tmp, RK_data->RK3_u, RK_data->RK3_b);
@@ -743,7 +739,7 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		// Update temporary field terms
 		RK_data->RK_u_tmp[n] = run_data->z_plus[n] + dt * RK4_A43 * RK_data->RK3_u[n];
 		RK_data->RK_b_tmp[n] = run_data->z_minus[n] + dt * RK4_A43 * RK_data->RK3_b[n];
-		#else
+		#elif !defined(PHASE_ONLY)
 		// Add dissipative & Update temorary velocity term
 		RK_data->RK3_u[n] -= sys_vars->NU * run_data->k[n] * run_data->k[n] * run_data->u[n];
 		RK_data->RK_u_tmp[n] = run_data->u[n] + dt * RK4_A43 * RK_data->RK3_u[n];
@@ -753,9 +749,9 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		RK_data->RK_b_tmp[n] = run_data->b[n] + dt * RK4_A43 * RK_data->RK3_b[n];
 		#endif
 		#endif
-		printf("RK3[%d]: %1.16lf %1.16lf\t\tRK_tmp[%d]: %1.16lf %1.16lf\n", i, creal(RK_data->RK3_u[n]), cimag(RK_data->RK3_u[n]), i, creal(RK_data->RK_u_tmp[n]), cimag(RK_data->RK_u_tmp[n]));
+		// printf("RK3[%d]: %1.16lf %1.16lf\ta: %1.16lf\tp: %1.16lf\tRK_tmp[%d]: %1.16lf %1.16lf\ta: %1.16lf\tp: %1.16lf\n", i, creal(RK_data->RK3_u[n]), cimag(RK_data->RK3_u[n]), cabs(RK_data->RK3_u[n]), carg(RK_data->RK3_u[n]), i, creal(RK_data->RK_u_tmp[n]), cimag(RK_data->RK_u_tmp[n]), cabs(RK_data->RK_u_tmp[n]), carg(RK_data->RK_u_tmp[n]));
 	}
-	printf("\n");
+	// printf("\n");
 
 	// ----------------------- Stage 4
 	NonlinearTermWithForcing(RK_data->RK_u_tmp, RK_data->RK_b_tmp, RK_data->RK4_u, RK_data->RK4_b);
@@ -773,10 +769,11 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		RK_data->RK4_b[n] -= sys_vars->ETA * run_data->k[n] * run_data->k[n] * run_data->b[n];
 		#endif
 		#endif
-		printf("RK4[%d]: %1.16lf %1.16lf\n", i, creal(RK_data->RK4_u[n]), cimag(RK_data->RK4_u[n]));
+		// printf("RK4[%d]: %1.16lf %1.16lf\ta: %1.16lf\tp: %1.16lf\t\ta: %1.16lf\tp: %1.16lf\n", i, creal(RK_data->RK4_u[n]), cimag(RK_data->RK4_u[n]), cabs(RK_data->RK4_u[n]), carg(RK_data->RK4_u[n]), run_data->a_n[n], RK_data->RK4_u[n]);
 	}
+	// printf("\n");
 
-	printf("\n\n");
+	// printf("\n\n");
 
 	/////////////////////
 	/// UPDATE STEP
@@ -853,7 +850,11 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		#endif
 		#endif
 
-		printf("RK4unew[%d]: %1.16lf %1.16lf\n", i, creal(run_data->u[n]), cimag(run_data->u[n]));
+		// #if defined(AMP_ONLY) || defined(PHASE_ONLY)
+		// printf("RK4unew[%d]: %1.16lf %1.16lf\ta: %1.16lf p: %1.16lf\n", i, creal(run_data->a_n[n] * cexp(I * run_data->phi_n[n])), cimag(run_data->a_n[n] * cexp(I * run_data->phi_n[n])), run_data->a_n[n], run_data->phi_n[n]);
+		// #else
+		// printf("RK4unew[%d]: %1.16lf %1.16lf\ta: %1.16lf p: %1.16lf\n", i, creal(run_data->u[n]), cimag(run_data->u[n]), cabs(run_data->u[n]), carg(run_data->u[n]));
+		// #endif
 	}
 	// for (int i = 0; i < N + 4; ++i) {
 	// 	#if defined(__MAGNETO)
@@ -1193,19 +1194,17 @@ void NonlinearTermWithForcing(double complex* input_u, double complex* input_b, 
 
 		// Get the appropriate output value depending on the system being solved
 		#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
-		// Get the Phase only RHS
-		if (run_data->a_n[n] != 0.0) {
-			output_u[n] = cimag(tmp_output_u * cexp(-I * run_data->phi_n[n])) / run_data->a_n[n];
-			#if defined(__MAGNETO)
-			output_b[n] = cimag(tmp_output_b * cexp(-I * run_data->psi_n[n])) / run_data->b_n[n];
-			#endif
-		}
-		else {
-			output_u[n] = 0.0;
-			#if defined(__MAGNETO)
-			output_b[n] = 0.0;
-			#endif
-		}
+		output_u[n] = cimag(tmp_output_u * cexp(-I * run_data->phi_n[n])) / run_data->a_n[n];
+		#if defined(__MAGNETO)
+		output_b[n] = cimag(tmp_output_b * cexp(-I * run_data->psi_n[n])) / run_data->b_n[n];
+		#endif
+		
+		#elif defined(AMP_ONLY) && !defined(__ELSASSAR_MHD)
+		output_u[n] = creal(tmp_output_u * cexp(-I * run_data->phi_n[n]));
+		#if defined(__MAGNETO) 
+		output_b[n] = creal(tmp_output_b * cexp(-I * run_data->psi_n[n]));
+		#endif
+		
 		#else
 		// Get the full systems Nonlinear term and forcing
 		output_u[n] = tmp_output_u;
@@ -1347,8 +1346,8 @@ void InitialConditions(const long int N) {
 					run_data->u[i] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) * cexp(I * (pow(i - 1, 2.0))) / sqrt(75);					
 
 					// Record the phases and amplitudes
-					#if defined(PHASE_ONLY) || defined(PHASE_ONLY_FXD_AMP)
-					run_data->a_n[i]   = (1.0 / pow(run_data->k[i], sys_vars->ALPHA));
+					#if defined(PHASE_ONLY) || defined(PHASE_ONLY_FXD_AMP) || defined(AMP_ONLY) || defined(AMP_ONLY_FXD_PHASE)
+					run_data->a_n[i]   = (1.0 / pow(run_data->k[i], sys_vars->ALPHA)) / sqrt(75);
 					run_data->phi_n[i] = pow(i - 1, 2.0);
 					#endif
 
@@ -1357,7 +1356,7 @@ void InitialConditions(const long int N) {
 					run_data->b[i] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * cexp(I * (pow(i - 1, 4.0))) * 1e-2 / sqrt(75);
 					// Record the phases and amplitudes
 					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY)
-					run_data->b_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-2;
+					run_data->b_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-2 / sqrt(75);
 					run_data->psi_n[i] = cexp(I * pow(i - 1, 4.0));
 					#endif
 					#endif

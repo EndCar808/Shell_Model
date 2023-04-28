@@ -493,7 +493,7 @@ void WriteStatsToFile(void) {
     // ------------------------------------
 	///-------------------------- Write velocity field 
 	dims1D[0] = sys_vars->N;
-	#if defined(PHASE_ONLY)
+	#if defined(PHASE_ONLY) || defined(AMP_ONLY)
 	if ( (H5LTmake_dataset(file_info->stats_file_handle, "VelAmps", D1, dims1D, H5T_NATIVE_DOUBLE, &(run_data->a_n[2]))) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "VelAmps");
 	}
@@ -677,7 +677,7 @@ void WriteStatsToFile(void) {
 	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	///-------------------------- Write Magnetic field 
 	dims1D[0] = sys_vars->N;
-	#if defined(PHASE_ONLY)
+	#if defined(PHASE_ONLY) || defined(AMP_ONLY)
 	if ( (H5LTmake_dataset(file_info->stats_file_handle, "MagAmps", D1, dims1D, H5T_NATIVE_DOUBLE, &(run_data->b_n[2]))) < 0) {
 		printf("\n["MAGENTA"WARNING"RESET"] --- Failed to make dataset ["CYAN"%s"RESET"]\n", "MagAmps");
 	}

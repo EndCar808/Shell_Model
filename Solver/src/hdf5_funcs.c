@@ -933,7 +933,7 @@ void ReadInputFile(const long int N) {
 	// -------------------------------
 	// Read In Initial Condition
 	// -------------------------------
-	#if defined(PHASE_ONLY)
+	#if defined(PHASE_ONLY) || defined(AMP_ONLY)
 	///----------------------------- Read in initial velocity amps and phases
 	// Create tmp array to read in data
 	double* tmp_u_amp = (double* )malloc(sizeof(double) * N);
@@ -1021,10 +1021,10 @@ void ReadInputFile(const long int N) {
 			// Print warning to screen
 			printf("\n["MAGENTA"WARNING"RESET"] --- Failed to read input dataset ["CYAN"%s"RESET"] ---> Using uniformly random generated phases instead!\n\n", "VelPhases");
 
-	// Uniformly randomly generated phases
-	for (int i = 0; i < N; ++i) {
-		tmp_u_phase[i] = genrand64_real1() * 2.0 * M_PI;
-	}			
+		// Uniformly randomly generated phases
+		for (int i = 0; i < N; ++i) {
+			tmp_u_phase[i] = genrand64_real1() * 2.0 * M_PI;
+		}			
 	}
 		
 		// Create the modes from the phase/amplitudes

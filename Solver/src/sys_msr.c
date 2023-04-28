@@ -127,7 +127,7 @@ void ComputeSystemMeasurables(double t, const long int iter, const long int save
 
 
     ///----------------------- Get Fields from Phase Only data or Elsassar Variables
-    #if defined(PHASE_ONLY) || defined(__ELSASSAR_MHD)
+    #if defined(PHASE_ONLY) || defined(AMP_ONLY) || defined(__ELSASSAR_MHD)
     // Get the input velocity and magnetic fields for the nonlinear term
     for (int i = 0; i < N; ++i) {
         // Get proper index
@@ -137,7 +137,7 @@ void ComputeSystemMeasurables(double t, const long int iter, const long int save
         #if defined(__ELSASSAR_MHD)
         run_data->u[n] = (run_data->z_plus[n] + run_data->z_minus[n]) / 2.0;
         run_data->b[n] = (run_data->z_plus[n] - run_data->z_minus[n]) / 2.0;
-        #elif defined(PHASE_ONLY)
+        #elif defined(PHASE_ONLY) || defined(AMP_ONLY) 
         run_data->u[n] = run_data->a_n[n] * cexp(I * run_data->phi_n[n]);
         #if defined(__MAGNETO)
         run_data->b[n] = run_data->b_n[n] * cexp(I * run_data->psi_n[n]);

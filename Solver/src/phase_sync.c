@@ -44,7 +44,7 @@ void ComputePhaseSyncData(const long int iter) {
 	// -------------------------------
 	// Get the Phases
 	// -------------------------------
-	#if !defined(PHASE_ONLY)
+	#if !defined(PHASE_ONLY) || !defined(AMP_ONLY)
 	for (int i = 0; i < N; ++i)	{
 		n = i + 2;
 
