@@ -36,13 +36,6 @@ void CreateOutputFilesWriteICs(const long int N) {
 	// Initialize variables
 	herr_t status;
 
-	// ------------------------------------------------
-    // Initialize Datatype ID For HDF5
-    // ------------------------------------------------
-    if (sys_vars->INPUT_FILE_FLAG == NO_INPUT_FILE) {
-    	file_info->COMPLEX_DTYPE = CreateComplexDatatype();
-    }
-
 	///////////////////////////
 	/// Create & Open Files
 	///////////////////////////
@@ -925,11 +918,6 @@ void ReadInputFile(const long int N) {
 		exit(1);
 	}
 
-	// ------------------------------------------------
-    // Initialize Datatype ID For HDF5
-    // ------------------------------------------------
-    file_info->COMPLEX_DTYPE = CreateComplexDatatype();
-
 	// -------------------------------
 	// Read In Initial Condition
 	// -------------------------------
@@ -1127,10 +1115,75 @@ void ReadInputFile(const long int N) {
 	}
 }
 /**
+ * Wrapper function for reading in the amplitudes or the phases of the HD or MHD models
+ * @param file_name Name of input file
+ * @param dset      Name of the input dataset
+ * @param data_type Which dataset to write of in the solver i.e., vel amps, vel phases, mag ams, mag phases
+ */
+void ReadDataInputFile(char* file_name, char* dset, char* data_type) {
+
+	// Initialize variables
+	herr_t status;
+	int n;
+
+	// Allocate temppory memory
+	double* tmp = (double* )malloc(sizeof(double) * sys_vars->N);
+
+	// Open file
+	file_info->input_file_handle = H5Fopen(file_name, H5F_ACC_RDONLY, H5P_DEFAULT);
+	if (file_info->input_file_handle < 0) {
+		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to open input file ["CYAN"%s"RESET"]\n-->> Exiting...\n", file_name);
+		exit(1);
+	}
+
+	// Read in data
+	H5LTread_dataset(file_info->input_file_handle, dset, H5T_NATIVE_DOUBLE, tmp);
+
+	// Write the input dataset to the correct array
+	for (int i = 0; i < sys_vars->N + 4; ++i) {
+		if(i >= 2 && i < sys_vars->N + 2) {
+			if (!(strcmp(data_type, "VEL_AMP"))) {
+				run_data->a_n[i] = tmp[i - 2];
+			}
+			else if (!(strcmp(data_type, "VEL_PHASE"))) {
+				run_data->phi_n[i] = tmp[i - 2];
+			}
+			else if (!(strcmp(data_type, "MAG_AMP"))) {
+				run_data->b_n[i] = tmp[i - 2];
+			}
+			else if (!(strcmp(data_type, "MAG_PHASE"))) {
+				run_data->psi_n[i] = tmp[i - 2];
+			}
+		}
+		else {
+			if (!(strcmp(data_type, "VEL_AMP"))) {
+				run_data->a_n[i] = 0.0;
+			}
+			else if (!(strcmp(data_type, "VEL_PHASE"))) {
+				run_data->phi_n[i] = 0.0;
+			}
+			else if (!(strcmp(data_type, "MAG_AMP"))) {
+				run_data->b_n[i] = 0.0;
+			}
+			else if (!(strcmp(data_type, "MAG_PHASE"))) {
+				run_data->psi_n[i] = 0.0;
+			}
+		}
+	}
+
+	status = H5Fclose(file_info->input_file_handle);
+	if (status < 0) {
+		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to close input file ["CYAN"%s"RESET"] at: Snap = ["CYAN"%s"RESET"]\n-->> Exiting...\n", file_info->input_file_name, "initial");
+		exit(1);		
+	}
+
+	free(tmp);
+}
+/**
  * Function to read in the amplitudes from a datafile
  * @param i The snapshot to read in either random or sequential
  */
-void ReadAmpInputFIle(int i) {
+void ReadAmpInputFile(int i) {
 	herr_t status;
 	hid_t dset, dspace;
 	char dset_name[64];
@@ -1371,7 +1424,9 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	// -------------------------------
 	// Write System Measurables
 	// -------------------------------
+	#if defined(__SYS_MEASURES)
 	WriteSystemMeasuresToFile();
+	#endif
 
 	// -------------------------------
 	// Write Phase Sync Stats
@@ -1391,11 +1446,13 @@ void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_ind
 	// -----------------------------------
 	// Close Files for the final time
 	// -----------------------------------
+	#if defined(__SYS_MEASURES)
 	status = H5Fclose(file_info->sys_msr_file_handle);
 	if (status < 0) {
 		fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to close main output file: "CYAN"%s"RESET" \n-->> Exiting....\n", file_info->output_file_name);
 		exit(1);
 	}
+	#endif
 	#if defined(__STATS)
 	status = H5Fclose(file_info->stats_file_handle);
 	if (status < 0) {

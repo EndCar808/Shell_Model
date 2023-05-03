@@ -45,6 +45,7 @@ void InitialConditions(const long int N);
 void InitializeIntegrationVariables(double* t0, double* t, double* dt, double* T, long int* trans_steps);
 double GetTimesetp(void);
 void InitializeForicing(const long int N, double dt);
+void GetField(long int iters, long int repl_iter, hid_t memspace, hid_t dspace, hid_t dataset);
 // Forcing Functions
 void ComputeForcing(double dt, const long int N);
 // Memory Functions

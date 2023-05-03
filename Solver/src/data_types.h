@@ -236,6 +236,8 @@ typedef struct system_vars_struct {
 	double max_dt;						// Largest timestep achieved when adaptive stepping is on
 	int print_every;                    // Records how many iterations are performed before printing to file
 	long int SAVE_EVERY;				// For specifying how often to print
+	long int STATS_EVERY;				// For specifying how often to compute stats
+	int REPL_EVERY;						// For specifying how often to replace amps/phases
 	double force_scale_var;				// The scaling variable for the forced modes
 	int force_k; 						// The forcing wavenumber 
 	int local_forcing_proc;				// Identifier used to indicate which process contains modes that need to be forced
@@ -275,6 +277,7 @@ typedef struct runtime_data_struct {
 	double complex* b;	      				// Fourier space vorticity
 	double complex* rhs; 		  			// Array to hold the RHS of the equation of motion
 	double complex* nonlinterm; 			// Array to hold the nonlinear term
+	double complex* tmp_input; 				// Array to hold temp input modes
 	double* a_n;			  				// Fourier vorticity amplitudes
 	double* a_n_t_avg;		  				// Fourier vorticity amplitudes
 	double* tmp_a_n;		  				// Array to hold the amplitudes of the fourier vorticity before marching forward in time
@@ -364,6 +367,8 @@ typedef struct HDF_file_info_struct {
 	char input_dir[512];			 // Inputs directory
 	char output_dir[512];			 // Output directory
 	char output_tag[64]; 			 // Tag to be added to the output directory
+	char input_str[64];				 // The input dataset string to read data from
+	int input_param;				 // Parameter to be used when reading in data
 	hid_t input_file_handle;		 // File handle for the input file
 	hid_t output_file_handle;		 // Main file handle for the output file 
 	hid_t stats_file_handle;		 // Stats file handle for the output file 

@@ -47,11 +47,17 @@ void Solve(void) {
 
 	// Initialize variables
 	const long int N = sys_vars->N;
+	int n;
 
 	// Initialize the Runge-Kutta struct
 	struct RK_data_struct* RK_data;	   // Initialize pointer to a RK_data_struct
 	struct RK_data_struct RK_data_tmp; // Initialize a RK_data_struct
 	RK_data = &RK_data_tmp;		       // Point the ptr to this new RK_data_struct
+
+	// ------------------------------------------------
+    // Initialize Datatype ID For HDF5
+    // ------------------------------------------------
+	file_info->COMPLEX_DTYPE = CreateComplexDatatype();
 
 	// -------------------------------
 	// Allocate memory
@@ -118,7 +124,9 @@ void Solve(void) {
 	// Create & Open Output File
 	// -------------------------------
 	// Inialize system measurables
+	#if defined(__SYS_MEASURES)
 	InitializeSystemMeasurables(RK_data);
+	#endif
 
 	// Initialize the phase sync objects
 	#if defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC_STATS)
@@ -129,41 +137,73 @@ void Solve(void) {
 	CreateOutputFilesWriteICs(N);
 
 	// Print update of the initial conditions to the terminal
+	#if defined(__PRINT_SCREEN)
 	PrintUpdateToTerminal(iters - 1, t0, dt, T, iters - 1);
+	#endif
 
-	int change_amp = 1e2;
-	int amp_indx   = 1;
+	// -------------------------------
+	// Initialize Replacement variables
+	// -------------------------------
+	long int repl_iter   = 1;
+	hid_t dataset, dspace, memspace;
+	hsize_t offset[2];
+	hsize_t count[2];
+    herr_t status;
+    hsize_t dimsm[2];
+    hsize_t offset_out[2];
+    hsize_t count_out[2];
+	if (!(strcmp(sys_vars->u0, "AO_INPUT_PHASE_REPLACE"))) {
+		// Open input file
+		file_info->input_file_handle = H5Fopen(file_info->input_file_name, H5F_ACC_RDONLY, H5P_DEFAULT);
+		if (file_info->input_file_handle < 0) {
+			fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to open input file ["CYAN"%s"RESET"]\n-->> Exiting...\n", file_info->input_file_name);
+			exit(1);
+		}
+		printf("Input File: ["MAGENTA"%s"RESET"]\n\nReplacing Every: %d\n\n", file_info->input_file_name, sys_vars->REPL_EVERY);
 
+		// Open dataset
+		dataset = H5Dopen(file_info->input_file_handle, "VelModes", H5P_DEFAULT);
 
+		// Get dataspace id
+		dspace = H5Dget_space(dataset);
+
+		// Allocate temporary input
+ 		run_data->tmp_input = (double complex* )malloc(sizeof(double complex) * sys_vars->N);
+	    
+	    // Create memory space for hyperslabbing
+        dimsm[0] = 1;
+        dimsm[1] = sys_vars->N;
+        memspace = H5Screate_simple(2, dimsm, NULL);   
+
+        // Define hyperslab for memory space
+        offset_out[0] = 0;
+        offset_out[1] = 0;
+        count_out[0]  = 1;
+        count_out[1]  = sys_vars->N;
+        status = H5Sselect_hyperslab(memspace, H5S_SELECT_SET, offset_out, NULL, count_out, NULL);
+	}
 
 	//////////////////////////////
 	// Begin Integration
 	//////////////////////////////
 	while (t <= T) {
 
-		#if defined(PHASE_ONLY)
-		if (!(strcmp(sys_vars->u0, "PO_RAND_AMPS"))) {
-			int indx = 0;
-			for (int n = 0; n < sys_vars->N; ++n) {
-				// Generate a unifrorm random value
-				double r1 = genrand64_real1();
-
-				for (int s = 0; s < run_data->num_bin_vals[n]; ++s) {
-					if (run_data->a_n_cdf_vals[n][s] > r1) {
-						indx = s;
-						break;
-					}
-				}
-
-				// Get the sample from the amplitude data
-				run_data->a_n[n + 2] = run_data->a_n_pdf_bin_vals[n][indx];
-			}
-		}
-		else if (!(strcmp(sys_vars->u0, "PO_AMP_INPUT")) && (iters % change_amp == 0)) {
-			ReadAmpInputFIle(amp_indx);
-			amp_indx+=1;
+		// -------------------------------	
+		// Get Field
+		// -------------------------------
+		#if defined(PHASE_ONLY) || defined(AMP_ONLY) || defined(AMP_ONLY_FXD_PHASE)
+		GetField(iters, repl_iter * sys_vars->REPL_EVERY, memspace, dspace, dataset);
+		if ((iters > 1) && (iters % sys_vars->REPL_EVERY == 0)) {
+			repl_iter++;
 		}
 		#endif
+		
+		// printf("t: %lf\n", t);
+		// for (int i = 0; i < N + 4; ++i) {
+		// 	printf("k[%d]: %1.2lf\tu[%d]: %1.16lf %1.16lf\ta[%d]: %1.16lf\tp[%d]: %1.16lf\n", i, run_data->k[i], i, creal(run_data->u[i]), cimag(run_data->u[i]), i, cabs(run_data->u[i]), i, carg(run_data->u[i]));
+		// }
+		// printf("\n");
+
 
 		// -------------------------------	
 		// Integration Step
@@ -178,12 +218,14 @@ void Solve(void) {
 		AB4CNStep(dt, (long int)iters, N, RK_data);
 		#endif
 
+		// exit(1);
+
 		// -------------------------------
 		// Compute System Quantities
 		// -------------------------------
 		// Compute stats
 		#if defined(STATS)
-		if (iters < trans_steps) {
+		if ((iters < trans_steps) || ((iters >= trans_steps) && (iters % sys_vars->STATS_EVERY == 0))) {
 			ComputeStats(iters, save_data_indx);
 		}
 		#endif
@@ -194,16 +236,13 @@ void Solve(void) {
 		if (iters % sys_vars->SAVE_EVERY == 0) {
 
 			// Record System Measurables
+			#if defined(__SYS_MEASURES)
 			ComputeSystemMeasurables(t, iters, save_data_indx, RK_data);
+			#endif
 
 			// Compute the conserved phases and phase order parameters
 			#if defined(__CONSERVED_PHASES) || defined(__PHASE_SYNC) || defined(__PHASE_SYNC_STATS)
 			ComputePhaseSyncData(iters);
-			#endif
-
-			// Compute stats
-			#if defined(STATS)
-			ComputeStats(iters, save_data_indx);
 			#endif
 
 			// If and when transient steps are complete write to file
@@ -245,13 +284,13 @@ void Solve(void) {
 		// Update timestep & iteration counter
 		iters++;
 		if (sys_vars->ADAPT_STEP_FLAG == ADAPTIVE_STEP) {
-			t += dt; 
+			t += t0 + dt; 
 		}
 		else {
 			#if defined(__DPRK5)
-			t += dt;
+			t += t0 + dt;
 			#else
-			t = iters * dt;
+			t = t0 + iters * dt;
 			#endif
 		}
 
@@ -271,16 +310,24 @@ void Solve(void) {
 		WriteDataToFile(t, iters, sys_vars->num_print_steps - 1);
 	}
 	// Compute System Measures on final state
+	#if defined (__SYS_MEASURES)
 	ComputeSystemMeasurables(t, iters, sys_vars->num_print_steps - 1, RK_data);
+	#endif
 
 	// Write the stats and system measures to file
 	FinalWriteAndCloseOutputFile(N, iters, sys_vars->num_print_steps - 1);
+
+	if (!(strcmp(sys_vars->u0, "AO_INPUT_PHASE_REPLACE"))) {
+		H5Dclose(dataset);
+		H5Sclose(dspace);
+		H5Sclose(memspace);
+		H5Fclose(file_info->input_file_handle);
+	}
 
 	// -------------------------------
 	// Clean Up 
 	// -------------------------------
 	FreeMemory(RK_data);
-
 }
 /**
  * Function to perform one step using the 4th order Runge-Kutta method
@@ -323,7 +370,7 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		n = i + 2;
 
 		// Get the input fields
-		#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
+		#if (defined(PHASE_ONLY) || defined(AMP_ONLY)) && !defined(__ELSASSAR_MHD)
 		// Get the Fourier velocity from the Fourier phases and amplitudes
 		RK_data->RK_u_tmp[n] = run_data->a_n[n] * cexp(I * run_data->phi_n[n]);
 		#if defined(__MAGNETO)
@@ -562,7 +609,9 @@ void IntFacRK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		#endif
 		///-------------------- Amp Only resetting in fixed phase mode
 		#if defined(AMP_ONLY_FXD_PHASE) && !defined(__ELSASSAR_MHD)
-		run_data->u[n] = cabs(run_data->u[n]) * cexp(I * ao_reset_phase_u);
+		// if (n != sys_vars->force_k + 1) {
+			run_data->u[n] = cabs(run_data->u[n]) * cexp(I * ao_reset_phase_u);
+		// }
 
 		// Record the phases and amplitudes
 		run_data->a_n[n]   = cabs(run_data->u[n]);
@@ -624,7 +673,7 @@ void RK4Step(const double dt, const long int N, RK_data_struct* RK_data) {
 		n = i + 2;
 
 		// Get the input fields
-		#if defined(PHASE_ONLY) && !defined(__ELSASSAR_MHD)
+		#if (defined(PHASE_ONLY) || defined(AMP_ONLY)) && !defined(__ELSASSAR_MHD)
 		// Get the Fourier velocity from the Fourier phases and amplitudes
 		RK_data->RK_u_tmp[n] = run_data->a_n[n] * cexp(I * run_data->phi_n[n]);
 		#if defined(__MAGNETO)
@@ -1221,8 +1270,10 @@ void InitialConditions(const long int N) {
 
 	// Initialize variables
 	double r1, r3;
+	double amp_u, phase_u;
 	#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 	double r2, r4;
+	double amp_b, phase_b;
 	#endif
 
 	// ------------------------------------------------
@@ -1233,25 +1284,10 @@ void InitialConditions(const long int N) {
 
   	printf("\nRNG Seed: %lld\n\n", init_seed);
 
-
-	if(!(strcmp(sys_vars->u0, "AO_ALGND_PHASE"))) {
-		// Set phi_1 = to forcing phase pi/4
-		run_data->phi_n[2] = M_PI / 4.0;
-		run_data->a_n[2]   = genrand64_real1();
-		run_data->u[2]     = run_data->a_n[2] * cexp(I * run_data->phi_n[2]);
-
-		// Set phi_2 = random as this is free variable
-		run_data->phi_n[3] = genrand64_real1();
-		run_data->a_n[3]   = genrand64_real1();
-		run_data->u[3]     = run_data->a_n[3] * cexp(I * run_data->phi_n[3]);
-		// The rest of the phases are found from the triad conditions and the aligned triad values of 3pi/2
-	}
-
-
 	// ------------------------------------------------
     // Check if Reading From Input File
     // ------------------------------------------------
-    if (sys_vars->INPUT_FILE_FLAG == INPUT_FILE || !(strcmp(sys_vars->u0, "INPUT_FILE"))) {
+    if (sys_vars->INPUT_FILE_FLAG == INPUT_FILE && !(strcmp(sys_vars->u0, "INPUT_FILE"))) {
 		// ------------------------------------------------
 	    // Read in Initial Condition From File
 	    // ------------------------------------------------
@@ -1321,7 +1357,7 @@ void InitialConditions(const long int N) {
 		// ------------------------------------------------
 	    // Randomly generate amplitudes from File
 	    // ------------------------------------------------
-	    ReadAmpInputFIle(0);
+	    ReadAmpInputFile(0);
 	    for (int i = 0; i < sys_vars->N + 4; ++i) {
 	    	if(i >= 2 && i < sys_vars->N + 2) {
 				run_data->phi_n[i] = 2.0 * M_PI * genrand64_real1();
@@ -1331,6 +1367,92 @@ void InitialConditions(const long int N) {
 				run_data->phi_n[i] = 0.0;
 				run_data->u[i]     = 0.0 + 0.0 * I;
 	    	}
+	    }
+	}
+    else if (!(strcmp(sys_vars->u0, "AO_INPUT_PHASE")) || !(strcmp(sys_vars->u0, "AO_INPUT_PHASE_REPLACE"))) {
+		// ------------------------------------------------
+	    // Phases from Input File
+	    // ------------------------------------------------
+	    // Read in phases from file
+	    if (!(strcmp(sys_vars->u0, "AO_INPUT_PHASE"))) {
+	    	ReadDataInputFile(file_info->input_file_name, file_info->input_str, "VEL_PHASE");
+
+		    // Construct The amplitudes, phases and modes
+		    for (int i = 0; i < sys_vars->N + 4; ++i) {
+		    	if(i >= 2 && i < sys_vars->N + 2) {
+					run_data->a_n[i] = genrand64_real1();
+					run_data->u[i]   = run_data->a_n[i] * cexp(I * run_data->phi_n[i]);
+		    	}
+		    	else {
+					run_data->a_n[i] = 0.0;
+					run_data->u[i]   = 0.0 + 0.0 * I;
+		    	}
+		    }
+	    }
+	    else {
+	    	// Initialize variables
+		    herr_t status;
+		    hsize_t dimsm[2];
+		    hsize_t offset_out[2];
+		    hsize_t count_out[2];
+		    hsize_t offset[2];
+		    hsize_t count[2];
+		    hid_t dataset, dspace, memspace;
+
+			// Open input file
+			file_info->input_file_handle = H5Fopen(file_info->input_file_name, H5F_ACC_RDONLY, H5P_DEFAULT);
+			if (file_info->input_file_handle < 0) {
+				fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to open input file ["CYAN"%s"RESET"]\n-->> Exiting...\n", file_info->input_file_name);
+				exit(1);
+			}
+
+			// Open dataset
+			dataset = H5Dopen(file_info->input_file_handle, "VelModes", H5P_DEFAULT);
+
+			// Get dataspace id
+			dspace = H5Dget_space(dataset);
+
+			// Allocate temporary input
+	 		run_data->tmp_input = (double complex* )malloc(sizeof(double complex) * sys_vars->N);
+		    
+		    // Create memory space for hyperslabbing
+	        dimsm[0] = 1;
+	        dimsm[1] = sys_vars->N;
+	        memspace = H5Screate_simple(2, dimsm, NULL);   
+
+	        // Define hyperslab for memory space
+	        offset_out[0] = 0;
+	        offset_out[1] = 0;
+	        count_out[0]  = 1;
+	        count_out[1]  = sys_vars->N;
+	        status = H5Sselect_hyperslab(memspace, H5S_SELECT_SET, offset_out, NULL, count_out, NULL);
+
+    		// Select appropriate hyperslab
+            offset[0] = 0;
+    	    offset[1] = 0;
+    	    count[0]  = 1;
+    	    count[1]  = sys_vars->N;
+    	    status = H5Sselect_hyperslab(dspace, H5S_SELECT_SET, offset, NULL, count, NULL);
+
+    	    // Read in data
+    	    double complex* tmp = (double complex* )malloc(sizeof(double complex) * sys_vars->N);
+    	    status = H5Dread(dataset, file_info->COMPLEX_DTYPE, memspace, dspace, H5P_DEFAULT, tmp);
+
+    	    // Construct The amplitudes, phases and modes
+    	    for (int i = 0; i < sys_vars->N + 4; ++i) {
+    	    	if(i >= 2 && i < sys_vars->N + 2) {
+					run_data->u[i]     = tmp[i - 2];
+					run_data->phi_n[i] = carg(tmp[i - 2]);
+					run_data->a_n[i]   = cabs(tmp[i - 2]);
+    	    	}
+    	    	else {
+					run_data->u[i]     = 0.0 + 0.0 * I;
+					run_data->phi_n[i] = 0.0;
+					run_data->a_n[i]   = 0.0;
+    	    	}
+    	    }
+
+    	    free(tmp);
 	    }
 	}
     else {
@@ -1365,7 +1487,7 @@ void InitialConditions(const long int N) {
 					// Scaling in N Initial Condition
 					// ------------------------------------------------
 					// Initialize the velocity field
-					run_data->u[i] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) * cexp(I * (pow(i - 1, 2.0) + genrand64_real1())) / sqrt(75);
+					run_data->u[i] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) * cexp(I * (pow(i - 1, 2.0) * genrand64_real1())) / sqrt(75);
 					// Record the phases and amplitudes
 					#if defined(PHASE_ONLY) || defined(PHASE_ONLY_FXD_AMP)
 					run_data->a_n[i]   = (1.0 / pow(run_data->k[i], sys_vars->ALPHA));
@@ -1374,7 +1496,7 @@ void InitialConditions(const long int N) {
 
 					// Initialize the magnetic field
 					#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
-					run_data->b[i] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * cexp(I * (pow(i - 1, 4.0) + genrand64_real1())) * 1e-2 / sqrt(75);
+					run_data->b[i] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * cexp(I * (pow(i - 1, 4.0) * genrand64_real1())) * 1e-2 / sqrt(75);
 					// Record the phases and amplitudes
 					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY)
 					run_data->b_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->BETA) * 1e-2;
@@ -1382,7 +1504,7 @@ void InitialConditions(const long int N) {
 					#endif
 					#endif
 				}
-				else if(!(strcmp(sys_vars->u0, "RANDOM"))) {
+				else if(!(strcmp(sys_vars->u0, "PO_PLAW_RND")) || !(strcmp(sys_vars->u0, "PO_PLAWEXP_RND"))) {
 					// ------------------------------------------------
 					// Default - Random Initial Conditions
 					// ------------------------------------------------	
@@ -1392,118 +1514,111 @@ void InitialConditions(const long int N) {
 					r2 = genrand64_real1();
 					#endif
 
-					// Initialize the velocity field
-					run_data->u[i] = 1.0 / pow(run_data->k[i], sys_vars->ALPHA) * cexp(I * r1 * 2.0 * M_PI); // *1e-3
-					// Record the phases and amplitudes
-					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY)
-					run_data->a_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->ALPHA); // *1e-3
-					run_data->phi_n[i] = r1 * 2.0 * M_PI;
-					#endif
-
-					// Initialize the magnetic field
-					#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
-					run_data->b[i] = 1.0 / pow(run_data->k[i], sys_vars->BETA) * cexp(I * r2 * 2.0 * M_PI); // *1e-3
-
-					// Record the phases and amplitudes
-					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY)
-					run_data->b_n[i]   = 1.0 / pow(run_data->k[i], sys_vars->BETA); // *1e-3
-					run_data->psi_n[i] = r2 * 2.0 * M_PI;
-					#endif
-					#endif
-				}
-				else if(!(strcmp(sys_vars->u0, "RANDOM_EXP"))) {
-					// ------------------------------------------------
-					// Default - Random Initial Conditions
-					// ------------------------------------------------	
-					// Get random uniform number
-					r1 = genrand64_real1();
-					#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
-					r2 = genrand64_real1();
-					#endif
-
-					// Initialize the velocity field
-					run_data->u[i] = RAND_EXP_C / pow(run_data->k[i], sys_vars->ALPHA) * cexp(-RAND_EXP_B * run_data->k[i]) * cexp(I * r1 * 2.0 * M_PI); // *1e-3
-					// Record the phases and amplitudes
-					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY)
-					run_data->a_n[i]   = RAND_EXP_C / pow(run_data->k[i], sys_vars->ALPHA) * cexp(-RAND_EXP_B * run_data->k[i]); // *1e-3
-					run_data->phi_n[i] = r1 * 2.0 * M_PI;
-					#endif
-
-					// Initialize the magnetic field
-					#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
-					run_data->b[i] = RAND_EXP_C / pow(run_data->k[i], sys_vars->BETA) * cexp(-RAND_EXP_B * run_data->k[i]) * cexp(I * r2 * 2.0 * M_PI); // *1e-3
-
-					// Record the phases and amplitudes
-					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY)
-					run_data->b_n[i]   = RAND_EXP_C / pow(run_data->k[i], sys_vars->BETA) * cexp(-RAND_EXP_B * run_data->k[i]); // *1e-3
-					run_data->psi_n[i] = r2 * 2.0 * M_PI;
-					#endif
-					#endif
-				}
-				else if(!(strcmp(sys_vars->u0, "AO_RND_PHASE"))) {
-					// ------------------------------------------------
-					// Default - Random Initial Conditions
-					// ------------------------------------------------	
-					// Get random uniform number
-					r1        = genrand64_real1();
-					double a1 = genrand64_real1();
-					#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
-					r2        = genrand64_real1();
-					double b1 = genrand64_real1();
-					#endif
-
-					// Initialize the velocity field
-					run_data->u[i] = a1 * cexp(I * r1 * 2.0 * M_PI); 
-					// Record the phases and amplitudes
-					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY)
-					run_data->a_n[i]   = a1; 
-					run_data->phi_n[i] = r1 * 2.0 * M_PI;
-					#endif
-
-					// Initialize the magnetic field
-					#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
-					run_data->b[i] = b1 * cexp(I * r2 * 2.0 * M_PI);
-
-					// Record the phases and amplitudes
-					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY)
-					run_data->b_n[i]   = b1;
-					run_data->psi_n[i] = r2 * 2.0 * M_PI;
-					#endif
-					#endif
-				}
-				else if(!(strcmp(sys_vars->u0, "AO_ALGND_PHASE"))) {
-					// ------------------------------------------------
-					// Default - Random Initial Conditions
-					// ------------------------------------------------	
-					if (i > 3) {
-						// Get random uniform number
-						double a1 = genrand64_real1();
+					// Get the amp and phase
+					if(!(strcmp(sys_vars->u0, "PO_PLAW_RND"))) {
+						amp_u   = 1.0 / pow(run_data->k[i], sys_vars->ALPHA);
+						phase_u = 2.0 * M_PI * r1;
 						#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
-						double b1 = genrand64_real1();
-						#endif
-
-						// Get the phase from the triad condition 
-						run_data->phi_n[i] = 3.0 * M_PI / 2.0 - run_data->phi_n[i - 1] - run_data->phi_n[i - 2]; 
-
-						// Initialize the velocity field
-						run_data->u[i] = a1 * cexp(I * run_data->phi_n[i]); 
-						// Record the phases and amplitudes
-						#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY)
-						run_data->a_n[i]   = a1; 
-						run_data->phi_n[i] = run_data->phi_n[i];
-						#endif
-
-						// Initialize the magnetic field
-						#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
-						run_data->b[i] = b1 * cexp(I * r2 * 2.0 * M_PI);
-
-						// Record the phases and amplitudes
-						#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY)
-						run_data->b_n[i]   = b1;
-						run_data->psi_n[i] = r2 * 2.0 * M_PI;
-						#endif
+						amp_b   = 1.0 / pow(run_data->k[i], sys_vars->BETA);
+						phase_b = 2.0 * M_PI * r2;
 						#endif
 					}
+					else if (!(strcmp(sys_vars->u0, "PO_PLAWEXP_RND"))) { 
+						amp_u   = RAND_EXP_C / pow(run_data->k[i], sys_vars->ALPHA) * cexp(-RAND_EXP_B * run_data->k[i]);
+						phase_u = 2.0 * M_PI * r1;
+						#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+						amp_b   = RAND_EXP_C / pow(run_data->k[i], sys_vars->BETA) * cexp(-RAND_EXP_B * run_data->k[i]);
+						phase_b = 2.0 * M_PI * r2;
+						#endif
+					}
+
+					// Initialize the velocity field
+					run_data->u[i] = amp_u * cexp(I * phase_u);
+					// Record the phases and amplitudes
+					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY)
+					run_data->a_n[i]   = amp_u;
+					run_data->phi_n[i] = phase_u;
+					#endif
+
+					// Initialize the magnetic field
+					#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+					run_data->b[i] = amp_b * cexp(I * phase_b);
+					// Record the phases and amplitudes
+					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY)
+					run_data->b_n[i]   = amp_b;
+					run_data->psi_n[i] = phase_b;
+					#endif
+					#endif
+				}
+				else if(!(strcmp(sys_vars->u0, "AO_RND_PHASE")) || !(strcmp(sys_vars->u0, "AO_ALGND_PHASE")) || !(strcmp(sys_vars->u0, "AO_ZERO_PHASE")) || !(strcmp(sys_vars->u0, "AO_ALGND_PHASE_SD")) || !(strcmp(sys_vars->u0, "AO_ALGND_PHASE_JTR"))) {
+					// ------------------------------------------------
+					// Default - Random Initial Conditions
+					// ------------------------------------------------	
+					// Get random uniform number in (0.0, 1.0) for ampluitudes
+					double a1 = 1.0 / pow(run_data->k[i], sys_vars->ALPHA); //genrand64_real3();
+					#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+					double b1 = 1.0 / pow(run_data->k[i], sys_vars->BETA); //genrand64_real3();
+					#endif
+
+					// Get the amp and phase
+					if(!(strcmp(sys_vars->u0, "AO_RND_PHASE"))) {
+						r1      = genrand64_real1();
+						amp_u   = a1;
+						phase_u = 2.0 * M_PI * r1;
+						#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+						r2      = genrand64_real1();
+						amp_b   = b1;
+						phase_b = 2.0 * M_PI * r2;
+						#endif
+					}
+					else if (!(strcmp(sys_vars->u0, "AO_ALGND_PHASE")) || !(strcmp(sys_vars->u0, "AO_ALGND_PHASE_SD")) || !(strcmp(sys_vars->u0, "AO_ALGND_PHASE_JTR"))) {
+						if(i == 2) {
+							// Set phi_1 = to forcing phase pi/4
+							phase_u = M_PI / 4.0;
+							amp_u   = 1.0 / pow(run_data->k[2], sys_vars->ALPHA);
+						}
+						else if (i == 3) {
+							// Set phi_2 = random as this is free variable
+							phase_u = genrand64_real1() * 2.0 * M_PI;
+							amp_u   = 1.0 / pow(run_data->k[3], sys_vars->ALPHA);
+						}
+						else if (i > 3) {
+							amp_u   = a1;
+							phase_u = 3.0 * M_PI / 2.0 - run_data->phi_n[i - 1] - run_data->phi_n[i - 2];
+							#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+							amp_b   = b1;
+							phase_b = 3.0 * M_PI / 2.0 - run_data->psi_n[i - 1] - run_data->psi_n[i - 2];
+							#endif
+						}
+						printf("i: %d\tphi[%d]: %lf\n", i, i - 2, phase_u);
+					}
+					else if (!(strcmp(sys_vars->u0, "AO_ZERO_PHASE"))) {
+						amp_u   = a1;
+						phase_u = 0.0;
+						#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+						amp_b   = b1;
+						phase_b = 0.0;
+						#endif
+					}
+
+					// Initialize the velocity field
+					run_data->u[i] = amp_u * cexp(I * phase_u); 
+					// Record the phases and amplitudes
+					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY)
+					run_data->a_n[i]   = amp_u; 
+					run_data->phi_n[i] = phase_u;
+					#endif
+
+					// Initialize the magnetic field
+					#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
+					run_data->b[i] = amp_b * cexp(I * phase_b);
+
+					// Record the phases and amplitudes
+					#if defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY) || defined(AMP_ONLY_FXD_PHASE) || defined(AMP_ONLY)
+					run_data->b_n[i]   = amp_b;
+					run_data->psi_n[i] = phase_b;
+					#endif
+					#endif
 				}
 				else if(!(strcmp(sys_vars->u0, "ZERO_PHASE"))) {
 					// ------------------------------------------------
@@ -1620,9 +1735,104 @@ void InitialConditions(const long int N) {
 			// printf("a_n[%d]:\t%1.16lf\tphi[%d]:\t%1.16lf\tb_n[%d]:\t%1.16lf\tpsi[%d]:\t%1.16lf\n", i, run_data->a_n[i], i, run_data->phi_n[i], i, run_data->b_n[i], i, run_data->psi_n[i]);
 			// printf("a_n[%d]:\t%1.16lf\tphi[%d]:\t%1.16lf\n", i - 1, run_data->a_n[i], i - 1, run_data->phi_n[i]);
 		}
-		// printf("\n");
     }
 }
+void GetField(long int iters, long int repl_iter, hid_t memspace, hid_t dspace, hid_t dataset) {
+
+	// Initialize variables
+	double jitter;
+	char dset_str[64];
+	int n;
+
+	if (!(strcmp(sys_vars->u0, "PO_RAND_AMPS"))) {
+		int indx = 0;
+		for (int n = 0; n < sys_vars->N; ++n) {
+			// Generate a unifrorm random value
+			double r1 = genrand64_real1();
+
+			for (int s = 0; s < run_data->num_bin_vals[n]; ++s) {
+				if (run_data->a_n_cdf_vals[n][s] > r1) {
+					indx = s;
+					break;
+				}
+			}
+
+			// Get the sample from the amplitude data
+			run_data->a_n[n + 2] = run_data->a_n_pdf_bin_vals[n][indx];
+		}
+	}
+	else if (!(strcmp(sys_vars->u0, "PO_AMP_INPUT"))) {
+		ReadAmpInputFile(repl_iter);
+		repl_iter+=1;
+	}
+	else if (!(strcmp(sys_vars->u0, "AO_INPUT_PHASE_REPLACE")) && (iters > 1) && (iters % sys_vars->REPL_EVERY == 0)) {
+		// sprintf(dset_str, "Phase_t%ld", repl_iter * sys_vars->REPL_EVERY);
+		// H5LTread_dataset(file_info->input_file_handle, dset_str, H5T_NATIVE_DOUBLE, &(run_data->phi_n[2]));
+		// Initialize variables
+		herr_t status;
+		hsize_t offset[2];
+		hsize_t count[2];
+		double tmp_phase;
+
+		// Select appropriate hyperslab
+        offset[0] = repl_iter;
+	    offset[1] = 0;
+	    count[0]  = 1;
+	    count[1]  = sys_vars->N;
+	    status = H5Sselect_hyperslab(dspace, H5S_SELECT_SET, offset, NULL, count, NULL);
+
+	    // Read in data
+	    status = H5Dread(dataset, file_info->COMPLEX_DTYPE, memspace, dspace, H5P_DEFAULT, run_data->tmp_input);
+
+		// Get the current modes
+		for (int i = 0; i < sys_vars->N; ++i) {
+			n = i + 2;
+
+			tmp_phase = carg(run_data->tmp_input[i]);
+
+			// Get the velocity field from the phases
+			run_data->u[n] = cabs(run_data->u[n]) * cexp(I * tmp_phase);
+		}
+	}
+	else if (!(strcmp(sys_vars->u0, "AO_ALGND_PHASE_SD")) || !(strcmp(sys_vars->u0, "AO_ALGND_PHASE_JTR"))) {
+		// if (iters == 1) {
+			double* tmp_sd = (double* )malloc(sizeof(double) * sys_vars->N);
+			file_info->input_file_handle = H5Fopen(file_info->input_file_name, H5F_ACC_RDONLY, H5P_DEFAULT);
+			if (file_info->input_file_handle < 0) {
+				fprintf(stderr, "\n["RED"ERROR"RESET"] --- Unable to open input file ["CYAN"%s"RESET"]\n-->> Exiting...\n", file_info->input_file_name);
+				exit(1);
+			}
+			H5LTread_dataset(file_info->input_file_handle, file_info->input_str, H5T_NATIVE_DOUBLE, tmp_sd);
+			H5Fclose(file_info->input_file_handle);
+		// }
+
+		for (int i = 0; i < sys_vars->N; ++i) {
+			n = i + 2;
+
+			if (n == 2) {
+				run_data->phi_n[2] = M_PI / 4.0;
+			}
+			else if (n == 3){
+				run_data->phi_n[3] = M_PI * 2.0 * genrand64_real1();
+			}
+			else if (n < sys_vars->N + 2) {
+				// Get the appropriate jitter
+				jitter = (1.0 - (-1.0)) * genrand64_real1() + (-1);
+				if (!(strcmp(sys_vars->u0, "AO_ALGND_PHASE_SD"))) {
+					jitter *= tmp_sd[n - 2];
+				} 					
+
+				// Compute the phases
+				run_data->phi_n[n] = (-M_PI / 2.0 + jitter) - run_data->phi_n[n - 1] - run_data->phi_n[n - 2];
+			}
+
+			// Get the velocity field from the phases
+			run_data->u[n] = cabs(run_data->u[n]) * cexp(I * run_data->phi_n[n]);
+		}
+
+		free(tmp_sd);
+	}
+}	
 /**
  * Function to initialize the shell wavenumber array
  * 
@@ -1743,7 +1953,11 @@ void InitializeForicing(const long int N, double dt) {
 				double rand2 = genrand64_real1();
 
 				// Compute the forcing timescale
+				#if defined(PHASE_ONLY) || defined(AMP_ONLY)
+				tau_0 = 1.0 / (run_data->k[i] * run_data->a_n[i]);
+				#else
 				tau_0 = 1.0 / (run_data->k[i] * cabs(run_data->u[i]));
+				#endif
 
 				// Compute the forcing
 				run_data->forcing_u[i] = sqrt(- 2.0 * (dt / tau_0) * log10(rand1)) * cexp(I * 2.0 * M_PI * rand2);
@@ -1771,7 +1985,11 @@ void InitializeForicing(const long int N, double dt) {
 				double rand2 = genrand64_real1();
 
 				// Compute the forcing timescale
+				#if defined(PHASE_ONLY) || defined(AMP_ONLY)
+				tau_0 = 1.0 / (run_data->k[i] * run_data->a_n[i]);
+				#else
 				tau_0 = 1.0 / (run_data->k[i] * cabs(run_data->u[i]));
+				#endif
 
 				// Compute the forcing
 				run_data->forcing_u[i] = sys_vars->force_scale_var * sqrt(-2.0 * (dt / tau_0) * log10(rand1)) * cexp(I * 2.0 * M_PI * rand2);
@@ -1829,7 +2047,11 @@ void ComputeForcing(double dt, const long int N) {
 			rand2 = genrand64_real1();
 
 			// Compute the forcing timescale
+			#if defined(PHASE_ONLY) || defined(AMP_ONLY)
+			tau_0 = 1.0 / (run_data->k[i] * run_data->a_n[i]);
+			#else
 			tau_0 = 1.0 / (run_data->k[i] * cabs(run_data->u[i]));
+			#endif
 
 			// Compute the exponential prefactor
 			exp_fac = cexp(-dt / tau_0);
@@ -1849,7 +2071,11 @@ void ComputeForcing(double dt, const long int N) {
 			rand2 = genrand64_real1();
 
 			// Compute the forcing timescale
+			#if defined(PHASE_ONLY) || defined(AMP_ONLY)
+			tau_0 = 1.0 / (run_data->k[i] * run_data->a_n[i]);
+			#else
 			tau_0 = 1.0 / (run_data->k[i] * cabs(run_data->u[i]));
+			#endif
 
 			// printf("|u|: %lf \t|k|: %lf \t tau: %lf\n", cabs(run_data->u[i]), cabs(run_data->k[i]), tau_0);
 
@@ -2011,8 +2237,7 @@ double GetTimesetp(void) {
  */
 void PrintUpdateToTerminal(long int iters, double t, double dt, double T, long int save_data_indx) {
 
-	// Initialize variables
-	
+	#if defined(__SYS_MEASURES)	
 	if (iters < sys_vars->trans_iters) {
 		#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 		printf("Iter: %1.3g / %1.1g\tt: %1.6lf / %1.3lf\ttau_0: %1.2lf\tdt: %1.6g\tKE: %6.6g\tDISS_U: %6.6g\tDISS_B: %6.6g\tHEL_U: %6.6g\tHEL_B: %6.6g\tX-HEL: %6.6g\n", 
@@ -2070,6 +2295,15 @@ void PrintUpdateToTerminal(long int iters, double t, double dt, double T, long i
 				run_data->tot_kin_hel_flux[save_data_indx]);
 		#endif
 	}
+	#else
+	if (iters % (long int)1e4 == 0) {
+		printf("Iter: %1.3g / %1.1g\tt: %1.6lf / %1.3lf\tdt: %1.6g\n", 
+			(double)iters, (double)sys_vars->num_t_steps, 
+					t, 
+					T,
+					dt);
+	}
+	#endif
 }
 /**
  * Function that checks the system to see if it is ok to continue integrations. Checks for blow up, timestep and iteration limits etc
@@ -2088,7 +2322,7 @@ void SystemCheck(double dt, long int iters, long int save_data_indx) {
 	// Check Stopping Criteria 
 	// -------------------------------	
 	// Get the max field value
-	for (int i = 0; i < sys_vars	->N; ++i) {
+	for (int i = 0; i < sys_vars->N; ++i) {
 		// Get temp index
 		n = i + 2;
 
@@ -2401,8 +2635,9 @@ void FreeMemory(RK_data_struct* RK_data) {
 	// ------------------------
 	// Free System Msr Memory 
 	// ------------------------
+	#if defined(__SYS_MEASURES)
 	FreeSystemMeasuresObjects();
-
+	#endif
 	// ------------------------
 	// Free Stats Objects
 	// ------------------------

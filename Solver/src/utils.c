@@ -44,6 +44,8 @@ int GetCMLArgs(int argc, char** argv) {
 	int output_dir_flag = 0;
 	int trans_iter_flag = 0;
 	int time_step_flag  = 0;
+	int input_file_flag = 0;
+	int save_every_flag = 0;
 
 	// -------------------------------
 	// Initialize Default Values
@@ -94,7 +96,8 @@ int GetCMLArgs(int argc, char** argv) {
 	sys_vars->NU_plus  = (sys_vars->NU + sys_vars->ETA) / 2.0;
 	sys_vars->NU_minus = (sys_vars->NU - sys_vars->ETA) / 2.0;
 	// Write to file every 
-	sys_vars->SAVE_EVERY = (long int)100;
+	sys_vars->SAVE_EVERY  = (long int)100;
+	sys_vars->STATS_EVERY = (long int)100;
 	// Input file flag
 	sys_vars->INPUT_FILE_FLAG = NO_INPUT_FILE;
 
@@ -329,14 +332,14 @@ int GetCMLArgs(int argc, char** argv) {
 					strncpy(sys_vars->u0, "N_SCALING_RAND", 64);
 					break;
 				}
-				else if (!(strcmp(optarg,"RANDOM"))) {
-					// Random Initial Conditions - Power Law k^-a
-					strncpy(sys_vars->u0, "RANDOM", 64);
+				else if (!(strcmp(optarg,"PO_PLAW_RND"))) {
+					// Phase Only -- Power Law with Amplitudes -- Random Uni Phases
+					strncpy(sys_vars->u0, "PO_PLAW_RND", 64);
 					break;
 				}
-				else if (!(strcmp(optarg,"RANDOM_EXP"))) {
-					// Random Initial Conditions - Power Law k^-a - W/ Exponential Cuttoff
-					strncpy(sys_vars->u0, "RANDOM_EXP", 64);
+				else if (!(strcmp(optarg,"PO_PLAWEXP_RND"))) {
+					// Phase Only -- Power Law with Exponentail Falloff Amplitudes -- Random Uni Phases
+					strncpy(sys_vars->u0, "PO_PLAWEXP_RND", 64);
 					break;
 				}
 				else if (!(strcmp(optarg,"ZERO_PHASE"))) {
@@ -365,13 +368,38 @@ int GetCMLArgs(int argc, char** argv) {
 					break;
 				}
 				else if (!(strcmp(optarg,"AO_RND_PHASE"))) {
-					// Amp Only - Random initial phases
+					// Amp Only -- Random Amplitudes in (0.0, 1.0) -- Random initial phases
 					strncpy(sys_vars->u0, "AO_RND_PHASE", 64);
 					break;
 				}
+				else if (!(strcmp(optarg,"AO_ZERO_PHASE"))) {
+					// Amp Only -- Random Amplitudes in (0.0, 1.0) -- Zero initial phases
+					strncpy(sys_vars->u0, "AO_ZERO_PHASE", 64);
+					break;
+				}
 				else if (!(strcmp(optarg,"AO_ALGND_PHASE"))) {
-					// Amp Only - Phases configured to produce aligned triad phases at 3pi/2
+					// Amp Only -- Random Amplitudes in (0.0, 1.0) -- Phases configured to produce aligned triad phases at 3pi/2
 					strncpy(sys_vars->u0, "AO_ALGND_PHASE", 64);
+					break;
+				}
+				else if (!(strcmp(optarg,"AO_ALGND_PHASE_SD"))) {
+					// Amp Only -- Random Amplitudes in (0.0, 1.0) -- Phases configured to produce aligned triad phases at 3pi/2 +/- std
+					strncpy(sys_vars->u0, "AO_ALGND_PHASE_SD", 64);
+					break;
+				}
+				else if (!(strcmp(optarg,"AO_ALGND_PHASE_JTR"))) {
+					// Amp Only -- Random Amplitudes in (0.0, 1.0) -- Phases configured to produce aligned triad phases at 3pi/2 +/- std
+					strncpy(sys_vars->u0, "AO_ALGND_PHASE_JTR", 64);
+					break;
+				}
+				else if (!(strcmp(optarg,"AO_INPUT_PHASE"))) {
+					// Amp Only -- Random Amplitudes in (0.0, 1.0) -- Phases read in from file
+					strncpy(sys_vars->u0, "AO_INPUT_PHASE", 64);
+					break;
+				}
+				else if (!(strcmp(optarg,"AO_INPUT_PHASE_REPLACE"))) {
+					// Amp Only -- Read IC from File -- Replace Phases From File 
+					strncpy(sys_vars->u0, "AO_INPUT_PHASE_REPLACE", 64);
 					break;
 				}
 				else {
@@ -410,8 +438,24 @@ int GetCMLArgs(int argc, char** argv) {
 				}
 				break;				
 			case 'p':
-				// Read in how often to print to file
-				sys_vars->SAVE_EVERY = (long int)atoi(optarg);
+				if (save_every_flag == 0) {
+					// Read in how often to print to file
+					sys_vars->SAVE_EVERY = (long int)atoi(optarg);
+					save_every_flag = 1;
+					break;
+				}
+				else if (save_every_flag == 1){
+					// Read in how often to print to file
+					sys_vars->STATS_EVERY = (long int)atoi(optarg);
+					save_every_flag = 2;
+					break;	
+				}
+				else if (save_every_flag == 2){
+					// Read in how often to print to file
+					sys_vars->REPL_EVERY = atoi(optarg);
+					save_every_flag = 3;
+					break;	
+				}
 				break;
 			case 'f':
 				// Read in the forcing type
@@ -458,16 +502,29 @@ int GetCMLArgs(int argc, char** argv) {
 				}
 				break;
 			case 'z':
-				if (strcmp(optarg, "NONE") != 0) {
-					// Read in input file name path
-					strncpy((file_info->input_file_name), optarg, 512);	// copy the input file name given as a command line argument
-					if ( access((file_info->input_file_name), F_OK) != 0) {
-						fprintf(stderr, "\n["RED"ERROR"RESET"] Parsing of Command Line Arguements Failed: The input file [%s] cannot be found, please ensure correct path to file is specified.\n", (file_info->input_file_name));		
-						exit(1);					
+				if (input_file_flag == 0) {
+					if (strcmp(optarg, "NONE") != 0) {
+						// Read in input file name path
+						strncpy((file_info->input_file_name), optarg, 512);	// copy the input file name given as a command line argument
+						if ( access((file_info->input_file_name), F_OK) != 0) {
+							fprintf(stderr, "\n["RED"ERROR"RESET"] Parsing of Command Line Arguements Failed: The input file [%s] cannot be found, please ensure correct path to file is specified.\n", (file_info->input_file_name));		
+							exit(1);					
+						}
+						// Set input file flag
+						sys_vars->INPUT_FILE_FLAG = INPUT_FILE;
 					}
-
-					// Set input file flag
-					sys_vars->INPUT_FILE_FLAG = INPUT_FILE;
+					input_file_flag = 1;
+					break;
+				}
+				else if (input_file_flag == 1) {
+					strncpy(file_info->input_str, optarg, 64);
+					input_file_flag = 2;
+					break;
+				}
+				else if (input_file_flag == 2) {
+					file_info->input_param = atoi(optarg);
+					input_file_flag = 3;
+					break;
 				}
 				break;
 			default:
@@ -631,9 +688,11 @@ void PrintSimulationDetails(int argc, char** argv, double sim_time) {
 	
 	// Print simulation turbulence details
 	fprintf(sim_file, "\nEddy Turnover Time: %lf\n", sys_vars->eddy_turnover_time);
-	fprintf(sim_file, "Transient Time: %lf\n", sys_vars->trans_time / sys_vars->eddy_turnover_time);
-	fprintf(sim_file, "Saving Step: %lf\n", ((double)sys_vars->SAVE_EVERY * sys_vars->dt)/sys_vars->eddy_turnover_time);
-	fprintf(sim_file, "Sim Time: %lf\n\n", (sys_vars->T - sys_vars->trans_time)/sys_vars->eddy_turnover_time);
+	fprintf(sim_file, "Transient Time (in tau units): %lf\n", sys_vars->trans_time / sys_vars->eddy_turnover_time);
+	fprintf(sim_file, "Saving Step (in tau units): %lf\n", ((double)sys_vars->SAVE_EVERY * sys_vars->dt)/sys_vars->eddy_turnover_time);
+	fprintf(sim_file, "Stats Step (in tau units): %lf\n", ((double)sys_vars->STATS_EVERY * sys_vars->dt)/sys_vars->eddy_turnover_time);
+	fprintf(sim_file, "Replace Step (in tau units): %lf\n", ((double)sys_vars->REPL_EVERY * sys_vars->dt)/sys_vars->eddy_turnover_time);
+	fprintf(sim_file, "Sim Time (in tau units): %lf\n\n", (sys_vars->T - sys_vars->trans_time)/sys_vars->eddy_turnover_time);
 	
 	// -------------------------------
 	// Print Execution Time to File

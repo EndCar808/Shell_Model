@@ -19,12 +19,13 @@ void CreateOutputFilesWriteICs(const long int N);
 void GetOutputDirPath(void);
 hid_t CreateComplexDatatype(void);
 void ReadInputFile(const long int N);
+void ReadDataInputFile(char* file_name, char* dset, char* data_type);
 void CreateSlabbedDSet(double t, int iters, hid_t file_handle, char* dset_name, hid_t* file_space, hid_t* data_set, hid_t* mem_space, hid_t dtype, hsize_t* dset_dims, hsize_t* dset_max_dims, hsize_t* dset_chunk_dims, const int num_dims);
 void WriteSlabbedDataReal(double t, int iters, hid_t file_space, hid_t data_set, hid_t mem_space, hid_t dtype, double* data, char* dset_name, hsize_t* count, hsize_t* index);
 void WriteSlabbedDataFourier(double t, int iters, hid_t file_space, hid_t data_set, hid_t mem_space, hid_t dtype, double complex* data, char* dset_name, hsize_t* count, hsize_t* index);
 void WriteDataToFile(double t, const long int iters, const long int save_indx);
 void FinalWriteAndCloseOutputFile(const long int N, int iters, int save_data_indx);
-void ReadAmpInputFIle(int i);
+void ReadAmpInputFile(int i);
 // ---------------------------------------------------------------------
 //  End of File
 // ---------------------------------------------------------------------

@@ -131,8 +131,8 @@ def get_vel_field_flux(data, N, delta, l):
                 u_pad[n] = data[t, i]
 
         ## Get field values
-        trip_prod[t, :], _, dub_prod[t, :], hel_flux[t, :], energy_flux[t, :] = compute_field_values(u_pad, N, delta, l)
-
+        trip_prod[t, :], _, tmp, hel_flux[t, :], energy_flux[t, :] = compute_field_values(u_pad, N, delta, l)
+        dub_prod[t, :-1] = tmp
     return trip_prod, dub_prod, hel_flux, energy_flux
 
 

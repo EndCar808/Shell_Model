@@ -209,6 +209,10 @@ if __name__ == '__main__':
             if 'save_data_every' in parser[section]:
                 for n in parser[section]['save_data_every'].lstrip('[').rstrip(']').split(', '):
                     save_every.append(int(n))
+            if 'stats_data_every' in parser[section]:
+                stats_data_every = int(parser[section]['stats_data_every'])
+            if 'replace_data_every' in parser[section]:
+                replace_data_every = int(parser[section]['replace_data_every'])
         if section in ['TIME']:
             if 'end_time' in parser[section]:
                 for n in parser[section]['end_time'].lstrip('[').rstrip(']').split(', '):
@@ -233,6 +237,10 @@ if __name__ == '__main__':
             if 'solver_input_dir' in parser[section]:
                 for n in parser[section]['solver_input_dir'].lstrip('[').rstrip(']').split(', '):
                     input_file.append(str(n))
+            if 'solver_input_str' in parser[section]:
+                solver_input_str = str(parser[section]['solver_input_str'])
+            if 'solver_input_param' in parser[section]:
+                solver_input_param = str(parser[section]['solver_input_param'])
             if 'solver_output_dir' in parser[section]:
                 output_dir = str(parser[section]['solver_output_dir'])
             if 'solver_tag' in parser[section]:
@@ -299,7 +307,7 @@ if __name__ == '__main__':
             solver_error  = []
 
         ## Generate command list 
-        cmd_list = [["{} -o {} -n {} -s {:3.5f} -e {:3.5f} -T {} -T {} -c {} -c {:1.6f} -h {:1.16f} -h {} -a {:1.10f} -b {:1.10f} -w {:1.3f} -w {:1.3f} -y {:1.16f} -y {:1.16f} -v {:g} -v {} -v {:1.1f} -d {:g} -d {} -d {:1.1f} -i {} -t {} -f {} -f {} -f {:1.3f} -p {} -z {}".format(
+        cmd_list = [["{} -o {} -n {} -s {:3.5f} -e {:3.5f} -T {} -T {} -c {} -c {:1.6f} -h {:1.16f} -h {} -a {:1.10f} -b {:1.10f} -w {:1.3f} -w {:1.3f} -y {:1.16f} -y {:1.16f} -v {:g} -v {} -v {:1.1f} -d {:g} -d {} -d {:1.1f} -i {} -t {} -f {} -f {} -f {:1.3f} -p {} -p {} -p {} -z {} -z {} -z {}".format(
                                                                                                                                                     executable, 
                                                                                                                                                     output_dir,
                                                                                                                                                     n,
@@ -315,7 +323,8 @@ if __name__ == '__main__':
                                                                                                                                                     u0, 
                                                                                                                                                     s_tag, 
                                                                                                                                                     forcing, force_k, force_scale, 
-                                                                                                                                                    save, in_file)] for n in N for t in T for h, save in zip(dt, save_every) for u0 in ic for v in nu for et in eta for ep in eps for a in alpha for b in beta for ep_m in eps_m for c in cfl for s_tag in solver_tag for in_file in input_file]
+                                                                                                                                                    save, stats_data_every, replace_data_every,
+                                                                                                                                                    in_file, solver_input_str, solver_input_param)] for n in N for t in T for h, save in zip(dt, save_every) for u0 in ic for v in nu for et in eta for ep in eps for a in alpha for b in beta for ep_m in eps_m for c in cfl for s_tag in solver_tag for in_file in input_file]
 
         if cmdargs.cmd_only:
             print(tc.C + "\nSolver Commands:\n" + tc.Rst)

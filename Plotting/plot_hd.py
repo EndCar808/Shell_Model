@@ -29,7 +29,7 @@ import time as TIME
 from subprocess import Popen, PIPE, run
 from matplotlib.pyplot import cm
 from functions import tc, sim_data, import_data, compute_pdf, import_stats_data, import_sys_msr_data, import_phase_sync_data, compute_pdf_from_hist, compute_pdf, parse_cml, slope_fit, get_vel_field_flux
-from plot_functions import plot_anomalous_exponent, plot_str_funcs_with_slope, phase_only_space_time, plot_spectrum
+from plot_functions import plot_anomalous_exponent, plot_str_funcs_with_slope, phase_only_space_time, plot_spectrum, plot_str_func_with_anom_scaling
 
 np.seterr(divide = 'ignore') 
 ###############################
@@ -146,194 +146,19 @@ if __name__ == '__main__':
 		num_pow = stats_data.vel_str_func.shape[-1]
 
 		## Plot The structure function
-        inert_lim_low  = 3
-        inert_lim_high = 12
-        range_lims     = [inert_lim_low, inert_lim_high]
-        log_func = 'loge'
-        k           = sys_msr_data.k
+		inert_lim_low  = 3
+		inert_lim_high = 18
+		range_lims     = [inert_lim_low, inert_lim_high]
+		log_func = 'loge'
+		k           = sys_msr_data.k
 		inert_range = range_lims
 
-		print("Getting Flux Values")
-		if sys_vars.model_type == "PO" or sys_vars.model_type == "AO":
-			u_n = run_data.a_n * np.exp(1j * run_data.phi_n)
-		else:
-			u_n = run_data.u
-		trip_prod, dub_prod, hel_flux, enrg_flux = get_vel_field_flux(u_n, N, delta, l)
-
-		####---------------------------------------- Plot Flux Field Values
-		input_data = [trip_prod, dub_prod, hel_flux, enrg_flux]
-		figure_names = [r"TripProd", r"DubProd", r"HelFlux", r"EnergyFlux"]
-		data_labels  = [r"u_{n + 2}u_{n + 1}u_{n}", r"u_{n}u_{n + 3}^*", r"\Pi_n^{\mathcal{H}^u}", r"\Pi_n^{\mathcal{K}^u}"]
-		for in_data, fig_name, data_labs in zip(input_data, figure_names, data_labels):
-			#-------------------- 1D - PDF - Angle
-			num_bins = 100
-			norm_hist = False
-			fig = plt.figure(figsize=(24, 24))
-			gs = GridSpec(5, 5, hspace=0.4, wspace=0.5)
-			pdf_angles = []
-			for i in range(5):
-				for j in range(5):
-					indx = i * 5 + j
-					if indx < in_data.shape[-1]:
-						ax1 = fig.add_subplot(gs[i, j])
-						pdf, centres = compute_pdf(np.mod(np.angle(in_data[:, indx]) + 2.0 * np.pi, 2.0 * np.pi), nbins=num_bins, normed=norm_hist)
-						pdf_angles.append(pdf)
-						p, = ax1.plot(centres, pdf, label="$n = {}$".format(indx + 1))    
-						ax1.set_xlabel(r"$ \arg \left\{" +  data_labs + r" \right\}$")
-						ax1.set_xlim(0, 2.0 * np.pi)
-						ax1.set_ylabel(r"PDF")
-						ax1.set_yscale('log')
-						ax1.set_title("n = {}".format(indx + 1))
-			fig.savefig(cmdargs.out_dir_HD + fig_name + "_1D_PDF_Angles" + fig_format, bbox_inches='tight')
-			plt.close()
-
-			#-------------------- 1D - PDF - Amp
-			fig = plt.figure(figsize=(24, 24))
-			gs = GridSpec(5, 5, hspace=0.4, wspace=0.5)
-			for i in range(5):
-				for j in range(5):
-					indx = i * 5 + j
-					if indx < in_data.shape[-1]:
-						ax1 = fig.add_subplot(gs[i, j])
-						pdf, centres = compute_pdf(np.absolute(in_data[:, indx]), nbins=num_bins, normed=norm_hist)
-						p, = ax1.plot(centres, pdf, label="$n = {}$".format(indx + 1))    
-						ax1.set_xlabel(r"$ \left|" +  data_labs + r" \right|$")
-						ax1.set_ylabel(r"PDF")
-						ax1.set_yscale('log')
-						ax1.set_title("n = {}".format(indx + 1))
-			fig.savefig(cmdargs.out_dir_HD + fig_name + "_1D_PDF_Amp" + fig_format, bbox_inches='tight')
-			plt.close()
-
-			## 1D - PDF - Imag
-			num_bins = 100
-			norm_hist = False
-			fig = plt.figure(figsize=(24, 24))
-			gs = GridSpec(5, 5, hspace=0.4, wspace=0.5)
-			for i in range(5):
-				for j in range(5):
-					indx = i * 5 + j
-					if indx < in_data.shape[-1]:
-						ax1 = fig.add_subplot(gs[i, j])
-						pdf, centres = compute_pdf(np.imag(in_data[:, indx]), nbins=num_bins, normed=norm_hist)
-						p, = ax1.plot(centres, pdf, label="$n = {}$".format(indx + 1))    
-						ax1.set_xlabel(r"$ \Im \left\{" +  data_labs + r" \right\}$")
-						ax1.set_ylabel(r"PDF")
-						ax1.set_yscale('log')
-						ax1.set_title("n = {}".format(indx + 1))
-			fig.savefig(cmdargs.out_dir_HD + fig_name + "_1D_PDF_Imag" + fig_format, bbox_inches='tight')
-			plt.close()
-
-			## 1D - PDF - Real
-			fig = plt.figure(figsize=(24, 24))
-			gs = GridSpec(5, 5, hspace=0.4, wspace=0.5)
-			for i in range(5):
-				for j in range(5):
-					indx = i * 5 + j
-					if indx < in_data.shape[-1]:
-						ax1 = fig.add_subplot(gs[i, j])
-						pdf, centres = compute_pdf(np.real(in_data[:, indx]), nbins=num_bins, normed=norm_hist)
-						p, = ax1.plot(centres, pdf, label="$n = {}$".format(indx + 1))    
-						ax1.set_xlabel(r"$ \Re \left\{" +  data_labs + r" \right\}$")
-						ax1.set_ylabel(r"PDF")
-						ax1.set_yscale('log')
-						ax1.set_title("n = {}".format(indx + 1))
-			fig.savefig(cmdargs.out_dir_HD + fig_name + "_1D_PDF_Real" + fig_format, bbox_inches='tight')
-			plt.close()
-
-			#---------------------- Test SF Independence
-			fig = plt.figure(figsize=(15, 6))
-			gs  = GridSpec(1, 3, hspace=0.4, wspace=0.3)
-			ax1 = fig.add_subplot(gs[0, 0])
-			for p in range(1, 6 + 1):
-				ax1.plot(k, np.mean(np.power(np.absolute(in_data), p/3.), axis=0), label=r"$Abs$; $p = {}$".format(p))
-			ax1.grid(which="both", axis="both", color='k', linestyle=":", linewidth=0.5)
-			ax1.set_yscale('log')
-			ax1.set_xscale('log')
-			ax1.legend()
-			ax1 = fig.add_subplot(gs[0, 1])
-			for p in range(1, 6 + 1):
-				ax1.plot(k, np.mean(np.power(np.sign(np.sin(np.angle(in_data))), p) * np.power(np.absolute(np.sin(np.angle(in_data))), p/3.), axis=0), label=r"$\sin \arg$; $p = {}$".format(p))
-			ax1.grid(which="both", axis="both", color='k', linestyle=":", linewidth=0.5)
-			ax1.set_xscale('log')
-			ax1.legend()
-			ax1 = fig.add_subplot(gs[0, 2])
-			slope = []
-			for p in range(1, 6 + 1):
-				p_info, = ax1.plot(k[:-6], np.mean(np.power(np.absolute(np.sin(np.angle(in_data))), p/3.), axis=0)[:-6], label=r"$\arg $; $p = {}$".format(p), marker = 'o')
-				# ax1.plot(k, np.mean(np.power(np.absolute(np.cos(np.angle(in_data))), p/3.), axis=0), label=r"$\arg $; $p = {}$".format(p))
-				# ax1.plot(k, np.mean( np.power(np.sign(np.angle(in_data)), p) * np.power(np.absolute(np.angle(in_data)), p/3.), axis=0), label=r"$\arg $; $p = {}$".format(p))
-				x = k
-				y = np.mean(np.power(np.absolute(np.sin(np.angle(in_data))), p/3.), axis=0)
-				s, c, res = slope_fit(np.log10(x), np.log10(y), 2, 11)
-				x = k
-				y = np.mean(np.power(np.absolute(in_data), p/3.), axis=0)
-				s_amp, c, res_amp = slope_fit(np.log10(x), np.log10(y), 2, 11)
-				print(fig_name, p, s, res, s_amp, res_amp)
-				# ax1.plot(x[2:11], x[2:11] ** slope + c, ':', color = p_info.get_color())
-
-			ax1.grid(which="both", axis="both", color='k', linestyle=":", linewidth=0.5)
-			ax1.set_xscale('log')
-			ax1.set_yscale('log')
-			ax1.legend()
-			plt.savefig(cmdargs.out_dir_HD + fig_name + "_Test_Independence_SF" + fig_format, bbox_inches='tight')
-			plt.close()
-
-
-			#----------------------
-			# Time Averaged Spectra
-			#----------------------
-			fig = plt.figure(figsize=fig_size)
-			gs = GridSpec(2, 2, hspace=0.4, wspace=0.3)
-			ax1 = fig.add_subplot(gs[0, 0])
-			ax2 = fig.add_subplot(gs[0, 1])
-			ax3 = fig.add_subplot(gs[1, 0])
-			ax4 = fig.add_subplot(gs[1, 1])
-
-			# Plot the time averaged tripple product
-			data = np.absolute(np.mean(np.imag(in_data), axis=0))
-			xlab = r"$\log k_n$"
-			ylab = r"$\log \left|\Im \left\{" + data_labs + r"\right\}\right|$"
-			plot_spectrum(fig, ax1, data, k, xlab, ylab)
-			ax1.set_title("Time Averaged Imaginary part")
-
-			# Plot the time averaged tripple product time k_n
-			data = np.absolute(np.mean(np.imag(in_data * k), axis=0))
-			ylab = r"$\log \left|k_n \Im \left\{" + data_labs + r"\right\}\right|$"
-			plot_spectrum(fig, ax2, data, k, xlab, ylab)
-			ax2.set_title("Time Averaged Imaginary part time $k_n$")
-
-			# Plot the time averaged tripple product
-			data = np.absolute(np.mean(np.real(in_data), axis=0))
-			xlab = r"$\log k_n$"
-			ylab = r"$\log \left|\Re \left\{" + data_labs + r"\right\}\right|$"
-			plot_spectrum(fig, ax3, data, k, xlab, ylab)
-			ax3.set_title("Time Averaged real part")
-
-			# Plot the time averaged tripple product time k_n
-			data = np.absolute(np.mean(np.real(in_data *  k), axis=0))
-			ylab = r"$\log \left|k_n \Re \left\{" + data_labs + r"\right\}\right|$"
-			plot_spectrum(fig, ax4, data, k, xlab, ylab)
-			ax4.set_title("Time Averaged Real part time $k_n$")
-
-			# Save figure
-			plt.suptitle(fig_name)
-			fig.savefig(cmdargs.out_dir_HD + fig_name + "_Time_Averaged_Spectrum" + fig_format, bbox_inches='tight')
-			plt.close()
-
-			fig = plt.figure(figsize=fig_size)
-			gs = GridSpec(1, 1, hspace=0.4, wspace=0.5)
-			ax1 = fig.add_subplot(gs[0, 0])
-			ax1.scatter(np.absolute(in_data).flatten(), np.sin(np.angle(in_data).flatten()))
-			ax2.set_xlabel(r"$\left|" + data_labs + r"\right|$")
-			ax2.set_ylabel(r"$\sin \arg \left\{ " + data_labs + r" \right\}$")
-			plt.suptitle(fig_name)
-			fig.savefig(cmdargs.out_dir_HD + fig_name + "_Scatter" + fig_format, bbox_inches='tight')
-			plt.close()
 
 		###----------------------------------------- Plot SF
 		input_data = [stats_data.vel_str_func[:, :], stats_data.vel_trip_prod_str_func_abs[:, :], stats_data.vel_flux_str_func_abs[:, :, 1], stats_data.vel_flux_str_func_abs[:, :, 0]]
 		figure_names = [r"SF_U", r"SF_Trip", r"SF_HFlux", r"SF_EFlux"]
 		for in_data, fig_name in zip(input_data, figure_names):
+			print("SF: {}".format(fig_name))
 			str_funcs   = in_data / stats_data.num_stats_steps
 			vel_zeta_p, ns_zeta_p, vel_zeta_p_resid = plot_str_func_with_anom_scaling(cmdargs.out_dir_HD + fig_name + "." + fig_format, k, str_funcs, inert_range, insert_fig = True, scaling = log_func, fig_size = (16, 8))
 
@@ -359,6 +184,10 @@ if __name__ == '__main__':
 		ax4.set_xlabel(r"$t$")
 		ax4.set_yscale('log')
 		ax4.set_title(r"Total Dissipation")
+		ax4 = fig.add_subplot(gs[1, 1])
+		ax4.plot(sys_msr_data.time, sys_msr_data.tot_vel_enrg_input, label = "Forcing Input")
+		ax4.set_xlabel(r"$t$")
+		ax4.set_title(r"Total Forcing")
 		ax4.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
 		fig.savefig(cmdargs.out_dir_HD  + "System_Measures" + "." + fig_format, format=fig_format, bbox_inches='tight')
 		plt.close()
@@ -372,23 +201,24 @@ if __name__ == '__main__':
 		num_bins = 1000
 		norm_hist = False
 
-		in_data = np.mod(np.angle(run_data.u) + 2.0 * np.pi, 2.0 * np.pi)
+		if sys_vars.model_type == "AO" or sys_vars.model_type == "PO":
+			phi_data = run_data.phi_n
+		else:
+			phi_data = np.mod(np.angle(run_data.u) + 2.0 * np.pi, 2.0 * np.pi)
 		fig_name = r"U_Phases"
 		data_labs = r"$\arg\{ u_n \}$"
 
 		fig = plt.figure(figsize=(24, 24))
 		gs = GridSpec(5, 5, hspace=0.4, wspace=0.5)
-		pdf_angles = []
 		for i in range(5):
 		  for j in range(5):
 		      indx = i * 5 + j
-		      if indx < in_data.shape[-1]:
+		      if indx < phi_data.shape[-1]:
 		          ax1 = fig.add_subplot(gs[i, j])
-		          pdf, centres = compute_pdf(in_data, nbins=num_bins, normed=norm_hist)
-		          pdf_angles.append(pdf)
+		          pdf, centres = compute_pdf(phi_data, nbins=num_bins, normed=norm_hist)
 		          p, = ax1.plot(centres, pdf, label="$n = {}$".format(indx + 1))    
 		          ax1.set_xlabel(data_labs)
-		          ax1.set_xlim(0, 2.0*np.pi)
+		          ax1.set_xlim(0 - 0.1, 2.0*np.pi + 0.1)
 		          ax1.set_xticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
 		          ax1.set_xticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
 		          ax1.set_ylabel(r"PDF")
@@ -398,87 +228,92 @@ if __name__ == '__main__':
 		plt.close()
 
 		###---------- Individual Amps
-		in_data = np.absolute(run_data.u)
+		if sys_vars.model_type == "AO" or sys_vars.model_type == "PO":
+			amp_data = run_data.a_n
+		else:
+			amp_data = np.absolute(run_data.u)
 		fig_name = r"U_Amps"
 		data_labs = r"$| u_n |$"
 		fig = plt.figure(figsize=(24, 24))
 		gs = GridSpec(5, 5, hspace=0.4, wspace=0.5)
-		pdf_angles = []
 		for i in range(5):
 		  for j in range(5):
 		      indx = i * 5 + j
-		      if indx < in_data.shape[-1]:
-		          ax1 = fig.add_subplot(gs[i, j])
-		          pdf, centres = compute_pdf(in_data, nbins=num_bins, normed=norm_hist)
-		          pdf_angles.append(pdf)
-		          p, = ax1.plot(centres, pdf, label="$n = {}$".format(indx + 1))    
-		          ax1.set_xlabel(data_labs)
-		          ax1.set_ylabel(r"PDF")
-		          ax1.set_yscale('log')
-		          ax1.set_title("n = {}".format(indx + 1))
+		      if indx < amp_data.shape[-1]:
+		          ax2 = fig.add_subplot(gs[i, j])
+		          pdf, centres = compute_pdf(amp_data, nbins=num_bins, normed=norm_hist)
+		          p, = ax2.plot(centres, pdf, label="$n = {}$".format(indx + 1))    
+		          ax2.set_xlabel(data_labs)
+		          ax2.set_ylabel(r"PDF")
+		          ax2.set_yscale('log')
+		          ax2.set_title("n = {}".format(indx + 1))
 		fig.savefig(cmdargs.out_dir_HD  + fig_name + "_PDFs" + "." + fig_format, format=fig_format, bbox_inches='tight')
 		plt.close()
 
 		###################################
 		##  PO Model Dynamics Diagnostic
 		###################################
-		if sys_vars.model_type == "PO" or sys_vars.model_type == "AO":
-			phases = run_data.phi_n
-		else:
-			phases = np.mod(np.angle(run_data.u) + 2.0*np.pi, 2.0*np.pi)
+		if os.path.isdir(cmdargs.out_dir + "/Phase_Sync_HDF_Data.h5"):
+			if sys_vars.model_type == "PO" or sys_vars.model_type == "AO":
+				phases = run_data.phi_n
+			else:
+				phases = np.mod(np.angle(run_data.u) + 2.0*np.pi, 2.0*np.pi)
 
-		if sys_vars.model_type == "PO" or sys_vars.model_type == "AO" or sys_vars.model_type == "FULL":
-			# Individual phases
-			phase_only_space_time(cmdargs.out_dir_HD + "Phases_SpaceTime_Dynamics_Diagnostic_Phases" + fig_file_type, phases, sys_msr_data.time, sys_vars.N, r"$\phi_n$")
+			if sys_vars.model_type == "PO" or sys_vars.model_type == "AO" or sys_vars.model_type == "FULL":
+				# Individual phases
+				phase_only_space_time(cmdargs.out_dir_HD + "Phases_SpaceTime_Dynamics_Diagnostic_Phases" + fig_file_type, phases, sys_msr_data.time, sys_vars.N, r"$\phi_n$")
 
-			# ## Read in sys_msr data
-			phase_sync = import_phase_sync_data(data_file_path, sys_vars, method)
-			
-			## Triads
-			phase_only_space_time(cmdargs.out_dir_HD + "Phases_SpaceTime_Dynamics_Diagnostic_Vel_Triads" + fig_file_type, phase_sync.vel_triads, sys_msr_data.time, phase_sync.num_triads, r"$\varphi_{n ,n + 1}^{n + 2}$")
+				# ## Read in sys_msr data
+				phase_sync = import_phase_sync_data(data_file_path, sys_vars, method)
+				
+				## Plot the velocity triad pdfs
+				fig = plt.figure(figsize = (16, 16))
+				gs  = GridSpec(5, 5, wspace = 0.25, hspace = 0.25)
+				for i in range(5):
+					for j in range(5):
+						if i * 5 + j < phase_sync.num_triads:
+							ax1 = fig.add_subplot(gs[i, j])
+							pdf, centres = compute_pdf_from_hist(phase_sync.vel_triad_hist_counts[i * 5 + j, :], phase_sync.vel_triad_hist_ranges[:], remove_zeros = False)
+							ax1.plot(centres, pdf, label = "$Tppp({})$".format(i * 5 + j + 1))
+							ax1.set_xlabel("$\phi_n + \phi_{n + 1} + \phi_{n + 2}$")
+							ax1.set_ylabel("PDF")
+							ax1.set_yscale("log")
+							ax1.legend()
+							ax1.set_xlim(0 - 0.1, 2.0*np.pi + 0.1)
+							ax1.set_xticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
+							ax1.set_xticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
 
-			## Phase Differences
-			phase_only_space_time(cmdargs.out_dir_HD + "Phases_SpaceTime_Dynamics_Diagnostic_Vel_PhaseDiffs" + fig_file_type, phase_sync.vel_phase_diffs, sys_msr_data.time, phase_sync.num_phase_diffs, r"$\phi_n - \phi_{n + 3}$")
+				plt.savefig(cmdargs.out_dir_HD + "Phases_Vel_Triad_PDF.png", bbox_inches='tight')
+				plt.close()
 
-			## Plot the velocity triad pdfs
-			fig = plt.figure(figsize = (16, 16))
-			gs  = GridSpec(5, 5, wspace = 0.25, hspace = 0.25)
-			for i in range(5):
-				for j in range(5):
-					if i * 5 + j < phase_sync.num_triads:
-						ax1 = fig.add_subplot(gs[i, j])
-						pdf, centres = compute_pdf_from_hist(phase_sync.vel_triad_hist_counts[i * 5 + j, :], phase_sync.vel_triad_hist_ranges[:], remove_zeros = False)
-						ax1.plot(centres, pdf, label = "$Tppp({})$".format(i * 5 + j + 1))
-						ax1.set_xlabel("$\phi_n + \phi_{n + 1} + \phi_{n + 2}$")
-						ax1.set_ylabel("PDF")
-						ax1.set_yscale("log")
-						ax1.legend()
-						ax1.set_xlim(0, 2.0*np.pi)
-						ax1.set_xticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
-						ax1.set_xticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
+				## Plot the velocity triad phase differences
+				fig = plt.figure(figsize = (16, 16))
+				gs  = GridSpec(5, 5, wspace = 0.25, hspace = 0.25)
+				for i in range(5):
+					for j in range(5):
+						if i * 5 + j < phase_sync.num_phase_diffs:
+							ax1 = fig.add_subplot(gs[i, j])
+							pdf, centres = compute_pdf_from_hist(phase_sync.vel_phase_diff_hist_counts[i * 5 + j, :], phase_sync.vel_phase_diff_hist_ranges[:], remove_zeros = False)
+							ax1.plot(centres, pdf, label = "$Tppp({})$".format(i * 5 + j + 1))
+							ax1.set_xlabel("$\phi_n - \phi_{n + 3}$")
+							ax1.set_ylabel("PDF")
+							ax1.set_yscale("log")
+							ax1.legend()
+							ax1.set_xlim(0 - 0.1, 2.0*np.pi + 0.1)
+							ax1.set_xticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
+							ax1.set_xticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
 
-			plt.savefig(cmdargs.out_dir_HD + "Phases_Vel_Triad_PDF.png", bbox_inches='tight')
-			plt.close()
+				plt.savefig(cmdargs.out_dir_HD + "Phases_Vel_PhaseDifferences_PDF.png", bbox_inches='tight')
+				plt.close()
 
-			## Plot the velocity triad phase differences
-			fig = plt.figure(figsize = (16, 16))
-			gs  = GridSpec(5, 5, wspace = 0.25, hspace = 0.25)
-			for i in range(5):
-				for j in range(5):
-					if i * 5 + j < phase_sync.num_phase_diffs:
-						ax1 = fig.add_subplot(gs[i, j])
-						pdf, centres = compute_pdf_from_hist(phase_sync.vel_phase_diff_hist_counts[i * 5 + j, :], phase_sync.vel_phase_diff_hist_ranges[:], remove_zeros = False)
-						ax1.plot(centres, pdf, label = "$Tppp({})$".format(i * 5 + j + 1))
-						ax1.set_xlabel("$\phi_n - \phi_{n + 3}$")
-						ax1.set_ylabel("PDF")
-						ax1.set_yscale("log")
-						ax1.legend()
-						ax1.set_xlim(0, 2.0*np.pi)
-						ax1.set_xticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
-						ax1.set_xticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
+				## Triads
+				if hasattr(phase_sync, 'vel_triads'):
+					phase_only_space_time(cmdargs.out_dir_HD + "Phases_SpaceTime_Dynamics_Diagnostic_Vel_Triads" + fig_file_type, phase_sync.vel_triads, sys_msr_data.time, phase_sync.num_triads, r"$\varphi_{n ,n + 1}^{n + 2}$")
 
-			plt.savefig(cmdargs.out_dir_HD + "Phases_Vel_PhaseDifferences_PDF.png", bbox_inches='tight')
-			plt.close()
+				## Phase Differences
+				if hasattr(phase_sync, 'vel_phase_diffs'):
+					phase_only_space_time(cmdargs.out_dir_HD + "Phases_SpaceTime_Dynamics_Diagnostic_Vel_PhaseDiffs" + fig_file_type, phase_sync.vel_phase_diffs, sys_msr_data.time, phase_sync.num_phase_diffs, r"$\phi_n - \phi_{n + 3}$")
+
 
 		###################################
 		##  PDFs
@@ -545,7 +380,6 @@ if __name__ == '__main__':
 		## --------  Structure function with fit
 		print("Velocity Structure Func")
 		zeta_p, ns_zeta_p, zeta_p_res = plot_str_funcs_with_slope(cmdargs.out_dir_HD + "VelStrFunc_Fit" + fig_file_type, sys_msr_data.k, stats_data.vel_str_func[:, :num_pow], inertial_range, ax_scale, fig_size = fig_size)
-		print(len(p), len(zeta_p), len(ns_zeta_p))
 
 		with open(cmdargs.out_dir_HD + "ComputedStrFuncSlopes.txt", 'w') as f:
 			f.write("Velocity Structure Func\n")
@@ -703,6 +537,213 @@ if __name__ == '__main__':
 			plt.close()
 
 		###################################
+		##  FLUX FIELD ANALYSIS
+		###################################
+		fig_size = (10, 8)
+		fig_file_type = ".png"
+		fig_format = "png"
+		# num_pow = 6
+		num_pow = stats_data.vel_str_func.shape[-1]
+
+		## Plot The structure function
+		inert_lim_low  = 3
+		inert_lim_high = 18
+		range_lims     = [inert_lim_low, inert_lim_high]
+		log_func = 'loge'
+		k           = sys_msr_data.k
+		inert_range = range_lims
+
+
+		print("Getting Flux Values")
+		if sys_vars.model_type == "PO" or sys_vars.model_type == "AO":
+			u_n = run_data.a_n * np.exp(1j * run_data.phi_n)
+		else:
+			u_n = run_data.u
+		trip_prod, dub_prod, hel_flux, enrg_flux = get_vel_field_flux(u_n, sys_vars.N, sys_vars.EPS, sys_vars.Lambda)
+
+		####---------------------------------------- Plot Flux Field Values
+		input_data   = [trip_prod, dub_prod, enrg_flux, hel_flux]
+		figure_names = [r"TripProd", r"DubProd", r"EnergyFlux", r"HelFlux"]
+		data_labels  = [r"u_{n + 2}u_{n + 1}u_{n}", r"u_{n}u_{n + 3}^*", r"\Pi_n^{\mathcal{K}^u}", r"\Pi_n^{\mathcal{H}^u}"]
+		for in_data, fig_name, data_labs in zip(input_data, figure_names, data_labels):
+			print(fig_name)
+			# print(in_data)
+
+			#-------------------- 1D - PDF - Angle
+			num_bins = 100
+			norm_hist = False
+			fig = plt.figure(figsize=(24, 24))
+			gs = GridSpec(5, 5, hspace=0.4, wspace=0.5)
+			pdf_angles = []
+			for i in range(5):
+				for j in range(5):
+					indx = i * 5 + j
+					if indx < in_data.shape[-1]:
+						ax1 = fig.add_subplot(gs[i, j])
+						pdf, centres = compute_pdf(np.mod(np.angle(in_data[:, indx]) + 2.0 * np.pi, 2.0 * np.pi), bin_lims=(0.0, 2.0 * np.pi), nbins=num_bins, normed=norm_hist)
+						pdf_angles.append(pdf)
+						p, = ax1.plot(centres, pdf, label="$n = {}$".format(indx + 1))    
+						ax1.set_xlabel(r"$ \arg \left\{" +  data_labs + r" \right\}$")
+						ax1.set_xlim(0 - 0.1, 2.0*np.pi + 0.1)
+						ax1.set_xticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
+						ax1.set_xticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
+						ax1.set_ylabel(r"PDF")
+						ax1.set_yscale('log')
+						ax1.set_title("n = {}".format(indx + 1))
+			fig.savefig(cmdargs.out_dir_HD + fig_name + "_1D_PDF_Angles" + "." + fig_format, format = fig_format, bbox_inches='tight')
+			plt.close()
+
+			#-------------------- 1D - PDF - Amp
+			fig = plt.figure(figsize=(24, 24))
+			gs = GridSpec(5, 5, hspace=0.4, wspace=0.5)
+			for i in range(5):
+				for j in range(5):
+					indx = i * 5 + j
+					if indx < in_data.shape[-1]:
+						ax1 = fig.add_subplot(gs[i, j])
+						pdf, centres = compute_pdf(np.absolute(in_data[:, indx]), nbins=num_bins, normed=norm_hist)
+						p, = ax1.plot(centres, pdf, label="$n = {}$".format(indx + 1))    
+						ax1.set_xlabel(r"$ \left|" +  data_labs + r" \right|$")
+						ax1.set_ylabel(r"PDF")
+						ax1.set_yscale('log')
+						ax1.set_title("n = {}".format(indx + 1))
+			fig.savefig(cmdargs.out_dir_HD + fig_name + "_1D_PDF_Amp" + "." + fig_format, format = fig_format, bbox_inches='tight')
+			plt.close()
+
+			## 1D - PDF - Imag
+			num_bins = 100
+			norm_hist = False
+			fig = plt.figure(figsize=(24, 24))
+			gs = GridSpec(5, 5, hspace=0.4, wspace=0.5)
+			for i in range(5):
+				for j in range(5):
+					indx = i * 5 + j
+					if indx < in_data.shape[-1]:
+						ax1 = fig.add_subplot(gs[i, j])
+						pdf, centres = compute_pdf(np.imag(in_data[:, indx]), nbins=num_bins, normed=norm_hist)
+						p, = ax1.plot(centres, pdf, label="$n = {}$".format(indx + 1))    
+						ax1.set_xlabel(r"$ \Im \left\{" +  data_labs + r" \right\}$")
+						ax1.set_ylabel(r"PDF")
+						ax1.set_yscale('log')
+						ax1.set_title("n = {}".format(indx + 1))
+			fig.savefig(cmdargs.out_dir_HD + fig_name + "_1D_PDF_Imag" + "." + fig_format, format = fig_format, bbox_inches='tight')
+			plt.close()
+
+			## 1D - PDF - Real
+			fig = plt.figure(figsize=(24, 24))
+			gs = GridSpec(5, 5, hspace=0.4, wspace=0.5)
+			for i in range(5):
+				for j in range(5):
+					indx = i * 5 + j
+					if indx < in_data.shape[-1]:
+						ax1 = fig.add_subplot(gs[i, j])
+						pdf, centres = compute_pdf(np.real(in_data[:, indx]), nbins=num_bins, normed=norm_hist)
+						p, = ax1.plot(centres, pdf, label="$n = {}$".format(indx + 1))    
+						ax1.set_xlabel(r"$ \Re \left\{" +  data_labs + r" \right\}$")
+						ax1.set_ylabel(r"PDF")
+						ax1.set_yscale('log')
+						ax1.set_title("n = {}".format(indx + 1))
+			fig.savefig(cmdargs.out_dir_HD + fig_name + "_1D_PDF_Real" + "." + fig_format, format = fig_format, bbox_inches='tight')
+			plt.close()
+
+			#---------------------- Test SF Independence
+			fig = plt.figure(figsize=(15, 6))
+			gs  = GridSpec(1, 3, hspace=0.4, wspace=0.3)
+			ax1 = fig.add_subplot(gs[0, 0])
+			for p in range(1, 6 + 1):
+				ax1.plot(k, np.mean(np.power(np.absolute(in_data), p/3.), axis=0), label=r"$Abs$; $p = {}$".format(p))
+			ax1.grid(which="both", axis="both", color='k', linestyle=":", linewidth=0.5)
+			ax1.set_yscale('log')
+			ax1.set_xscale('log')
+			ax1.legend()
+			ax1 = fig.add_subplot(gs[0, 1])
+			for p in range(1, 6 + 1):
+				ax1.plot(k, np.mean(np.power(np.sign(np.sin(np.angle(in_data))), p) * np.power(np.absolute(np.sin(np.angle(in_data))), p/3.), axis=0), label=r"$\sin \arg$; $p = {}$".format(p))
+			ax1.grid(which="both", axis="both", color='k', linestyle=":", linewidth=0.5)
+			ax1.set_xscale('log')
+			ax1.legend()
+			ax1 = fig.add_subplot(gs[0, 2])
+			slope = []
+			for p in range(1, 6 + 1):
+				p_info, = ax1.plot(k[:-6], np.mean(np.power(np.absolute(np.sin(np.angle(in_data))), p/3.), axis=0)[:-6], label=r"$\arg $; $p = {}$".format(p), marker = 'o')
+				# ax1.plot(k, np.mean(np.power(np.absolute(np.cos(np.angle(in_data))), p/3.), axis=0), label=r"$\arg $; $p = {}$".format(p))
+				# ax1.plot(k, np.mean( np.power(np.sign(np.angle(in_data)), p) * np.power(np.absolute(np.angle(in_data)), p/3.), axis=0), label=r"$\arg $; $p = {}$".format(p))
+				x = k
+				y = np.mean(np.power(np.absolute(np.sin(np.angle(in_data))), p/3.), axis=0)
+				s, c, res = slope_fit(np.log10(x), np.log10(y), 2, 11)
+				x = k
+				y = np.mean(np.power(np.absolute(in_data), p/3.), axis=0)
+				s_amp, c, res_amp = slope_fit(np.log10(x), np.log10(y), 2, 11)
+				print(fig_name, p, s, res, s_amp, res_amp)
+				# ax1.plot(x[2:11], x[2:11] ** slope + c, ':', color = p_info.get_color())
+
+			ax1.grid(which="both", axis="both", color='k', linestyle=":", linewidth=0.5)
+			ax1.set_xscale('log')
+			ax1.set_yscale('log')
+			ax1.legend()
+			plt.savefig(cmdargs.out_dir_HD + fig_name + "_Test_Independence_SF" + "." + fig_format, format = fig_format, bbox_inches='tight')
+			plt.close()
+
+			## Plot The structure function
+			inert_lim_low  = 3
+			inert_lim_high = 18
+			range_lims     = [inert_lim_low, inert_lim_high]
+			log_func = 'loge'
+			k           = sys_msr_data.k
+			inert_range = range_lims
+
+			#----------------------
+			# Time Averaged Spectra
+			#----------------------
+			fig = plt.figure(figsize=fig_size)
+			gs = GridSpec(2, 2, hspace=0.4, wspace=0.3)
+			ax1 = fig.add_subplot(gs[0, 0])
+			ax2 = fig.add_subplot(gs[0, 1])
+			ax3 = fig.add_subplot(gs[1, 0])
+			ax4 = fig.add_subplot(gs[1, 1])
+
+			# Plot the time averaged tripple product
+			data = np.absolute(np.mean(np.imag(in_data), axis=0))
+			xlab = r"$\log k_n$"
+			ylab = r"$\log \left|\Im \left\{" + data_labs + r"\right\}\right|$"
+			plot_spectrum(fig, ax1, data, k, xlab, ylab)
+			ax1.set_title("Time Averaged Imaginary part")
+
+			# Plot the time averaged tripple product time k_n
+			data = np.absolute(np.mean(np.imag(in_data * k), axis=0))
+			ylab = r"$\log \left|k_n \Im \left\{" + data_labs + r"\right\}\right|$"
+			plot_spectrum(fig, ax2, data, k, xlab, ylab)
+			ax2.set_title("Time Averaged Imaginary part time $k_n$")
+
+			# Plot the time averaged tripple product
+			data = np.absolute(np.mean(np.real(in_data), axis=0))
+			xlab = r"$\log k_n$"
+			ylab = r"$\log \left|\Re \left\{" + data_labs + r"\right\}\right|$"
+			plot_spectrum(fig, ax3, data, k, xlab, ylab)
+			ax3.set_title("Time Averaged real part")
+
+			# Plot the time averaged tripple product time k_n
+			data = np.absolute(np.mean(np.real(in_data *  k), axis=0))
+			ylab = r"$\log \left|k_n \Re \left\{" + data_labs + r"\right\}\right|$"
+			plot_spectrum(fig, ax4, data, k, xlab, ylab)
+			ax4.set_title("Time Averaged Real part time $k_n$")
+
+			# Save figure
+			plt.suptitle(fig_name)
+			fig.savefig(cmdargs.out_dir_HD + fig_name + "_Time_Averaged_Spectrum" + "." + fig_format, format = fig_format, bbox_inches='tight')
+			plt.close()
+
+			fig = plt.figure(figsize=fig_size)
+			gs = GridSpec(1, 1, hspace=0.4, wspace=0.5)
+			ax1 = fig.add_subplot(gs[0, 0])
+			ax1.scatter(np.absolute(in_data).flatten(), np.sin(np.angle(in_data).flatten()))
+			ax2.set_xlabel(r"$\left|" + data_labs + r"\right|$")
+			ax2.set_ylabel(r"$\sin \arg \left\{ " + data_labs + r" \right\}$")
+			plt.suptitle(fig_name)
+			fig.savefig(cmdargs.out_dir_HD + fig_name + "_Scatter" + "." + fig_format, format = fig_format, bbox_inches='tight')
+			plt.close()
+
+		###################################
 		##  Structure Function Contribution Breakdown
 		###################################
 		fig = plt.figure(figsize=(15, 6))
@@ -722,7 +763,6 @@ if __name__ == '__main__':
 		ax1.set_yscale('log')
 		ax1.legend()
 		ax1 = fig.add_subplot(gs[0, 2])
-		print(run_data.enrg_flux[:, :-2])
 		for p in range(1, 6 + 1):
 			func = np.mean(np.power(np.absolute(np.sin(np.angle(run_data.enrg_flux[:, :-2]))), p/3.), axis=0)
 			ax1.plot(sys_msr_data.k[:-2], func / func[0], label=r"$\arg $; $p = {}$".format(p))
@@ -896,3 +936,4 @@ if __name__ == '__main__':
 		ax2.legend()
 		plt.savefig(cmdargs.out_dir_HD + "Total_Fluxes" + fig_file_type, bbox_inches='tight')
 		plt.close()
+

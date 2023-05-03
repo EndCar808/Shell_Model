@@ -50,7 +50,7 @@ class tc:
 ###################################
 ##          STATS PLOT           ##
 ###################################
-def plot_str_func_with_anom_scaling(outdir_path, k, str_funcs, inert_range, insert_fig = True, scaling = 'loge', fig_size = (21, 12)):
+def plot_str_func_with_anom_scaling(outdir_path, k, str_funcs, inert_range, insert_fig = True, scaling = 'loge', fig_size = (21, 12), straight_line=True):
 
 	## Set up figure
 	fig   = plt.figure(figsize = fig_size)
@@ -141,6 +141,8 @@ def plot_str_func_with_anom_scaling(outdir_path, k, str_funcs, inert_range, inse
 	ax1.plot(p, zeta_p, marker = 'o', markerfacecolor = 'None', markersize = 5.0, markevery = 1, label = "GOY")
 	ax1.plot(np.arange(2, 6 + 1), ns_zeta_p, marker = '.', markerfacecolor = 'None', markersize = 5.0, markevery = 1, label = "Navier Stokes")
 	ax1.plot(p, p / 3, 'k--', label = "K41")
+	if straight_line:
+		ax1.plot([p[0], p[-1]], [zeta_p[0], zeta_p[-1]], 'r--', alpha = 0.4, label = "Straightline")
 	ax1.set_xlabel(r"$p$")
 	ax1.set_ylabel(r"$\zeta_p$")
 	ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
