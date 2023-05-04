@@ -93,7 +93,7 @@ void CreateOutputFilesWriteICs(const long int N) {
 	index2D[1]     = 0;								// set column index to 0 to start writing from the first column
 
 	///--------------------------------------- Velocity Modes
-	#if defined(__VEL) && !(defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY))
+	#if defined(__VEL) //&& !(defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY))
 	CreateSlabbedDSet(0.0, 0, file_info->output_file_handle, "VelModes", &(file_info->file_space[DSET_VEL]), &(file_info->data_set[DSET_VEL]), &(file_info->mem_space[DSET_VEL]), file_info->COMPLEX_DTYPE, dims2D, maxdims2D, chunkdims2D, Dim2D);
 	#endif
 
@@ -500,10 +500,11 @@ void GetOutputDirPath(void) {
 		// -------------------------------------
 		#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 		// Construct file label from simulation data
-		sprintf(file_data, "_%s-%s-%s_N[%ld]_T[%1.1lf,%g,%1.3lf]_NU[%g]_ETA[%g]_ALPHA[%1.3lf]_BETA[%1.3lf]_K[%1.3lf,%1.3lf]_EPS[%1.2lf,%1.2lf]_FORC[%s,%d,%1.3lf]_u0[%s].h5", 
+		sprintf(file_data, "_%s-%s-%s_N[%ld]_T[%1.1lf,%g,%1.3lf]_SMP[%ld,%ld,%d]_NU[%g]_ETA[%g]_ALPHA[%1.3lf]_BETA[%1.3lf]_K[%1.3lf,%1.3lf]_EPS[%1.2lf,%1.2lf]_FORC[%s,%d,%1.3lf]_u0[%s].h5", 
 							sys_type, solv_type, model_type, 
 							sys_vars->N, 
 							sys_vars->t0, sys_vars->dt, sys_vars->T, 
+							sys_vars->SAVE_EVERY, sys_vars->STATS_EVERY, sys_vars->REPL_EVERY,
 							sys_vars->NU, 
 							sys_vars->ETA, 
 							sys_vars->ALPHA, 
@@ -513,10 +514,11 @@ void GetOutputDirPath(void) {
 							sys_vars->forcing, sys_vars->force_k, sys_vars->force_scale_var, 
 							sys_vars->u0);
 		#else
-		sprintf(file_data, "_%s-%s-%s_N[%ld]_T[%1.1lf,%g,%1.3lf]_NU[%g]_ALPHA[%1.3lf]_K[%1.3lf,%1.3lf]_EPS[%1.2lf]_FORC[%s,%d,%1.3lf]_u0[%s].h5", 
+		sprintf(file_data, "_%s-%s-%s_N[%ld]_T[%1.1lf,%g,%1.3lf]_SMP[%ld,%ld,%d]_NU[%g]_ALPHA[%1.3lf]_K[%1.3lf,%1.3lf]_EPS[%1.2lf]_FORC[%s,%d,%1.3lf]_u0[%s].h5", 
 							sys_type, solv_type, model_type, 
 							sys_vars->N, 
 							sys_vars->t0, sys_vars->dt, sys_vars->T, 
+							sys_vars->SAVE_EVERY, sys_vars->STATS_EVERY, sys_vars->REPL_EVERY,
 							sys_vars->NU, 
 							sys_vars->ALPHA, 
 							sys_vars->k_0, sys_vars->Lambda, 
@@ -574,10 +576,11 @@ void GetOutputDirPath(void) {
 		// ----------------------------------
 		#if defined(__MAGNETO) || defined(__ELSASSAR_MHD)
 		// Construct file label from simulation data
-		sprintf(file_data, "%s-%s-%s_N[%ld]_T[%1.1lf,%g,%1.3lf]_NU[%g]_ETA[%g]_ALPHA[%1.3lf]_BETA[%1.3lf]_K[%1.3lf,%1.3lf]_EPS[%1.2lf,%1.2lf]_FORC[%s,%d,%1.3lf]_u0[%s]_TAG[%s]/", 
+		sprintf(file_data, "%s-%s-%s_N[%ld]_T[%1.1lf,%g,%1.3lf]_SMP[%ld,%ld,%d]_NU[%g]_ETA[%g]_ALPHA[%1.3lf]_BETA[%1.3lf]_K[%1.3lf,%1.3lf]_EPS[%1.2lf,%1.2lf]_FORC[%s,%d,%1.3lf]_u0[%s]_TAG[%s]/", 
 							sys_type, solv_type, model_type, 
 							sys_vars->N, 
 							sys_vars->t0, sys_vars->dt, sys_vars->T, 
+							sys_vars->SAVE_EVERY, sys_vars->STATS_EVERY, sys_vars->REPL_EVERY,
 							sys_vars->NU, 
 							sys_vars->ETA, 
 							sys_vars->ALPHA,
@@ -588,10 +591,11 @@ void GetOutputDirPath(void) {
 							sys_vars->u0, 
 							file_info->output_tag);
 		#else
-		sprintf(file_data, "%s-%s-%s_N[%ld]_T[%1.1lf,%g,%1.3lf]_NU[%g]_ALPHA[%1.3lf]_K[%1.3lf,%1.3lf]_EPS[%1.2lf]_FORC[%s,%d,%1.3lf]_u0[%s]_TAG[%s]/", 
+		sprintf(file_data, "%s-%s-%s_N[%ld]_T[%1.1lf,%g,%1.3lf]_SMP[%ld,%ld,%d]_NU[%g]_ALPHA[%1.3lf]_K[%1.3lf,%1.3lf]_EPS[%1.2lf]_FORC[%s,%d,%1.3lf]_u0[%s]_TAG[%s]/", 
 							sys_type, solv_type, model_type, 
 							sys_vars->N, 
 							sys_vars->t0, sys_vars->dt, sys_vars->T, 
+							sys_vars->SAVE_EVERY, sys_vars->STATS_EVERY, sys_vars->REPL_EVERY,
 							sys_vars->NU, sys_vars->ALPHA, 
 							sys_vars->k_0, sys_vars->Lambda, 
 							sys_vars->EPS,
@@ -706,7 +710,7 @@ void WriteDataToFile(double t, const long int iters, const long int save_indx) {
 	index2D[1] = 0;					// set column index to 0 to start writing from the first column
 
 	///--------------------------------------- Velocity Modes
-	#if defined(__VEL) && !(defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)) 
+	#if defined(__VEL) //&& !(defined(PHASE_ONLY_FXD_AMP) || defined(PHASE_ONLY)) 
 	WriteSlabbedDataFourier(t, iters, file_info->file_space[DSET_VEL], file_info->data_set[DSET_VEL], file_info->mem_space[DSET_VEL], file_info->COMPLEX_DTYPE, &(run_data->u[2]), "VelModes", count2D, index2D);
 	#endif
 

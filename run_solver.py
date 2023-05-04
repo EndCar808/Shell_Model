@@ -145,20 +145,21 @@ if __name__ == '__main__':
     parser.read(cmdargs.init_file)
 
     ## Create list objects
-    N          = []
-    nu         = []
-    eta        = []
-    ic         = []
-    T          = []
-    dt         = []
-    solver_tag = []
-    alpha      = []
-    beta       = []
-    eps        = []
-    eps_m      = []
-    cfl        = []
-    save_every = []
-    input_file = []
+    N             = []
+    nu            = []
+    eta           = []
+    ic            = []
+    T             = []
+    dt            = []
+    solver_tag    = []
+    alpha         = []
+    beta          = []
+    eps           = []
+    eps_m         = []
+    cfl           = []
+    save_every    = []
+    replace_every = []
+    input_file    = []
 
     ## Parse input parameters
     for section in parser.sections():
@@ -212,7 +213,8 @@ if __name__ == '__main__':
             if 'stats_data_every' in parser[section]:
                 stats_data_every = int(parser[section]['stats_data_every'])
             if 'replace_data_every' in parser[section]:
-                replace_data_every = int(parser[section]['replace_data_every'])
+                for n in parser[section]['replace_data_every'].lstrip('[').rstrip(']').split(', '):
+                    replace_every.append(int(n))
         if section in ['TIME']:
             if 'end_time' in parser[section]:
                 for n in parser[section]['end_time'].lstrip('[').rstrip(']').split(', '):
@@ -323,8 +325,8 @@ if __name__ == '__main__':
                                                                                                                                                     u0, 
                                                                                                                                                     s_tag, 
                                                                                                                                                     forcing, force_k, force_scale, 
-                                                                                                                                                    save, stats_data_every, replace_data_every,
-                                                                                                                                                    in_file, solver_input_str, solver_input_param)] for n in N for t in T for h, save in zip(dt, save_every) for u0 in ic for v in nu for et in eta for ep in eps for a in alpha for b in beta for ep_m in eps_m for c in cfl for s_tag in solver_tag for in_file in input_file]
+                                                                                                                                                    save, stats_data_every, repl,
+                                                                                                                                                    in_file, solver_input_str, solver_input_param)] for n in N for t in T for h, save in zip(dt, save_every) for u0 in ic for v in nu for et in eta for ep in eps for a in alpha for b in beta for ep_m in eps_m for c in cfl for s_tag in solver_tag for in_file in input_file for repl in replace_every]
 
         if cmdargs.cmd_only:
             print(tc.C + "\nSolver Commands:\n" + tc.Rst)
@@ -398,13 +400,13 @@ if __name__ == '__main__':
         if "_mag_hydro" in executable or "_elsassar_mhd" in executable:
             cmd_list = [["python3 {} -i {} {}".format(
                                                 plot_script, 
-                                                post_input_dir + "_N[{}]_T[{:1.1f},{:g},{:1.3f}]_NU[{:g}]_ETA[{:g}]_ALPHA[{:1.3f}]_BETA[{:1.3f}]_K[{:1.3f},{:1.3f}]_EPS[{:1.2f},{:1.2f}]_FORC[{},{},{:1.3f}]_u0[{}]_TAG[{}]/".format(n, t0, h, t, v, e, a, b, k0, lam, ep, ep_m, forcing, force_k, force_scale, u0, s_tag), 
-                                                plot_options)] for n in N for h in dt for t in T for e in eta for v in nu for a in alpha for b in beta for ep in eps for ep_m in eps_m for u0 in ic for s_tag in solver_tag]
+                                                post_input_dir + "_N[{}]_T[{:1.1f},{:g},{:1.3f}]_SMP[{:d},{:d},{:d}]_NU[{:g}]_ETA[{:g}]_ALPHA[{:1.3f}]_BETA[{:1.3f}]_K[{:1.3f},{:1.3f}]_EPS[{:1.2f},{:1.2f}]_FORC[{},{},{:1.3f}]_u0[{}]_TAG[{}]/".format(n, t0, h, t, sv_ev, stats_data_every, repl, v, e, a, b, k0, lam, ep, ep_m, forcing, force_k, force_scale, u0, s_tag), 
+                                                plot_options)] for n in N for h in dt for t in T for e in eta for v in nu for a in alpha for b in beta for ep in eps for ep_m in eps_m for u0 in ic for s_tag in solver_tag for sv_ev in save_every for repl in replace_every]
         else:
             cmd_list = [["python3 {} -i {} {}".format(
                                                 plot_script, 
-                                                post_input_dir + "_N[{}]_T[{:1.1f},{:g},{:1.3f}]_NU[{:g}]_ALPHA[{:1.3f}]_K[{:1.3f},{:1.3f}]_EPS[{:1.2f}]_FORC[{},{},{:1.3f}]_u0[{}]_TAG[{}]/".format(n, t0, h, t, v, a, k0, lam, ep, forcing, force_k, force_scale, u0, s_tag), 
-                                                plot_options)] for n in N for h in dt for t in T for v in nu for a in alpha for ep in eps for u0 in ic for s_tag in solver_tag]
+                                                post_input_dir + "_N[{}]_T[{:1.1f},{:g},{:1.3f}]_SMP[{:d},{:d},{:d}]_NU[{:g}]_ALPHA[{:1.3f}]_K[{:1.3f},{:1.3f}]_EPS[{:1.2f}]_FORC[{},{},{:1.3f}]_u0[{}]_TAG[{}]/".format(n, t0, h, t, sv_ev, stats_data_every, repl, v, a, k0, lam, ep, forcing, force_k, force_scale, u0, s_tag), 
+                                                plot_options)] for n in N for h in dt for t in T for v in nu for a in alpha for ep in eps for u0 in ic for s_tag in solver_tag for sv_ev in save_every for repl in replace_every]
 
         if cmdargs.cmd_only:
             print(tc.C + "\nPlotting Commands:\n" + tc.Rst)

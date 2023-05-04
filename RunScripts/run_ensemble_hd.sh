@@ -39,7 +39,7 @@ save_every=25000
 # wait
 
 ############################## Run Ensemble Plotting Script
-ens_cmd="time python3 Plotting/plot_ensemble_stats.py "
+ens_cmd="python3 Plotting/plot_ensemble_stats.py FullModel "
 for tag in {0..50}
 do
 	input_data_dir=""$data_dir"HD-INTFACRK4-FULL_N[$N]_T[0.0,"$dt","$T"]_NU["$nu"]_ALPHA[1.500]_K[0.050,2.000]_EPS[0.50]_FORC["$forcing","$force_k","$force_scale"]_u0[$u0]_TAG[$tag] "

@@ -367,6 +367,11 @@ int GetCMLArgs(int argc, char** argv) {
 					strncpy(sys_vars->u0, "PO_AMP_INPUT", 64);
 					break;
 				}
+				else if (!(strcmp(optarg,"PO_INPUT"))) {
+					// Input File Initial Conditions - Full IC taken from input file
+					strncpy(sys_vars->u0, "PO_INPUT", 64);
+					break;
+				}
 				else if (!(strcmp(optarg,"AO_RND_PHASE"))) {
 					// Amp Only -- Random Amplitudes in (0.0, 1.0) -- Random initial phases
 					strncpy(sys_vars->u0, "AO_RND_PHASE", 64);

@@ -402,9 +402,10 @@ void ComputeSystemMeasurables(double t, const long int iter, const long int save
 
         // Eddy turnover time -> max of l / U during the transient iterations
         if (sys_vars->trans_iters == 0 && save_iter == 0) {
-            sys_vars->eddy_turnover_time = 1.0 / (run_data->k[2] * cabs(run_data->u[2]));                
+            sys_vars->tmp_eddy_turn_avg += 1.0 /(run_data->k[2] * cabs(run_data->u[2]));
+            sys_vars->eddy_turnover_time = sys_vars->tmp_eddy_turn_avg / run_data->num_sys_msr_steps;                 
         }
-        else if (sys_vars->trans_iters != 0 && save_iter <= 1) {            
+        else if (sys_vars->trans_iters != 0 && save_iter >= 1) {            
             // sys_vars->eddy_turnover_time = fmax(sys_vars->eddy_turnover_time, run_data->int_scale[save_iter] / run_data->u_charact[save_iter]);
             sys_vars->tmp_eddy_turn_avg += 1.0 /(run_data->k[2] * cabs(run_data->u[2]));
             sys_vars->eddy_turnover_time = sys_vars->tmp_eddy_turn_avg / sys_vars->num_sys_msr_before_trans;                

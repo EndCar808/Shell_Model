@@ -2,7 +2,7 @@
 # Sept 2022
 # Makfile to compile programmes for solver for the Magnetohydrodynamic GOY shell Model
 
- 
+
 # ---------------------------------------------------------------------
 #  Compiler flags
 # ---------------------------------------------------------------------
@@ -78,7 +78,7 @@ ELSASSAR_MHD_SOLVER_RK4_FLAGS := -D__RK4 -D__ELSASSAR_MHD -D__Z_PLUS -D__Z_MINUS
 ELSASSAR_MHD_SOLVER_AB4CN_FLAGS := -D__AB4CN -D__ELSASSAR_MHD -D__Z_PLUS -D__Z_MINUS # -D__ADAPTIVE_STEP -D__CFL_STEP
 
 # Phase only flags to be passed to solver
-PHASE_ONLY_FLAGS := -D__PHASE_ONLY -D__RK4 -D__VEL_AMP -D__VEL_PHI #-D__MAGNETO
+PHASE_ONLY_FLAGS := -D__PHASE_ONLY -D__RK4 -D__VEL #-D__VEL_AMP -D__VEL_PHI #-D__MAGNETO
 
 # Phase only flags to be passed to solver
 PHASE_ONLY_FXD_AMP_FLAGS := -D__PHASE_ONLY_FXD_AMP -D__RK4 -D__VEL_AMP -D__VEL_PHI #-D__MAGNETO
@@ -90,16 +90,18 @@ AMP_ONLY_FLAGS := -D__AMP_ONLY -D__INT_FAC_RK4 -D__VEL_AMP -D__VEL_PHI #-D__MAGN
 AMP_ONLY_FXD_PHASE_FLAGS := -D__AMP_ONLY_FXD_PHASE -D__INT_FAC_RK4 -D__VEL_AMP -D__VEL_PHI #-D__MAGNETO
 
 # Dataset Flags to be passed to the solver
-# DSET_FLAGS = -D__SYS_MEASURES 
-# DSET_FLAGS += -D__CONSERVED_PHASES -D__PHASE_SYNC 
-# DSET_FLAGS += -D__PHASE_SYNC_STATS 
+DSET_FLAGS = -D__SYS_MEASURES 
+DSET_FLAGS += -D__CONSERVED_PHASES -D__PHASE_SYNC 
+DSET_FLAGS += -D__PHASE_SYNC_STATS 
 DSET_FLAGS += -D__STATS 
-# DSET_FLAGS += -D__ENRG_SPECT_AVG -D__DISS_SPECT_AVG -D__TOT_ENRG_FLUX -D__TOT_KIN_HEL_FLUX -D__ENRG_FLUX_AVG -D__VEL_AMP_AVG -D__MAG_AMP_AVG -D__KIN_HEL_FLUX_AVG -D__KIN_HEL_FLUX
-# DSET_FLAGS += -D__KIN_ENRG_SPECT_AVG -D__MAG_ENRG_SPECT_AVG -D__PSEUDO_ENRG_FLUX_AVG
-# DSET_FLAGS += -D__ENRG_SPECT -D__DISS_SPECT -D__ENRG_FLUX -D__KIN_ENRG_SPECT -D__MAG_ENRG_SPECT
-# DSET_FLAGS += -D__FORCING
-# DSET_FLAGS += -D__VEL 
-# DSET_FLAGS += -D__MAG
+DSET_FLAGS += -D__ENRG_SPECT_AVG -D__DISS_SPECT_AVG -D__TOT_ENRG_FLUX -D__TOT_KIN_HEL_FLUX -D__ENRG_FLUX_AVG -D__VEL_AMP_AVG -D__MAG_AMP_AVG -D__KIN_HEL_FLUX_AVG -D__KIN_HEL_FLUX
+DSET_FLAGS += -D__KIN_ENRG_SPECT_AVG -D__MAG_ENRG_SPECT_AVG -D__PSEUDO_ENRG_FLUX_AVG
+DSET_FLAGS += -D__ENRG_SPECT -D__DISS_SPECT -D__ENRG_FLUX -D__KIN_ENRG_SPECT -D__MAG_ENRG_SPECT
+DSET_FLAGS += -D__FORCING
+DSET_FLAGS += -D__VEL 
+DSET_FLAGS += -D__MAG
+
+DENSE_DSET_FLAGS := -D__STATS
  
 # Flags to be passed to the solver for testing
 TEST_FLAGS    := -D__MAGNETO -D__TESTING -D__DEBUG #-D__ADAPTIVE_STEP -D__CFL_STEP -D__TRANSIENTS
@@ -131,6 +133,7 @@ SRCOBJ_PO_D 	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_phase_only_fxd_amp.o, $(SR
 SRCOBJ_AO  		:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_amp_only.o, $(SRCFILE))
 SRCOBJ_AO_D 	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_amp_only_fxd_phase.o, $(SRCFILE))
 SRCOBJ_Test 	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_test.o, $(SRCFILE))
+SRCOBJ_Dense 	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_hydro_dense.o, $(SRCFILE))
 
 DEPS = $(wildcard *.h) 
 
@@ -142,9 +145,9 @@ DEPS = $(wildcard *.h)
 ############
 
 
-all: $(BIN)/solver_hydro_IF $(BIN)/solver_hydro_RK $(BIN)/solver_hydro_AB $(BIN)/solver_mag_hydro_IF $(BIN)/solver_mag_hydro_RK $(BIN)/solver_mag_hydro_AB $(BIN)/solver_elsassar_mhd_IF $(BIN)/solver_elsassar_mhd_RK $(BIN)/solver_elsassar_mhd_AB $(BIN)/solver_phase_only $(BIN)/solver_phase_only_fxd_amp $(BIN)/solver_amp_only $(BIN)/solver_amp_only_fxd_phase $(BIN)/solver_test
+all: $(BIN)/solver_hydro_dense $(BIN)/solver_hydro_IF $(BIN)/solver_hydro_RK $(BIN)/solver_hydro_AB $(BIN)/solver_mag_hydro_IF $(BIN)/solver_mag_hydro_RK $(BIN)/solver_mag_hydro_AB $(BIN)/solver_elsassar_mhd_IF $(BIN)/solver_elsassar_mhd_RK $(BIN)/solver_elsassar_mhd_AB $(BIN)/solver_phase_only $(BIN)/solver_phase_only_fxd_amp $(BIN)/solver_amp_only $(BIN)/solver_amp_only_fxd_phase $(BIN)/solver_test
 
-
+# 
 ####--------
 #  Solvers
 ####--------
@@ -173,6 +176,13 @@ $(BIN)/solver_hydro_AB: $(SRCOBJ_H_AB) $(DEPS)
 $(OBJBIN)/%_hydro_AB.o: $(SRCDIR)/%.c $(DEPS)
 	$(GCC) $(CCFLAG) $(HYDRO_SOLVER_AB4CN_FLAGS) $(DSET_FLAGS) -c $^ -o $@ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
 
+solver_hydro_dense: $(BIN)/solver_hydro_dense
+
+$(BIN)/solver_hydro_dense: $(SRCOBJ_Dense) $(DEPS)
+	$(GCC) $(CCFLAG) $(HYDRO_SOLVER_IFRK4_FLAGS) $(DENSE_DSET_FLAGS) -o $@ $^ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+
+$(OBJBIN)/%_hydro_dense.o: $(SRCDIR)/%.c $(DEPS)
+	$(GCC) $(CCFLAG) $(HYDRO_SOLVER_IFRK4_FLAGS) $(DENSE_DSET_FLAGS) -c $^ -o $@ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
 
 ##----------------------- Mag Hydro Solvers
 solver_mag_hydro_IF: $(BIN)/solver_mag_hydro_IF 

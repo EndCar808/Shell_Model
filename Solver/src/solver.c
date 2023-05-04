@@ -1369,7 +1369,7 @@ void InitialConditions(const long int N) {
 	    	}
 	    }
 	}
-    else if (!(strcmp(sys_vars->u0, "AO_INPUT_PHASE")) || !(strcmp(sys_vars->u0, "AO_INPUT_PHASE_REPLACE"))) {
+    else if (!(strcmp(sys_vars->u0, "AO_INPUT_PHASE")) || !(strcmp(sys_vars->u0, "AO_INPUT_PHASE_REPLACE")) || !(strcmp(sys_vars->u0, "PO_INPUT"))) {
 		// ------------------------------------------------
 	    // Phases from Input File
 	    // ------------------------------------------------
@@ -1451,7 +1451,6 @@ void InitialConditions(const long int N) {
 					run_data->a_n[i]   = 0.0;
     	    	}
     	    }
-
     	    free(tmp);
 	    }
 	}

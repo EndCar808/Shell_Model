@@ -137,20 +137,40 @@ if __name__ == '__main__':
 
 	## Read in Velocities
 	with h5py.File(cmdargs.in_dir + "Main_HDF_Data.h5", 'r') as in_file:
-		u = in_file["VelModes"][:, :]
-		num_t, num_shell = u.shape
+		num_t, num_shell = in_file["VelModes"].shape
+		
+		start=0
+		stride=1000
+		count=(num_t) // stride
+		block=1
+		
+		u = in_file["VelModes"][h5py.MultiBlockSlice(start, stride, count, block), :]
+		num_t_slice, num_shell_slice = u.shape
+
 
 	tot_energy = np.sum(np.absolute(u)**2, axis=-1)
-	# tot_diss = np.sum((k[np.newaxis, :]**2 * np.absolute(u)**2), axis=-1)
+	tot_diss   = np.sum((k[np.newaxis, :]**2 * np.absolute(u)**2), axis=-1)
+	eddy_turn  = 1.0 / (k[0] * np.absolute(u[:, 0]))
 	
-	time = np.arange(sys_vars.T * 0.2, sys_vars.T + sys_vars.dt, step=sys_vars.dt)
+	time = np.linspace(sys_vars.T * 0.2, sys_vars.T, num_t_slice)
 
 	fig = plt.figure(figsize = (32, 8))
-	gs  = GridSpec(1, 2, hspace = 0.35)
+	gs  = GridSpec(1, 3, hspace = 0.35)
 	ax1 = fig.add_subplot(gs[0, 0])
 	ax1.plot(time, tot_energy)
 	ax1.set_xlabel(r"$t$")
 	ax1.set_title(r"Total Energy")
+	ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+	ax1 = fig.add_subplot(gs[0, 1])
+	ax1.plot(time, tot_diss)
+	ax1.set_xlabel(r"$t$")
+	ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
+	ax1.set_title(r"Total Dissipation")
+	ax1 = fig.add_subplot(gs[0, 2])
+	ax1.plot(time, eddy_turn, label=r"Mean = {}".format(np.mean(eddy_turn)))
+	ax1.set_xlabel(r"$t$")
+	ax1.set_title(r"Eddy Turnover")
+	ax1.legend()
 	ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
 	fig.savefig(cmdargs.out_dir_HD  + "System_Measures" + "." + fig_format, format=fig_format, bbox_inches='tight')
 	plt.close()
