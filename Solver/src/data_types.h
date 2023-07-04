@@ -266,6 +266,7 @@ typedef struct system_vars_struct {
 	double eddy_turnover_time;			// Eddy turnover time is going to be defined as the max eddy turnover time during transient iterations
 	double trans_time;					// Integration time it takes to perform the transient iterations
 	int num_sys_msr_before_trans;		// The number of times system measures has been computed
+	long int num_replacements;			// Count the number of replacements
 } system_vars_struct;
 
 // Runtime data struct

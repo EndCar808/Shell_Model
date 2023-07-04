@@ -134,6 +134,7 @@ SRCOBJ_AO  		:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_amp_only.o, $(SRCFILE))
 SRCOBJ_AO_D 	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_amp_only_fxd_phase.o, $(SRCFILE))
 SRCOBJ_Test 	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_test.o, $(SRCFILE))
 SRCOBJ_Dense 	:= $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_hydro_dense.o, $(SRCFILE))
+SRCOBJ_PO_Dense := $(patsubst $(SRCDIR)/%.c, $(OBJBIN)/%_phase_only_dense.o, $(SRCFILE))
 
 DEPS = $(wildcard *.h) 
 
@@ -145,9 +146,9 @@ DEPS = $(wildcard *.h)
 ############
 
 
-all: $(BIN)/solver_hydro_dense $(BIN)/solver_hydro_IF $(BIN)/solver_hydro_RK $(BIN)/solver_hydro_AB $(BIN)/solver_mag_hydro_IF $(BIN)/solver_mag_hydro_RK $(BIN)/solver_mag_hydro_AB $(BIN)/solver_elsassar_mhd_IF $(BIN)/solver_elsassar_mhd_RK $(BIN)/solver_elsassar_mhd_AB $(BIN)/solver_phase_only $(BIN)/solver_phase_only_fxd_amp $(BIN)/solver_amp_only $(BIN)/solver_amp_only_fxd_phase $(BIN)/solver_test
+all: $(BIN)/solver_phase_only_dense $(BIN)/solver_hydro_dense $(BIN)/solver_hydro_IF $(BIN)/solver_hydro_RK $(BIN)/solver_hydro_AB $(BIN)/solver_mag_hydro_IF $(BIN)/solver_mag_hydro_RK $(BIN)/solver_mag_hydro_AB $(BIN)/solver_elsassar_mhd_IF $(BIN)/solver_elsassar_mhd_RK $(BIN)/solver_elsassar_mhd_AB $(BIN)/solver_phase_only $(BIN)/solver_phase_only_fxd_amp $(BIN)/solver_amp_only $(BIN)/solver_amp_only_fxd_phase $(BIN)/solver_test
 
-# 
+
 ####--------
 #  Solvers
 ####--------
@@ -255,7 +256,13 @@ $(BIN)/solver_phase_only_fxd_amp: $(SRCOBJ_PO_D) $(DEPS)
 $(OBJBIN)/%_phase_only_fxd_amp.o: $(SRCDIR)/%.c $(DEPS) 
 	$(GCC) $(CCFLAG) $(PHASE_ONLY_FXD_AMP_FLAGS) $(DSET_FLAGS) -c $^ -o $@ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
 
+solver_phase_only_dense: $(BIN)/solver_phase_only_dense 
 
+$(BIN)/solver_phase_only_dense: $(SRCOBJ_PO_Dense) $(DEPS) 
+	$(GCC) $(CCFLAG) $(PHASE_ONLY_FLAGS) $(DENSE_DSET_FLAGS) -o $@ $^ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
+
+$(OBJBIN)/%_phase_only_dense.o: $(SRCDIR)/%.c $(DEPS) 
+	$(GCC) $(CCFLAG) $(PHASE_ONLY_FLAGS) $(DENSE_DSET_FLAGS) -c $^ -o $@ ${INCDIR} ${LIBDIR} $(LIBFLAG) $(GSLFLAG)
 ####-----------
 #  Amp Only 
 ####-----------

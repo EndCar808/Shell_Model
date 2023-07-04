@@ -13,7 +13,7 @@ force_k=1
 force_scale=0.100
 
 u0="N_SCALING"
-data_dir="./Data/Thesis/"
+data_dir="./Data/Thesis/EnsembleRuns/HDStatsEnsemble/"
 
 save_every=25000
 
@@ -39,7 +39,7 @@ save_every=25000
 # wait
 
 ############################## Run Ensemble Plotting Script
-ens_cmd="python3 Plotting/plot_ensemble_stats.py FullModel "
+ens_cmd="python3 Plotting/plot_ensemble_stats.py /home/enda/PhD/Shell_Model/Data/Thesis/Plots/HDStats/ FullModel "
 for tag in {0..50}
 do
 	input_data_dir=""$data_dir"HD-INTFACRK4-FULL_N[$N]_T[0.0,"$dt","$T"]_NU["$nu"]_ALPHA[1.500]_K[0.050,2.000]_EPS[0.50]_FORC["$forcing","$force_k","$force_scale"]_u0[$u0]_TAG[$tag] "

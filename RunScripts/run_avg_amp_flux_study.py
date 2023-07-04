@@ -174,9 +174,9 @@ if __name__ == '__main__':
 		fig.savefig(cmdargs.out_dir_AVGFLUX + fig_name + "_TimeAveraged_knSpec" + fig_format, bbox_inches='tight')
 		plt.close()
 
-		----------------------
-		1D PDF
-		----------------------
+		# ----------------------
+		# 1D PDF
+		# ----------------------
 		# 1D - PDF - Angle
 		num_bins = 100
 		norm_hist = False

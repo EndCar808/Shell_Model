@@ -52,23 +52,29 @@ my_cmap.set_under(color = "white")
 # # --------  CMD Line & Data Directories
 # --------------------------------------------------
 ## Get script name and check for input directories
-script_name = sys.argv[0]
-tag_name    = sys.argv[1]
+script_name  = sys.argv[0]
+out_dir_name = sys.argv[1]
+tag_name     = sys.argv[2]
 print("\nFile name: %s " % script_name)
 print("\nTag name: %s " % tag_name)
+print("\nOutdir name: %s " % out_dir_name)
 if (len(sys.argv) == 1):
 	print("No Input file specified, Error.\n")
 	sys.exit()
 data_no = 0
 
+if not(os.path.isdir(out_dir_name)):
+	print("Not a valid output dir: {}\n".format(out_dir_name))
+	sys.exit()
+
 ## Initialize array to hold data directories
-out_dir_data = np.array(['' for _ in range(len(sys.argv)-2)], dtype='object')
-fig_format  = 'png'
+out_dir_data = np.array(['' for _ in range(len(sys.argv)-3)], dtype='object')
+fig_format  = 'pdf'
 
 ## Get input data directories
-for i in range(0,len(sys.argv)-2):
+for i in range(0,len(sys.argv)-3):
 	if (len(sys.argv) > data_no+1):
-		out_dir_data[data_no] = str(sys.argv[data_no+2])
+		out_dir_data[data_no] = str(sys.argv[data_no+3])
 		data_no += 1
 print()
 
@@ -109,7 +115,8 @@ for i in range(true_data_no):
 print()
 
 
-plot_dir="/home/enda/PhD/Shell_Model/Data/Thesis/Plots/ReplaceData/"
+# plot_dir="/home/enda/PhD/Shell_Model/Data/Thesis/Plots/ReplaceData/"
+plot_dir=out_dir_name
 
 # --------------------------------------------------
 # # --------  Initialize Data Arrays
@@ -139,22 +146,34 @@ sys_vars = sim_data(true_out_dir_data[-1] + "/", "default")
 
 ## Initialize Arrays
 Tot_Enrg_all 	 = np.empty([true_data_no, num_t_steps], dtype=float, order='C')
-Vel_Modse_all    = np.empty([true_data_no, num_t_steps, num_shell], dtype=np.complex128, order='C')
+Vel_Modes_all    = np.empty([true_data_no, num_t_steps, num_shell], dtype=np.complex128, order='C')
 Vel_SF_all       = np.empty([true_data_no, num_shell, num_pow], dtype=float, order='C')
 Vel_Trip_SF_all  = np.empty([true_data_no, num_shell, num_pow], dtype=float, order='C')
 Vel_EFlux_SF_all = np.empty([true_data_no, num_shell, num_pow], dtype=float, order='C')
 Vel_HFlux_SF_all = np.empty([true_data_no, num_shell, num_pow], dtype=float, order='C')
 
-
+Triads_all = np.empty([true_data_no, num_t_steps, 23], dtype=float, order='C')
 
 # --------------------------------------------------
 # # --------  Read In Data Arrays
 # --------------------------------------------------
 print("\nReading In Data")
+skipped=0
 for i in range(0, true_data_no):
 	with h5py.File(true_out_dir_data[i]+"/Stats_HDF_Data.h5",'r') as HDFfileRuntime:
 		## Get the number of stats steps
 		num_stats_steps = HDFfileRuntime["NumStatsSteps"][:]
+
+	with h5py.File(true_out_dir_data[i]+"/System_Measure_HDF_Data.h5",'r') as HDFfileRuntime:
+		tmp = HDFfileRuntime["TotalEnergy"][:]
+
+	if np.any(tmp > 75):
+		skipped+=1
+		continue
+
+	with h5py.File(true_out_dir_data[i]+"/System_Measure_HDF_Data.h5",'r') as HDFfileRuntime:
+		Tot_Enrg_all[i, :]     = HDFfileRuntime["TotalEnergy"][:]
+
 
 		## Get the HD Stats Data
 		Vel_SF_all[i, :, :]       = HDFfileRuntime["StructureFunctionVel"][:, :] / num_stats_steps
@@ -164,12 +183,12 @@ for i in range(0, true_data_no):
 
 	with h5py.File(true_out_dir_data[i]+"/Main_HDF_Data.h5",'r') as HDFfileRuntime:
 		## Get the Velocity Modes
-		Vel_Modse_all[i, :, :] = HDFfileRuntime["VelModes"][:, :]
-
-	with h5py.File(true_out_dir_data[i]+"/System_Measure_HDF_Data.h5",'r') as HDFfileRuntime:
-		Tot_Enrg_all[i, :]     = HDFfileRuntime["TotalEnergy"][:]
+		Vel_Modes_all[i, :, :] = HDFfileRuntime["VelModes"][:, :]
 
 
+
+	with h5py.File(true_out_dir_data[i]+"/Phase_Sync_HDF_Data.h5",'r') as HDFfileRuntime:
+		Triads_all[i, :, :] = HDFfileRuntime["VelTriads"][:, :]
 
 # --------------------------------------------------
 # # --------  Plotting Data
@@ -186,7 +205,7 @@ ax1.set_xlabel(r"$t$")
 ax1.set_title(r"Total Energy")
 ax1.legend()
 ax1.grid(which = "both", axis = "both", color = 'k', linestyle = ":", linewidth = 0.5)
-plt.suptitle("True No. of Data Dirs: {}".format(true_data_no))
+plt.suptitle("True No. of Data Dirs: {}/".format(true_data_no, data_no))
 fig.savefig(plot_dir + "Ens_TotalEnergy_Tag[{}]".format(tag_name) + "." + fig_format, format=fig_format, bbox_inches='tight')
 plt.close()
 
@@ -211,7 +230,7 @@ plot_str_func_with_anom_scaling(plot_dir + "EnsSF_Vel_HelFlux_Tag[{}]".format(ta
 
 
 ###------------------ Plot PDFs
-plot_PDF_InOne(plot_dir + "EnsPDFs_Vel_Real_Tag[{}]".format(tag_name) + "." + fig_format, np.real(Vel_Modse_all), lab="\Re u_n", remove_zeros=True)
+plot_PDF_InOne(plot_dir + "EnsPDFs_Vel_Real_Tag[{}]".format(tag_name) + "." + fig_format, np.real(Vel_Modes_all), lab="\Re u_n", remove_zeros=True)
 
 
 
@@ -249,7 +268,7 @@ gs  = GridSpec(1, 1)
 ax1 = fig.add_subplot(gs[0, 0])
 indxs = [5, 10, 15, 20]
 for j, i in enumerate(indxs):
-	pdf, centres = compute_pdf(np.real(Vel_Modse_all[:, :, i]).flatten(), nbins = nbins, normed = True, remove_zeros=True)    
+	pdf, centres = compute_pdf(np.real(Vel_Modes_all[:, :, i]).flatten(), nbins = nbins, normed = True, remove_zeros=True)    
 	ax1.plot(centres, pdf, label = "$n = {}$".format(i), color=plot_colours[(j + 5 - len(indxs)) * 2])    
 ax1.set_xlabel(r"$\Re \left\{u_n\right\} / \langle \Re\left\{ u_n \right\}^2 \rangle^{1/2}$", fontsize=label_size)
 ax1.set_yscale('log')
@@ -259,4 +278,63 @@ ax1.grid()
 ax1.legend()
 plt.savefig(plot_dir + "Shell_PDFs" + "." + 'pdf', format = 'pdf', bbox_inches='tight', dpi=1200)
 plt.close()
+
+
+###------------ Plot SF
+p_range = np.arange(2.0, 6.0 + 1, dtype=np.int64)
+zeta_p = [0.3729, 0.7055, 0.9963, 1.245, 1.4475, 1.6218]
+ns_zeta_p    = [0.7, 1, 1.27, 1.53, 1.78]
+
+kk = k/sys_vars.k0
+inert_range = [3, 12]
+
+fig = plt.figure()
+gs  = GridSpec(1, 2)
+ax1 = fig.add_subplot(gs[0, 0])
+zeta_p, zeta_p_resi = plot_sf(fig, ax1, p_range, kk, np.mean(Vel_EFlux_SF_all, axis=0)[:, 1:], inert_range, r"\mathcal{S}_p^{\Pi^{\mathcal{K}}}", insert_fig = True, scaling = 'loge')
+ax1 = fig.add_subplot(gs[0, 1])
+plot_anom_scaling(fig, ax1, p_range, zeta_p[:], ns_zeta_p, r"$\zeta_p^{\Pi^{\mathcal{K}}}$")
+plt.savefig(plot_dir + "PO_Shell_SFs" + "." + 'pdf', format = 'pdf', bbox_inches='tight', dpi=1200)
+plt.close()
+
+fig = plt.figure()
+gs  = GridSpec(1, 1)
+ax1 = fig.add_subplot(gs[0, 0])
+ax1.plot(kk, np.mean(np.absolute(Vel_Modes_all), axis=(0, 1)), color = plot_colours[-3])
+ax1.plot(kk[3:15], kk[3:15]**(-0.3333), 'k--', label=r"$k_n^{-1/3}$")
+ax1.set_xlabel(r"$k_n / k_0$")
+ax1.set_ylabel(r"$a_n$")
+ax1.set_yscale('log')
+ax1.set_xscale('log')
+ax1.legend()
+ax1.grid()
+plt.savefig(plot_dir + "PO_Amps" + "." + 'pdf', format = 'pdf', bbox_inches='tight', dpi=1200)
+plt.close()
+
+fig = plt.figure(figsize = (16, 16))
+gs  = GridSpec(5, 5, wspace = 0.35, hspace = 0.25)
+for i in range(5):
+	for j in range(5):
+		if i * 5 + j < 23:
+			ax1 = fig.add_subplot(gs[i, j])
+			pdf, ranges = np.histogram(Triads_all[:, :, i * 5 + j].flatten(), bins=1000, range=(0.0, 2.0*np.pi), density=True)
+			centres = (ranges[1:] + ranges[:-1]) * 0.5
+			ax1.plot(centres, pdf, label = "$n = {}$".format(i * 5 + j + 1), color=plot_colours[-3])
+			ax1.set_xlabel("$\phi_n + \phi_{n + 1} + \phi_{n + 2}$")
+			ax1.set_ylabel("PDF")
+			ax1.set_yscale("log")
+			ax1.legend()
+			ax1.set_xlim(0, 2.0*np.pi)
+			# ax1.set_xlim(-np.pi, np.pi)
+			ax1.set_xticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
+			ax1.set_xticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2 \pi$"])
+			# ax1.set_xticklabels([-np.pi, -np.pi/2.0, 0.0, np.pi/2, np.pi])
+			# ax1.set_xticklabels([r"$-\pi$", r"$\frac{-\pi}{2}$", r"$0$", r"$\frac{\pi}{2}$", r"$\pi$"])
+			ax1.grid()
+plt.savefig(plot_dir + "PO_Phases_Vel_Triad_PDF" + "." + fig_format, format = fig_format, bbox_inches='tight', dpi=1200)
+plt.close()
+
+
+print("True: {} - Skipped: {}".format(true_data_no, skipped))
+
 print("\n\nFinshied\n\n")

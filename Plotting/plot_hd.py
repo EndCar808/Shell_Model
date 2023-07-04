@@ -322,7 +322,7 @@ if __name__ == '__main__':
 		fig = plt.figure(figsize = fig_size)
 		gs  = GridSpec(1, 1)
 		ax1 = fig.add_subplot(gs[0, 0])
-		for j, i in enumerate([6, 11, 16, 20]):
+		for j, i in enumerate([6, 11, 16, sys_vars.N - 2]):
 			if hasattr(stats_data, "vel_hist_counts"):
 				pdf, centres = compute_pdf_from_hist(stats_data.vel_hist_counts[i, :], stats_data.vel_hist_ranges[i, :], normed = True)
 				ax1.set_title("C Data")

@@ -152,7 +152,9 @@ void Solve(void) {
     hsize_t dimsm[2];
     hsize_t offset_out[2];
     hsize_t count_out[2];
+	sys_vars->num_replacements = 0;
 	if (!(strcmp(sys_vars->u0, "AO_INPUT_PHASE_REPLACE"))) {
+
 		// Open input file
 		file_info->input_file_handle = H5Fopen(file_info->input_file_name, H5F_ACC_RDONLY, H5P_DEFAULT);
 		if (file_info->input_file_handle < 0) {
@@ -953,7 +955,7 @@ void AB4CNStep(const double dt, const long iters, const long int N, RK_data_stru
 		// Perform RK4 Step
 		// -----------------------------------
 		// March the field forward in time using RK4 step
-		RK4Step(dt, N, RK_data);
+		IntFacRK4Step(dt, N, RK_data);
 
 		// Save the nonlinear term for each pre step for use in the update step of the AB4CN scheme
 		memcpy(&(RK_data->AB_tmp_nonlin_u[iters - 1][0]), RK_data->RK1_u, sizeof(double complex) * (N + 4));
@@ -1792,6 +1794,8 @@ void GetField(long int iters, long int repl_iter, hid_t memspace, hid_t dspace, 
 			// Get the velocity field from the phases
 			run_data->u[n] = cabs(run_data->u[n]) * cexp(I * tmp_phase);
 		}
+
+		sys_vars->num_replacements++;
 	}
 	else if (!(strcmp(sys_vars->u0, "AO_ALGND_PHASE_SD")) || !(strcmp(sys_vars->u0, "AO_ALGND_PHASE_JTR"))) {
 		// if (iters == 1) {

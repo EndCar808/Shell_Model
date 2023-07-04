@@ -689,7 +689,8 @@ void PrintSimulationDetails(int argc, char** argv, double sim_time) {
 
 	// Printing
 	fprintf(sim_file, "Data Saved Every: %d\n", sys_vars->print_every);
-	fprintf(sim_file, "Total Saving Steps: %ld\n", sys_vars->tot_save_steps);
+	fprintf(sim_file, "Total Saving Steps: %ld", sys_vars->tot_save_steps);
+	fprintf(sim_file, "Total Replacement Steps: %ld\n", sys_vars->num_replacements);
 	
 	// Print simulation turbulence details
 	fprintf(sim_file, "\nEddy Turnover Time: %lf\n", sys_vars->eddy_turnover_time);
