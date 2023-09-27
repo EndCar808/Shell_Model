@@ -53,8 +53,8 @@ my_cmap.set_under(color = "white")
 # --------------------------------------------------
 ## Get script name and check for input directories
 script_name  = sys.argv[0]
-out_dir_name = sys.argv[1]
-tag_name     = sys.argv[2]
+out_dir_name = sys.argv[2]
+tag_name     = sys.argv[1]
 print("\nFile name: %s " % script_name)
 print("\nTag name: %s " % tag_name)
 print("\nOutdir name: %s " % out_dir_name)
@@ -69,6 +69,7 @@ if not(os.path.isdir(out_dir_name)):
 
 ## Initialize array to hold data directories
 out_dir_data = np.array(['' for _ in range(len(sys.argv)-3)], dtype='object')
+# fig_format  = 'png'
 fig_format  = 'pdf'
 
 ## Get input data directories
@@ -116,6 +117,7 @@ print()
 
 
 # plot_dir="/home/enda/PhD/Shell_Model/Data/Thesis/Plots/ReplaceData/"
+# plot_dir="/home/enda/PhD/Shell_Model/Data/Viva/Plots/ReplaceData/"
 plot_dir=out_dir_name
 
 # --------------------------------------------------
@@ -152,7 +154,7 @@ Vel_Trip_SF_all  = np.empty([true_data_no, num_shell, num_pow], dtype=float, ord
 Vel_EFlux_SF_all = np.empty([true_data_no, num_shell, num_pow], dtype=float, order='C')
 Vel_HFlux_SF_all = np.empty([true_data_no, num_shell, num_pow], dtype=float, order='C')
 
-Triads_all = np.empty([true_data_no, num_t_steps, 23], dtype=float, order='C')
+Triads_all = np.empty([true_data_no, num_t_steps, 20], dtype=float, order='C')
 
 # --------------------------------------------------
 # # --------  Read In Data Arrays
@@ -160,21 +162,21 @@ Triads_all = np.empty([true_data_no, num_t_steps, 23], dtype=float, order='C')
 print("\nReading In Data")
 skipped=0
 for i in range(0, true_data_no):
-	with h5py.File(true_out_dir_data[i]+"/Stats_HDF_Data.h5",'r') as HDFfileRuntime:
-		## Get the number of stats steps
-		num_stats_steps = HDFfileRuntime["NumStatsSteps"][:]
 
 	with h5py.File(true_out_dir_data[i]+"/System_Measure_HDF_Data.h5",'r') as HDFfileRuntime:
 		tmp = HDFfileRuntime["TotalEnergy"][:]
 
-	if np.any(tmp > 75):
-		skipped+=1
-		continue
+	# if np.any(tmp > 75):
+	# 	skipped+=1
+	# 	continue
 
 	with h5py.File(true_out_dir_data[i]+"/System_Measure_HDF_Data.h5",'r') as HDFfileRuntime:
 		Tot_Enrg_all[i, :]     = HDFfileRuntime["TotalEnergy"][:]
 
 
+	with h5py.File(true_out_dir_data[i]+"/Stats_HDF_Data.h5",'r') as HDFfileRuntime:
+		## Get the number of stats steps
+		num_stats_steps = HDFfileRuntime["NumStatsSteps"][:]
 		## Get the HD Stats Data
 		Vel_SF_all[i, :, :]       = HDFfileRuntime["StructureFunctionVel"][:, :] / num_stats_steps
 		Vel_Trip_SF_all[i, :, :]  = HDFfileRuntime["StructureFunctionTrippleProdVelAbs"][:, :] / num_stats_steps
@@ -187,8 +189,8 @@ for i in range(0, true_data_no):
 
 
 
-	with h5py.File(true_out_dir_data[i]+"/Phase_Sync_HDF_Data.h5",'r') as HDFfileRuntime:
-		Triads_all[i, :, :] = HDFfileRuntime["VelTriads"][:, :]
+	# with h5py.File(true_out_dir_data[i]+"/Phase_Sync_HDF_Data.h5",'r') as HDFfileRuntime:
+	# 	Triads_all[i, :, :] = HDFfileRuntime["VelTriads"][:, :]
 
 # --------------------------------------------------
 # # --------  Plotting Data
@@ -294,7 +296,7 @@ ax1 = fig.add_subplot(gs[0, 0])
 zeta_p, zeta_p_resi = plot_sf(fig, ax1, p_range, kk, np.mean(Vel_EFlux_SF_all, axis=0)[:, 1:], inert_range, r"\mathcal{S}_p^{\Pi^{\mathcal{K}}}", insert_fig = True, scaling = 'loge')
 ax1 = fig.add_subplot(gs[0, 1])
 plot_anom_scaling(fig, ax1, p_range, zeta_p[:], ns_zeta_p, r"$\zeta_p^{\Pi^{\mathcal{K}}}$")
-plt.savefig(plot_dir + "PO_Shell_SFs" + "." + 'pdf', format = 'pdf', bbox_inches='tight', dpi=1200)
+plt.savefig(plot_dir + "PO_Shell_SFs_new" + "." + 'pdf', format = 'pdf', bbox_inches='tight', dpi=1200)
 plt.close()
 
 fig = plt.figure()
@@ -315,7 +317,7 @@ fig = plt.figure(figsize = (16, 16))
 gs  = GridSpec(5, 5, wspace = 0.35, hspace = 0.25)
 for i in range(5):
 	for j in range(5):
-		if i * 5 + j < 23:
+		if i * 5 + j < 20:
 			ax1 = fig.add_subplot(gs[i, j])
 			pdf, ranges = np.histogram(Triads_all[:, :, i * 5 + j].flatten(), bins=1000, range=(0.0, 2.0*np.pi), density=True)
 			centres = (ranges[1:] + ranges[:-1]) * 0.5

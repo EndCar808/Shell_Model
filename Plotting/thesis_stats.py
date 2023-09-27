@@ -117,10 +117,10 @@ def plot_sf(fig, ax, p_range, k, str_funcs, inert_range, ylab, insert_fig = True
 		zeta_p_resid.append(poly_resid)
 		ax.plot(log_func(k[inert_lim_low:inert_lim_high]), log_func(k[inert_lim_low:inert_lim_high])*pfit_slope + pfit_c, '--', color = p.get_color())
 
-		if i >= 1 and i <= len(ns_zeta_p):
-			print(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f} \t{:1.3f}".format(i, -(idx + 1) / 3, pfit_slope, poly_resid, -ns_zeta_p[i - 2]))
+		if i >= 2 and i <= len(ns_zeta_p):
+			print(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f} \t{:1.3f}".format(i, -(i) / 3, pfit_slope, poly_resid, -ns_zeta_p[i - 2]))
 		else:
-			print(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f}".format(i, -(idx + 1) / 3, pfit_slope, poly_resid))
+			print(" {}\t {:1.4f} \t {:1.4f} +/-{:0.3f}".format(i, -(i) / 3, pfit_slope, poly_resid))
 
 		if insert_fig:
 			# ## Compute the local derivative and plot in insert
@@ -151,7 +151,7 @@ def plot_sf(fig, ax, p_range, k, str_funcs, inert_range, ylab, insert_fig = True
 
 def plot_anom_scaling(fig, ax, p, zeta_p, ns_zeta_p, label_str):
 	ax.plot(p, zeta_p, marker = 'o', markerfacecolor = 'None', markersize = 5.0, markevery = 1, label = label_str, color=plot_colours[-1])
-	ax.plot(np.arange(2, 6 + 1), ns_zeta_p, marker = '.', markerfacecolor = 'None', markersize = 5.0, markevery = 1, label = "Navier Stokes", color=plot_colours[-3])
+	ax.plot(np.arange(2, 6 + 1), ns_zeta_p, marker = '.', markerfacecolor = 'None', markersize = 5.0, markevery = 1, label = "Navier-Stokes", color=plot_colours[-3])
 	ax.plot(p, p / 3, 'k--', label = r"$p/3$")
 	ax.set_xlabel(r"$p$", fontsize=label_size)
 	ax.set_ylabel(label_str, fontsize=label_size)
@@ -333,29 +333,45 @@ if __name__ == '__main__':
 
 
 
-	# # -----------------------------------------
-	# # # --------  Plot Structure Functions
-	# # -----------------------------------------
-	# p_range = np.arange(2.0, 6.0 + 1, dtype=np.int64)
-	# zeta_p = [0.3729, 0.7055, 0.9963, 1.245, 1.4475, 1.6218]
-	# ns_zeta_p    = [0.7, 1, 1.27, 1.53, 1.78]
+	# -----------------------------------------
+	# # --------  Plot Structure Functions
+	# -----------------------------------------
+	p_range = np.arange(2.0, 6.0 + 1, dtype=np.int64)
+	zeta_p = [0.3729, 0.7055, 0.9963, 1.245, 1.4475, 1.6218]
+	ns_zeta_p    = [0.7, 1, 1.27, 1.53, 1.78]
 
-	# k = sys_msr_data.k/sys_vars.k0
-	# inert_range = [3 - 1, 12 - 1]
+	k = sys_msr_data.k/sys_vars.k0
+	inert_range = [3, 12]
+
+	print(stats_data.vel_str_func.shape)
 
 	# fig = plt.figure(figsize=fig_size_2x2)
 	# gs  = GridSpec(2, 2)
 	# ax1 = fig.add_subplot(gs[0, 0])
-	# zeta_p, zeta_p_resi = plot_sf(fig, ax1, p_range, k, stats_data.vel_str_func[:, :] / stats_data.num_stats_steps, inert_range, r"\mathcal{S}_p^{u}", insert_fig = True, scaling = 'loge', ax_pos=[0.15, 0.55, 0.15, 0.15])
+	# zeta_p, zeta_p_resi = plot_sf(fig, ax1, p_range, k, stats_data.vel_str_func[:, :], inert_range, r"\mathcal{S}_p^{u}", insert_fig = True, scaling = 'loge', ax_pos=[0.15, 0.55, 0.15, 0.15])
 	# ax1 = fig.add_subplot(gs[0, 1])
 	# plot_anom_scaling(fig, ax1, p_range, zeta_p[:], ns_zeta_p, r"$\zeta_p^{u}$")
 	# ax1 = fig.add_subplot(gs[1, 0])
-	# zeta_p, zeta_p_resi = plot_sf(fig, ax1, p_range, k, stats_data.vel_flux_str_func_abs[:, :, 0] / stats_data.num_stats_steps, inert_range, r"\mathcal{S}_p^{\Pi^{\mathcal{K}^{u}}}", insert_fig = True, scaling = 'loge')
+	# zeta_p, zeta_p_resi = plot_sf(fig, ax1, p_range, k, stats_data.vel_flux_str_func_abs[:, :, 0], inert_range, r"\mathcal{S}_p^{\Pi^{\mathcal{K}^{u}}}", insert_fig = True, scaling = 'loge')
 	# ax1 = fig.add_subplot(gs[1, 1])
 	# plot_anom_scaling(fig, ax1, p_range, zeta_p[:], ns_zeta_p, r"$\zeta_p^{\Pi^{\mathcal{K}^{u}}}$")
-	# plt.savefig(output_dir + "Shell_SFs" + "." + fig_format, format = fig_format, bbox_inches='tight', dpi=1200)
+	# plt.savefig(output_dir + "Shell_SFs_new" + "." + fig_format, format = fig_format, bbox_inches='tight', dpi=1200)
 	# plt.close()
 
+	fig = plt.figure(figsize=fig_size_2x2)
+	gs  = GridSpec(2, 2)
+	ax1 = fig.add_subplot(gs[0, 0])
+	zeta_p, zeta_p_resi = plot_sf(fig, ax1, p_range, k, stats_data.vel_str_func[:, 1:], inert_range, r"\mathcal{S}_p^{u}", insert_fig = True, scaling = 'loge', ax_pos=[0.15, 0.55, 0.15, 0.15])
+	print(zeta_p)
+	ax1 = fig.add_subplot(gs[0, 1])
+	plot_anom_scaling(fig, ax1, p_range, zeta_p[:], ns_zeta_p, r"$\zeta_p^{u}$")
+	ax1 = fig.add_subplot(gs[1, 0])
+	zeta_p, zeta_p_resi = plot_sf(fig, ax1, p_range, k, stats_data.vel_flux_str_func_abs[:, 1:, 0], inert_range, r"\mathcal{S}_p^{\Pi^{\mathcal{K}}}", insert_fig = True, scaling = 'loge')
+	print(zeta_p)
+	ax1 = fig.add_subplot(gs[1, 1])
+	plot_anom_scaling(fig, ax1, p_range, zeta_p[:], ns_zeta_p, r"$\zeta_p^{\Pi^{\mathcal{K}}}$")
+	plt.savefig(output_dir + "Shell_SFs_new" + "." + fig_format, format = fig_format, bbox_inches='tight', dpi=1200)
+	plt.close()
 
 
 
@@ -413,191 +429,194 @@ if __name__ == '__main__':
 	# plt.savefig(output_dir + "TriadSpace" + "." + fig_format, format = fig_format, bbox_inches='tight', dpi=1200)
 	# plt.close()
 
-	trip_prod     = np.ones((sys_vars.ndata, sys_vars.N)) * 1j
-	doub_prod     = np.ones((sys_vars.ndata, sys_vars.N)) * 1j
-	hel_flux      = np.ones((sys_vars.ndata, sys_vars.N)) * 1j
-	enrg_flux     = np.ones((sys_vars.ndata, sys_vars.N)) * 1j
+	# trip_prod     = np.ones((sys_vars.ndata, sys_vars.N)) * 1j
+	# doub_prod     = np.ones((sys_vars.ndata, sys_vars.N)) * 1j
+	# hel_flux      = np.ones((sys_vars.ndata, sys_vars.N)) * 1j
+	# enrg_flux     = np.ones((sys_vars.ndata, sys_vars.N)) * 1j
 
 
-	for t in range(sys_vars.ndata):
-		# print(t)
+	# for t in range(sys_vars.ndata):
+	# 	# print(t)
 
-		# Get padded field 
-		u_pad = np.pad(run_data.u[t, :], 2, "constant")
+	# 	# Get padded field 
+	# 	u_pad = np.pad(run_data.u[t, :], 2, "constant")
 
-		# Get field values
-		trip_prod[t, :], _, tmp_dbl_prod, hel_flux[t, :], enrg_flux[t, :] = compute_field_values(u_pad, sys_vars.N, sys_vars.eps, sys_vars.Lambda)
-		doub_prod[t, :sys_vars.N - 1] = tmp_dbl_prod
+	# 	# Get field values
+	# 	trip_prod[t, :], _, tmp_dbl_prod, hel_flux[t, :], enrg_flux[t, :] = compute_field_values(u_pad, sys_vars.N, sys_vars.eps, sys_vars.Lambda)
+	# 	doub_prod[t, :sys_vars.N - 1] = tmp_dbl_prod
 
-	num_bins = 250
-	density_flag = True
-	aspect_flag='auto'
-	c_map = my_cmap_rev
-	c_map_norm = mpl.colors.LogNorm()
+	# num_bins = 250
+	# density_flag = True
+	# aspect_flag='auto'
+	# c_map = my_cmap_rev
+	# c_map_norm = mpl.colors.LogNorm()
 
-	input_data = [trip_prod]#, sys_msr_data.k * trip_prod, enrg_flux] #, k * trip_prod, trip_prod_alt, doub_prod, enrg_flux, hel_flux] #, avg_trip_prod, k * avg_trip_prod, avg_doub_prod, avg_enrg_flux, avg_hel_flux]
-	figure_names = ["TripProd"]#,  "kTripProd", "EnrgFlux"] #, "kTripProd", "TripProdAlt", "DoubleProd", "EnrgFlux", "HelFlux"] #, "TimeAvgTripProd", "TimeAvgkTripProd", "TimeAvgDoubleProd", "TimeAvgEnrgFlux", "TimeAvgHelFlux"]
-	data_labels = [r"u_{n + 2}u_{n + 1}u_{n}"]#,  r"k_nu_{n + 2}u_{n + 1}u_{n}", r"\Pi^{\mathcal{K}}"] #, r"k_n u_{n + 2}u_{n + 1}u_{n}", r"(1 - \delta) / \lambda u_{n + 2}u_{n + 1}u_{n}", r"u_{n}u_{n + 3}^{*}", r"\Pi_n^{\mathcal{E}}", r"\Pi_n^{\mathcal{H}}"] #, r"u_{n + 2}u_{n + 1}u_{n}", r"k_n u_{n + 2}u_{n + 1}u_{n}", r"u_{n}u_{n + 3}^{*}", r"\Pi_n^{\mathcal{E}}", r"\Pi_n^{\mathcal{H}}"]
-	# Loop through data
-	for in_data, fig_name, data_labs in zip(input_data, figure_names, data_labels):
+	# input_data = [trip_prod]#, sys_msr_data.k * trip_prod, enrg_flux] #, k * trip_prod, trip_prod_alt, doub_prod, enrg_flux, hel_flux] #, avg_trip_prod, k * avg_trip_prod, avg_doub_prod, avg_enrg_flux, avg_hel_flux]
+	# figure_names = ["TripProd"]#,  "kTripProd", "EnrgFlux"] #, "kTripProd", "TripProdAlt", "DoubleProd", "EnrgFlux", "HelFlux"] #, "TimeAvgTripProd", "TimeAvgkTripProd", "TimeAvgDoubleProd", "TimeAvgEnrgFlux", "TimeAvgHelFlux"]
+	# data_labels = [r"u_{n + 2}u_{n + 1}u_{n}"]#,  r"k_nu_{n + 2}u_{n + 1}u_{n}", r"\Pi^{\mathcal{K}}"] #, r"k_n u_{n + 2}u_{n + 1}u_{n}", r"(1 - \delta) / \lambda u_{n + 2}u_{n + 1}u_{n}", r"u_{n}u_{n + 3}^{*}", r"\Pi_n^{\mathcal{E}}", r"\Pi_n^{\mathcal{H}}"] #, r"u_{n + 2}u_{n + 1}u_{n}", r"k_n u_{n + 2}u_{n + 1}u_{n}", r"u_{n}u_{n + 3}^{*}", r"\Pi_n^{\mathcal{E}}", r"\Pi_n^{\mathcal{H}}"]
+	# # Loop through data
+	# for in_data, fig_name, data_labs in zip(input_data, figure_names, data_labels):
 
-		out_dir_AVGFLUX = output_dir + "AVGFLUX_PLOTS/" + fig_name + "/"
-		if os.path.isdir(out_dir_AVGFLUX) != True:
-			print("Making folder:" + tc.C + " AVGFLUX_PLOTS/" + tc.Rst)
-			os.mkdir(out_dir_AVGFLUX)
-		n = 0
-		fig = plt.figure(figsize=fig_size_2x2)
-		gs  = GridSpec(2, 2, hspace=0.35, wspace=0.35)
-		ax1 = fig.add_subplot(gs[0, 0])
-		x = np.absolute(in_data[:, n])
-		y = np.mod(np.angle(in_data[:, n]) + 2.0 * np.pi, 2.0 * np.pi)
-		hist, xedges, yedges = np.histogram2d(x, y, bins=(np.linspace(x.min(), x.max(), num_bins + 1), np.linspace(0.0, 2.0 * np.pi, num_bins + 1)), density=density_flag)
-		im1 = ax1.imshow(np.rot90(hist, k=1), extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect=aspect_flag, cmap=c_map, norm=c_map_norm)
-		ax1.set_ylim(0, 2.0 * np.pi)
-		ax1.set_yticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
-		ax1.set_yticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2\pi$"])
-		div1  = make_axes_locatable(ax1)
-		cbax1 = div1.append_axes("right", size = "5%", pad = 0.05)
-		cb2   = plt.colorbar(im1, cax = cbax1)
-		cb2.set_label("PDF")
-		ax1.set_ylabel(r"$\varphi_{n, n + 1, n + 2}$", fontsize=label_size)
-		ax1.set_xlabel(r"$a_{n} a_{n + 1}a_{n + 2}$")
-
-
-		ax2 = fig.add_subplot(gs[0, 1])
-		ax2.set_xlabel(r"$p(a_{n} a_{n + 1}a_{n + 2})$", fontsize=label_size)
-		ax2.set_ylabel(r"$p(\varphi_{n, n + 1, n + 2})$", fontsize=label_size)
-		marg_abs_pdf = np.sum(hist, axis=0)	* (yedges[1] - yedges[0])
-		marg_angle_pdf = np.sum(hist, axis=1) * (xedges[1] - xedges[0])
-		pdf_prod_data = np.outer(marg_angle_pdf, marg_abs_pdf)
-		im2 = ax2.imshow(np.rot90(pdf_prod_data), extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect=aspect_flag, cmap=c_map, norm=c_map_norm)
-		div2  = make_axes_locatable(ax2)
-		cbax2 = div2.append_axes("right", size = "5%", pad = 0.05)
-		cb2   = plt.colorbar(im2, cax = cbax2)
-		cb2.set_label("PDF")
-		div2  = make_axes_locatable(ax2)
-		cbax2 = div2.append_axes("right", size = "5%", pad = 0.05)
-		cb2   = plt.colorbar(im2, cax = cbax2)
-		cb2.set_label("PDF")
+	# 	out_dir_AVGFLUX = output_dir + "AVGFLUX_PLOTS/" + fig_name + "/"
+	# 	if os.path.isdir(out_dir_AVGFLUX) != True:
+	# 		print("Making folder:" + tc.C + " AVGFLUX_PLOTS/" + tc.Rst)
+	# 		os.mkdir(out_dir_AVGFLUX)
+	# 	n = 0
+	# 	fig = plt.figure(figsize=fig_size_2x2)
+	# 	gs  = GridSpec(2, 2, hspace=0.35, wspace=0.35)
+	# 	ax1 = fig.add_subplot(gs[0, 0])
+	# 	x = np.absolute(in_data[:, n])
+	# 	# y = np.mod(np.angle(in_data[:, n]) + 2.0 * np.pi, 2.0 * np.pi)
+	# 	# hist, xedges, yedges = np.histogram2d(x, y, bins=(np.linspace(x.min(), x.max(), num_bins + 1), np.linspace(0.0, 2.0 * np.pi, num_bins + 1)), density=density_flag)
+	# 	y = np.sin(np.mod(np.angle(in_data[:, n]) + 2.0 * np.pi, 2.0 * np.pi))
+	# 	hist, xedges, yedges = np.histogram2d(x, y, bins=(np.linspace(x.min(), x.max(), num_bins + 1), np.linspace(-1, 1, num_bins + 1)), density=density_flag)
+	# 	im1 = ax1.imshow(np.rot90(hist, k=1), extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect=aspect_flag, cmap=c_map, norm=c_map_norm)
+	# 	# ax1.set_ylim(0, 2.0 * np.pi)
+	# 	# ax1.set_yticks([0.0, np.pi/2.0, np.pi, 1.5*np.pi, 2.0 * np.pi])
+	# 	# ax1.set_yticklabels([r"$0$", r"$\frac{\pi}{2}$", r"$\pi$", r"$\frac{3\pi}{2}$", r"$2\pi$"])
+	# 	div1  = make_axes_locatable(ax1)
+	# 	cbax1 = div1.append_axes("right", size = "5%", pad = 0.05)
+	# 	cb2   = plt.colorbar(im1, cax = cbax1)
+	# 	cb2.set_label("PDF")
+	# 	ax1.set_ylabel(r"$\varphi_{n, n + 1, n + 2}$", fontsize=label_size)
+	# 	ax1.set_xlabel(r"$a_{n} a_{n + 1}a_{n + 2}$")
 
 
-		hel_ms = np.zeros((sys_vars.N - 2, ))
-		for n in range(sys_vars.N - 2):
-			print(n)
-			x = np.absolute(in_data[:, n])
-			y = np.mod(np.angle(in_data[:, n]) + 2.0 * np.pi, 2.0 * np.pi)
-			hist, xedges, yedges = np.histogram2d(x, y, bins=(np.linspace(x.min(), x.max(), num_bins + 1), np.linspace(0.0, 2.0 * np.pi, num_bins + 1)), density=density_flag)
-
-			marg_abs_pdf = np.sum(hist, axis=0)	* (yedges[1] - yedges[0])
-			marg_angle_pdf = np.sum(hist, axis=1) * (xedges[1] - xedges[0])
-			pdf_prod_data = np.outer(marg_angle_pdf, marg_abs_pdf)
-			dx = xedges[1] - xedges[0]
-			dy = yedges[1] - yedges[0]
-			hist_2d = np.rot90(hist, k=1) 
-			marg_data = np.rot90(pdf_prod_data)
-
-			nx, ny = hist_2d.shape
-			hellinger_dist = np.zeros((nx, ny))
-
-			for i in range(nx):
-				for j in range(ny):
-					hellinger_dist[i, j]      = (np.sqrt(hist_2d[i, j]) - np.sqrt(marg_data[i, j]))**2
-			hellinger_msr  = np.sqrt(0.5 * np.sum(hellinger_dist)* dx * dy)
-			print(hellinger_msr)
-			hel_ms[n] = hellinger_msr
+	# 	ax2 = fig.add_subplot(gs[0, 1])
+	# 	ax2.set_xlabel(r"$p(a_{n} a_{n + 1}a_{n + 2})$", fontsize=label_size)
+	# 	ax2.set_ylabel(r"$p(\varphi_{n, n + 1, n + 2})$", fontsize=label_size)
+	# 	marg_abs_pdf = np.sum(hist, axis=0)	* (yedges[1] - yedges[0])
+	# 	marg_angle_pdf = np.sum(hist, axis=1) * (xedges[1] - xedges[0])
+	# 	pdf_prod_data = np.outer(marg_angle_pdf, marg_abs_pdf)
+	# 	im2 = ax2.imshow(np.rot90(pdf_prod_data), extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], aspect=aspect_flag, cmap=c_map, norm=c_map_norm)
+	# 	div2  = make_axes_locatable(ax2)
+	# 	cbax2 = div2.append_axes("right", size = "5%", pad = 0.05)
+	# 	cb2   = plt.colorbar(im2, cax = cbax2)
+	# 	cb2.set_label("PDF")
+	# 	div2  = make_axes_locatable(ax2)
+	# 	cbax2 = div2.append_axes("right", size = "5%", pad = 0.05)
+	# 	cb2   = plt.colorbar(im2, cax = cbax2)
+	# 	cb2.set_label("PDF")
 
 
+	# 	hel_ms = np.zeros((sys_vars.N - 2, ))
+	# 	for n in range(sys_vars.N - 2):
+	# 		print(n)
+	# 		x = np.absolute(in_data[:, n])
+	# 		y = np.mod(np.angle(in_data[:, n]) + 2.0 * np.pi, 2.0 * np.pi)
+	# 		y = np.sin(np.mod(np.angle(in_data[:, n]) + 2.0 * np.pi, 2.0 * np.pi))
+	# 		hist, xedges, yedges = np.histogram2d(x, y, bins=(np.linspace(x.min(), x.max(), num_bins + 1), np.linspace(-1, 1.0, num_bins + 1)), density=density_flag)
 
+	# 		marg_abs_pdf = np.sum(hist, axis=0)	* (yedges[1] - yedges[0])
+	# 		marg_angle_pdf = np.sum(hist, axis=1) * (xedges[1] - xedges[0])
+	# 		pdf_prod_data = np.outer(marg_angle_pdf, marg_abs_pdf)
+	# 		dx = xedges[1] - xedges[0]
+	# 		dy = yedges[1] - yedges[0]
+	# 		hist_2d = np.rot90(hist, k=1) 
+	# 		marg_data = np.rot90(pdf_prod_data)
 
+	# 		nx, ny = hist_2d.shape
+	# 		hellinger_dist = np.zeros((nx, ny))
 
-		ax3 = fig.add_subplot(gs[1, :])
-		ax3.plot(range(1, sys_vars.N - 1), hel_ms, color=plot_colours[-3])
-		ax3.set_xlim(1, sys_vars.N - 2)
-		ax3.set_ylim(0, 0.5)
-		ax3.grid()
-		ax3.set_xlabel(r"$n$",fontsize=label_size)
-		ax3.set_ylabel(r"$H$",fontsize=label_size)
-		fig.savefig(out_dir_AVGFLUX + fig_name + "_2DHist_Comparison" + ".pdf", format="pdf", dpi=1200, bbox_inches='tight')
-		plt.close()
-
-		p_range = np.arange(1, 6 + 1)
-		amp_slope = []
-		amp_resid = []
-		phase_slope = []
-		phase_resid = []
-
-		full_slope = []
-		full_resid = []
-		fig = plt.figure()
-		gs  = GridSpec(1, 3, hspace=0.4, wspace=0.3)
-		ax1 = fig.add_subplot(gs[0, 0])
-		for p in range(2, 6 + 1):
-			x = sys_msr_data.k
-			y = np.mean(np.power(np.absolute(in_data), p/3.), axis=0)
-			ax1.plot(x, y,label=r"$p = {}$".format(p), color=plot_colours[(p - 2) * 2])
-			amp_s, amp_c, amp_res = slope_fit(np.log10(x), np.log10(y), 2, 11)
-			amp_slope.append(amp_s)
-			amp_resid.append(amp_res)
-			print("Amp - p {}: {}".format(p, amp_s))
-		ax1.set_xlabel(r"$k_n$", fontsize=label_size)
-		ax1.set_ylabel(r"$\langle|a_n a_{n+ 1}a_{n + 2}|^{p/3}\rangle$", fontsize=label_size)
-		for p in range(2, 6 + 1):
-			x = sys_msr_data.k
-			y = np.mean(np.power(np.absolute(np.imag(in_data)), p/3.), axis=0)
-			full_s, full_c, full_res = slope_fit(np.log10(x), np.log10(y), 2, 11)
-			full_slope.append(full_s)
-			full_resid.append(full_res)
-			print("Full - p {}: {}".format(p, full_s))
-		ax1.grid(which="both", axis="both", color='k', linestyle=":", linewidth=0.5)
-		ax1.set_yscale('log')
-		ax1.set_xscale('log')
-		ax1.legend()
-		ax1 = fig.add_subplot(gs[0, 1])
-		ax1.set_xlabel(r"$k_n$", fontsize=label_size)
-		ax1.set_ylabel(r"$\langle|\sin\left(\varphi_{n , n + 1, n + 2} \right)|^{p/3}\rangle$", fontsize=label_size)
-		for p in range(2, 6 + 1):
-			x = sys_msr_data.k
-			y = np.mean(np.power(np.absolute(np.sin(np.angle(in_data))), p/3.), axis=0)
-			ax1.plot(x, y, label=r"$\sin \arg$; $p = {}$".format(p), color=plot_colours[(p - 2) * 2])
-			phase_s, phase_c, phase_res = slope_fit(np.log10(x), np.log10(y), 2, 11)
-			phase_slope.append(phase_s)
-			phase_resid.append(phase_res)
-			print("Phase - p {}: {}".format(p, phase_s))
-			# ax1.plot(sys_msr_data.k, np.mean(np.power(np.sign(np.sin(np.angle(in_data))), p) * np.power(np.absolute(np.sin(np.angle(in_data))), p/3.), axis=0), label=r"$\sin \arg$; $p = {}$".format(p))
-		ax1.grid(which="both", axis="both", color='k', linestyle=":", linewidth=0.5)
-		ax1.set_xscale('log')
-		ax1.legend()
-		ax1 = fig.add_subplot(gs[0, 2])
-		ax1.plot(p_range[1:], p_range[1:] / 3, 'k--', label=r"K41")
-		ax1.plot(p_range[1:], np.absolute(amp_slope), '.-', label=r"Amp",  color=plot_colours[-3])
-		ax1.plot(p_range[1:], np.absolute(phase_slope), '.-', label=r"Phase", color=plot_colours[-5])
-		ax1.plot(p_range[1:], np.absolute(full_slope), label=r"Full", color=plot_colours[-1])
-		# ax1.plot(p_range[1:], [0.72, 1, 1.273, 1.534, 1.786], label=r"NS")
-		ax1.set_xlabel(r"$p$")
-		ax1.set_ylabel(r"$\zeta_p$")
-		ax1.set_xlim(2, 6)
-		ax1.grid()
-		ax1.legend()
-		# slope = []
-		# for p in range(1, 6 + 1):
-		# 	p_info, = ax1.plot(sys_msr_data.k[:-6], np.mean(np.power(np.absolute(np.sin(np.angle(in_data))), p/3.), axis=0)[:-6], label=r"$\arg $; $p = {}$".format(p), marker = 'o')
-		# 	# ax1.plot(k, np.mean(np.power(np.absolute(np.cos(np.angle(in_data))), p/3.), axis=0), label=r"$\arg $; $p = {}$".format(p))
-		# 	# ax1.plot(k, np.mean( np.power(np.sign(np.angle(in_data)), p) * np.power(np.absolute(np.angle(in_data)), p/3.), axis=0), label=r"$\arg $; $p = {}$".format(p))
-		# 	x = sys_msr_data.k
-		# 	y = np.mean(np.power(np.absolute(np.sin(np.angle(in_data))), p/3.), axis=0)
-		# 	s, c, res = slope_fit(np.log10(x), np.log10(y), 2, 11)
-		# 	x = sys_msr_data.k
-		# 	y = np.mean(np.power(np.absolute(in_data), p/3.), axis=0)
-		# 	s_amp, c, res_amp = slope_fit(np.log10(x), np.log10(y), 2, 11)
-		# 	print(fig_name, p, s, res, s_amp, res_amp)
-		# 	# ax1.plot(x[2:11], x[2:11] ** slope + c, ':', color = p_info.get_color())
-
-		# ax1.grid(which="both", axis="both", color='k', linestyle=":", linewidth=0.5)
-		# ax1.set_xscale('log')
-		# ax1.set_yscale('log')
-		plt.savefig(out_dir_AVGFLUX + fig_name + "_Test_Independence_SF" + ".pdf", format="pdf", dpi=1200, bbox_inches='tight')
-		plt.close()
+	# 		for i in range(nx):
+	# 			for j in range(ny):
+	# 				hellinger_dist[i, j]      = (np.sqrt(hist_2d[i, j]) - np.sqrt(marg_data[i, j]))**2
+	# 		hellinger_msr  = np.sqrt(0.5 * np.sum(hellinger_dist)* dx * dy)
+	# 		print(hellinger_msr)
+	# 		hel_ms[n] = hellinger_msr
 
 
 
-	print("\n\nFinished\n\n")
+
+
+	# 	ax3 = fig.add_subplot(gs[1, :])
+	# 	ax3.plot(range(1, sys_vars.N - 1), hel_ms, color=plot_colours[-3])
+	# 	ax3.set_xlim(1, sys_vars.N - 2)
+	# 	ax3.set_ylim(0, 0.5)
+	# 	ax3.grid()
+	# 	ax3.set_xlabel(r"$n$",fontsize=label_size)
+	# 	ax3.set_ylabel(r"$H$",fontsize=label_size)
+	# 	fig.savefig(out_dir_AVGFLUX + fig_name + "_2DHist_Comparison" + ".pdf", format="pdf", dpi=1200, bbox_inches='tight')
+	# 	plt.close()
+
+	# 	p_range = np.arange(1, 6 + 1)
+	# 	amp_slope = []
+	# 	amp_resid = []
+	# 	phase_slope = []
+	# 	phase_resid = []
+
+	# 	full_slope = []
+	# 	full_resid = []
+	# 	fig = plt.figure()
+	# 	gs  = GridSpec(1, 3, hspace=0.4, wspace=0.3)
+	# 	ax1 = fig.add_subplot(gs[0, 0])
+	# 	for p in range(2, 6 + 1):
+	# 		x = sys_msr_data.k
+	# 		y = np.mean(np.power(np.absolute(in_data), p/3.), axis=0)
+	# 		ax1.plot(x, y,label=r"$p = {}$".format(p), color=plot_colours[(p - 2) * 2])
+	# 		amp_s, amp_c, amp_res = slope_fit(np.log10(x), np.log10(y), 2, 11)
+	# 		amp_slope.append(amp_s)
+	# 		amp_resid.append(amp_res)
+	# 		print("Amp - p {}: {}".format(p, amp_s))
+	# 	ax1.set_xlabel(r"$k_n$", fontsize=label_size)
+	# 	ax1.set_ylabel(r"$\langle|a_n a_{n+ 1}a_{n + 2}|^{p/3}\rangle$", fontsize=label_size)
+	# 	for p in range(2, 6 + 1):
+	# 		x = sys_msr_data.k
+	# 		y = np.mean(np.power(np.absolute(np.imag(in_data)), p/3.), axis=0)
+	# 		full_s, full_c, full_res = slope_fit(np.log10(x), np.log10(y), 2, 11)
+	# 		full_slope.append(full_s)
+	# 		full_resid.append(full_res)
+	# 		print("Full - p {}: {}".format(p, full_s))
+	# 	ax1.grid(which="both", axis="both", color='k', linestyle=":", linewidth=0.5)
+	# 	ax1.set_yscale('log')
+	# 	ax1.set_xscale('log')
+	# 	ax1.legend()
+	# 	ax1 = fig.add_subplot(gs[0, 1])
+	# 	ax1.set_xlabel(r"$k_n$", fontsize=label_size)
+	# 	ax1.set_ylabel(r"$\langle|\sin\left(\varphi_{n , n + 1, n + 2} \right)|^{p/3}\rangle$", fontsize=label_size)
+	# 	for p in range(2, 6 + 1):
+	# 		x = sys_msr_data.k
+	# 		y = np.mean(np.power(np.absolute(np.sin(np.angle(in_data))), p/3.), axis=0)
+	# 		ax1.plot(x, y, label=r"$\sin \arg$; $p = {}$".format(p), color=plot_colours[(p - 2) * 2])
+	# 		phase_s, phase_c, phase_res = slope_fit(np.log10(x), np.log10(y), 2, 11)
+	# 		phase_slope.append(phase_s)
+	# 		phase_resid.append(phase_res)
+	# 		print("Phase - p {}: {}".format(p, phase_s))
+	# 		# ax1.plot(sys_msr_data.k, np.mean(np.power(np.sign(np.sin(np.angle(in_data))), p) * np.power(np.absolute(np.sin(np.angle(in_data))), p/3.), axis=0), label=r"$\sin \arg$; $p = {}$".format(p))
+	# 	ax1.grid(which="both", axis="both", color='k', linestyle=":", linewidth=0.5)
+	# 	ax1.set_xscale('log')
+	# 	ax1.legend()
+	# 	ax1 = fig.add_subplot(gs[0, 2])
+	# 	ax1.plot(p_range[1:], p_range[1:] / 3, 'k--', label=r"K41")
+	# 	ax1.plot(p_range[1:], np.absolute(amp_slope), '.-', label=r"Amp",  color=plot_colours[-3])
+	# 	ax1.plot(p_range[1:], np.absolute(phase_slope), '.-', label=r"Phase", color=plot_colours[-5])
+	# 	ax1.plot(p_range[1:], np.absolute(full_slope), label=r"Full", color=plot_colours[-1])
+	# 	# ax1.plot(p_range[1:], [0.72, 1, 1.273, 1.534, 1.786], label=r"NS")
+	# 	ax1.set_xlabel(r"$p$")
+	# 	ax1.set_ylabel(r"$\zeta_p$")
+	# 	ax1.set_xlim(2, 6)
+	# 	ax1.grid()
+	# 	ax1.legend()
+	# 	# slope = []
+	# 	# for p in range(1, 6 + 1):
+	# 	# 	p_info, = ax1.plot(sys_msr_data.k[:-6], np.mean(np.power(np.absolute(np.sin(np.angle(in_data))), p/3.), axis=0)[:-6], label=r"$\arg $; $p = {}$".format(p), marker = 'o')
+	# 	# 	# ax1.plot(k, np.mean(np.power(np.absolute(np.cos(np.angle(in_data))), p/3.), axis=0), label=r"$\arg $; $p = {}$".format(p))
+	# 	# 	# ax1.plot(k, np.mean( np.power(np.sign(np.angle(in_data)), p) * np.power(np.absolute(np.angle(in_data)), p/3.), axis=0), label=r"$\arg $; $p = {}$".format(p))
+	# 	# 	x = sys_msr_data.k
+	# 	# 	y = np.mean(np.power(np.absolute(np.sin(np.angle(in_data))), p/3.), axis=0)
+	# 	# 	s, c, res = slope_fit(np.log10(x), np.log10(y), 2, 11)
+	# 	# 	x = sys_msr_data.k
+	# 	# 	y = np.mean(np.power(np.absolute(in_data), p/3.), axis=0)
+	# 	# 	s_amp, c, res_amp = slope_fit(np.log10(x), np.log10(y), 2, 11)
+	# 	# 	print(fig_name, p, s, res, s_amp, res_amp)
+	# 	# 	# ax1.plot(x[2:11], x[2:11] ** slope + c, ':', color = p_info.get_color())
+
+	# 	# ax1.grid(which="both", axis="both", color='k', linestyle=":", linewidth=0.5)
+	# 	# ax1.set_xscale('log')
+	# 	# ax1.set_yscale('log')
+	# 	plt.savefig(out_dir_AVGFLUX + fig_name + "_Test_Independence_SF" + ".pdf", format="pdf", dpi=1200, bbox_inches='tight')
+	# 	plt.close()
+
+
+
+	# print("\n\nFinished\n\n")

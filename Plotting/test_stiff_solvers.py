@@ -4,24 +4,24 @@ from rkstiff import grids
 from rkstiff import if34, etd35, if4, etd4, etd5
 
 #### ---------- System Parameters
-N     = 25
-nu    = 1e-5
-k0    = 0.05
+N     = 22
+nu    = 5e-7
+k0    = 0.0625
 lam   = 2.0
 delta = 0.5
 alpha = 1.5
 
 t0 = 0.0
 t = t0
-dt = 1e-3
+dt = 1e-4
 T  = 1000
 
-forcing_shell = 0
-forcing_scale = 0.1
+forcing_shell = 1
+forcing_scale = 0.005
 
 Printing = False
 
-save_every=1e4
+save_every=1e5
 
 #### ---------- Function Defs
 def init_k(N, k0, lmabda):
@@ -56,12 +56,22 @@ def NL(u):
               non[n] += forcing_scale * (1.0 + 1j)
     return non
 
+@njit
+def NL_AO(a):
+    non = np.zeros((a.shape), dtype=np.float64)
+    for i in range(a.shape[0] - 4):
+        n = i + 2
+        non[n] = k[n] * (a[n + 1] * a[n + 2] * np.sin(phi[n + 1] + phi[n + 2] + phi[n]) - (delta/lam) * (a[n - 1] * a[n + 1] * np.sin(phi[n - 1] + phi[n + 1] + phi[n])) - ((1.0 - delta)/lam**2) * (a[n - 2] * a[n - 1] * np.sin(phi[n - 1] + phi[n - 2] + phi[n])))
+        if n == forcing_shell + 2:
+              non[n] += np.real(forcing_scale * (1.0 + 1j) * np.exp(phi[n]))
+    return non
+
 def print_update(u, h, iters):
     if np.mod(iters, save_every) == 0.0:
         print("Iter: {}/{} t: {:g} \t Enrg: {:g}".format(iters, int(T/dt), h, np.sum(np.absolute(u)**2)*0.5))
 
-def run_IF34(u0, dt):
-    solver = if34.IF34(linop=L,NLfunc=NL,epsilon=1e-8)
+def run_IF34(u0, dt, nl, l):
+    solver = if34.IF34(linop=l,NLfunc=nl,epsilon=1e-8)
 
     h = dt
     u = u0.copy()
@@ -75,8 +85,8 @@ def run_IF34(u0, dt):
         h = h_suggest
         iters+=1
 
-def run_ETD35(u0, dt):
-    solver = etd35.ETD35(linop=L,NLfunc=NL,epsilon=1e-8)
+def run_ETD35(u0, dt, nl, l):
+    solver = etd35.ETD35(linop=l,NLfunc=nl,epsilon=1e-8)
 
     h = dt
     u = u0.copy()
@@ -91,8 +101,8 @@ def run_ETD35(u0, dt):
         iters+=1
 
 
-def run_IF4(u0, dt):
-    solver = if4.IF4(linop=L,NLfunc=NL)
+def run_IF4(u0, dt, nl, l):
+    solver = if4.IF4(linop=l,NLfunc=nl)
 
     h = dt
     u = u0.copy()
@@ -105,8 +115,8 @@ def run_IF4(u0, dt):
         # use suggested step 
         iters+=1
 
-def run_ETD4(u0, dt):
-    solver = etd4.ETD4(linop=L,NLfunc=NL)
+def run_ETD4(u0, dt, nl, l):
+    solver = etd4.ETD4(linop=l,NLfunc=nl)
 
     h = dt
     u = u0.copy()
@@ -120,8 +130,8 @@ def run_ETD4(u0, dt):
         iters+=1
 
 
-def run_ETD5(u0, dt):
-    solver = etd5.ETD5(linop=L,NLfunc=NL)
+def run_ETD5(u0, dt, nl, l):
+    solver = etd5.ETD5(linop=l,NLfunc=nl)
 
     h = dt
     u = u0.copy()
@@ -143,13 +153,24 @@ L     = -nu * k_sqr
 
 u0, amp, phi = get_IC(k, N, "N_SCALING")
 
+####---------------- Test Full Model
+# run_IF34(u0, dt, NL, L)
 
-# run_IF34(u0, dt)
+# run_ETD35(u0, dt, NL, L)
 
-# run_ETD35(u0, dt)
+# run_IF4(u0, dt, NL, L)
 
-run_IF4(u0, dt)
+# run_ETD4(u0, dt, NL, L)
 
-# run_ETD4(u0, dt)
+# run_ETD5(u0, dt, NL, L)
 
-# run_ETD5(u0, dt)
+####---------------- Test AO
+# run_IF34(amp, dt, NL_AO, L)
+
+# run_ETD35(amp, dt, NL_AO, L)
+
+run_IF4(amp, dt, NL_AO, L)
+
+# run_ETD4(amp, dt, NL_AO, L)
+
+# run_ETD5(amp, dt, NL_AO, L)

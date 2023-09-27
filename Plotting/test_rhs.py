@@ -3,20 +3,20 @@ from numba import njit
 import sys
 
 
-N     = 25
+N     = 22
 nu    = 5e-7
-k0    = 0.05
+k0    = 0.0625
 lam   = 2.0
 delta = 0.5
-alpha = 1.5
+alpha = 0.3333
 
 t0 = 0.0
 t = t0
 dt = 1e-4
-T  = 1000
+T  = 100
 
-forcing_shell = 0
-forcing_scale = 0.1
+forcing_shell = 1
+forcing_scale = 0.005
 
 rk1 = np.zeros((N + 4, ), dtype=np.complex128)
 rk2 = np.zeros((N + 4, ), dtype=np.complex128)
@@ -126,13 +126,15 @@ def get_exp(dt, nu, k_sqr):
 ##-----------------------------------------
 ## START SOLVER
 ##-----------------------------------------
-model_type  = "AO"
+model_type  = "FXD_PHASE_AO"
 
 
 if model_type == "AO":
 	solver_type = "INT_FAC"
 elif model_type == "PO":
 	solver_type = "RK4"
+else:
+	solver_type = "INT_FAC"
 
 
 ##-----------------------------------------
@@ -290,7 +292,11 @@ while t <= T:
 						print("INTFACunew[{}]: {:1.16f} {:1.16f}\ta: {:1.16f}\tp: {:1.16f}".format(i - 2, np.real(amp[i] * np.exp(1j * phi[i])), np.imag(amp[i] * np.exp(1j * phi[i])), amp[i], phi[i]))
 				print("\n")
 		else:
+			if model_type == "FXD_PHASE_AO":
+				phase_before = np.angle(u)
 			u = exp_dt * u + dt * (1.0/6.0) * (exp_dt * rk1) + dt * (1.0/3.0) * (exp_dt2 * rk2) + dt * (1.0/3.0) * (exp_dt2 * rk3) + dt * (1.0/6.0) * rk4
+			if model_type == "FXD_PHASE_AO":
+				u = np.absolute(u) * np.exp(1j * phase_before)
 			if Printing:
 				for i in range(N + 4):
 					if i >= 2 and i < N + 2:
